@@ -1,134 +1,252 @@
-import type { AuditEvent, CurrentUser, RbacOverview } from "../types";
+import { SvgIcon } from "../components/SvgIcon";
+import type { AuditEvent, CurrentUser, DashboardKpi, DashboardReadModel } from "../types";
 
 type DashboardPageProps = {
-  currentUser: CurrentUser;
-  overview: RbacOverview | null;
   auditEvents: AuditEvent[];
+  currentUser: CurrentUser;
+  dashboard: DashboardReadModel | null;
+  onNavigate: (path: string) => void;
 };
 
-export function DashboardPage({ currentUser, overview, auditEvents }: DashboardPageProps) {
-  const permissionCount = currentUser.permissions.includes("*")
-    ? "ALL"
-    : currentUser.permissions.length.toString().padStart(2, "0");
-  const defaultMembership = currentUser.memberships.find((membership) => membership.is_default);
+function toneClass(tone: string | undefined) {
+  if (tone === "critical") return "critical";
+  if (tone === "pending" || tone === "warning") return "pending";
+  return "ok";
+}
+
+function formatKpiValue(kpi: DashboardKpi) {
+  if (typeof kpi.value === "number") {
+    return `${Math.round(kpi.value).toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ""}`;
+  }
+  return kpi.value;
+}
+
+function short(value: string | undefined | null) {
+  return value ? value.replaceAll("_", " ").toUpperCase() : "?";
+}
+
+function timeLabel(value: string) {
+  return new Date(value).toLocaleString(undefined, {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+  });
+}
+
+export function DashboardPage({
+  auditEvents,
+  currentUser,
+  dashboard,
+  onNavigate,
+}: DashboardPageProps) {
+  const role = dashboard?.roleShape;
+  const planRisk = dashboard?.planRisk;
+  const queue = dashboard?.queuePressure;
+  const kpis = dashboard?.kpis ?? [];
+  const recentAudit = auditEvents.slice(0, 5);
 
   return (
-    <section className="workspace-page dashboard-cockpit">
-      <header className="page-heading">
+    <section className="workspace-page situation-board">
+      <header className="page-heading planning-heading">
         <div>
-          <p>Control Tower</p>
+          <p>Control Tower / Network Situation</p>
           <h1>Network Situation</h1>
         </div>
-        <span className="phase-chip">Chunk 1 · Governance spine</span>
+        <div className="planning-actions">
+          <span className={`phase-chip ${toneClass(planRisk?.tone)}`}>
+            Chunk 6 ? {planRisk?.liveLabel ?? "No active read model"}
+          </span>
+          <button onClick={() => onNavigate("/schedule/published-plan")} type="button">
+            Open plan
+          </button>
+          <button onClick={() => onNavigate("/exceptions/center")} type="button">
+            Open exceptions
+          </button>
+        </div>
       </header>
 
-      <div className="metric-strip six-up">
-        <div>
-          <span>Organizations</span>
-          <strong>{overview?.organizations.length ?? "—"}</strong>
-        </div>
-        <div>
-          <span>Active users</span>
-          <strong>{overview?.users.length ?? "—"}</strong>
-        </div>
-        <div>
-          <span>Role templates</span>
-          <strong>{overview?.roles.length ?? "—"}</strong>
-        </div>
-        <div>
-          <span>Assignments</span>
-          <strong>{overview?.assignmentCount ?? "—"}</strong>
-        </div>
-        <div>
-          <span>Audit events</span>
-          <strong>{overview?.auditEventCount ?? auditEvents.length}</strong>
-        </div>
-        <div>
-          <span>Authority</span>
-          <strong>{permissionCount}</strong>
-        </div>
+      <div className="metric-strip six-up situation-kpis">
+        {kpis.length ? (
+          kpis.map((kpi) => (
+            <button key={kpi.key} onClick={() => onNavigate(kpi.href)} type="button">
+              <span>{kpi.label}</span>
+              <strong className={`${toneClass(kpi.tone)}-text`}>{formatKpiValue(kpi)}</strong>
+              <em>{kpi.detail}</em>
+            </button>
+          ))
+        ) : (
+          <div>
+            <span>Read model</span>
+            <strong>Loading</strong>
+          </div>
+        )}
       </div>
 
-      <div className="cockpit-grid">
-        <section className="plain-section board-surface">
-          <h2>Governance readiness board</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Layer</th>
-                <th>Status</th>
-                <th>Current evidence</th>
-                <th>Next build dependency</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Organizations</td>
-                <td>
-                  <span className="status-chip ok">Ready</span>
-                </td>
-                <td>
-                  {overview ? `${overview.organizations.length} seeded tenants` : "restricted view"}
-                </td>
-                <td>Object ownership in Chunk 2</td>
-              </tr>
-              <tr>
-                <td>RBAC</td>
-                <td>
-                  <span className="status-chip ok">Ready</span>
-                </td>
-                <td>{overview ? `${overview.roles.length} role templates` : "restricted view"}</td>
-                <td>Workflow authority in scheduling</td>
-              </tr>
-              <tr>
-                <td>Audit</td>
-                <td>
-                  <span className="status-chip ok">Writing</span>
-                </td>
-                <td>{auditEvents.length} recent events visible</td>
-                <td>Domain event correlation</td>
-              </tr>
-              <tr>
-                <td>Scheduling data</td>
-                <td>
-                  <span className="status-chip pending">Pending</span>
-                </td>
-                <td>No fake schedule data shown</td>
-                <td>Master data catalog in Chunk 2</td>
-              </tr>
-            </tbody>
-          </table>
+      <div className="situation-layout">
+        <section className="board-surface exception-queue-panel">
+          <div className="grid-header">
+            <div>
+              <SvgIcon name="rule" />
+              <strong>Exception queue</strong>
+            </div>
+            <span>{planRisk?.blockingConflicts ?? 0} blockers active</span>
+          </div>
+
+          <div className="exception-cards">
+            {(dashboard?.conflictAggregation ?? []).slice(0, 5).map((conflict) => (
+              <button
+                className={`exception-card ${toneClass(conflict.tone)}`}
+                key={`${conflict.code}-${conflict.objectType}`}
+                onClick={() => onNavigate(conflict.href)}
+                type="button"
+              >
+                <span>Severity: {short(conflict.severity)}</span>
+                <strong>{conflict.code}</strong>
+                <em>
+                  {conflict.blocking} blocking / {conflict.total} total ? {conflict.objectType}
+                </em>
+              </button>
+            ))}
+            {(dashboard?.conflictAggregation ?? []).length === 0 ? (
+              <div className="exception-card ok">
+                <span>Severity: Clear</span>
+                <strong>No active conflicts</strong>
+                <em>Current plan has no unresolved dashboard exceptions.</em>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="priority-action-list">
+            <h2>Priority actions</h2>
+            {(dashboard?.priorityActions ?? []).map((action) => (
+              <button key={`${action.label}-${action.sourceId ?? action.href}`} onClick={() => onNavigate(action.href)} type="button">
+                <span className={`status-chip ${toneClass(action.severity)}`}>{short(action.severity)}</span>
+                <strong>{action.label}</strong>
+                <em>{action.detail}</em>
+              </button>
+            ))}
+          </div>
         </section>
 
-        <aside className="detail-drawer">
-          <div>
-            <span>Selected authority</span>
-            <strong>{defaultMembership?.organization.name ?? "Unscoped"}</strong>
+        <section className="board-surface control-timeline-panel">
+          <div className="grid-header">
+            <div>
+              <SvgIcon name="account-tree" />
+              <strong>Network resource timeline</strong>
+            </div>
+            <span>Read model ? OGV ? jetty ? tug/barge ? CTS</span>
           </div>
-          <dl>
+          <div className="timeline-timebar">
+            <strong>Asset resource</strong>
+            <span>08:00</span>
+            <span>10:00</span>
+            <span>12:00</span>
+            <span>14:00</span>
+            <span>16:00 now</span>
+            <span>18:00</span>
+          </div>
+          <div className="control-timeline-grid">
+            <i className="timeline-now" />
+            {(dashboard?.resourceTimeline ?? []).map((group) => (
+              <div className="timeline-group" key={group.category}>
+                <h2>{group.category}</h2>
+                {group.rows.slice(0, 6).map((row) => (
+                  <div className="timeline-row" key={`${group.category}-${row.tripId}-${row.label}`}>
+                    <strong>{row.label}</strong>
+                    <div>
+                      <button
+                        className={`timeline-block ${toneClass(row.tone)}`}
+                        onClick={() => onNavigate("/schedule/published-plan")}
+                        style={{ left: `${row.offsetPct}%`, width: `${row.widthPct}%` }}
+                        title={`${row.tripId}: ${timeLabel(row.start)} - ${timeLabel(row.end)}`}
+                        type="button"
+                      >
+                        {row.tripId} ? {short(row.status)}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <aside className="board-surface situation-action-rail">
+          <div className="grid-header">
             <div>
-              <dt>User</dt>
-              <dd>{currentUser.email}</dd>
+              <SvgIcon name="dashboard" />
+              <strong>Action rail</strong>
             </div>
-            <div>
-              <dt>Primary role</dt>
-              <dd>{currentUser.assignments[0]?.role.name ?? "No role assigned"}</dd>
-            </div>
-            <div>
-              <dt>Data scope</dt>
-              <dd>{currentUser.assignments[0]?.data_scope.name ?? "No scope assigned"}</dd>
-            </div>
-          </dl>
-          <section>
-            <h2>Event audit trail</h2>
-            <ol className="trace-list">
-              {auditEvents.slice(0, 4).map((event) => (
-                <li key={event.id}>
-                  <span>{new Date(event.created_at).toLocaleTimeString()}</span>
-                  <strong>{event.action}</strong>
-                </li>
+            <span>{role?.profile.replaceAll("_", " ") ?? "loading"}</span>
+          </div>
+
+          <section className="situation-risk-card">
+            <span className={`status-chip ${toneClass(planRisk?.tone)}`}>
+              {planRisk?.riskScore ?? 0}% risk
+            </span>
+            <h2>{planRisk?.highestRiskOgv.vesselName ?? "No active OGV"}</h2>
+            <p>{planRisk?.highestRiskOgv.detail ?? "Waiting for dashboard read model."}</p>
+            <dl>
+              <div>
+                <dt>Constrained resource</dt>
+                <dd>{planRisk?.mostConstrainedResource.label ?? "?"}</dd>
+              </div>
+              <div>
+                <dt>First blocker</dt>
+                <dd>{planRisk?.firstBlockingConstraint ?? "NONE"}</dd>
+              </div>
+              <div>
+                <dt>Publish state</dt>
+                <dd>{planRisk?.publishState ?? "Unknown"}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="queue-pressure-card">
+            <h2>Queue pressure</h2>
+            <dl>
+              <div>
+                <dt>Peak jetty</dt>
+                <dd>{queue?.peakResource ?? "?"}</dd>
+              </div>
+              <div>
+                <dt>Tug/barge pairs</dt>
+                <dd>{queue?.fleet.tugBargePairs ?? 0}</dd>
+              </div>
+              <div>
+                <dt>Bridge/tide risk</dt>
+                <dd>{queue?.navigationRisk.label ?? "Low"}</dd>
+              </div>
+            </dl>
+            <div className="queue-mini-list">
+              {(queue?.jetties ?? []).slice(0, 4).map((jetty) => (
+                <span key={jetty.code}>
+                  {jetty.code}<strong>{jetty.queuedTrips}</strong>
+                </span>
               ))}
-            </ol>
+            </div>
+          </section>
+
+          <section className="drilldown-card">
+            <h2>Drill-downs</h2>
+            {(dashboard?.drilldowns ?? []).map((item) => (
+              <button key={item.href} onClick={() => onNavigate(item.href)} type="button">
+                <strong>{item.label}</strong>
+                <span>{item.detail}</span>
+              </button>
+            ))}
+          </section>
+
+          <section className="audit-mini-card">
+            <h2>Recent audit</h2>
+            {recentAudit.map((event) => (
+              <p key={event.id}>
+                <span>{new Date(event.created_at).toLocaleTimeString()}</span>
+                <strong>{event.action}</strong>
+              </p>
+            ))}
+            {recentAudit.length === 0 ? <p>No audit events visible for {currentUser.email}.</p> : null}
           </section>
         </aside>
       </div>

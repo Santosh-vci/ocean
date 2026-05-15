@@ -6,6 +6,7 @@ from .views import (
     ApprovalRequestViewSet,
     AssignmentViewSet,
     ConflictViewSet,
+    DashboardSituationView,
     OverrideRequestViewSet,
     PlanVersionViewSet,
     PlanViewSet,
@@ -40,6 +41,7 @@ router.register("scheduling/scenarios", SimulationScenarioViewSet, basename="sim
 overview = SchedulingOverviewViewSet.as_view({"get": "overview"})
 
 urlpatterns = [
+    path("dashboard/situation/", DashboardSituationView.as_view(), name="dashboard-situation"),
     path("scheduling/overview/", overview, name="scheduling-overview"),
     *router.urls,
 ]

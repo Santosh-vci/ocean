@@ -80,6 +80,128 @@ export type AuditEvent = {
   created_at: string;
 };
 
+export type DashboardTone = "ok" | "pending" | "critical";
+
+export type DashboardKpi = {
+  key: string;
+  label: string;
+  value: string | number;
+  unit?: string;
+  detail: string;
+  tone: DashboardTone;
+  href: string;
+};
+
+export type DashboardPlanVersion = {
+  id: number;
+  planCode: string;
+  planName: string;
+  versionNo: number;
+  status: string;
+  validationStatus: string;
+  generatedAt: string | null;
+  publishedAt: string | null;
+  liveSnapshotId: string | null;
+  liveVersionNo: number | null;
+};
+
+export type DashboardRoleShape = {
+  profile: string;
+  organizationName: string;
+  organizationKind: string;
+  dataScope: string;
+  sections: Record<string, boolean>;
+  redactions: string[];
+};
+
+export type DashboardResourceRow = {
+  label: string;
+  tripId: string;
+  status: string;
+  start: string;
+  end: string;
+  tone: DashboardTone;
+  offsetPct: number;
+  widthPct: number;
+};
+
+export type DashboardReadModel = {
+  generatedAt: string;
+  roleShape: DashboardRoleShape;
+  latestVersion: DashboardPlanVersion | null;
+  kpis: DashboardKpi[];
+  planRisk: {
+    riskScore: number;
+    tone: DashboardTone;
+    blockingConflicts: number;
+    criticalConflicts: number;
+    warningConflicts: number;
+    highestRiskOgv: {
+      tripId?: string | null;
+      vesselName: string;
+      detail: string;
+      tone: DashboardTone;
+    };
+    mostConstrainedResource: {
+      label: string;
+      code?: string;
+      count: number;
+      tone: DashboardTone;
+    };
+    firstBlockingConstraint: string;
+    publishState: string;
+    liveLabel: string;
+  };
+  queuePressure: {
+    peakResource: string;
+    summary: string;
+    tone: DashboardTone;
+    href: string;
+    jetties: Array<{ code: string; queuedTrips: number; tone: DashboardTone }>;
+    cts: Array<{ code: string; queuedTrips: number; tone: DashboardTone }>;
+    fleet: {
+      activeTugs: number;
+      totalTugs: number;
+      activeBarges: number;
+      totalBarges: number;
+      activeCts: number;
+      totalCts: number;
+      tugBargePairs: number;
+      blockedAssets: number;
+    };
+    navigationRisk: {
+      openTideBridgeConflicts: number;
+      label: string;
+    };
+  };
+  conflictAggregation: Array<{
+    code: string;
+    severity: string;
+    objectType: string;
+    total: number;
+    blocking: number;
+    tone: DashboardTone;
+    href: string;
+  }>;
+  priorityActions: Array<{
+    label: string;
+    detail: string;
+    severity: string;
+    href: string;
+    sourceType: string;
+    sourceId: number | null;
+  }>;
+  resourceTimeline: Array<{
+    category: string;
+    rows: DashboardResourceRow[];
+  }>;
+  drilldowns: Array<{
+    label: string;
+    href: string;
+    detail: string;
+  }>;
+};
+
 export type RbacOverview = {
   users: UserSummary[];
   roles: Role[];

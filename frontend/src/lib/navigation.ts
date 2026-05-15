@@ -179,7 +179,6 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "fleet.view",
         icon: "map",
         phase: "Chunk 6",
-        disabled: true,
       },
     ],
   },

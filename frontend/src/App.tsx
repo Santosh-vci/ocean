@@ -15,6 +15,7 @@ import {
   PublishedPlanPage,
   TugBargeAssignmentPage,
 } from "./pages/LogisticsPages";
+import { LiveResourceMapPage } from "./pages/MapPage";
 import { MasterDataPage } from "./pages/MasterDataPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { RbacPage } from "./pages/RbacPage";
@@ -27,6 +28,7 @@ import { TideBridgePage } from "./pages/TideBridgePage";
 import type {
   AuditEvent,
   CurrentUser,
+  DashboardReadModel,
   MasterDataOverview,
   PlanningOverview,
   RbacOverview,
@@ -44,6 +46,7 @@ function App() {
   const [masterDataOverview, setMasterDataOverview] = useState<MasterDataOverview | null>(null);
   const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
   const [schedulingOverview, setSchedulingOverview] = useState<SchedulingOverview | null>(null);
+  const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [isBooting, setIsBooting] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -73,6 +76,8 @@ function App() {
     [currentUser],
   );
   const canViewAudit = currentUser ? canAccess(currentUser.permissions, "audit.view") : false;
+  const canViewDashboard = currentUser ? canAccess(currentUser.permissions, "dashboard.view") : false;
+  const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
   const canViewAdmin = currentUser ? canAccess(currentUser.permissions, "admin.view") : false;
   const canViewMasterData = currentUser
     ? canAccess(currentUser.permissions, "masterdata.view")
@@ -92,6 +97,12 @@ function App() {
   useEffect(() => {
     if (!currentUser) {
       return;
+    }
+
+    if (canViewDashboard) {
+      apiFetch<DashboardReadModel>("/dashboard/situation/")
+        .then(setDashboardReadModel)
+        .catch(() => setDashboardReadModel(null));
     }
 
     if (canViewAdmin) {
@@ -119,7 +130,14 @@ function App() {
         .then(setSchedulingOverview)
         .catch(() => setSchedulingOverview(null));
     }
-  }, [canViewAdmin, canViewAudit, canViewMasterData, canViewSchedule, currentUser]);
+  }, [
+    canViewAdmin,
+    canViewAudit,
+    canViewDashboard,
+    canViewMasterData,
+    canViewSchedule,
+    currentUser,
+  ]);
 
   async function handleLogin(username: string, password: string) {
     const user = await login(username, password);
@@ -133,6 +151,7 @@ function App() {
     setMasterDataOverview(null);
     setPlanningOverview(null);
     setSchedulingOverview(null);
+    setDashboardReadModel(null);
     setAuditEvents([]);
   }
 
@@ -203,11 +222,19 @@ function App() {
             overview={schedulingOverview}
           />
         ) : null}
+        {route === "/map/live" && canViewFleet ? (
+          <LiveResourceMapPage
+            dashboard={dashboardReadModel}
+            onNavigate={handleNavigate}
+            overview={schedulingOverview}
+          />
+        ) : null}
         {route === "/dashboard/situation" ? (
           <DashboardPage
             auditEvents={auditEvents}
             currentUser={currentUser}
-            overview={overview}
+            dashboard={dashboardReadModel}
+            onNavigate={handleNavigate}
           />
         ) : null}
       </section>

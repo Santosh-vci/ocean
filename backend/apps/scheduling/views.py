@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from apps.audit.mixins import AuditMutationMixin
@@ -22,6 +23,7 @@ from .models import (
     SimulationScenario,
     Trip,
 )
+from .read_models import build_dashboard_read_model
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
@@ -48,6 +50,14 @@ from .services import (
     simulate_scenario,
     submit_approval_request,
 )
+
+
+class DashboardSituationView(APIView):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"get": "dashboard.view"}
+
+    def get(self, request):
+        return Response(build_dashboard_read_model(request.user))
 
 
 class SchedulingViewSet(AuditMutationMixin, ModelViewSet):

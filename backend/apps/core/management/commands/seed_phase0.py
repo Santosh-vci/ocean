@@ -252,7 +252,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                "Seeded Chunk 5 organizations, roles, planning data, schedule, and governance loop."
+                "Seeded Chunk 6 organizations, roles, planning data, schedule, "
+                "governance loop, and dashboard context."
             )
         )
 

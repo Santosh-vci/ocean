@@ -75,6 +75,12 @@ test("exposes chunk 5 recovery routes by workflow permission", () => {
   ).toContain("Approvals & Publishing");
 });
 
+test("exposes chunk 6 live map through fleet visibility", () => {
+  expect(visibleNavItems(["dashboard.view", "fleet.view"]).map((item) => item.label)).toContain(
+    "Live Resource Map",
+  );
+});
+
 test("renders the role-aware dashboard shell", async () => {
   render(<App />);
 
