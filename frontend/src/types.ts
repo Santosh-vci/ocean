@@ -415,3 +415,131 @@ export type PlanningOverview = {
     remainingDemandMt: number;
   };
 };
+
+export type PlanRecord = {
+  id: number;
+  code: string;
+  name: string;
+  organization: Organization | null;
+  horizon_start: string;
+  horizon_end: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PlanVersionRecord = {
+  id: number;
+  plan: number;
+  plan_code: string;
+  plan_name: string;
+  version_no: number;
+  status: string;
+  validation_status: string;
+  source_version: number | null;
+  generated_at: string | null;
+  published_at: string | null;
+  created_by: number | null;
+  created_by_email: string | null;
+  summary: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ScheduleEventRecord = {
+  id: number;
+  trip: number;
+  trip_ref: string;
+  sequence: number;
+  event_type: string;
+  planned_at: string;
+  actual_at: string | null;
+  location_label: string;
+  resource_code: string;
+  status: string;
+  metadata: Record<string, unknown>;
+};
+
+export type AssignmentRecord = {
+  id: number;
+  trip: number;
+  trip_ref: string;
+  voyage_ref: string;
+  vessel_name: string;
+  planned_quantity_mt: number;
+  tug: TugRecord | null;
+  barge: BargeRecord | null;
+  jetty: JettyRecord | null;
+  cts: CTSAssetRecord | null;
+  route_segment: number | null;
+  owner_organization: Organization | null;
+  planned_departure: string;
+  planned_arrival: string;
+  tug_status: string;
+  barge_status: string;
+  next_constraint: string;
+  next_action: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TripRecord = {
+  id: number;
+  plan_version: number;
+  plan_version_ref: string;
+  trip_id: string;
+  sequence: number;
+  voyage: OGVVoyageRecord;
+  cargo_requirement: CargoRequirementRecord | null;
+  cargo_layer_step: CargoLayerStepRecord | null;
+  origin_jetty: JettyRecord | null;
+  destination_location: number | null;
+  planned_start: string;
+  planned_end: string;
+  planned_quantity_mt: number;
+  loaded_quantity_mt: number;
+  status: string;
+  selection_reason: Record<string, unknown>;
+  assignment: AssignmentRecord | null;
+  events: ScheduleEventRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConflictRecord = {
+  id: number;
+  plan_version: number;
+  plan_version_ref: string;
+  trip: number | null;
+  trip_ref: string | null;
+  vessel_name: string | null;
+  code: string;
+  severity: string;
+  object_type: string;
+  object_id: string;
+  message: string;
+  is_blocking: boolean;
+  resolved_at: string | null;
+  created_at: string;
+};
+
+export type SchedulingOverview = {
+  plans: PlanRecord[];
+  planVersions: PlanVersionRecord[];
+  activePlanVersion: PlanVersionRecord | null;
+  trips: TripRecord[];
+  assignments: AssignmentRecord[];
+  events: ScheduleEventRecord[];
+  conflicts: ConflictRecord[];
+  validation: {
+    tripCount: number;
+    assignmentCount: number;
+    eventCount: number;
+    conflictCount: number;
+    blockingConflictCount: number;
+    criticalConflictCount: number;
+    plannedMt: number;
+    loadedMt: number;
+  };
+};

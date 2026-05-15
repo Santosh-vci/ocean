@@ -47,6 +47,10 @@ test("shows implemented admin submodules without exposing future locked routes",
     "OGV Demand & Laycan",
     "Coal Grade Sequence",
     "Tide & Bridge Window",
+    "Tug/Barge Assignment",
+    "Jetty Loading",
+    "CTS / Floating Crane",
+    "Published Plan & Schedule",
     "Master Data Console",
   ]);
 });

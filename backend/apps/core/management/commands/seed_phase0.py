@@ -38,6 +38,8 @@ from apps.rbac.models import (
     Role,
     UserRoleAssignment,
 )
+from apps.scheduling.models import Plan, PlanVersion
+from apps.scheduling.services import generate_plan_version
 
 
 class Command(BaseCommand):
@@ -234,10 +236,11 @@ class Command(BaseCommand):
 
         self._seed_master_data(berau=berau, abl=abl)
         self._seed_planning_data(berau=berau, abl=abl, created_by=admin_user)
+        self._seed_schedule_data(abl=abl, created_by=admin_user)
 
         self.stdout.write(
             self.style.SUCCESS(
-                "Seeded Chunk 3 organizations, roles, Berau/ABL master data, and planning inputs."
+                "Seeded Chunk 4 organizations, roles, planning data, and generated schedule."
             )
         )
 
@@ -1327,3 +1330,26 @@ class Command(BaseCommand):
                 "created_by": created_by,
             },
         )
+
+    def _seed_schedule_data(self, *, abl, created_by):
+        plan, _ = Plan.objects.update_or_create(
+            code="PLAN-2026-10-24",
+            defaults={
+                "name": "Berau-ABL Feasible Schedule Horizon",
+                "organization": abl,
+                "horizon_start": timezone.make_aware(datetime(2026, 10, 24, 0, 0)),
+                "horizon_end": timezone.make_aware(datetime(2026, 10, 31, 23, 59)),
+                "status": Plan.Status.ACTIVE,
+            },
+        )
+        version, _ = PlanVersion.objects.update_or_create(
+            plan=plan,
+            version_no=1,
+            defaults={
+                "status": PlanVersion.Status.DRAFT,
+                "validation_status": PlanVersion.ValidationStatus.FEASIBLE,
+                "created_by": created_by,
+                "summary": {},
+            },
+        )
+        generate_plan_version(version)

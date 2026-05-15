@@ -29,10 +29,16 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
   background: var(--surface);
 }
 
@@ -120,7 +126,8 @@ button {
 }
 
 .operations-shell {
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 0;
   display: grid;
   grid-template-columns: 15rem minmax(0, 1fr);
   grid-template-rows: 1fr auto;
@@ -555,11 +562,13 @@ tbody tr:hover,
 }
 
 .operations-shell {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-columns: 15rem minmax(0, 1fr);
   grid-template-rows: 2.75rem minmax(0, 1fr) auto;
   background: var(--surface);
+  overflow: hidden;
 }
 
 .operations-shell.sidebar-is-collapsed {
@@ -1370,6 +1379,7 @@ tbody tr:hover,
   position: sticky;
   top: 0;
   z-index: 30;
+  align-self: start;
   margin: -1rem -1rem 0;
   border-bottom: 1px solid var(--border-subtle);
   background:
@@ -1886,5 +1896,315 @@ tbody tr:hover,
   .planning-actions,
   .window-legend {
     justify-content: flex-start;
+  }
+}
+
+.logistics-board {
+  display: grid;
+  grid-auto-rows: max-content;
+  gap: 0.65rem;
+}
+
+.logistics-split,
+.jetty-layout,
+.published-layout {
+  min-height: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.logistics-split {
+  grid-template-columns: minmax(46rem, 1fr) 22rem;
+  min-height: 24rem;
+}
+
+.jetty-layout {
+  grid-template-columns: minmax(46rem, 1fr) 22rem;
+}
+
+.published-layout {
+  grid-template-columns: minmax(48rem, 1fr) 22rem;
+}
+
+.logistics-table td {
+  vertical-align: middle;
+}
+
+.logistics-table td:nth-child(8),
+.logistics-table td:nth-child(5) {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logistics-inspector {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--surface-high);
+}
+
+.mini-gantt-panel,
+.cts-panel,
+.jetty-plan-panel,
+.schedule-gantt-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mini-gantt {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.65rem;
+}
+
+.mini-gantt-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mini-gantt-row > strong {
+  overflow: hidden;
+  color: var(--primary);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-gantt-row > div {
+  min-height: 1.55rem;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  background:
+    linear-gradient(90deg, rgba(137, 206, 255, 0.07) 1px, transparent 1px) 0 0 / 8.333% 100%,
+    var(--surface-charcoal);
+}
+
+.gantt-pill {
+  height: 1.1rem;
+  display: grid;
+  align-items: center;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--on-surface);
+  padding-inline: 0.35rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.56rem;
+  white-space: nowrap;
+}
+
+.gantt-pill.pending,
+.gantt-block.pending {
+  border-color: rgba(245, 158, 11, 0.72);
+  background: rgba(245, 158, 11, 0.16);
+  color: var(--status-warning);
+}
+
+.gantt-pill.critical,
+.gantt-block.critical {
+  border-color: rgba(239, 68, 68, 0.72);
+  background: rgba(239, 68, 68, 0.18);
+  color: var(--status-critical);
+}
+
+.jetty-sections {
+  max-height: 32rem;
+  overflow: auto;
+  background: var(--surface-graphite);
+}
+
+.jetty-section + .jetty-section {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.jetty-section h2 {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-charcoal);
+  color: var(--primary);
+  padding: 0.48rem 0.65rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.jetty-section h2 span {
+  color: var(--status-warning);
+  font-size: 0.58rem;
+}
+
+.jetty-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr 0.8fr 1fr 1.3fr 0.7fr 1.3fr;
+  gap: 0.45rem;
+  align-items: center;
+  min-width: 62rem;
+  min-height: 1.85rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.62);
+  padding: 0 0.65rem;
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+}
+
+.jetty-row-header {
+  position: sticky;
+  top: 2.05rem;
+  z-index: 7;
+  background: #172033;
+  color: var(--on-surface-variant);
+  font-family: Inter, sans-serif;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.jetty-row strong {
+  overflow: hidden;
+  color: var(--on-surface);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jetty-row i {
+  display: block;
+  height: 0.45rem;
+  max-width: 100%;
+  background: var(--primary);
+}
+
+.jetty-row .ok {
+  color: var(--status-success);
+}
+
+.jetty-row .pending {
+  color: var(--status-warning);
+}
+
+.jetty-row .critical {
+  color: var(--status-critical);
+}
+
+.schedule-gantt {
+  min-height: 34rem;
+  display: grid;
+  grid-template-columns: 12rem minmax(58rem, 1fr);
+  overflow: auto;
+  background: var(--surface-graphite);
+}
+
+.schedule-gantt aside {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  display: grid;
+  align-content: start;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--surface-charcoal);
+}
+
+.schedule-gantt aside strong,
+.schedule-gantt aside span {
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.62);
+  padding: 0 0.6rem;
+  font-size: 0.64rem;
+}
+
+.schedule-gantt aside strong {
+  color: var(--primary);
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gantt-canvas {
+  position: relative;
+  min-width: 58rem;
+  background:
+    linear-gradient(90deg, rgba(137, 206, 255, 0.08) 1px, transparent 1px) 0 0 / 10% 100%,
+    var(--surface-graphite);
+}
+
+.gantt-time-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(6, 10rem);
+  min-height: 2rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-charcoal);
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.58rem;
+}
+
+.gantt-time-header span {
+  display: grid;
+  place-items: center;
+  border-right: 1px solid rgba(51, 65, 85, 0.7);
+}
+
+.now-marker {
+  position: absolute;
+  top: 2rem;
+  bottom: 0;
+  left: 32%;
+  z-index: 4;
+  width: 2px;
+  background: var(--status-critical);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.gantt-resource-row {
+  position: relative;
+  min-height: 2rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.55);
+}
+
+.gantt-block {
+  position: absolute;
+  top: 0.38rem;
+  height: 1.15rem;
+  display: grid;
+  align-items: center;
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--on-surface);
+  padding-inline: 0.35rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.56rem;
+  white-space: nowrap;
+}
+
+.gantt-resource-row em {
+  position: absolute;
+  right: 0.55rem;
+  top: 0.45rem;
+  color: var(--status-critical);
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 1180px) {
+  .logistics-split,
+  .jetty-layout,
+  .published-layout {
+    grid-template-columns: 1fr;
   }
 }

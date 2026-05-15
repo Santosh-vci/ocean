@@ -9,6 +9,12 @@ import { AuditPage } from "./pages/AuditPage";
 import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
+import {
+  CtsOperationsPage,
+  JettyLoadingPage,
+  PublishedPlanPage,
+  TugBargeAssignmentPage,
+} from "./pages/LogisticsPages";
 import { MasterDataPage } from "./pages/MasterDataPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { RbacPage } from "./pages/RbacPage";
@@ -19,6 +25,7 @@ import type {
   MasterDataOverview,
   PlanningOverview,
   RbacOverview,
+  SchedulingOverview,
 } from "./types";
 
 function currentHashPath() {
@@ -31,6 +38,7 @@ function App() {
   const [overview, setOverview] = useState<RbacOverview | null>(null);
   const [masterDataOverview, setMasterDataOverview] = useState<MasterDataOverview | null>(null);
   const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
+  const [schedulingOverview, setSchedulingOverview] = useState<SchedulingOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [isBooting, setIsBooting] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -94,6 +102,12 @@ function App() {
         .then(setPlanningOverview)
         .catch(() => setPlanningOverview(null));
     }
+
+    if (canViewSchedule) {
+      apiFetch<SchedulingOverview>("/scheduling/overview/")
+        .then(setSchedulingOverview)
+        .catch(() => setSchedulingOverview(null));
+    }
   }, [canViewAdmin, canViewAudit, canViewMasterData, canViewSchedule, currentUser]);
 
   async function handleLogin(username: string, password: string) {
@@ -107,6 +121,7 @@ function App() {
     setOverview(null);
     setMasterDataOverview(null);
     setPlanningOverview(null);
+    setSchedulingOverview(null);
     setAuditEvents([]);
   }
 
@@ -151,6 +166,18 @@ function App() {
         ) : null}
         {route === "/constraints/tide-bridge" && canViewSchedule ? (
           <TideBridgePage overview={planningOverview} />
+        ) : null}
+        {route === "/operations/tug-barge-assignment" && canViewSchedule ? (
+          <TugBargeAssignmentPage canEdit={canEditSchedule} overview={schedulingOverview} />
+        ) : null}
+        {route === "/operations/jetty-loading" && canViewSchedule ? (
+          <JettyLoadingPage canEdit={canEditSchedule} overview={schedulingOverview} />
+        ) : null}
+        {route === "/operations/cts-floating-crane" && canViewSchedule ? (
+          <CtsOperationsPage overview={schedulingOverview} />
+        ) : null}
+        {route === "/schedule/published-plan" && canViewSchedule ? (
+          <PublishedPlanPage overview={schedulingOverview} />
         ) : null}
         {route === "/dashboard/situation" ? (
           <DashboardPage

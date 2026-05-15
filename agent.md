@@ -139,6 +139,8 @@ If a code change weakens one of these distinctions, stop and reconsider the mode
 - Page-level headers must be sticky inside the workspace, and top-level grid/table headers
   must stay sticky while operators scroll dense boards. Treat this as a core frontend rule,
   not a per-screen preference.
+- The app root/body must not become the scroll container. Keep scrolling inside the
+  workspace page region so sticky page headers pin directly below the topbar.
 
 ## 11. Testing expectations
 
