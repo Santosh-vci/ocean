@@ -1364,3 +1364,527 @@ tbody tr:hover,
     max-height: 14rem;
   }
 }
+
+/* Core frontend rule: workspace page headers and dense grid headers stay visible while scrolling. */
+.workspace-page > .page-heading {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: -1rem -1rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(180deg, rgba(19, 27, 46, 0.98), rgba(11, 19, 38, 0.96)),
+    var(--surface-low);
+  padding: 0.85rem 1rem 0.65rem;
+  backdrop-filter: blur(14px);
+}
+
+.grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  min-height: 2.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.98);
+  padding: 0.52rem 0.65rem;
+}
+
+.grid-header div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--primary);
+}
+
+.grid-header strong {
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.grid-header span {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.master-grid-scroll thead th,
+.grid-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #172033;
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
+.planning-board {
+  display: grid;
+  grid-auto-rows: max-content;
+  gap: 0.65rem;
+}
+
+.planning-heading {
+  align-items: center;
+}
+
+.planning-actions,
+.window-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.planning-actions button {
+  min-height: 1.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--on-surface);
+  padding: 0 0.7rem;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.planning-actions button:hover:not(:disabled) {
+  border-color: rgba(137, 206, 255, 0.45);
+  color: var(--primary);
+}
+
+.planning-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.planning-kpis {
+  margin-bottom: 0;
+}
+
+.success-text {
+  color: var(--status-success);
+}
+
+.planning-demand-layout,
+.sequence-layout,
+.tide-bridge-layout {
+  min-height: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.planning-demand-layout {
+  grid-template-columns: minmax(46rem, 1fr) 21rem;
+  min-height: 25rem;
+}
+
+.sequence-layout {
+  grid-template-columns: minmax(44rem, 1fr) 22rem;
+  min-height: 24rem;
+}
+
+.tide-bridge-layout {
+  grid-template-columns: minmax(42rem, 1fr) 23rem;
+}
+
+.planning-grid-panel,
+.timeline-panel,
+.affected-trips-panel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.grid-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  background: var(--surface-graphite);
+}
+
+.planning-table th,
+.planning-table td {
+  height: 1.8rem;
+  border-right: 1px solid rgba(51, 65, 85, 0.45);
+  white-space: nowrap;
+}
+
+.planning-table td {
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.66rem;
+}
+
+.planning-table td strong {
+  color: var(--on-surface);
+  font-size: 0.68rem;
+}
+
+.demand-table td:nth-child(12),
+.sequence-table td:nth-child(7) {
+  max-width: 15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.risk-engine-rail,
+.sequence-inspector,
+.recovery-panel {
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-high);
+}
+
+.risk-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.65rem;
+  list-style: none;
+}
+
+.risk-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.45rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.55);
+  padding-bottom: 0.45rem;
+}
+
+.risk-list strong,
+.import-review strong,
+.compact-list strong {
+  color: var(--on-surface);
+  font-size: 0.68rem;
+}
+
+.risk-list p,
+.import-review span,
+.compact-list span,
+.compact-list em {
+  margin: 0.15rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.66rem;
+}
+
+.import-review {
+  display: grid;
+  gap: 0.38rem;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.65rem;
+}
+
+.import-review div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+}
+
+.import-review em {
+  color: var(--primary);
+  font-style: normal;
+}
+
+.voyage-detail-panel {
+  overflow: hidden;
+}
+
+.voyage-detail-grid {
+  display: grid;
+  grid-template-columns: 22rem minmax(0, 1fr);
+  gap: 0.65rem;
+  padding: 0.65rem;
+}
+
+.voyage-detail-grid h2 {
+  margin: 0 0 0.45rem;
+  color: var(--primary);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.compact-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compact-list li {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  background: var(--surface-charcoal);
+  padding: 0.42rem 0.5rem;
+}
+
+.compact-list em {
+  font-style: normal;
+}
+
+.hatch-sequence-strip,
+.sequence-strip {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.hatch-sequence-strip li,
+.sequence-strip li {
+  min-width: 8.5rem;
+  border: 1px solid var(--border-subtle);
+  border-top: 2px solid var(--status-success);
+  background: var(--surface-charcoal);
+  padding: 0.45rem;
+}
+
+.hatch-sequence-strip li.blocked,
+.sequence-strip li.pending {
+  border-top-color: var(--status-warning);
+}
+
+.hatch-sequence-strip li.violated,
+.sequence-strip li.critical {
+  border-top-color: var(--status-critical);
+}
+
+.hatch-sequence-strip span,
+.sequence-strip span {
+  display: block;
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.58rem;
+}
+
+.hatch-sequence-strip strong,
+.sequence-strip strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--on-surface);
+  font-size: 0.7rem;
+}
+
+.hatch-sequence-strip em,
+.sequence-strip em {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--primary);
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inspector-body,
+.recovery-body {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+}
+
+.inspector-body h2,
+.recovery-body h2 {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 0.95rem;
+}
+
+.inspector-body p,
+.recovery-body p,
+.recovery-box p {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.inspector-body dl,
+.recovery-body dl {
+  display: grid;
+  gap: 0.28rem;
+  margin: 0;
+}
+
+.inspector-body dl div,
+.recovery-body dl div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.45rem;
+}
+
+.inspector-body dt,
+.inspector-body dd,
+.recovery-body dt,
+.recovery-body dd {
+  margin: 0;
+  font-size: 0.68rem;
+}
+
+.inspector-body dt,
+.recovery-body dt {
+  color: var(--on-surface-variant);
+}
+
+.recovery-box {
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 0.6rem;
+}
+
+.recovery-box strong {
+  color: var(--status-warning);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.focus-sequence {
+  overflow: hidden;
+}
+
+.sequence-strip {
+  padding: 0.65rem;
+}
+
+.window-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: var(--on-surface-variant);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.legend-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--on-surface-variant);
+}
+
+.legend-dot.ok,
+.legend-dot.waiting {
+  background: var(--status-success);
+}
+
+.legend-dot.pending {
+  background: var(--status-warning);
+}
+
+.legend-dot.critical {
+  background: var(--status-critical);
+}
+
+.timeline-board {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.65rem;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.timeline-row > div:first-child {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.timeline-row strong {
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.68rem;
+}
+
+.timeline-row span {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+}
+
+.timeline-track {
+  position: relative;
+  min-height: 1.85rem;
+  border: 1px solid rgba(51, 65, 85, 0.72);
+  background:
+    linear-gradient(90deg, rgba(137, 206, 255, 0.08) 1px, transparent 1px) 0 0 / 12.5% 100%,
+    var(--surface-charcoal);
+}
+
+.timeline-bar {
+  position: absolute;
+  top: 0.28rem;
+  bottom: 0.28rem;
+  display: grid;
+  align-items: center;
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--on-surface);
+  padding: 0 0.42rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.58rem;
+  white-space: nowrap;
+}
+
+.timeline-bar.pending {
+  border-color: rgba(245, 158, 11, 0.65);
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.timeline-bar.critical {
+  border-color: rgba(239, 68, 68, 0.65);
+  background: rgba(239, 68, 68, 0.18);
+}
+
+.affected-trips-panel {
+  min-height: 18rem;
+}
+
+@media (max-width: 1180px) {
+  .planning-demand-layout,
+  .sequence-layout,
+  .tide-bridge-layout,
+  .voyage-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .workspace-page > .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .planning-actions,
+  .window-legend {
+    justify-content: flex-start;
+  }
+}

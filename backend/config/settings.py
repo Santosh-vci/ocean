@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.rbac",
     "apps.audit",
     "apps.masters",
+    "apps.planning",
 ]
 
 MIDDLEWARE = [

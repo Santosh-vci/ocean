@@ -6,11 +6,20 @@ import { Topbar } from "./components/Topbar";
 import { apiFetch, login, logout } from "./lib/api";
 import { canAccess, visibleNavItems, visibleNavModules } from "./lib/navigation";
 import { AuditPage } from "./pages/AuditPage";
+import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MasterDataPage } from "./pages/MasterDataPage";
+import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { RbacPage } from "./pages/RbacPage";
-import type { AuditEvent, CurrentUser, MasterDataOverview, RbacOverview } from "./types";
+import { TideBridgePage } from "./pages/TideBridgePage";
+import type {
+  AuditEvent,
+  CurrentUser,
+  MasterDataOverview,
+  PlanningOverview,
+  RbacOverview,
+} from "./types";
 
 function currentHashPath() {
   return window.location.hash.replace("#", "") || "/dashboard/situation";
@@ -21,6 +30,7 @@ function App() {
   const [activePath, setActivePath] = useState(currentHashPath());
   const [overview, setOverview] = useState<RbacOverview | null>(null);
   const [masterDataOverview, setMasterDataOverview] = useState<MasterDataOverview | null>(null);
+  const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [isBooting, setIsBooting] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -57,6 +67,8 @@ function App() {
   const canManageMasterData = currentUser
     ? canAccess(currentUser.permissions, "masterdata.manage")
     : false;
+  const canViewSchedule = currentUser ? canAccess(currentUser.permissions, "schedule.view") : false;
+  const canEditSchedule = currentUser ? canAccess(currentUser.permissions, "schedule.edit") : false;
 
   useEffect(() => {
     if (!currentUser) {
@@ -76,7 +88,13 @@ function App() {
     if (canViewAudit) {
       apiFetch<AuditEvent[]>("/audit-events/").then(setAuditEvents).catch(() => setAuditEvents([]));
     }
-  }, [canViewAdmin, canViewAudit, canViewMasterData, currentUser]);
+
+    if (canViewSchedule) {
+      apiFetch<PlanningOverview>("/planning/overview/")
+        .then(setPlanningOverview)
+        .catch(() => setPlanningOverview(null));
+    }
+  }, [canViewAdmin, canViewAudit, canViewMasterData, canViewSchedule, currentUser]);
 
   async function handleLogin(username: string, password: string) {
     const user = await login(username, password);
@@ -88,6 +106,7 @@ function App() {
     setCurrentUser(null);
     setOverview(null);
     setMasterDataOverview(null);
+    setPlanningOverview(null);
     setAuditEvents([]);
   }
 
@@ -124,6 +143,15 @@ function App() {
         ) : null}
         {route === "/admin/users-rbac" && overview ? <RbacPage overview={overview} /> : null}
         {route === "/admin/audit-logs" && canViewAudit ? <AuditPage events={auditEvents} /> : null}
+        {route === "/schedule/ogv-demand" && canViewSchedule ? (
+          <OgvDemandPage canEdit={canEditSchedule} overview={planningOverview} />
+        ) : null}
+        {route === "/schedule/coal-grade-sequence" && canViewSchedule ? (
+          <CoalGradeSequencePage canEdit={canEditSchedule} overview={planningOverview} />
+        ) : null}
+        {route === "/constraints/tide-bridge" && canViewSchedule ? (
+          <TideBridgePage overview={planningOverview} />
+        ) : null}
         {route === "/dashboard/situation" ? (
           <DashboardPage
             auditEvents={auditEvents}

@@ -42,7 +42,13 @@ test("shows implemented admin submodules without exposing future locked routes",
     visibleNavItems(["dashboard.view", "masterdata.view", "schedule.view"]).map(
       (item) => item.label,
     ),
-  ).toEqual(["Network Situation", "Master Data Console"]);
+  ).toEqual([
+    "Network Situation",
+    "OGV Demand & Laycan",
+    "Coal Grade Sequence",
+    "Tide & Bridge Window",
+    "Master Data Console",
+  ]);
 });
 
 test("renders the role-aware dashboard shell", async () => {

@@ -1,7 +1,9 @@
 import os
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from apps.masters.models import (
     AssetCompatibilityRule,
@@ -18,6 +20,17 @@ from apps.masters.models import (
     Tug,
 )
 from apps.organizations.models import Organization
+from apps.planning.models import (
+    AssetAvailabilityWindow,
+    BridgeWindow,
+    CargoLayerStep,
+    CargoRequirement,
+    ImportJob,
+    JettyAvailabilityWindow,
+    NavigationConstraintCheck,
+    OGVVoyage,
+    TideWindow,
+)
 from apps.rbac.models import (
     AccessPermission,
     DataScope,
@@ -220,10 +233,11 @@ class Command(BaseCommand):
             self._assign(user, organization, role, scope, title)
 
         self._seed_master_data(berau=berau, abl=abl)
+        self._seed_planning_data(berau=berau, abl=abl, created_by=admin_user)
 
         self.stdout.write(
             self.style.SUCCESS(
-                "Seeded Chunk 2 organizations, roles, users, and Berau/ABL master data."
+                "Seeded Chunk 3 organizations, roles, Berau/ABL master data, and planning inputs."
             )
         )
 
@@ -729,3 +743,587 @@ class Command(BaseCommand):
                     "reason": reason,
                 },
             )
+
+    def _seed_planning_data(self, *, berau, abl, created_by):
+        def dt(day, hour, minute=0):
+            return timezone.make_aware(datetime(2026, 10, day, hour, minute))
+
+        locations = {record.code: record for record in Location.objects.all()}
+        grades = {record.code: record for record in CoalGrade.objects.all()}
+        jetties = {record.code: record for record in Jetty.objects.all()}
+        barges = {record.code: record for record in Barge.objects.all()}
+        cts_assets = {record.code: record for record in CTSAsset.objects.all()}
+        segments = {
+            record.sequence: record for record in RouteSegment.objects.select_related("route")
+        }
+
+        voyage_rows = [
+            {
+                "voyage_id": "VOY-PACIFIC-PRIDE",
+                "vessel_name": "MV PACIFIC PRIDE",
+                "customer_name": "GLENCORE",
+                "vessel_class": "Panamax",
+                "eta": dt(24, 3),
+                "etb": dt(24, 8),
+                "etc_target": dt(26, 18),
+                "laycan_start": dt(24, 0),
+                "laycan_end": dt(27, 23),
+                "required_mt": 165000,
+                "loaded_mt": 142500,
+                "in_transit_mt": 12000,
+                "discharged_mt": 0,
+                "priority": 1,
+                "demurrage_rate_usd_per_day": 14200,
+                "anchorage_location": locations["LOC-MUARA-PANTAI"],
+                "organization": berau,
+                "status": OGVVoyage.Status.ACTIVE,
+                "risk_status": OGVVoyage.RiskStatus.LOW,
+                "current_stage": "H5 STAGE",
+                "next_blocking_constraint": "No critical blockers",
+            },
+            {
+                "voyage_id": "VOY-OCEAN-VOYAGER",
+                "vessel_name": "MV OCEAN VOYAGER",
+                "customer_name": "VITOL",
+                "vessel_class": "Supramax",
+                "eta": dt(24, 6),
+                "etb": dt(24, 11),
+                "etc_target": dt(26, 9),
+                "laycan_start": dt(24, 0),
+                "laycan_end": dt(26, 20),
+                "required_mt": 120000,
+                "loaded_mt": 118200,
+                "in_transit_mt": 0,
+                "discharged_mt": 0,
+                "priority": 2,
+                "demurrage_rate_usd_per_day": 12800,
+                "anchorage_location": locations["LOC-MUARA-PANTAI"],
+                "organization": berau,
+                "status": OGVVoyage.Status.AT_RISK,
+                "risk_status": OGVVoyage.RiskStatus.HIGH,
+                "current_stage": "FINAL TOP-OFF",
+                "next_blocking_constraint": "LOW TIDE DRAFT RESTR.",
+            },
+            {
+                "voyage_id": "VOY-NORTH-STAR",
+                "vessel_name": "MV NORTH STAR",
+                "customer_name": "NIPPON STEEL",
+                "vessel_class": "Handymax",
+                "eta": dt(25, 1),
+                "etb": dt(25, 9),
+                "etc_target": dt(27, 4),
+                "laycan_start": dt(25, 0),
+                "laycan_end": dt(28, 8),
+                "required_mt": 98000,
+                "loaded_mt": 54000,
+                "in_transit_mt": 18500,
+                "discharged_mt": 0,
+                "priority": 2,
+                "demurrage_rate_usd_per_day": 10900,
+                "anchorage_location": locations["LOC-ANCHORAGE-SOUTH"],
+                "organization": berau,
+                "status": OGVVoyage.Status.AT_RISK,
+                "risk_status": OGVVoyage.RiskStatus.MEDIUM,
+                "current_stage": "H2/L2",
+                "next_blocking_constraint": "GRADE SEQUENCE VIOLATION",
+            },
+            {
+                "voyage_id": "VOY-GOLDEN-ORIOLE",
+                "vessel_name": "MV GOLDEN ORIOLE",
+                "customer_name": "KOREA POWER",
+                "vessel_class": "Capesize",
+                "eta": dt(27, 15),
+                "etb": dt(28, 6),
+                "etc_target": dt(31, 18),
+                "laycan_start": dt(27, 0),
+                "laycan_end": dt(31, 23),
+                "required_mt": 210000,
+                "loaded_mt": 0,
+                "in_transit_mt": 0,
+                "discharged_mt": 0,
+                "priority": 4,
+                "demurrage_rate_usd_per_day": 15600,
+                "anchorage_location": locations["LOC-ANCHORAGE-SOUTH"],
+                "organization": berau,
+                "status": OGVVoyage.Status.PLANNED,
+                "risk_status": OGVVoyage.RiskStatus.LOW,
+                "current_stage": "PRE-LAYCAN",
+                "next_blocking_constraint": "Awaiting ETA confirm",
+            },
+            {
+                "voyage_id": "VOY-TRITON-STAR",
+                "vessel_name": "MV TRITON STAR",
+                "customer_name": "TRAFIGURA",
+                "vessel_class": "Panamax",
+                "eta": dt(24, 22),
+                "etb": dt(25, 5),
+                "etc_target": dt(28, 20),
+                "laycan_start": dt(24, 12),
+                "laycan_end": dt(28, 12),
+                "required_mt": 180000,
+                "loaded_mt": 22000,
+                "in_transit_mt": 14500,
+                "discharged_mt": 0,
+                "priority": 1,
+                "demurrage_rate_usd_per_day": 15100,
+                "anchorage_location": locations["LOC-MUARA-PANTAI"],
+                "organization": berau,
+                "status": OGVVoyage.Status.AT_RISK,
+                "risk_status": OGVVoyage.RiskStatus.DEMURRAGE,
+                "current_stage": "H1/L1",
+                "next_blocking_constraint": "Feeder delay (+4h)",
+            },
+        ]
+        voyages = {}
+        for row in voyage_rows:
+            voyage, _ = OGVVoyage.objects.update_or_create(
+                voyage_id=row["voyage_id"],
+                defaults={key: value for key, value in row.items() if key != "voyage_id"},
+            )
+            voyages[row["voyage_id"]] = voyage
+
+        requirement_rows = [
+            ("VOY-PACIFIC-PRIDE", "EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 98000, 86000, 6000),
+            ("VOY-PACIFIC-PRIDE", "AGATHIS", "LOC-LATI-PORT", "JTY-LATI", 67000, 56500, 6000),
+            ("VOY-OCEAN-VOYAGER", "MAHONI", "LOC-SUARAN-PORT", "JTY-SUARAN", 120000, 118200, 0),
+            ("VOY-NORTH-STAR", "SUNGKAI", "LOC-LATI-PORT", "JTY-LATI", 52000, 31000, 9000),
+            ("VOY-NORTH-STAR", "AGATHIS", "LOC-LATI-PORT", "JTY-LATI", 46000, 23000, 9500),
+            ("VOY-GOLDEN-ORIOLE", "EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 130000, 0, 0),
+            ("VOY-GOLDEN-ORIOLE", "MAHONI", "LOC-SUARAN-PORT", "JTY-SUARAN", 80000, 0, 0),
+            ("VOY-TRITON-STAR", "EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 180000, 22000, 14500),
+        ]
+        requirements = {}
+        for voyage_id, grade, source, jetty, required, loaded, in_transit in requirement_rows:
+            requirement, _ = CargoRequirement.objects.update_or_create(
+                voyage=voyages[voyage_id],
+                coal_grade=grades[grade],
+                defaults={
+                    "source_location": locations[source],
+                    "preferred_jetty": jetties[jetty],
+                    "required_mt": required,
+                    "loaded_mt": loaded,
+                    "in_transit_mt": in_transit,
+                    "discharged_mt": 0,
+                    "status": CargoRequirement.Status.LOADING
+                    if loaded
+                    else CargoRequirement.Status.PLANNED,
+                },
+            )
+            requirements[(voyage_id, grade)] = requirement
+
+        layer_rows = [
+            (
+                "VOY-PACIFIC-PRIDE",
+                "EBONY",
+                1,
+                1,
+                1,
+                32000,
+                0,
+                "BRG-VAL-08",
+                "JTY-SUARAN",
+                "CTS-BORNEO",
+                CargoLayerStep.Status.COMPLETED,
+                "",
+                "DISCHARGED",
+                False,
+                dt(24, 8),
+                dt(24, 18),
+            ),
+            (
+                "VOY-PACIFIC-PRIDE",
+                "AGATHIS",
+                1,
+                2,
+                2,
+                28000,
+                6500,
+                "BRG-NUS-17",
+                "JTY-LATI",
+                "CTS-JAVA",
+                CargoLayerStep.Status.LOADING,
+                "",
+                "CTS FEED ACTIVE",
+                False,
+                dt(24, 19),
+                dt(25, 4),
+            ),
+            (
+                "VOY-PACIFIC-PRIDE",
+                "EBONY",
+                2,
+                1,
+                3,
+                34000,
+                34000,
+                "BRG-KAL-22",
+                "JTY-SUARAN",
+                "CTS-BORNEO",
+                CargoLayerStep.Status.BLOCKED,
+                "Waiting for tide window at Rantau Delta",
+                "TIDE GATE HOLD",
+                False,
+                dt(25, 6),
+                dt(25, 17),
+            ),
+            (
+                "VOY-NORTH-STAR",
+                "SUNGKAI",
+                2,
+                2,
+                1,
+                26000,
+                26000,
+                "BRG-NUS-17",
+                "JTY-LATI",
+                "FC-CHLOE",
+                CargoLayerStep.Status.BLOCKED,
+                "Mahoni layer cannot precede Sungkai approval",
+                "SEQUENCE VIOLATION",
+                True,
+                dt(25, 9),
+                dt(25, 17),
+            ),
+            (
+                "VOY-TRITON-STAR",
+                "EBONY",
+                1,
+                1,
+                1,
+                36000,
+                36000,
+                "BRG-VAL-08",
+                "JTY-SUARAN",
+                "CTS-BORNEO",
+                CargoLayerStep.Status.QUEUED,
+                "Feeder delay (+4h)",
+                "BARGE QUEUE",
+                False,
+                dt(25, 2),
+                dt(25, 12),
+            ),
+            (
+                "VOY-GOLDEN-ORIOLE",
+                "MAHONI",
+                1,
+                1,
+                1,
+                42000,
+                42000,
+                "BRG-KAL-22",
+                "JTY-SUARAN",
+                "CTS-JAVA",
+                CargoLayerStep.Status.PLANNED,
+                "ETA not confirmed",
+                "PRE-LAYCAN",
+                False,
+                dt(28, 6),
+                dt(28, 18),
+            ),
+        ]
+        for (
+            voyage_id,
+            grade,
+            hatch,
+            layer,
+            sequence,
+            required,
+            remaining,
+            barge,
+            jetty,
+            cts,
+            status,
+            blocking_reason,
+            chain_status,
+            violation,
+            planned_start,
+            planned_end,
+        ) in layer_rows:
+            CargoLayerStep.objects.update_or_create(
+                voyage=voyages[voyage_id],
+                required_sequence_no=sequence,
+                defaults={
+                    "cargo_requirement": requirements[(voyage_id, grade)],
+                    "hatch_no": hatch,
+                    "layer_no": layer,
+                    "coal_grade": grades[grade],
+                    "required_mt": required,
+                    "remaining_mt": remaining,
+                    "planned_barge": barges[barge],
+                    "planned_jetty": jetties[jetty],
+                    "planned_cts": cts_assets[cts],
+                    "status": status,
+                    "blocking_reason": blocking_reason,
+                    "chain_status": chain_status,
+                    "sequence_violation": violation,
+                    "planned_start": planned_start,
+                    "planned_end": planned_end,
+                },
+            )
+
+        asset_windows = [
+            (
+                AssetAvailabilityWindow.AssetType.TUG,
+                "BER-TUG-04",
+                dt(24, 0),
+                dt(26, 8),
+                AssetAvailabilityWindow.Status.MAINTENANCE,
+                "Planned maintenance at Dock 01",
+            ),
+            (
+                AssetAvailabilityWindow.AssetType.BARGE,
+                "BRG-KAL-22",
+                dt(25, 0),
+                dt(25, 10),
+                AssetAvailabilityWindow.Status.UNAVAILABLE,
+                "Awaiting bridge pass",
+            ),
+            (
+                AssetAvailabilityWindow.AssetType.CTS,
+                "CTS-JAVA",
+                dt(24, 0),
+                dt(29, 0),
+                AssetAvailabilityWindow.Status.AVAILABLE,
+                "Primary conveyor online",
+            ),
+        ]
+        for asset_type, asset_code, start, end, status, reason in asset_windows:
+            AssetAvailabilityWindow.objects.update_or_create(
+                asset_type=asset_type,
+                asset_code=asset_code,
+                window_start=start,
+                defaults={"window_end": end, "status": status, "reason": reason},
+            )
+
+        jetty_windows = [
+            ("JTY-SUARAN", dt(24, 0), dt(26, 0), JettyAvailabilityWindow.Status.WORKING, 2800, ""),
+            (
+                "JTY-LATI",
+                dt(24, 16),
+                dt(25, 7),
+                JettyAvailabilityWindow.Status.REDUCED,
+                1500,
+                "Shift handover and conveyor inspection",
+            ),
+            (
+                "JTY-GMB",
+                dt(25, 6),
+                dt(26, 6),
+                JettyAvailabilityWindow.Status.BLOCKED,
+                None,
+                "Silt clearance",
+            ),
+        ]
+        for jetty, start, end, status, rate, reason in jetty_windows:
+            JettyAvailabilityWindow.objects.update_or_create(
+                jetty=jetties[jetty],
+                window_start=start,
+                defaults={
+                    "window_end": end,
+                    "status": status,
+                    "loading_rate_override_tph": rate,
+                    "reason": reason,
+                },
+            )
+
+        tide_rows = [
+            (
+                "TIDE-RANTAU-01",
+                "LOC-RANTAU-DELTA",
+                dt(24, 7),
+                dt(24, 12),
+                "2.40",
+                "4.40",
+                2,
+                TideWindow.RiskLevel.NORMAL,
+            ),
+            (
+                "TIDE-RANTAU-02",
+                "LOC-RANTAU-DELTA",
+                dt(25, 8),
+                dt(25, 10),
+                "2.10",
+                "4.20",
+                2,
+                TideWindow.RiskLevel.TIGHT,
+            ),
+            (
+                "TIDE-DEEP-01",
+                "LOC-MUARA-PANTAI",
+                dt(25, 18),
+                dt(25, 23),
+                "2.90",
+                "4.80",
+                3,
+                TideWindow.RiskLevel.NORMAL,
+            ),
+        ]
+        for code, location, start, end, water_level, draft, segment, risk in tide_rows:
+            TideWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": locations[location],
+                    "window_start": start,
+                    "window_end": end,
+                    "min_water_level_m": water_level,
+                    "max_loaded_draft_m": draft,
+                    "applicable_route_segment": segments[segment],
+                    "risk_level": risk,
+                    "source": "seeded_tide_calendar",
+                    "is_active": True,
+                },
+            )
+
+        bridge_rows = [
+            (
+                "BRDG-GATE-B-01",
+                dt(24, 6),
+                dt(24, 9),
+                "12.50",
+                "300ft barge",
+                BridgeWindow.Status.OPEN,
+                "Normal lift slot",
+            ),
+            (
+                "BRDG-GATE-B-02",
+                dt(25, 4),
+                dt(25, 5),
+                "10.80",
+                "300ft barge",
+                BridgeWindow.Status.RESTRICTED,
+                "Pilot approval required",
+            ),
+            (
+                "BRDG-GATE-B-03",
+                dt(25, 9),
+                dt(25, 13),
+                "0.00",
+                "",
+                BridgeWindow.Status.CLOSED,
+                "Maintenance hold",
+            ),
+        ]
+        for code, start, end, clearance, allowed_class, status, notes in bridge_rows:
+            BridgeWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": locations["LOC-BRIDGE-GATE-B"],
+                    "window_start": start,
+                    "window_end": end,
+                    "clearance_m": clearance,
+                    "allowed_asset_class": allowed_class,
+                    "status": status,
+                    "notes": notes,
+                    "is_active": True,
+                },
+            )
+
+        checks = [
+            (
+                "VOY-PACIFIC-PRIDE",
+                "BRG-VAL-08",
+                2,
+                NavigationConstraintCheck.ConstraintType.TIDE,
+                dt(24, 8),
+                dt(24, 7),
+                dt(24, 12),
+                "4.10",
+                118,
+                NavigationConstraintCheck.Status.CAN_CROSS,
+                "Proceed through Rantau Delta on current slot.",
+            ),
+            (
+                "VOY-OCEAN-VOYAGER",
+                "BRG-KAL-22",
+                2,
+                NavigationConstraintCheck.ConstraintType.TIDE,
+                dt(25, 10, 40),
+                dt(25, 8),
+                dt(25, 10),
+                "4.50",
+                -40,
+                NavigationConstraintCheck.Status.MISSED,
+                "Split load or resequence against TIDE-DEEP-01.",
+            ),
+            (
+                "VOY-NORTH-STAR",
+                "BRG-NUS-17",
+                1,
+                NavigationConstraintCheck.ConstraintType.BRIDGE,
+                dt(25, 9, 45),
+                dt(25, 4),
+                dt(25, 5),
+                "4.00",
+                -285,
+                NavigationConstraintCheck.Status.MISSED,
+                "Hold upstream and request next bridge lift.",
+            ),
+            (
+                "VOY-TRITON-STAR",
+                "BRG-VAL-08",
+                3,
+                NavigationConstraintCheck.ConstraintType.TIDE,
+                dt(25, 18, 20),
+                dt(25, 18),
+                dt(25, 23),
+                "4.60",
+                22,
+                NavigationConstraintCheck.Status.MARGINAL,
+                "Use priority tow and reduce loading target if delayed.",
+            ),
+            (
+                "VOY-GOLDEN-ORIOLE",
+                "BRG-KAL-22",
+                1,
+                NavigationConstraintCheck.ConstraintType.BRIDGE,
+                dt(25, 4, 25),
+                dt(25, 4),
+                dt(25, 5),
+                "4.40",
+                35,
+                NavigationConstraintCheck.Status.WAITING,
+                "Await pilot confirmation before dispatch.",
+            ),
+        ]
+        for (
+            voyage_id,
+            asset,
+            segment,
+            kind,
+            eta,
+            window_start,
+            window_end,
+            draft,
+            margin,
+            status,
+            hint,
+        ) in checks:
+            NavigationConstraintCheck.objects.update_or_create(
+                voyage=voyages[voyage_id],
+                asset_code=asset,
+                constraint_type=kind,
+                eta_gate=eta,
+                defaults={
+                    "route_segment": segments[segment],
+                    "window_start": window_start,
+                    "window_end": window_end,
+                    "draft_m": draft,
+                    "margin_minutes": margin,
+                    "status": status,
+                    "recovery_hint": hint,
+                },
+            )
+
+        ImportJob.objects.update_or_create(
+            filename="seed_ogv_demand_v1.xlsx",
+            import_type=ImportJob.ImportType.OGV_DEMAND,
+            defaults={
+                "source": "seed_phase0",
+                "status": ImportJob.Status.IMPORTED,
+                "total_rows": 5,
+                "valid_rows": 5,
+                "error_rows": 0,
+                "errors": [],
+                "created_by": created_by,
+            },
+        )

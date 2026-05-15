@@ -236,3 +236,182 @@ export type MasterDataOverview = {
     missingGpsDevices: number;
   };
 };
+
+export type OGVVoyageRecord = {
+  id: number;
+  voyage_id: string;
+  vessel_name: string;
+  customer_name: string;
+  vessel_class: string;
+  eta: string;
+  etb: string | null;
+  etc_target: string | null;
+  laycan_start: string;
+  laycan_end: string;
+  required_mt: number;
+  loaded_mt: number;
+  in_transit_mt: number;
+  discharged_mt: number;
+  remaining_mt: number;
+  priority: number;
+  demurrage_rate_usd_per_day: string;
+  anchorage_location: LocationRecord | null;
+  organization: Organization | null;
+  status: string;
+  risk_status: string;
+  current_stage: string;
+  next_blocking_constraint: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CargoRequirementRecord = {
+  id: number;
+  voyage: number;
+  voyage_ref: string;
+  vessel_name: string;
+  coal_grade: CoalGradeRecord;
+  source_location: LocationRecord | null;
+  preferred_jetty: JettyRecord | null;
+  required_mt: number;
+  loaded_mt: number;
+  in_transit_mt: number;
+  discharged_mt: number;
+  remaining_mt: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CargoLayerStepRecord = {
+  id: number;
+  voyage: number;
+  voyage_ref: string;
+  vessel_name: string;
+  cargo_requirement: number | null;
+  hatch_no: number;
+  layer_no: number;
+  required_sequence_no: number;
+  coal_grade: CoalGradeRecord;
+  required_mt: number;
+  remaining_mt: number;
+  planned_barge: BargeRecord | null;
+  planned_jetty: JettyRecord | null;
+  planned_cts: CTSAssetRecord | null;
+  status: string;
+  blocking_reason: string;
+  chain_status: string;
+  sequence_violation: boolean;
+  planned_start: string | null;
+  planned_end: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssetAvailabilityWindowRecord = {
+  id: number;
+  asset_type: string;
+  asset_code: string;
+  window_start: string;
+  window_end: string;
+  status: string;
+  reason: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JettyAvailabilityWindowRecord = {
+  id: number;
+  jetty: JettyRecord;
+  window_start: string;
+  window_end: string;
+  status: string;
+  loading_rate_override_tph: number | null;
+  reason: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TideWindowRecord = {
+  id: number;
+  code: string;
+  location: LocationRecord;
+  window_start: string;
+  window_end: string;
+  min_water_level_m: string;
+  max_loaded_draft_m: string;
+  applicable_route_segment: RouteSegmentRecord | null;
+  risk_level: string;
+  source: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BridgeWindowRecord = {
+  id: number;
+  code: string;
+  location: LocationRecord;
+  window_start: string;
+  window_end: string;
+  clearance_m: string;
+  allowed_asset_class: string;
+  status: string;
+  notes: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NavigationConstraintCheckRecord = {
+  id: number;
+  voyage: number;
+  voyage_ref: string;
+  vessel_name: string;
+  asset_code: string;
+  route_segment: RouteSegmentRecord | null;
+  constraint_type: string;
+  eta_gate: string;
+  window_start: string;
+  window_end: string;
+  draft_m: string | null;
+  margin_minutes: number;
+  status: string;
+  recovery_hint: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ImportJobRecord = {
+  id: number;
+  import_type: string;
+  filename: string;
+  source: string;
+  status: string;
+  total_rows: number;
+  valid_rows: number;
+  error_rows: number;
+  errors: Array<Record<string, unknown>>;
+  created_by: number | null;
+  created_by_email: string | null;
+  created_at: string;
+};
+
+export type PlanningOverview = {
+  voyages: OGVVoyageRecord[];
+  cargoRequirements: CargoRequirementRecord[];
+  cargoLayerSteps: CargoLayerStepRecord[];
+  assetAvailability: AssetAvailabilityWindowRecord[];
+  jettyAvailability: JettyAvailabilityWindowRecord[];
+  tideWindows: TideWindowRecord[];
+  bridgeWindows: BridgeWindowRecord[];
+  constraintChecks: NavigationConstraintCheckRecord[];
+  importJobs: ImportJobRecord[];
+  validation: {
+    highRiskVoyages: number;
+    sequenceViolations: number;
+    missedWindows: number;
+    activeDemandMt: number;
+    remainingDemandMt: number;
+  };
+};

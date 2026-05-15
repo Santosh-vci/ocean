@@ -136,6 +136,9 @@ If a code change weakens one of these distinctions, stop and reconsider the mode
 - Prefer compact grids, right rails, thin KPI strips, and schedule timelines.
 - Status color must mean something operational.
 - Every board should make the next decision easier, not merely look complete.
+- Page-level headers must be sticky inside the workspace, and top-level grid/table headers
+  must stay sticky while operators scroll dense boards. Treat this as a core frontend rule,
+  not a per-screen preference.
 
 ## 11. Testing expectations
 

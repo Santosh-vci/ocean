@@ -57,7 +57,7 @@ export const NAV_MODULES: NavModule[] = [
   {
     id: "planning",
     label: "Planning",
-    eyebrow: "Chunk 3 spine",
+    eyebrow: "Demand & sequence",
     icon: "schedule",
     items: [
       {
@@ -67,7 +67,6 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.view",
         icon: "schedule",
         phase: "Chunk 3",
-        disabled: true,
       },
       {
         path: "/schedule/coal-grade-sequence",
@@ -76,16 +75,22 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.view",
         icon: "coal",
         phase: "Chunk 3",
-        disabled: true,
       },
+    ],
+  },
+  {
+    id: "constraints",
+    label: "Constraints",
+    eyebrow: "Navigation feasibility",
+    icon: "rule",
+    items: [
       {
-        path: "/schedule/tide-bridge",
+        path: "/constraints/tide-bridge",
         label: "Tide & Bridge Window",
-        module: "Planning",
+        module: "Constraints",
         requiredPermission: "schedule.view",
         icon: "rule",
         phase: "Chunk 3",
-        disabled: true,
       },
     ],
   },
