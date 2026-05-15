@@ -1,0 +1,14 @@
+.git
+.github
+.env
+docs
+fixtures
+tests
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.venv
+**/node_modules
+**/dist
+**/coverage
+
