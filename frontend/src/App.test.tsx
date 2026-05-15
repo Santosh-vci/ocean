@@ -37,6 +37,14 @@ test("filters navigation by permission", () => {
   ]);
 });
 
+test("shows implemented admin submodules without exposing future locked routes", () => {
+  expect(
+    visibleNavItems(["dashboard.view", "masterdata.view", "schedule.view"]).map(
+      (item) => item.label,
+    ),
+  ).toEqual(["Network Situation", "Master Data Console"]);
+});
+
 test("renders the role-aware dashboard shell", async () => {
   render(<App />);
 

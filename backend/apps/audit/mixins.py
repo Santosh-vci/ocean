@@ -1,8 +1,15 @@
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
+
 from .services import record_audit_event
 
 
 class AuditMutationMixin:
     audit_object_type = None
+
+    def _safe_metadata(self, metadata):
+        return json.loads(json.dumps(metadata, cls=DjangoJSONEncoder, default=str))
 
     def _audit_object_type(self, instance) -> str:
         return self.audit_object_type or instance._meta.model_name
@@ -16,7 +23,7 @@ class AuditMutationMixin:
             object_type=self._audit_object_type(instance),
             object_id=str(instance.pk),
             object_repr=str(instance),
-            metadata={"changes": serializer.validated_data},
+            metadata=self._safe_metadata({"changes": serializer.validated_data}),
             request=self.request,
         )
 
@@ -29,7 +36,7 @@ class AuditMutationMixin:
             object_type=self._audit_object_type(instance),
             object_id=str(instance.pk),
             object_repr=str(instance),
-            metadata={"changes": serializer.validated_data},
+            metadata=self._safe_metadata({"changes": serializer.validated_data}),
             request=self.request,
         )
 
@@ -48,4 +55,3 @@ class AuditMutationMixin:
             object_repr=object_repr,
             request=self.request,
         )
-

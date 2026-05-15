@@ -1,42 +1,133 @@
-import type { NavItem } from "../lib/navigation";
+﻿import { useEffect, useMemo, useState } from "react";
+
+import type { NavModule } from "../lib/navigation";
+import { SvgIcon } from "./SvgIcon";
 
 type SidebarProps = {
   activePath: string;
-  items: NavItem[];
+  collapsed: boolean;
+  modules: NavModule[];
   onNavigate: (path: string) => void;
+  onToggleCollapsed: () => void;
 };
 
-export function Sidebar({ activePath, items, onNavigate }: SidebarProps) {
-  const groupedItems = items.reduce<Record<string, NavItem[]>>((groups, item) => {
-    groups[item.group] ??= [];
-    groups[item.group].push(item);
-    return groups;
-  }, {});
+export function Sidebar({
+  activePath,
+  collapsed,
+  modules,
+  onNavigate,
+  onToggleCollapsed,
+}: SidebarProps) {
+  const activeModuleId = useMemo(
+    () => modules.find((module) => module.items.some((item) => item.path === activePath))?.id,
+    [activePath, modules],
+  );
+  const [openModuleIds, setOpenModuleIds] = useState<Set<string>>(
+    () => new Set(modules.map((module) => module.id)),
+  );
+
+  useEffect(() => {
+    if (!activeModuleId) {
+      return;
+    }
+    setOpenModuleIds((previous) => new Set(previous).add(activeModuleId));
+  }, [activeModuleId]);
+
+  function toggleModule(moduleId: string) {
+    setOpenModuleIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(moduleId)) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+      }
+      return next;
+    });
+  }
 
   return (
-    <aside className="sidebar">
+    <aside className={collapsed ? "sidebar collapsed" : "sidebar"}>
       <div className="brand-block">
-        <span>Coalflow</span>
-        <strong>Tower</strong>
+        <div>
+          <span>Coalflow</span>
+          <strong>Tower</strong>
+        </div>
+        <button
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="sidebar-toggle"
+          onClick={onToggleCollapsed}
+          type="button"
+        >
+          <SvgIcon name={collapsed ? "chevron-right" : "chevron-left"} />
+        </button>
       </div>
 
-      <nav aria-label="Primary navigation">
-        {Object.entries(groupedItems).map(([group, groupItems]) => (
-          <section key={group} className="nav-group">
-            <p>{group}</p>
-            {groupItems?.map((item) => (
+      <nav aria-label="Primary navigation" className="module-nav">
+        {modules.map((module) => {
+          const isOpen = openModuleIds.has(module.id) && !collapsed;
+          const isActiveModule = module.id === activeModuleId;
+          return (
+            <section className={isActiveModule ? "nav-module active" : "nav-module"} key={module.id}>
               <button
-                className={item.path === activePath ? "nav-item active" : "nav-item"}
-                key={item.path}
-                onClick={() => onNavigate(item.path)}
+                aria-expanded={isOpen}
+                className="nav-module-trigger"
+                onClick={() => toggleModule(module.id)}
+                title={collapsed ? module.label : undefined}
                 type="button"
               >
-                {item.label}
+                <SvgIcon name={module.icon} />
+                <span className="module-copy">
+                  <strong>{module.label}</strong>
+                  <em>{module.eyebrow}</em>
+                </span>
+                <SvgIcon name="chevron-down" className={isOpen ? "svg-icon open" : "svg-icon"} />
               </button>
-            ))}
-          </section>
-        ))}
+
+              {isOpen ? (
+                <div className="nav-submodule-list">
+                  {module.items.map((item) => {
+                    const className = [
+                      "nav-item",
+                      item.path === activePath ? "active" : "",
+                      item.disabled ? "disabled" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+                    return (
+                      <button
+                        aria-disabled={item.disabled || undefined}
+                        className={className}
+                        key={item.path}
+                        onClick={() => {
+                          if (!item.disabled) {
+                            onNavigate(item.path);
+                          }
+                        }}
+                        type="button"
+                      >
+                        <SvgIcon name={item.icon} />
+                        <span>{item.label}</span>
+                        {item.phase ? <em>{item.phase}</em> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+          );
+        })}
       </nav>
+
+      <div className="sidebar-support">
+        <button type="button" title={collapsed ? "System Audit" : undefined}>
+          <SvgIcon name="audit" />
+          <span>System Audit</span>
+        </button>
+        <button type="button" title={collapsed ? "Terminal Support" : undefined}>
+          <SvgIcon name="help" />
+          <span>Terminal Support</span>
+        </button>
+      </div>
     </aside>
   );
 }

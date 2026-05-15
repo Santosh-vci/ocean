@@ -58,14 +58,11 @@ docker compose --profile devtools up flower mailpit
 
 ## Current milestone
 
-Chunk 0 is the execution spine only:
+Chunk 2 is the governed master-data foundation:
 
-- container topology;
-- backend/frontend bootstraps;
-- database migrations on startup;
-- seed command skeleton;
-- health endpoints;
-- lint/test commands;
-- CI workflow.
-
-Domain implementation begins in Chunk 1.
+- role-aware shell with collapsible module/submodule navigation;
+- Users/RBAC and audit governance spine;
+- Berau/ABL master-data catalogs for locations, coal grades, mines, stockpiles, jetties, tugs, barges, CTS, routes, loading rates, and compatibility rules;
+- CRUD plus JSON import/export actions behind backend permissions;
+- activation flags and audit events for sensitive configuration changes;
+- hardened Admin / Master Data Console adapted from the frontend resource pack.

@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.organizations",
     "apps.rbac",
     "apps.audit",
+    "apps.masters",
 ]
 
 MIDDLEWARE = [

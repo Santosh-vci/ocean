@@ -17,11 +17,14 @@ Before making material changes, read in order:
 5. `docs/04_RBAC_and_Django_Architecture_Addendum.md`
 6. `docs/07_Frontend_Build_Handoff_and_Phasewise_Plan.md`
 7. `docs/08_Phase_1_Implementation_Spec.md`
-8. any BRD document in `docs/` whose filename starts with `BRD`
+8. `docs/berau_abl_seed_data_instructions.md` when creating or extending seed data
+9. any BRD document in `docs/` whose filename starts with `BRD`
 
 The hardened frontend zips under `docs/frontend_resources/` are visual references, not production code.
 
 Treat those frontend resource packs as **scenario-complete screen baselines**. For each chunk, adapt only the resource packs whose backend truth exists in that chunk; preserve their cockpit structure and operational intent, but do not fabricate later-phase data just to make a screen look finished.
+
+Treat `berau_abl_seed_data_instructions.md` as the seed-data operating map. Whenever a chunk reaches locations, routes, assets, compatibility, OGV demand, telemetry, exceptions, approvals, or published plans, seed data must use the Berau/ABL vocabulary, approximate geography, stable IDs, and scenario intent described there.
 
 ## 3. Product truths
 
