@@ -38,8 +38,15 @@ from apps.rbac.models import (
     Role,
     UserRoleAssignment,
 )
-from apps.scheduling.models import Plan, PlanVersion
-from apps.scheduling.services import generate_plan_version
+from apps.scheduling.models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    OverrideRequest,
+    Plan,
+    PlanVersion,
+    SimulationScenario,
+)
+from apps.scheduling.services import clone_plan_version, generate_plan_version, simulate_scenario
 
 
 class Command(BaseCommand):
@@ -71,6 +78,7 @@ class Command(BaseCommand):
             ("schedule.edit", "schedule", "edit", "Edit draft schedules"),
             ("schedule.approve", "schedule", "approve", "Approve proposed schedules"),
             ("schedule.publish", "schedule", "publish", "Publish approved schedules"),
+            ("simulation.run", "simulation", "run", "Run recovery simulations"),
             ("fleet.view", "fleet", "view", "View fleet state"),
             ("fleet.assign", "fleet", "assign", "Assign fleet resources"),
             ("masterdata.view", "masterdata", "view", "View master data"),
@@ -129,6 +137,7 @@ class Command(BaseCommand):
                     permissions["schedule.view"],
                     permissions["schedule.edit"],
                     permissions["schedule.approve"],
+                    permissions["simulation.run"],
                     permissions["masterdata.view"],
                     permissions["audit.view"],
                 ],
@@ -142,6 +151,8 @@ class Command(BaseCommand):
                     permissions["schedule.edit"],
                     permissions["fleet.view"],
                     permissions["fleet.assign"],
+                    permissions["schedule.approve"],
+                    permissions["simulation.run"],
                     permissions["audit.view"],
                 ],
             },
@@ -153,6 +164,7 @@ class Command(BaseCommand):
                     permissions["schedule.view"],
                     permissions["schedule.approve"],
                     permissions["schedule.publish"],
+                    permissions["simulation.run"],
                     permissions["fleet.view"],
                     permissions["audit.view"],
                 ],
@@ -240,7 +252,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                "Seeded Chunk 4 organizations, roles, planning data, and generated schedule."
+                "Seeded Chunk 5 organizations, roles, planning data, schedule, and governance loop."
             )
         )
 
@@ -1352,4 +1364,89 @@ class Command(BaseCommand):
                 "summary": {},
             },
         )
+        SimulationScenario.objects.filter(baseline_version=version).delete()
+        ApprovalRequest.objects.filter(plan_version=version).delete()
+        OverrideRequest.objects.filter(plan_version=version).delete()
         generate_plan_version(version)
+        first_trip = (
+            version.trips.select_related("assignment", "voyage")
+            .order_by("sequence")
+            .first()
+        )
+        first_conflict = version.conflicts.select_related("trip", "trip__voyage").first()
+        if first_trip and hasattr(first_trip, "assignment"):
+            OverrideRequest.objects.update_or_create(
+                plan_version=version,
+                trip=first_trip,
+                reason_code=OverrideRequest.ReasonCode.TUG_BREAKDOWN,
+                defaults={
+                    "assignment": first_trip.assignment,
+                    "description": "Tug availability correction captured for governed replan.",
+                    "requested_change": {
+                        "status": first_trip.assignment.status,
+                        "next_action": "Convert blocker to simulation before dispatch.",
+                    },
+                    "before_state": {
+                        "tripId": first_trip.trip_id,
+                        "tug": first_trip.assignment.tug.code
+                        if first_trip.assignment.tug
+                        else "",
+                        "status": first_trip.assignment.status,
+                    },
+                    "after_state": {
+                        "tripId": first_trip.trip_id,
+                        "status": first_trip.assignment.status,
+                        "nextAction": "Convert blocker to simulation before dispatch.",
+                    },
+                    "status": OverrideRequest.Status.APPLIED,
+                    "requested_by": created_by,
+                    "applied_by": created_by,
+                    "applied_at": timezone.now(),
+                },
+            )
+
+        approval_request, _ = ApprovalRequest.objects.update_or_create(
+            request_id="APR-PLAN-2026-10-24-V1",
+            defaults={
+                "plan_version": version,
+                "status": ApprovalRequest.Status.PENDING,
+                "required_authorities": [
+                    ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
+                    ApprovalDecision.AuthorityRole.ABL_DISPATCHER,
+                ],
+                "reason": (
+                    "Approval pending day: ABL has reviewed recovery impacts; "
+                    "Berau sign-off remains open."
+                ),
+                "requested_by": created_by,
+            },
+        )
+        ApprovalDecision.objects.update_or_create(
+            approval_request=approval_request,
+            authority_role=ApprovalDecision.AuthorityRole.ABL_DISPATCHER,
+            defaults={
+                "decision": ApprovalDecision.Decision.APPROVE,
+                "comments": "ABL dispatch accepts fleet recovery assumptions.",
+                "actor": created_by,
+                "organization": abl,
+            },
+        )
+        version.status = PlanVersion.Status.PROPOSED
+        version.save(update_fields=["status", "updated_at"])
+
+        scenario_version = PlanVersion.objects.filter(plan=plan, version_no=2).first()
+        if scenario_version is None:
+            scenario_version = clone_plan_version(source_version=version, created_by=created_by)
+        scenario, _ = SimulationScenario.objects.update_or_create(
+            scenario_id="SIM-PLAN-2026-10-24-A",
+            defaults={
+                "name": "Tug reassignment A",
+                "scenario_type": "tug_breakdown_recovery",
+                "baseline_version": version,
+                "scenario_version": scenario_version,
+                "source_conflict": first_conflict,
+                "status": SimulationScenario.Status.SIMULATED,
+                "created_by": created_by,
+            },
+        )
+        simulate_scenario(scenario=scenario)

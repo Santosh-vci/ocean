@@ -42,6 +42,7 @@ class PlanVersion(models.Model):
         PROPOSED = "proposed", "Proposed"
         APPROVED = "approved", "Approved"
         PUBLISHED = "published", "Published"
+        SUPERSEDED = "superseded", "Superseded"
 
     class ValidationStatus(models.TextChoices):
         FEASIBLE = "feasible", "Feasible"
@@ -295,3 +296,242 @@ class Conflict(models.Model):
 
     def __str__(self) -> str:
         return f"{self.code}: {self.message}"
+
+
+class OverrideRequest(models.Model):
+    class ReasonCode(models.TextChoices):
+        TUG_BREAKDOWN = "tug_breakdown", "Tug breakdown"
+        BARGE_UNAVAILABLE = "barge_unavailable", "Barge unavailable"
+        JETTY_DELAY = "jetty_delay", "Jetty delay"
+        TIDE_BRIDGE_RECOVERY = "tide_bridge_recovery", "Tide / bridge recovery"
+        GRADE_SEQUENCE_RECOVERY = "grade_sequence_recovery", "Grade sequence recovery"
+        MANUAL_CORRECTION = "manual_correction", "Manual correction"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPLIED = "applied", "Applied"
+        REJECTED = "rejected", "Rejected"
+        SUPERSEDED = "superseded", "Superseded"
+
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="override_requests",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="override_requests",
+    )
+    assignment = models.ForeignKey(
+        Assignment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="override_requests",
+    )
+    reason_code = models.CharField(max_length=64, choices=ReasonCode.choices)
+    description = models.CharField(max_length=255)
+    requested_change = models.JSONField(default=dict, blank=True)
+    before_state = models.JSONField(default=dict, blank=True)
+    after_state = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_schedule_overrides",
+    )
+    applied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="applied_schedule_overrides",
+    )
+    applied_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=("plan_version", "status", "reason_code"))]
+
+    def __str__(self) -> str:
+        return f"{self.reason_code} override on {self.plan_version}"
+
+
+class ApprovalRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+        PUBLISHED = "published", "Published"
+        CANCELED = "canceled", "Canceled"
+
+    request_id = models.CharField(max_length=80, unique=True)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="approval_requests",
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
+    required_authorities = models.JSONField(default=list, blank=True)
+    reason = models.CharField(max_length=255)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_plan_approvals",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=("status", "created_at"))]
+
+    def __str__(self) -> str:
+        return self.request_id
+
+
+class ApprovalDecision(models.Model):
+    class Decision(models.TextChoices):
+        APPROVE = "approve", "Approve"
+        REJECT = "reject", "Reject"
+        RETURN = "return", "Return"
+        ESCALATE = "escalate", "Escalate"
+
+    class AuthorityRole(models.TextChoices):
+        BERAU_SCHEDULER = "berau_scheduler", "Berau Scheduler"
+        ABL_DISPATCHER = "abl_dispatcher", "ABL Dispatcher"
+        JOINT_CONTROL = "joint_control", "Joint Control"
+
+    approval_request = models.ForeignKey(
+        ApprovalRequest,
+        on_delete=models.CASCADE,
+        related_name="decisions",
+    )
+    authority_role = models.CharField(max_length=64, choices=AuthorityRole.choices)
+    decision = models.CharField(max_length=32, choices=Decision.choices)
+    comments = models.CharField(max_length=255, blank=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plan_approval_decisions",
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plan_approval_decisions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("approval_request", "authority_role"),
+                name="unique_approval_decision_authority",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.approval_request.request_id} {self.authority_role}"
+
+
+class PublishedPlanSnapshot(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        SUPERSEDED = "superseded", "Superseded"
+
+    snapshot_id = models.CharField(max_length=80, unique=True)
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="published_snapshots")
+    plan_version = models.OneToOneField(
+        PlanVersion,
+        on_delete=models.PROTECT,
+        related_name="published_snapshot",
+    )
+    approval_request = models.ForeignKey(
+        ApprovalRequest,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="published_snapshots",
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACTIVE)
+    payload = models.JSONField(default=dict)
+    published_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="published_plan_snapshots",
+    )
+    published_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-published_at"]
+        indexes = [models.Index(fields=("plan", "status"))]
+
+    def __str__(self) -> str:
+        return self.snapshot_id
+
+
+class SimulationScenario(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        SIMULATED = "simulated", "Simulated"
+        PROPOSED = "proposed", "Proposed"
+        CANCELED = "canceled", "Canceled"
+
+    scenario_id = models.CharField(max_length=80, unique=True)
+    name = models.CharField(max_length=160)
+    scenario_type = models.CharField(max_length=80)
+    baseline_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="baseline_scenarios",
+    )
+    scenario_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scenario_outputs",
+    )
+    source_conflict = models.ForeignKey(
+        Conflict,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="simulation_scenarios",
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.DRAFT)
+    recovery_actions = models.JSONField(default=list, blank=True)
+    impact_summary = models.JSONField(default=dict, blank=True)
+    delta_summary = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_simulation_scenarios",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=("status", "created_at"))]
+
+    def __str__(self) -> str:
+        return self.scenario_id

@@ -2,12 +2,17 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    ApprovalDecisionViewSet,
+    ApprovalRequestViewSet,
     AssignmentViewSet,
     ConflictViewSet,
+    OverrideRequestViewSet,
     PlanVersionViewSet,
     PlanViewSet,
+    PublishedPlanSnapshotViewSet,
     ScheduleEventViewSet,
     SchedulingOverviewViewSet,
+    SimulationScenarioViewSet,
     TripViewSet,
 )
 
@@ -18,6 +23,19 @@ router.register("scheduling/trips", TripViewSet, basename="trip")
 router.register("scheduling/assignments", AssignmentViewSet, basename="assignment")
 router.register("scheduling/schedule-events", ScheduleEventViewSet, basename="schedule-event")
 router.register("scheduling/conflicts", ConflictViewSet, basename="conflict")
+router.register("scheduling/overrides", OverrideRequestViewSet, basename="override")
+router.register("scheduling/approval-requests", ApprovalRequestViewSet, basename="approval-request")
+router.register(
+    "scheduling/approval-decisions",
+    ApprovalDecisionViewSet,
+    basename="approval-decision",
+)
+router.register(
+    "scheduling/published-snapshots",
+    PublishedPlanSnapshotViewSet,
+    basename="published-snapshot",
+)
+router.register("scheduling/scenarios", SimulationScenarioViewSet, basename="simulation-scenario")
 
 overview = SchedulingOverviewViewSet.as_view({"get": "overview"})
 

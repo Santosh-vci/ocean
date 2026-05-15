@@ -1,13 +1,24 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
-from apps.scheduling.models import Conflict, PlanVersion, Trip
-from apps.scheduling.services import generate_plan_version
+from apps.scheduling.models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    Conflict,
+    OverrideRequest,
+    PlanVersion,
+    PublishedPlanSnapshot,
+    Trip,
+)
+from apps.scheduling.services import clone_plan_version, compute_plan_diff, generate_plan_version
 
 
 def assign(user, organization, permission_codes):
@@ -119,3 +130,123 @@ def test_schedule_editor_can_generate_and_clone_with_audit():
     assert clone_response.status_code == 201
     assert AuditEvent.objects.filter(action="planversion.generate").exists()
     assert AuditEvent.objects.filter(action="planversion.clone").exists()
+
+
+@pytest.mark.django_db
+def test_assignment_override_requires_reason_and_records_audit():
+    call_command("seed_phase0")
+    platform = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user(username="override-editor", password="secret")
+    assign(user, platform, ["schedule.view", "schedule.edit"])
+    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    assignment = version.trips.order_by("sequence").first().assignment
+
+    client = APIClient()
+    client.force_authenticate(user)
+    missing_reason = client.post(
+        f"/api/scheduling/assignments/{assignment.id}/apply-override/",
+        {"description": "Manual correction", "changes": {"next_action": "Hold"}},
+        format="json",
+    )
+    valid = client.post(
+        f"/api/scheduling/assignments/{assignment.id}/apply-override/",
+        {
+            "reason_code": OverrideRequest.ReasonCode.MANUAL_CORRECTION,
+            "description": "Manual correction from dispatch desk.",
+            "changes": {"next_action": "Hold for approval workflow."},
+        },
+        format="json",
+    )
+
+    assert missing_reason.status_code == 400
+    assert valid.status_code == 201
+    assert OverrideRequest.objects.filter(
+        reason_code=OverrideRequest.ReasonCode.MANUAL_CORRECTION
+    ).exists()
+    assert AuditEvent.objects.filter(action="assignment.override").exists()
+
+
+@pytest.mark.django_db
+def test_publish_is_blocked_until_conflicts_are_resolved_even_after_approvals():
+    call_command("seed_phase0")
+    platform = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user(username="approval-manager", password="secret")
+    assign(user, platform, ["schedule.view", "schedule.approve", "schedule.publish"])
+    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    approval_request = ApprovalRequest.objects.get(request_id="APR-PLAN-2026-10-24-V1")
+
+    client = APIClient()
+    client.force_authenticate(user)
+    decision_response = client.post(
+        f"/api/scheduling/approval-requests/{approval_request.id}/decide/",
+        {
+            "authority_role": ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
+            "decision": ApprovalDecision.Decision.APPROVE,
+            "comments": "Berau accepts the proposed recovery path.",
+        },
+        format="json",
+    )
+    publish_response = client.post(f"/api/scheduling/plan-versions/{version.id}/publish/")
+
+    assert decision_response.status_code == 200
+    assert publish_response.status_code == 400
+    assert not PublishedPlanSnapshot.objects.exists()
+
+
+@pytest.mark.django_db
+def test_resolved_dual_party_approved_plan_can_publish_and_becomes_immutable():
+    call_command("seed_phase0")
+    platform = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user(username="publisher", password="secret")
+    assign(
+        user,
+        platform,
+        ["schedule.view", "schedule.edit", "schedule.approve", "schedule.publish"],
+    )
+    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    Conflict.objects.filter(plan_version=version).update(resolved_at=timezone.now())
+    version.validation_status = PlanVersion.ValidationStatus.FEASIBLE
+    version.save(update_fields=["validation_status", "updated_at"])
+    approval_request = ApprovalRequest.objects.get(request_id="APR-PLAN-2026-10-24-V1")
+    assignment = version.trips.order_by("sequence").first().assignment
+
+    client = APIClient()
+    client.force_authenticate(user)
+    client.post(
+        f"/api/scheduling/approval-requests/{approval_request.id}/decide/",
+        {
+            "authority_role": ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
+            "decision": ApprovalDecision.Decision.APPROVE,
+            "comments": "Berau final approval.",
+        },
+        format="json",
+    )
+    publish_response = client.post(f"/api/scheduling/plan-versions/{version.id}/publish/")
+    override_response = client.post(
+        f"/api/scheduling/assignments/{assignment.id}/apply-override/",
+        {
+            "reason_code": OverrideRequest.ReasonCode.MANUAL_CORRECTION,
+            "description": "Attempt to mutate a published plan.",
+            "changes": {"next_action": "Should fail"},
+        },
+        format="json",
+    )
+
+    assert publish_response.status_code == 201
+    assert PublishedPlanSnapshot.objects.filter(status=PublishedPlanSnapshot.Status.ACTIVE).exists()
+    assert override_response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_plan_diff_reports_changed_trip_delta():
+    call_command("seed_phase0")
+    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    clone = clone_plan_version(source_version=version)
+    trip = clone.trips.order_by("sequence").first()
+    trip.planned_end = trip.planned_end + timedelta(hours=1)
+    trip.save(update_fields=["planned_end", "updated_at"])
+
+    diff = compute_plan_diff(source_version=version, target_version=clone)
+
+    assert diff["summary"]["changedTripCount"] == 1
+    assert diff["summary"]["delayDeltaMinutes"] == 60

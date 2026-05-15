@@ -51,8 +51,28 @@ test("shows implemented admin submodules without exposing future locked routes",
     "Jetty Loading",
     "CTS / Floating Crane",
     "Published Plan & Schedule",
+    "Exception Center",
     "Master Data Console",
   ]);
+});
+
+test("exposes chunk 5 recovery routes by workflow permission", () => {
+  expect(
+    visibleNavItems([
+      "dashboard.view",
+      "schedule.view",
+      "schedule.edit",
+      "schedule.approve",
+    ]).map((item) => item.label),
+  ).toContain("Simulation Workspace");
+  expect(
+    visibleNavItems([
+      "dashboard.view",
+      "schedule.view",
+      "schedule.edit",
+      "schedule.approve",
+    ]).map((item) => item.label),
+  ).toContain("Approvals & Publishing");
 });
 
 test("renders the role-aware dashboard shell", async () => {

@@ -147,7 +147,6 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.view",
         icon: "rule",
         phase: "Chunk 5",
-        disabled: true,
       },
       {
         path: "/simulation/workspace",
@@ -156,7 +155,6 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.edit",
         icon: "account-tree",
         phase: "Chunk 5",
-        disabled: true,
       },
       {
         path: "/approvals/publishing",
@@ -165,7 +163,6 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.approve",
         icon: "audit",
         phase: "Chunk 5",
-        disabled: true,
       },
     ],
   },

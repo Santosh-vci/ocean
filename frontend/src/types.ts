@@ -524,6 +524,94 @@ export type ConflictRecord = {
   created_at: string;
 };
 
+export type OverrideRequestRecord = {
+  id: number;
+  plan_version: number;
+  plan_version_ref: string;
+  trip: number | null;
+  trip_ref: string | null;
+  vessel_name: string | null;
+  assignment: number | null;
+  reason_code: string;
+  description: string;
+  requested_change: Record<string, unknown>;
+  before_state: Record<string, unknown>;
+  after_state: Record<string, unknown>;
+  status: string;
+  requested_by: number | null;
+  requested_by_email: string | null;
+  applied_by: number | null;
+  applied_by_email: string | null;
+  applied_at: string | null;
+  created_at: string;
+};
+
+export type ApprovalDecisionRecord = {
+  id: number;
+  approval_request: number;
+  authority_role: string;
+  decision: string;
+  comments: string;
+  actor: number | null;
+  actor_email: string | null;
+  organization: number | null;
+  organization_name: string | null;
+  created_at: string;
+};
+
+export type ApprovalRequestRecord = {
+  id: number;
+  request_id: string;
+  plan_version: number;
+  plan_version_ref: string;
+  status: string;
+  required_authorities: string[];
+  reason: string;
+  requested_by: number | null;
+  requested_by_email: string | null;
+  decided_at: string | null;
+  created_at: string;
+  updated_at: string;
+  decisions: ApprovalDecisionRecord[];
+};
+
+export type PublishedPlanSnapshotRecord = {
+  id: number;
+  snapshot_id: string;
+  plan: number;
+  plan_code: string;
+  plan_version: number;
+  plan_version_ref: string;
+  approval_request: number | null;
+  status: string;
+  payload: Record<string, unknown>;
+  published_by: number | null;
+  published_by_email: string | null;
+  published_at: string;
+};
+
+export type SimulationScenarioRecord = {
+  id: number;
+  scenario_id: string;
+  name: string;
+  scenario_type: string;
+  baseline_version: number;
+  baseline_version_ref: string;
+  scenario_version: number | null;
+  scenario_version_ref: string | null;
+  source_conflict: number | null;
+  source_conflict_code: string | null;
+  source_conflict_message: string | null;
+  status: string;
+  recovery_actions: string[];
+  impact_summary: Record<string, unknown>;
+  delta_summary: Record<string, unknown>;
+  created_by: number | null;
+  created_by_email: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type SchedulingOverview = {
   plans: PlanRecord[];
   planVersions: PlanVersionRecord[];
@@ -532,6 +620,10 @@ export type SchedulingOverview = {
   assignments: AssignmentRecord[];
   events: ScheduleEventRecord[];
   conflicts: ConflictRecord[];
+  overrideRequests: OverrideRequestRecord[];
+  approvalRequests: ApprovalRequestRecord[];
+  publishedSnapshots: PublishedPlanSnapshotRecord[];
+  simulationScenarios: SimulationScenarioRecord[];
   validation: {
     tripCount: number;
     assignmentCount: number;
@@ -539,6 +631,9 @@ export type SchedulingOverview = {
     conflictCount: number;
     blockingConflictCount: number;
     criticalConflictCount: number;
+    overrideCount: number;
+    approvalPendingCount: number;
+    scenarioCount: number;
     plannedMt: number;
     loadedMt: number;
   };

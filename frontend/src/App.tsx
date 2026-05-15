@@ -18,6 +18,11 @@ import {
 import { MasterDataPage } from "./pages/MasterDataPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { RbacPage } from "./pages/RbacPage";
+import {
+  ApprovalsPublishingPage,
+  ExceptionCenterPage,
+  SimulationWorkspacePage,
+} from "./pages/RecoveryPages";
 import { TideBridgePage } from "./pages/TideBridgePage";
 import type {
   AuditEvent,
@@ -77,6 +82,12 @@ function App() {
     : false;
   const canViewSchedule = currentUser ? canAccess(currentUser.permissions, "schedule.view") : false;
   const canEditSchedule = currentUser ? canAccess(currentUser.permissions, "schedule.edit") : false;
+  const canApproveSchedule = currentUser
+    ? canAccess(currentUser.permissions, "schedule.approve")
+    : false;
+  const canPublishSchedule = currentUser
+    ? canAccess(currentUser.permissions, "schedule.publish")
+    : false;
 
   useEffect(() => {
     if (!currentUser) {
@@ -178,6 +189,19 @@ function App() {
         ) : null}
         {route === "/schedule/published-plan" && canViewSchedule ? (
           <PublishedPlanPage overview={schedulingOverview} />
+        ) : null}
+        {route === "/exceptions/center" && canViewSchedule ? (
+          <ExceptionCenterPage canEdit={canEditSchedule} overview={schedulingOverview} />
+        ) : null}
+        {route === "/simulation/workspace" && canEditSchedule ? (
+          <SimulationWorkspacePage canEdit={canEditSchedule} overview={schedulingOverview} />
+        ) : null}
+        {route === "/approvals/publishing" && canApproveSchedule ? (
+          <ApprovalsPublishingPage
+            canEdit={canApproveSchedule}
+            canPublish={canPublishSchedule}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/dashboard/situation" ? (
           <DashboardPage

@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 from apps.masters.models import AssetCompatibilityRule, Jetty, Location, Tug
 from apps.planning.models import (
@@ -13,8 +14,26 @@ from apps.planning.models import (
     NavigationConstraintCheck,
     OGVVoyage,
 )
+from apps.rbac.models import UserRoleAssignment
 
-from .models import Assignment, Conflict, Plan, PlanVersion, ScheduleEvent, Trip
+from .models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    Assignment,
+    Conflict,
+    OverrideRequest,
+    Plan,
+    PlanVersion,
+    PublishedPlanSnapshot,
+    ScheduleEvent,
+    SimulationScenario,
+    Trip,
+)
+
+REQUIRED_APPROVAL_AUTHORITIES = [
+    ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
+    ApprovalDecision.AuthorityRole.ABL_DISPATCHER,
+]
 
 
 @dataclass
@@ -133,6 +152,336 @@ def clone_plan_version(*, source_version: PlanVersion, created_by=None) -> PlanV
             )
 
     return clone
+
+
+def apply_assignment_override(
+    *,
+    assignment: Assignment,
+    actor,
+    reason_code: str,
+    description: str,
+    changes: dict,
+) -> OverrideRequest:
+    if not reason_code:
+        raise ValidationError({"reason_code": "A reason code is required for overrides."})
+    if not description:
+        raise ValidationError({"description": "A description is required for overrides."})
+    if assignment.trip.plan_version.status in {
+        PlanVersion.Status.PUBLISHED,
+        PlanVersion.Status.SUPERSEDED,
+    }:
+        raise ValidationError("Published or superseded plan versions cannot be edited.")
+
+    allowed_fields = {
+        "status",
+        "next_constraint",
+        "next_action",
+        "planned_departure",
+        "planned_arrival",
+    }
+    requested_change = {key: value for key, value in changes.items() if key in allowed_fields}
+    if not requested_change:
+        raise ValidationError("At least one supported assignment field must change.")
+
+    before_state = _assignment_state(assignment)
+    for field, value in requested_change.items():
+        setattr(assignment, field, value)
+    assignment.save(update_fields=[*requested_change.keys(), "updated_at"])
+    after_state = _assignment_state(assignment)
+
+    return OverrideRequest.objects.create(
+        plan_version=assignment.trip.plan_version,
+        trip=assignment.trip,
+        assignment=assignment,
+        reason_code=reason_code,
+        description=description,
+        requested_change=requested_change,
+        before_state=before_state,
+        after_state=after_state,
+        status=OverrideRequest.Status.APPLIED,
+        requested_by=actor,
+        applied_by=actor,
+        applied_at=timezone.now(),
+    )
+
+
+def submit_approval_request(
+    *,
+    plan_version: PlanVersion,
+    actor,
+    reason: str,
+) -> ApprovalRequest:
+    if plan_version.status in {PlanVersion.Status.PUBLISHED, PlanVersion.Status.SUPERSEDED}:
+        raise ValidationError("Published or superseded plan versions cannot be submitted.")
+
+    request_id = f"APR-{plan_version.plan.code}-V{plan_version.version_no}"
+    with transaction.atomic():
+        approval_request, _ = ApprovalRequest.objects.update_or_create(
+            request_id=request_id,
+            defaults={
+                "plan_version": plan_version,
+                "status": ApprovalRequest.Status.PENDING,
+                "required_authorities": REQUIRED_APPROVAL_AUTHORITIES,
+                "reason": reason or "Plan lifecycle approval requested.",
+                "requested_by": actor,
+            },
+        )
+        if plan_version.status not in {
+            PlanVersion.Status.PROPOSED,
+            PlanVersion.Status.APPROVED,
+        }:
+            plan_version.status = PlanVersion.Status.PROPOSED
+            plan_version.save(update_fields=["status", "updated_at"])
+
+    return approval_request
+
+
+def record_approval_decision(
+    *,
+    approval_request: ApprovalRequest,
+    actor,
+    decision: str,
+    authority_role: str,
+    comments: str = "",
+) -> ApprovalDecision:
+    if approval_request.status in {
+        ApprovalRequest.Status.PUBLISHED,
+        ApprovalRequest.Status.CANCELED,
+    }:
+        raise ValidationError("This approval request is closed.")
+    if decision != ApprovalDecision.Decision.APPROVE and not comments:
+        raise ValidationError({"comments": "Comments are required for non-approval decisions."})
+    if decision not in dict(ApprovalDecision.Decision.choices):
+        raise ValidationError({"decision": "Unsupported approval decision."})
+    if authority_role not in dict(ApprovalDecision.AuthorityRole.choices):
+        raise ValidationError({"authority_role": "Unsupported approval authority."})
+
+    organization = _default_organization_for_actor(actor)
+    with transaction.atomic():
+        approval_decision, _ = ApprovalDecision.objects.update_or_create(
+            approval_request=approval_request,
+            authority_role=authority_role,
+            defaults={
+                "decision": decision,
+                "comments": comments,
+                "actor": actor,
+                "organization": organization,
+            },
+        )
+        if decision == ApprovalDecision.Decision.REJECT:
+            approval_request.status = ApprovalRequest.Status.REJECTED
+            approval_request.decided_at = timezone.now()
+            approval_request.plan_version.status = PlanVersion.Status.PROPOSED
+        elif _required_approvals_complete(approval_request):
+            approval_request.status = ApprovalRequest.Status.APPROVED
+            approval_request.decided_at = timezone.now()
+            if not _open_blocking_conflicts(approval_request.plan_version).exists():
+                approval_request.plan_version.status = PlanVersion.Status.APPROVED
+        else:
+            approval_request.status = ApprovalRequest.Status.PENDING
+
+        approval_request.save(update_fields=["status", "decided_at", "updated_at"])
+        approval_request.plan_version.save(update_fields=["status", "updated_at"])
+
+    return approval_decision
+
+
+def publish_plan_version(*, plan_version: PlanVersion, actor) -> PublishedPlanSnapshot:
+    if plan_version.status == PlanVersion.Status.PUBLISHED:
+        raise ValidationError("This plan version is already published.")
+    approval_request = (
+        plan_version.approval_requests.filter(status=ApprovalRequest.Status.APPROVED)
+        .order_by("-created_at")
+        .first()
+    )
+    if approval_request is None:
+        raise ValidationError("A complete approval request is required before publishing.")
+    if _open_blocking_conflicts(plan_version).exists():
+        raise ValidationError("Publish is blocked while unresolved blocking conflicts remain.")
+    if not _required_approvals_complete(approval_request):
+        raise ValidationError("Dual-party Berau and ABL approvals are required.")
+
+    with transaction.atomic():
+        PlanVersion.objects.filter(
+            plan=plan_version.plan,
+            status=PlanVersion.Status.PUBLISHED,
+        ).exclude(pk=plan_version.pk).update(status=PlanVersion.Status.SUPERSEDED)
+        PublishedPlanSnapshot.objects.filter(
+            plan=plan_version.plan,
+            status=PublishedPlanSnapshot.Status.ACTIVE,
+        ).update(status=PublishedPlanSnapshot.Status.SUPERSEDED)
+
+        snapshot = PublishedPlanSnapshot.objects.create(
+            snapshot_id=f"LIVE-{plan_version.plan.code}-V{plan_version.version_no}",
+            plan=plan_version.plan,
+            plan_version=plan_version,
+            approval_request=approval_request,
+            payload=_snapshot_payload(plan_version),
+            published_by=actor,
+        )
+        plan_version.status = PlanVersion.Status.PUBLISHED
+        plan_version.published_at = timezone.now()
+        plan_version.save(update_fields=["status", "published_at", "updated_at"])
+        approval_request.status = ApprovalRequest.Status.PUBLISHED
+        approval_request.save(update_fields=["status", "updated_at"])
+
+    return snapshot
+
+
+def compute_plan_diff(*, source_version: PlanVersion, target_version: PlanVersion) -> dict:
+    source_rows = {_trip_diff_key(trip): trip for trip in source_version.trips.all()}
+    target_rows = {_trip_diff_key(trip): trip for trip in target_version.trips.all()}
+    keys = sorted(set(source_rows) | set(target_rows))
+    rows = []
+    changed = 0
+    delay_delta = 0
+    quantity_delta = 0
+
+    for key in keys:
+        source_trip = source_rows.get(key)
+        target_trip = target_rows.get(key)
+        if source_trip and target_trip:
+            row_delay = int(
+                (target_trip.planned_end - source_trip.planned_end).total_seconds() / 60
+            )
+            row_quantity = target_trip.planned_quantity_mt - source_trip.planned_quantity_mt
+            source_assignment = getattr(source_trip, "assignment", None)
+            target_assignment = getattr(target_trip, "assignment", None)
+            source_tug = (
+                source_assignment.tug.code
+                if source_assignment and source_assignment.tug
+                else ""
+            )
+            target_tug = (
+                target_assignment.tug.code
+                if target_assignment and target_assignment.tug
+                else ""
+            )
+            state = (
+                "changed"
+                if row_delay or row_quantity or source_tug != target_tug
+                else "unchanged"
+            )
+            changed += 1 if state == "changed" else 0
+            delay_delta += row_delay
+            quantity_delta += row_quantity
+            rows.append(
+                {
+                    "key": key,
+                    "state": state,
+                    "sourceTrip": source_trip.trip_id,
+                    "targetTrip": target_trip.trip_id,
+                    "sourceVessel": source_trip.voyage.vessel_name,
+                    "targetVessel": target_trip.voyage.vessel_name,
+                    "delayDeltaMinutes": row_delay,
+                    "quantityDeltaMt": row_quantity,
+                    "sourceTug": source_tug,
+                    "targetTug": target_tug,
+                }
+            )
+        elif target_trip:
+            changed += 1
+            quantity_delta += target_trip.planned_quantity_mt
+            rows.append(
+                {
+                    "key": key,
+                    "state": "added",
+                    "targetTrip": target_trip.trip_id,
+                    "targetVessel": target_trip.voyage.vessel_name,
+                    "quantityDeltaMt": target_trip.planned_quantity_mt,
+                }
+            )
+        elif source_trip:
+            changed += 1
+            quantity_delta -= source_trip.planned_quantity_mt
+            rows.append(
+                {
+                    "key": key,
+                    "state": "removed",
+                    "sourceTrip": source_trip.trip_id,
+                    "sourceVessel": source_trip.voyage.vessel_name,
+                    "quantityDeltaMt": -source_trip.planned_quantity_mt,
+                }
+            )
+
+    return {
+        "sourceVersion": source_version.id,
+        "targetVersion": target_version.id,
+        "summary": {
+            "changedTripCount": changed,
+            "delayDeltaMinutes": delay_delta,
+            "quantityDeltaMt": quantity_delta,
+        },
+        "rows": rows,
+    }
+
+
+def create_scenario_from_conflict(
+    *,
+    baseline_version: PlanVersion,
+    source_conflict: Conflict | None,
+    actor,
+    name: str = "",
+) -> SimulationScenario:
+    scenario_id = f"SIM-{baseline_version.plan.code}-V{baseline_version.version_no}"
+    scenario, _ = SimulationScenario.objects.get_or_create(
+        scenario_id=scenario_id,
+        defaults={
+            "name": name or "Recovery scenario A",
+            "scenario_type": "conflict_recovery",
+            "baseline_version": baseline_version,
+            "source_conflict": source_conflict,
+            "status": SimulationScenario.Status.DRAFT,
+            "created_by": actor,
+        },
+    )
+    return scenario
+
+
+def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
+    conflict = scenario.source_conflict
+    actions = [
+        "Reassign available tug against earliest feasible tide window.",
+        "Hold barge queue at source jetty until route gate clears.",
+        "Preserve OGV hatch/layer order before approval promotion.",
+    ]
+    scenario.recovery_actions = actions
+    scenario.impact_summary = {
+        "sourceConflict": conflict.code if conflict else "MANUAL_SCENARIO",
+        "affectedVessel": conflict.trip.voyage.vessel_name if conflict and conflict.trip else "",
+        "feasibilityPct": 89 if conflict else 96,
+    }
+    scenario.delta_summary = {
+        "delayDeltaMinutes": -210 if conflict else 0,
+        "demurrageDeltaUsd": -42000 if conflict else 0,
+        "fleetUtilizationPct": 6,
+        "remainingViolations": 1 if conflict else 0,
+    }
+    scenario.status = SimulationScenario.Status.SIMULATED
+    scenario.save(
+        update_fields=[
+            "recovery_actions",
+            "impact_summary",
+            "delta_summary",
+            "status",
+            "updated_at",
+        ]
+    )
+    return scenario
+
+
+def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> SimulationScenario:
+    with transaction.atomic():
+        if scenario.scenario_version is None:
+            scenario.scenario_version = clone_plan_version(
+                source_version=scenario.baseline_version,
+                created_by=actor,
+            )
+        scenario.status = SimulationScenario.Status.PROPOSED
+        scenario.scenario_version.status = PlanVersion.Status.PROPOSED
+        scenario.scenario_version.save(update_fields=["status", "updated_at"])
+        scenario.save(update_fields=["scenario_version", "status", "updated_at"])
+    return scenario
 
 
 def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
@@ -558,3 +907,102 @@ def _conflict(
         message=message,
         is_blocking=is_blocking,
     )
+
+
+def _assignment_state(assignment: Assignment) -> dict:
+    return {
+        "status": assignment.status,
+        "tug": assignment.tug.code if assignment.tug else "",
+        "barge": assignment.barge.code if assignment.barge else "",
+        "jetty": assignment.jetty.code if assignment.jetty else "",
+        "cts": assignment.cts.code if assignment.cts else "",
+        "plannedDeparture": assignment.planned_departure.isoformat(),
+        "plannedArrival": assignment.planned_arrival.isoformat(),
+        "nextConstraint": assignment.next_constraint,
+        "nextAction": assignment.next_action,
+    }
+
+
+def _open_blocking_conflicts(plan_version: PlanVersion):
+    return plan_version.conflicts.filter(is_blocking=True, resolved_at__isnull=True)
+
+
+def _required_approvals_complete(approval_request: ApprovalRequest) -> bool:
+    approved_roles = set(
+        approval_request.decisions.filter(
+            decision=ApprovalDecision.Decision.APPROVE
+        ).values_list("authority_role", flat=True)
+    )
+    return set(approval_request.required_authorities or REQUIRED_APPROVAL_AUTHORITIES).issubset(
+        approved_roles
+    )
+
+
+def _default_organization_for_actor(actor):
+    if not actor or not getattr(actor, "is_authenticated", False):
+        return None
+    assignment = (
+        UserRoleAssignment.objects.select_related("organization")
+        .filter(user=actor, is_active=True)
+        .order_by("id")
+        .first()
+    )
+    return assignment.organization if assignment else None
+
+
+def _trip_diff_key(trip: Trip) -> str:
+    if trip.cargo_layer_step_id:
+        return f"layer-{trip.cargo_layer_step_id}"
+    return f"seq-{trip.sequence}"
+
+
+def _snapshot_payload(plan_version: PlanVersion) -> dict:
+    trips = []
+    for trip in plan_version.trips.select_related(
+        "voyage",
+        "cargo_layer_step",
+        "origin_jetty",
+    ).prefetch_related("events"):
+        assignment = getattr(trip, "assignment", None)
+        trips.append(
+            {
+                "tripId": trip.trip_id,
+                "sequence": trip.sequence,
+                "vessel": trip.voyage.vessel_name,
+                "status": trip.status,
+                "plannedStart": trip.planned_start.isoformat(),
+                "plannedEnd": trip.planned_end.isoformat(),
+                "plannedQuantityMt": trip.planned_quantity_mt,
+                "jetty": trip.origin_jetty.code if trip.origin_jetty else "",
+                "tug": assignment.tug.code if assignment and assignment.tug else "",
+                "barge": assignment.barge.code if assignment and assignment.barge else "",
+                "cts": assignment.cts.code if assignment and assignment.cts else "",
+                "events": [
+                    {
+                        "type": event.event_type,
+                        "plannedAt": event.planned_at.isoformat(),
+                        "status": event.status,
+                    }
+                    for event in trip.events.all()
+                ],
+            }
+        )
+    approvals = [
+        {
+            "authorityRole": decision.authority_role,
+            "decision": decision.decision,
+            "actor": decision.actor.email if decision.actor else "",
+            "createdAt": decision.created_at.isoformat(),
+        }
+        for decision in ApprovalDecision.objects.filter(
+            approval_request__plan_version=plan_version
+        ).select_related("actor")
+    ]
+    return {
+        "plan": plan_version.plan.code,
+        "version": plan_version.version_no,
+        "publishedSourceStatus": plan_version.status,
+        "summary": plan_version.summary,
+        "trips": trips,
+        "approvals": approvals,
+    }

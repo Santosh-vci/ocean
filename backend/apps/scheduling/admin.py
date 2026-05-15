@@ -1,6 +1,18 @@
 from django.contrib import admin
 
-from .models import Assignment, Conflict, Plan, PlanVersion, ScheduleEvent, Trip
+from .models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    Assignment,
+    Conflict,
+    OverrideRequest,
+    Plan,
+    PlanVersion,
+    PublishedPlanSnapshot,
+    ScheduleEvent,
+    SimulationScenario,
+    Trip,
+)
 
 
 @admin.register(Plan)
@@ -43,3 +55,38 @@ class ConflictAdmin(admin.ModelAdmin):
     list_display = ("code", "severity", "plan_version", "trip", "is_blocking")
     list_filter = ("code", "severity", "is_blocking")
     search_fields = ("code", "message", "trip__trip_id")
+
+
+@admin.register(OverrideRequest)
+class OverrideRequestAdmin(admin.ModelAdmin):
+    list_display = ("reason_code", "plan_version", "trip", "status", "requested_by")
+    list_filter = ("reason_code", "status")
+    search_fields = ("description", "trip__trip_id")
+
+
+@admin.register(ApprovalRequest)
+class ApprovalRequestAdmin(admin.ModelAdmin):
+    list_display = ("request_id", "plan_version", "status", "requested_by")
+    list_filter = ("status",)
+    search_fields = ("request_id", "plan_version__plan__code")
+
+
+@admin.register(ApprovalDecision)
+class ApprovalDecisionAdmin(admin.ModelAdmin):
+    list_display = ("approval_request", "authority_role", "decision", "actor")
+    list_filter = ("authority_role", "decision")
+    search_fields = ("approval_request__request_id", "comments")
+
+
+@admin.register(PublishedPlanSnapshot)
+class PublishedPlanSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("snapshot_id", "plan", "plan_version", "status", "published_by")
+    list_filter = ("status",)
+    search_fields = ("snapshot_id", "plan__code")
+
+
+@admin.register(SimulationScenario)
+class SimulationScenarioAdmin(admin.ModelAdmin):
+    list_display = ("scenario_id", "name", "baseline_version", "scenario_version", "status")
+    list_filter = ("status", "scenario_type")
+    search_fields = ("scenario_id", "name")

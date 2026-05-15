@@ -221,7 +221,7 @@ button {
 
 .workspace-page {
   min-width: 0;
-  padding: 1rem;
+  padding: 0 1rem 1rem;
 }
 
 .page-heading {
@@ -269,6 +269,14 @@ button {
 
 .metric-strip.six-up {
   grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.metric-strip.five-up {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.metric-strip.seven-up {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .metric-strip div {
@@ -535,7 +543,9 @@ tbody tr:hover,
 
   .topbar,
   .metric-strip.four-up,
+  .metric-strip.five-up,
   .metric-strip.six-up,
+  .metric-strip.seven-up,
   .cockpit-grid,
   .governance-layout,
   .audit-layout,
@@ -909,7 +919,7 @@ tbody tr:hover,
   height: 100%;
   min-width: 0;
   overflow: auto;
-  padding: 1rem;
+  padding: 0 1rem 1rem;
 }
 
 .audit-strip {
@@ -1380,12 +1390,12 @@ tbody tr:hover,
   top: 0;
   z-index: 30;
   align-self: start;
-  margin: -1rem -1rem 0;
+  margin: 0 -1rem 0;
   border-bottom: 1px solid var(--border-subtle);
   background:
     linear-gradient(180deg, rgba(19, 27, 46, 0.98), rgba(11, 19, 38, 0.96)),
     var(--surface-low);
-  padding: 0.85rem 1rem 0.65rem;
+  padding: 0.45rem 1rem 0.55rem;
   backdrop-filter: blur(14px);
 }
 
@@ -2206,5 +2216,261 @@ tbody tr:hover,
   .jetty-layout,
   .published-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Chunk 5 recovery, simulation, and approval loop */
+.recovery-board {
+  display: grid;
+  grid-auto-rows: max-content;
+  gap: 0.65rem;
+}
+
+.recovery-kpis {
+  margin-bottom: 0;
+}
+
+.exception-layout,
+.approval-layout {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 24rem;
+  gap: 0.65rem;
+  min-height: 31rem;
+}
+
+.simulation-layout {
+  display: grid;
+  grid-template-columns: 18rem minmax(0, 1fr) 22rem;
+  gap: 0.65rem;
+  min-height: 41rem;
+}
+
+.recovery-filter-rail,
+.scenario-config {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.recovery-filter-rail section,
+.scenario-config dl {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.recovery-filter-rail h2,
+.scenario-config dt,
+.approval-chain strong {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.recovery-filter-rail span,
+.recovery-filter-rail button,
+.scenario-config dd {
+  margin: 0;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.42rem 0.5rem;
+  text-align: left;
+  font-size: 0.72rem;
+}
+
+.recovery-grid-panel,
+.simulation-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recovery-grid-panel .grid-scroll,
+.simulation-main .grid-scroll {
+  min-height: 17rem;
+}
+
+.recovery-inspector,
+.approval-inspector {
+  min-width: 0;
+}
+
+.impact-chain {
+  overflow: hidden;
+}
+
+.impact-chain > div:last-child {
+  min-height: 8rem;
+  display: grid;
+  grid-template-columns: 11rem 1fr 11rem 1fr 11rem 1fr 11rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem;
+  background: var(--surface-lowest);
+}
+
+.chain-node {
+  min-height: 3rem;
+  display: grid;
+  align-content: center;
+  border: 1px solid var(--border-subtle);
+  background: rgba(30, 41, 59, 0.72);
+  color: var(--on-surface);
+  padding: 0.45rem 0.6rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-transform: uppercase;
+}
+
+.chain-node.critical {
+  border-color: rgba(239, 68, 68, 0.65);
+  color: var(--status-critical);
+}
+
+.chain-node.pending {
+  border-color: rgba(245, 158, 11, 0.65);
+  color: var(--status-warning);
+}
+
+.chain-line {
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-subtle), var(--primary));
+}
+
+.scenario-config button {
+  margin: 0 0.65rem 0.65rem;
+}
+
+.simulation-main {
+  gap: 0.65rem;
+}
+
+.scenario-timeline {
+  min-height: 19rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+}
+
+.scenario-row {
+  display: grid;
+  grid-template-columns: 11rem minmax(34rem, 1fr);
+  min-height: 2.9rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.scenario-row > strong {
+  display: grid;
+  align-content: center;
+  border-right: 1px solid var(--border-subtle);
+  padding: 0 0.6rem;
+  color: var(--on-surface);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.scenario-bar {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.45rem;
+  border: 1px solid rgba(137, 206, 255, 0.65);
+  background: rgba(14, 165, 233, 0.18);
+  color: var(--primary);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.scenario-bar.ok {
+  border-color: rgba(16, 185, 129, 0.65);
+  background: rgba(16, 185, 129, 0.16);
+  color: var(--status-success);
+}
+
+.scenario-bar.pending {
+  border-color: rgba(245, 158, 11, 0.65);
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--status-warning);
+}
+
+.scenario-bar.critical {
+  border-color: rgba(239, 68, 68, 0.65);
+  background: rgba(239, 68, 68, 0.16);
+  color: var(--status-critical);
+}
+
+.approval-chain {
+  display: grid;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.75rem;
+}
+
+.approval-chain span {
+  position: relative;
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 1.1rem;
+  color: var(--on-surface);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.approval-chain span i {
+  position: absolute;
+  top: 0.2rem;
+  left: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--status-warning);
+}
+
+.approval-chain span.complete i {
+  background: var(--status-success);
+}
+
+.approval-chain em {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.approval-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.approval-actions button:last-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1280px) {
+  .exception-layout,
+  .approval-layout,
+  .simulation-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-chain > div:last-child {
+    grid-template-columns: 1fr;
+  }
+
+  .chain-line {
+    min-height: 1.25rem;
+    width: 1px;
+    justify-self: center;
   }
 }

@@ -13,7 +13,19 @@ from apps.planning.serializers import (
     OGVVoyageSerializer,
 )
 
-from .models import Assignment, Conflict, Plan, PlanVersion, ScheduleEvent, Trip
+from .models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    Assignment,
+    Conflict,
+    OverrideRequest,
+    Plan,
+    PlanVersion,
+    PublishedPlanSnapshot,
+    ScheduleEvent,
+    SimulationScenario,
+    Trip,
+)
 
 
 class PlanSerializer(serializers.ModelSerializer):
@@ -197,3 +209,183 @@ class ConflictSerializer(serializers.ModelSerializer):
             "created_at",
         )
         read_only_fields = ("id", "created_at")
+
+
+class OverrideRequestSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+    vessel_name = serializers.CharField(source="trip.voyage.vessel_name", read_only=True)
+    requested_by_email = serializers.EmailField(source="requested_by.email", read_only=True)
+    applied_by_email = serializers.EmailField(source="applied_by.email", read_only=True)
+
+    class Meta:
+        model = OverrideRequest
+        fields = (
+            "id",
+            "plan_version",
+            "plan_version_ref",
+            "trip",
+            "trip_ref",
+            "vessel_name",
+            "assignment",
+            "reason_code",
+            "description",
+            "requested_change",
+            "before_state",
+            "after_state",
+            "status",
+            "requested_by",
+            "requested_by_email",
+            "applied_by",
+            "applied_by_email",
+            "applied_at",
+            "created_at",
+        )
+        read_only_fields = (
+            "id",
+            "before_state",
+            "after_state",
+            "requested_by",
+            "requested_by_email",
+            "applied_by",
+            "applied_by_email",
+            "applied_at",
+            "created_at",
+        )
+
+
+class ApprovalDecisionSerializer(serializers.ModelSerializer):
+    actor_email = serializers.EmailField(source="actor.email", read_only=True)
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+
+    class Meta:
+        model = ApprovalDecision
+        fields = (
+            "id",
+            "approval_request",
+            "authority_role",
+            "decision",
+            "comments",
+            "actor",
+            "actor_email",
+            "organization",
+            "organization_name",
+            "created_at",
+        )
+        read_only_fields = (
+            "id",
+            "actor",
+            "actor_email",
+            "organization",
+            "organization_name",
+            "created_at",
+        )
+
+
+class ApprovalRequestSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    requested_by_email = serializers.EmailField(source="requested_by.email", read_only=True)
+    decisions = ApprovalDecisionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ApprovalRequest
+        fields = (
+            "id",
+            "request_id",
+            "plan_version",
+            "plan_version_ref",
+            "status",
+            "required_authorities",
+            "reason",
+            "requested_by",
+            "requested_by_email",
+            "decided_at",
+            "created_at",
+            "updated_at",
+            "decisions",
+        )
+        read_only_fields = (
+            "id",
+            "request_id",
+            "status",
+            "required_authorities",
+            "requested_by",
+            "requested_by_email",
+            "decided_at",
+            "created_at",
+            "updated_at",
+            "decisions",
+        )
+
+
+class PublishedPlanSnapshotSerializer(serializers.ModelSerializer):
+    plan_code = serializers.CharField(source="plan.code", read_only=True)
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    published_by_email = serializers.EmailField(source="published_by.email", read_only=True)
+
+    class Meta:
+        model = PublishedPlanSnapshot
+        fields = (
+            "id",
+            "snapshot_id",
+            "plan",
+            "plan_code",
+            "plan_version",
+            "plan_version_ref",
+            "approval_request",
+            "status",
+            "payload",
+            "published_by",
+            "published_by_email",
+            "published_at",
+        )
+        read_only_fields = fields
+
+
+class SimulationScenarioSerializer(serializers.ModelSerializer):
+    baseline_version_ref = serializers.CharField(source="baseline_version", read_only=True)
+    scenario_version_ref = serializers.CharField(source="scenario_version", read_only=True)
+    source_conflict_code = serializers.CharField(source="source_conflict.code", read_only=True)
+    source_conflict_message = serializers.CharField(
+        source="source_conflict.message",
+        read_only=True,
+    )
+    created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+
+    class Meta:
+        model = SimulationScenario
+        fields = (
+            "id",
+            "scenario_id",
+            "name",
+            "scenario_type",
+            "baseline_version",
+            "baseline_version_ref",
+            "scenario_version",
+            "scenario_version_ref",
+            "source_conflict",
+            "source_conflict_code",
+            "source_conflict_message",
+            "status",
+            "recovery_actions",
+            "impact_summary",
+            "delta_summary",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "scenario_id",
+            "scenario_version",
+            "scenario_version_ref",
+            "status",
+            "recovery_actions",
+            "impact_summary",
+            "delta_summary",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "updated_at",
+        )

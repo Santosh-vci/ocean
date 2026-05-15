@@ -1,4 +1,5 @@
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,16 +9,45 @@ from apps.audit.mixins import AuditMutationMixin
 from apps.audit.services import record_audit_event
 from apps.rbac.permissions import RequiresAccessPermission
 
-from .models import Assignment, Conflict, Plan, PlanVersion, ScheduleEvent, Trip
+from .models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    Assignment,
+    Conflict,
+    OverrideRequest,
+    Plan,
+    PlanVersion,
+    PublishedPlanSnapshot,
+    ScheduleEvent,
+    SimulationScenario,
+    Trip,
+)
 from .serializers import (
+    ApprovalDecisionSerializer,
+    ApprovalRequestSerializer,
     AssignmentSerializer,
     ConflictSerializer,
+    OverrideRequestSerializer,
     PlanSerializer,
     PlanVersionSerializer,
+    PublishedPlanSnapshotSerializer,
     ScheduleEventSerializer,
+    SimulationScenarioSerializer,
     TripSerializer,
 )
-from .services import clone_plan_version, create_plan_version, generate_plan_version
+from .services import (
+    apply_assignment_override,
+    clone_plan_version,
+    compute_plan_diff,
+    create_plan_version,
+    create_scenario_from_conflict,
+    generate_plan_version,
+    promote_scenario_to_proposed,
+    publish_plan_version,
+    record_approval_decision,
+    simulate_scenario,
+    submit_approval_request,
+)
 
 
 class SchedulingViewSet(AuditMutationMixin, ModelViewSet):
@@ -29,6 +59,14 @@ class SchedulingViewSet(AuditMutationMixin, ModelViewSet):
         "create_version": "schedule.edit",
         "generate": "schedule.edit",
         "clone": "schedule.edit",
+        "apply_override": "schedule.edit",
+        "request_approval": "schedule.edit",
+        "decide": "schedule.approve",
+        "publish": "schedule.publish",
+        "diff": "schedule.view",
+        "create_scenario": "schedule.edit",
+        "simulate": "schedule.edit",
+        "promote": "schedule.edit",
         "create": "schedule.edit",
         "update": "schedule.edit",
         "partial_update": "schedule.edit",
@@ -100,6 +138,87 @@ class PlanVersionViewSet(SchedulingViewSet):
         )
         return Response(PlanVersionSerializer(clone).data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=["post"], url_path="request-approval")
+    def request_approval(self, request, pk=None):
+        version = self.get_object()
+        approval_request = submit_approval_request(
+            plan_version=version,
+            actor=request.user,
+            reason=request.data.get("reason", ""),
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=version.plan.organization,
+            action="approval.request",
+            object_type="approval_request",
+            object_id=str(approval_request.pk),
+            object_repr=approval_request.request_id,
+            metadata={"plan_version": str(version), "status": approval_request.status},
+            request=request,
+        )
+        return Response(
+            ApprovalRequestSerializer(approval_request).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="publish")
+    def publish(self, request, pk=None):
+        version = self.get_object()
+        snapshot = publish_plan_version(plan_version=version, actor=request.user)
+        record_audit_event(
+            actor=request.user,
+            organization=version.plan.organization,
+            action="planversion.publish",
+            object_type="published_plan_snapshot",
+            object_id=str(snapshot.pk),
+            object_repr=snapshot.snapshot_id,
+            metadata={"plan_version": str(version), "snapshot_id": snapshot.snapshot_id},
+            request=request,
+        )
+        return Response(
+            PublishedPlanSnapshotSerializer(snapshot).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["get"], url_path="diff")
+    def diff(self, request, pk=None):
+        source_version = self.get_object()
+        target_id = request.query_params.get("against")
+        if not target_id:
+            return Response(
+                {"detail": "against query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        target_version = get_object_or_404(PlanVersion, pk=target_id)
+        return Response(
+            compute_plan_diff(source_version=source_version, target_version=target_version)
+        )
+
+    @action(detail=True, methods=["post"], url_path="create-scenario")
+    def create_scenario(self, request, pk=None):
+        version = self.get_object()
+        conflict = None
+        conflict_id = request.data.get("conflict")
+        if conflict_id:
+            conflict = get_object_or_404(Conflict, pk=conflict_id, plan_version=version)
+        scenario = create_scenario_from_conflict(
+            baseline_version=version,
+            source_conflict=conflict,
+            actor=request.user,
+            name=request.data.get("name", ""),
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=version.plan.organization,
+            action="simulation.create",
+            object_type="simulation_scenario",
+            object_id=str(scenario.pk),
+            object_repr=scenario.scenario_id,
+            metadata={"plan_version": str(version), "source_conflict": conflict_id},
+            request=request,
+        )
+        return Response(SimulationScenarioSerializer(scenario).data, status=status.HTTP_201_CREATED)
+
 
 class TripViewSet(SchedulingViewSet):
     queryset = (
@@ -140,6 +259,32 @@ class AssignmentViewSet(SchedulingViewSet):
     ).all()
     serializer_class = AssignmentSerializer
 
+    @action(detail=True, methods=["post"], url_path="apply-override")
+    def apply_override(self, request, pk=None):
+        assignment = self.get_object()
+        override = apply_assignment_override(
+            assignment=assignment,
+            actor=request.user,
+            reason_code=request.data.get("reason_code", ""),
+            description=request.data.get("description", ""),
+            changes=request.data.get("changes", {}),
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=assignment.owner_organization,
+            action="assignment.override",
+            object_type="override_request",
+            object_id=str(override.pk),
+            object_repr=str(override),
+            metadata={
+                "trip": assignment.trip.trip_id,
+                "reason_code": override.reason_code,
+                "requested_change": override.requested_change,
+            },
+            request=request,
+        )
+        return Response(OverrideRequestSerializer(override).data, status=status.HTTP_201_CREATED)
+
 
 class ScheduleEventViewSet(SchedulingViewSet):
     queryset = ScheduleEvent.objects.select_related("trip").all()
@@ -154,6 +299,121 @@ class ConflictViewSet(SchedulingViewSet):
         "trip__voyage",
     ).all()
     serializer_class = ConflictSerializer
+
+
+class OverrideRequestViewSet(SchedulingViewSet):
+    queryset = OverrideRequest.objects.select_related(
+        "plan_version",
+        "plan_version__plan",
+        "trip",
+        "trip__voyage",
+        "assignment",
+        "requested_by",
+        "applied_by",
+    ).all()
+    serializer_class = OverrideRequestSerializer
+
+
+class ApprovalRequestViewSet(SchedulingViewSet):
+    queryset = (
+        ApprovalRequest.objects.select_related(
+            "plan_version",
+            "plan_version__plan",
+            "requested_by",
+        )
+        .prefetch_related("decisions")
+        .all()
+    )
+    serializer_class = ApprovalRequestSerializer
+
+    @action(detail=True, methods=["post"], url_path="decide")
+    def decide(self, request, pk=None):
+        approval_request = self.get_object()
+        decision = record_approval_decision(
+            approval_request=approval_request,
+            actor=request.user,
+            decision=request.data.get("decision", ApprovalDecision.Decision.APPROVE),
+            authority_role=request.data.get("authority_role", ""),
+            comments=request.data.get("comments", ""),
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=decision.organization,
+            action="approval.decision",
+            object_type="approval_decision",
+            object_id=str(decision.pk),
+            object_repr=str(decision),
+            metadata={
+                "request_id": approval_request.request_id,
+                "authority_role": decision.authority_role,
+                "decision": decision.decision,
+            },
+            request=request,
+        )
+        approval_request.refresh_from_db()
+        return Response(ApprovalRequestSerializer(approval_request).data)
+
+
+class ApprovalDecisionViewSet(SchedulingViewSet):
+    queryset = ApprovalDecision.objects.select_related(
+        "approval_request",
+        "actor",
+        "organization",
+    ).all()
+    serializer_class = ApprovalDecisionSerializer
+
+
+class PublishedPlanSnapshotViewSet(SchedulingViewSet):
+    queryset = PublishedPlanSnapshot.objects.select_related(
+        "plan",
+        "plan_version",
+        "approval_request",
+        "published_by",
+    ).all()
+    serializer_class = PublishedPlanSnapshotSerializer
+
+
+class SimulationScenarioViewSet(SchedulingViewSet):
+    queryset = SimulationScenario.objects.select_related(
+        "baseline_version",
+        "baseline_version__plan",
+        "scenario_version",
+        "source_conflict",
+        "source_conflict__trip",
+        "source_conflict__trip__voyage",
+        "created_by",
+    ).all()
+    serializer_class = SimulationScenarioSerializer
+
+    @action(detail=True, methods=["post"], url_path="simulate")
+    def simulate(self, request, pk=None):
+        scenario = simulate_scenario(scenario=self.get_object())
+        record_audit_event(
+            actor=request.user,
+            organization=scenario.baseline_version.plan.organization,
+            action="simulation.run",
+            object_type="simulation_scenario",
+            object_id=str(scenario.pk),
+            object_repr=scenario.scenario_id,
+            metadata=scenario.delta_summary,
+            request=request,
+        )
+        return Response(SimulationScenarioSerializer(scenario).data)
+
+    @action(detail=True, methods=["post"], url_path="promote")
+    def promote(self, request, pk=None):
+        scenario = promote_scenario_to_proposed(scenario=self.get_object(), actor=request.user)
+        record_audit_event(
+            actor=request.user,
+            organization=scenario.baseline_version.plan.organization,
+            action="simulation.promote",
+            object_type="simulation_scenario",
+            object_id=str(scenario.pk),
+            object_repr=scenario.scenario_id,
+            metadata={"scenario_version": scenario.scenario_version_id},
+            request=request,
+        )
+        return Response(SimulationScenarioSerializer(scenario).data)
 
 
 class SchedulingOverviewViewSet(SchedulingViewSet):
@@ -173,13 +433,16 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     ),
                 )
             )
-            .order_by("-generated_at", "-created_at")
+            .order_by(F("generated_at").desc(nulls_last=True), "-created_at")
             .first()
         )
         trips = Trip.objects.none()
         assignments = Assignment.objects.none()
         events = ScheduleEvent.objects.none()
         conflicts = Conflict.objects.none()
+        override_requests = OverrideRequest.objects.none()
+        approval_requests = ApprovalRequest.objects.none()
+        scenarios = SimulationScenario.objects.none()
 
         if active_version:
             trips = (
@@ -225,6 +488,31 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "trip",
                 "trip__voyage",
             )
+            override_requests = OverrideRequest.objects.filter(
+                plan_version=active_version
+            ).select_related(
+                "plan_version",
+                "trip",
+                "trip__voyage",
+                "assignment",
+                "requested_by",
+                "applied_by",
+            )
+            approval_requests = (
+                ApprovalRequest.objects.filter(plan_version=active_version)
+                .select_related("plan_version", "requested_by")
+                .prefetch_related("decisions")
+            )
+            scenarios = SimulationScenario.objects.filter(
+                baseline_version=active_version
+            ).select_related(
+                "baseline_version",
+                "scenario_version",
+                "source_conflict",
+                "source_conflict__trip",
+                "source_conflict__trip__voyage",
+                "created_by",
+            )
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -253,6 +541,27 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "assignments": AssignmentSerializer(assignments, many=True).data,
                 "events": ScheduleEventSerializer(events, many=True).data,
                 "conflicts": ConflictSerializer(conflicts, many=True).data,
+                "overrideRequests": OverrideRequestSerializer(
+                    override_requests,
+                    many=True,
+                ).data,
+                "approvalRequests": ApprovalRequestSerializer(
+                    approval_requests,
+                    many=True,
+                ).data,
+                "publishedSnapshots": PublishedPlanSnapshotSerializer(
+                    PublishedPlanSnapshot.objects.select_related(
+                        "plan",
+                        "plan_version",
+                        "approval_request",
+                        "published_by",
+                    ),
+                    many=True,
+                ).data,
+                "simulationScenarios": SimulationScenarioSerializer(
+                    scenarios,
+                    many=True,
+                ).data,
                 "validation": {
                     "tripCount": trips.count(),
                     "assignmentCount": assignments.count(),
@@ -260,6 +569,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     "conflictCount": conflict_counts["total"] or 0,
                     "blockingConflictCount": conflict_counts["blocking"] or 0,
                     "criticalConflictCount": conflict_counts["critical"] or 0,
+                    "overrideCount": override_requests.count(),
+                    "approvalPendingCount": approval_requests.filter(
+                        status=ApprovalRequest.Status.PENDING
+                    ).count(),
+                    "scenarioCount": scenarios.count(),
                     "plannedMt": trip_totals["required"] or 0,
                     "loadedMt": trip_totals["loaded"] or 0,
                 },
