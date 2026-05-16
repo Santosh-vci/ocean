@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.audit.models import AuditEvent
 from apps.masters.models import (
     AssetCompatibilityRule,
     Barge,
@@ -42,16 +43,38 @@ from apps.scheduling.models import (
     ApprovalDecision,
     ApprovalRequest,
     Assignment,
+    Conflict,
+    ExportJob,
     OverrideRequest,
     Plan,
     PlanVersion,
+    PublishedPlanSnapshot,
+    ScheduleEvent,
     SimulationScenario,
+    Trip,
 )
 from apps.scheduling.services import clone_plan_version, generate_plan_version, simulate_scenario
 
 
 class Command(BaseCommand):
     help = "Seed the baseline local-development data required by the current build."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--master-data-only",
+            action="store_true",
+            help=(
+                "Seed organizations, roles, users, and master data only. "
+                "Operational planning/scheduling/export/audit records are cleared first."
+            ),
+        )
+        parser.add_argument(
+            "--reset-operational-data",
+            action="store_true",
+            help=(
+                "Clear operational planning, scheduling, export, and audit records before seeding."
+            ),
+        )
 
     def handle(self, *args, **options):
         email = os.getenv("SEED_ADMIN_EMAIL", "admin@coalflow.local")
@@ -253,7 +276,19 @@ class Command(BaseCommand):
             )
             self._assign(user, organization, role, scope, title)
 
+        if options["master_data_only"] or options["reset_operational_data"]:
+            self._reset_operational_data()
+
         self._seed_master_data(berau=berau, abl=abl)
+        if options["master_data_only"]:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Seeded Phase 1 organizations, roles, users, and master data only. "
+                    "Operational planning, scheduling, export, and audit records are empty."
+                )
+            )
+            return
+
         self._seed_planning_data(berau=berau, abl=abl, created_by=admin_user)
         self._seed_schedule_data(abl=abl, created_by=admin_user)
 
@@ -317,6 +352,32 @@ class Command(BaseCommand):
             data_scope=scope,
             defaults={"is_active": True},
         )
+
+    def _reset_operational_data(self):
+        ExportJob.objects.all().delete()
+        PublishedPlanSnapshot.objects.all().delete()
+        ApprovalDecision.objects.all().delete()
+        ApprovalRequest.objects.all().delete()
+        SimulationScenario.objects.all().delete()
+        OverrideRequest.objects.all().delete()
+        ScheduleEvent.objects.all().delete()
+        Assignment.objects.all().delete()
+        Conflict.objects.all().delete()
+        Trip.objects.all().delete()
+        PlanVersion.objects.all().delete()
+        Plan.objects.all().delete()
+
+        NavigationConstraintCheck.objects.all().delete()
+        BridgeWindow.objects.all().delete()
+        TideWindow.objects.all().delete()
+        JettyAvailabilityWindow.objects.all().delete()
+        AssetAvailabilityWindow.objects.all().delete()
+        CargoLayerStep.objects.all().delete()
+        CargoRequirement.objects.all().delete()
+        OGVVoyage.objects.all().delete()
+        ImportJob.objects.all().delete()
+
+        AuditEvent.objects.all().delete()
 
     def _seed_master_data(self, *, berau, abl):
         location_rows = [

@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -8,6 +9,8 @@ from apps.masters.models import Location, Route, RouteSegment
 from apps.organizations.models import Organization
 from apps.planning.models import (
     BridgeWindow,
+    CargoLayerStep,
+    CargoRequirement,
     ImportJob,
     NavigationConstraintCheck,
     OGVVoyage,
@@ -228,3 +231,46 @@ def test_planning_overview_exposes_tide_and_bridge_constraint_context():
     assert response.data["tideWindows"][0]["applicable_route_segment"]["sequence"] == 1
     assert response.data["bridgeWindows"][0]["location"]["code"] == "LOC-BRIDGE"
     assert response.data["constraintChecks"][0]["route_segment"]["requires_tide_window"] is True
+
+
+@pytest.mark.django_db
+def test_operator_ui_can_start_from_master_only_seed_with_intake_and_windows():
+    call_command("seed_phase0", "--reset-operational-data", "--master-data-only")
+    user = User.objects.get(username="berau.scheduler@coalflow.local")
+
+    client = APIClient()
+    client.force_authenticate(user)
+    import_response = client.post(
+        "/api/planning/import-jobs/validate-ogv-demand/",
+        {
+            "commit": True,
+            "filename": "operator-ui-demand.xlsx",
+            "source": "operator-ui-action",
+            "rows": [
+                {
+                    "voyage_id": "VOY-UI-TEST-001",
+                    "vessel_name": "MV Operator UI Import",
+                    "customer_name": "Pilot Customer",
+                    "laycan_start": "2026-11-05T00:00:00Z",
+                    "laycan_end": "2026-11-08T00:00:00Z",
+                    "eta": "2026-11-05T06:00:00Z",
+                    "required_mt": 64000,
+                }
+            ],
+        },
+        format="json",
+    )
+    windows_response = client.post("/api/planning/overview/enter-operating-windows/")
+    overview_response = client.get("/api/planning/overview/")
+
+    assert import_response.status_code == 201
+    assert import_response.data["status"] == ImportJob.Status.IMPORTED
+    assert OGVVoyage.objects.filter(voyage_id="VOY-UI-TEST-001").exists()
+    assert CargoRequirement.objects.count() == 2
+    assert CargoLayerStep.objects.count() == 2
+    assert windows_response.status_code == 201
+    assert windows_response.data["constraintChecks"] == 4
+    assert overview_response.status_code == 200
+    assert overview_response.data["voyages"][0]["vessel_name"] == "MV Operator UI Import"
+    assert overview_response.data["tideWindows"][0]["code"] == "TIDE-UI-OPERATING-01"
+    assert overview_response.data["bridgeWindows"][0]["code"] == "BRDG-UI-OPERATING-01"

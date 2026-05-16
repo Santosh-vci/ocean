@@ -40,6 +40,7 @@ import type {
   MasterDataOverview,
   ApprovalRequestRecord,
   OverrideRequestRecord,
+  PlanRecord,
   PlanVersionRecord,
   PlanningOverview,
   RbacOverview,
@@ -328,6 +329,7 @@ function App() {
           "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
+          commit: true,
           filename: `operator-ui-demand-${stamp}.xlsx`,
           source: "operator-ui-action",
           rows: [
@@ -343,7 +345,26 @@ function App() {
           ],
         }),
       });
-      return `Import validated: ${job.filename} (${job.valid_rows}/${job.total_rows} rows)`;
+      return `Import committed: ${job.filename} (${job.valid_rows}/${job.total_rows} rows)`;
+    });
+  }
+
+  async function handleEnterOperatingWindows() {
+    await runWorkspaceAction("Enter operating windows", async () => {
+      const csrfToken = await getCsrfToken();
+      const result = await apiFetch<{
+        assetWindows: number;
+        jettyWindows: number;
+        tideWindow: string;
+        bridgeWindow: string;
+        constraintChecks: number;
+      }>("/planning/overview/enter-operating-windows/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+      });
+      return `Operating windows entered: ${result.tideWindow}, ${result.bridgeWindow}, ${result.constraintChecks} checks`;
     });
   }
 
@@ -391,11 +412,45 @@ function App() {
     });
   }
 
+  async function createInitialOperatorPlanVersion() {
+    const csrfToken = await getCsrfToken();
+    const defaultMembership = currentUser?.memberships.find((membership) => membership.is_default)
+      ?? currentUser?.memberships[0];
+    const stamp = Date.now();
+    const plan = await apiFetch<PlanRecord>("/scheduling/plans/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        code: `PLAN-UI-${String(stamp).slice(-8)}`,
+        name: "Operator UI Planning Run",
+        organization_id: defaultMembership?.organization.id ?? null,
+        horizon_start: "2026-11-05T00:00:00Z",
+        horizon_end: "2026-11-12T23:59:00Z",
+        status: "active",
+      }),
+    });
+    return apiFetch<PlanVersionRecord>(`/scheduling/plans/${plan.id}/create-version/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+      },
+    });
+  }
+
   async function handleCreateDraft() {
     await runWorkspaceAction("Create draft", async () => {
       const activeVersion = schedulingOverview?.activePlanVersion;
       if (!activeVersion) {
-        throw new Error("No active plan version");
+        const draft = await createInitialOperatorPlanVersion();
+        return `Initial draft created: ${draft.plan_code} V${draft.version_no}`;
+      }
+      if (["draft", "proposed"].includes(activeVersion.status)) {
+        return `Draft already active: ${activeVersion.plan_code} V${activeVersion.version_no}`;
+      }
+      if (activeVersion.status === "validated") {
+        return `Editable plan already active: ${activeVersion.plan_code} V${activeVersion.version_no}`;
       }
       const csrfToken = await getCsrfToken();
       const draft = await apiFetch<PlanVersionRecord>(
@@ -413,8 +468,9 @@ function App() {
 
   async function handleRegeneratePlan() {
     await runWorkspaceAction("Generate schedule", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion;
-      if (!activeVersion || ["published", "superseded"].includes(activeVersion.status)) {
+      const activeVersion = schedulingOverview?.activePlanVersion
+        ?? await createInitialOperatorPlanVersion();
+      if (["published", "superseded"].includes(activeVersion.status)) {
         throw new Error("No editable active plan version");
       }
       const csrfToken = await getCsrfToken();
@@ -733,11 +789,16 @@ function App() {
           />
         ) : null}
         {route === "/constraints/tide-bridge" && canViewSchedule ? (
-          <TideBridgePage overview={planningOverview} />
+          <TideBridgePage
+            canEdit={canEditSchedule}
+            isActionRunning={isWorkspaceActionRunning}
+            onEnterOperatingWindows={handleEnterOperatingWindows}
+            overview={planningOverview}
+          />
         ) : null}
         {route === "/operations/tug-barge-assignment" && canViewSchedule ? (
           <TugBargeAssignmentPage
-            canEdit={canEditSchedule && activePlanIsEditable}
+            canEdit={canEditSchedule}
             canExport={canGenerateExports}
             isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}

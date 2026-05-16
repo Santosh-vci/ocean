@@ -42,8 +42,14 @@ router.register(
 router.register("planning/import-jobs", ImportJobViewSet, basename="planning-import-job")
 
 overview = PlanningOverviewViewSet.as_view({"get": "overview"})
+enter_operating_windows = PlanningOverviewViewSet.as_view({"post": "enter_operating_windows"})
 
 urlpatterns = [
     path("planning/overview/", overview, name="planning-overview"),
+    path(
+        "planning/overview/enter-operating-windows/",
+        enter_operating_windows,
+        name="planning-enter-operating-windows",
+    ),
     *router.urls,
 ]

@@ -10,6 +10,9 @@ import type {
 
 type TideBridgePageProps = {
   overview: PlanningOverview | null;
+  canEdit: boolean;
+  isActionRunning: boolean;
+  onEnterOperatingWindows: () => void;
 };
 
 const EMPTY_CHECKS: NavigationConstraintCheckRecord[] = [];
@@ -46,7 +49,12 @@ function bestRecovery(checks: NavigationConstraintCheckRecord[]) {
   return checks.find((check) => check.status === "missed") ?? checks.find((check) => check.status === "marginal");
 }
 
-export function TideBridgePage({ overview }: TideBridgePageProps) {
+export function TideBridgePage({
+  overview,
+  canEdit,
+  isActionRunning,
+  onEnterOperatingWindows,
+}: TideBridgePageProps) {
   const tideWindows = overview?.tideWindows ?? [];
   const bridgeWindows = overview?.bridgeWindows ?? [];
   const checks = overview?.constraintChecks ?? EMPTY_CHECKS;
@@ -62,11 +70,20 @@ export function TideBridgePage({ overview }: TideBridgePageProps) {
           <p>Constraints / Tide & Bridge Window Board</p>
           <h1>Tide & Bridge Window</h1>
         </div>
-        <div className="window-legend">
-          <span><i className="legend-dot ok" />Can cross</span>
-          <span><i className="legend-dot critical" />Missed</span>
-          <span><i className="legend-dot pending" />Marginal</span>
-          <span><i className="legend-dot waiting" />Waiting</span>
+        <div className="planning-actions">
+          <div className="window-legend">
+            <span><i className="legend-dot ok" />Can cross</span>
+            <span><i className="legend-dot critical" />Missed</span>
+            <span><i className="legend-dot pending" />Marginal</span>
+            <span><i className="legend-dot waiting" />Waiting</span>
+          </div>
+          <button
+            disabled={!canEdit || isActionRunning}
+            onClick={onEnterOperatingWindows}
+            type="button"
+          >
+            Enter operating windows
+          </button>
         </div>
       </header>
 

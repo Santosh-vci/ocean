@@ -133,6 +133,61 @@ def test_schedule_editor_can_generate_and_clone_with_audit():
 
 
 @pytest.mark.django_db
+def test_operator_ui_can_create_initial_plan_and_generate_from_blank_operational_seed():
+    call_command("seed_phase0", "--reset-operational-data", "--master-data-only")
+    user = User.objects.get(username="berau.scheduler@coalflow.local")
+    berau = Organization.objects.get(slug="berau-coal")
+
+    client = APIClient()
+    client.force_authenticate(user)
+    client.post(
+        "/api/planning/import-jobs/validate-ogv-demand/",
+        {
+            "commit": True,
+            "filename": "operator-ui-demand.xlsx",
+            "source": "operator-ui-action",
+            "rows": [
+                {
+                    "voyage_id": "VOY-UI-SCHED-001",
+                    "vessel_name": "MV Operator UI Import",
+                    "customer_name": "Pilot Customer",
+                    "laycan_start": "2026-11-05T00:00:00Z",
+                    "laycan_end": "2026-11-08T00:00:00Z",
+                    "eta": "2026-11-05T06:00:00Z",
+                    "required_mt": 64000,
+                }
+            ],
+        },
+        format="json",
+    )
+    client.post("/api/planning/overview/enter-operating-windows/")
+    plan_response = client.post(
+        "/api/scheduling/plans/",
+        {
+            "code": "PLAN-UI-TEST",
+            "name": "Operator UI Planning Run",
+            "organization_id": berau.id,
+            "horizon_start": "2026-11-05T00:00:00Z",
+            "horizon_end": "2026-11-12T23:59:00Z",
+            "status": "active",
+        },
+        format="json",
+    )
+    version_response = client.post(
+        f"/api/scheduling/plans/{plan_response.data['id']}/create-version/"
+    )
+    generate_response = client.post(
+        f"/api/scheduling/plan-versions/{version_response.data['id']}/generate/"
+    )
+
+    assert plan_response.status_code == 201
+    assert version_response.status_code == 201
+    assert generate_response.status_code == 200
+    assert generate_response.data["plan_code"] == "PLAN-UI-TEST"
+    assert Trip.objects.filter(plan_version_id=version_response.data["id"]).count() == 2
+
+
+@pytest.mark.django_db
 def test_assignment_override_requires_reason_and_records_audit():
     call_command("seed_phase0")
     platform = Organization.objects.get(slug="coalflow-platform")

@@ -5,11 +5,13 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
+from apps.planning.models import ImportJob, OGVVoyage
 from apps.scheduling.models import (
     ApprovalDecision,
     ApprovalRequest,
     Conflict,
     ExportJob,
+    Plan,
     PlanVersion,
     PublishedPlanSnapshot,
 )
@@ -114,3 +116,23 @@ def test_full_seeded_workflow_reaches_published_plan_and_governed_export(monkeyp
     assert AuditEvent.objects.filter(action="planning_import_job.validate").exists()
     assert AuditEvent.objects.filter(action="planversion.publish").exists()
     assert AuditEvent.objects.filter(action="export.generated").exists()
+
+
+@pytest.mark.django_db
+def test_master_data_only_seed_clears_operational_records():
+    call_command("seed_phase0")
+    assert OGVVoyage.objects.exists()
+    assert PlanVersion.objects.exists()
+
+    call_command("seed_phase0", "--reset-operational-data", "--master-data-only")
+
+    assert User.objects.filter(username="admin@coalflow.local").exists()
+    assert User.objects.filter(username="berau.scheduler@coalflow.local").exists()
+    assert OGVVoyage.objects.count() == 0
+    assert ImportJob.objects.count() == 0
+    assert Plan.objects.count() == 0
+    assert PlanVersion.objects.count() == 0
+    assert Conflict.objects.count() == 0
+    assert ExportJob.objects.count() == 0
+    assert PublishedPlanSnapshot.objects.count() == 0
+    assert AuditEvent.objects.count() == 0
