@@ -14,8 +14,13 @@ type RecoveryPageProps = {
   canEdit?: boolean;
   isActionRunning?: boolean;
   onApprove?: () => void;
+  onCreateScenario?: (conflictId: number | null) => void;
   onPublish?: () => void;
   onReject?: () => void;
+  onRunSimulation?: () => void;
+  onSubmitApproval?: () => void;
+  onPromoteScenario?: () => void;
+  onPublishTriage?: () => void;
   canPublish?: boolean;
 };
 
@@ -62,7 +67,13 @@ function approvalCoverage(request: ApprovalRequestRecord | undefined) {
   };
 }
 
-export function ExceptionCenterPage({ overview, canEdit = false }: RecoveryPageProps) {
+export function ExceptionCenterPage({
+  overview,
+  canEdit = false,
+  isActionRunning = false,
+  onCreateScenario,
+  onPublishTriage,
+}: RecoveryPageProps) {
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const scenarios = overview?.simulationScenarios ?? EMPTY_SCENARIOS;
@@ -84,16 +95,19 @@ export function ExceptionCenterPage({ overview, canEdit = false }: RecoveryPageP
         <div className="planning-actions">
           <span className="phase-chip">Chunk 5 · Active triage</span>
           <button
-            disabled
-            title={canEdit
-              ? "Scenario conversion is locked until governed adjustment capture."
-              : "Your role cannot convert exceptions to scenarios."}
+            disabled={!canEdit || !onCreateScenario || isActionRunning}
+            onClick={() => onCreateScenario?.(selectedConflict?.id ?? null)}
+            title={!canEdit ? "Your role cannot convert exceptions to scenarios." : undefined}
             type="button"
           >
-            Scenario locked
+            Convert to scenario
           </button>
-          <button disabled title="Triage publishing is outside Phase 1 action scope." type="button">
-            Publish triage locked
+          <button
+            disabled={!onPublishTriage || isActionRunning}
+            onClick={onPublishTriage}
+            type="button"
+          >
+            Publish triage view
           </button>
         </div>
       </header>
@@ -121,7 +135,16 @@ export function ExceptionCenterPage({ overview, canEdit = false }: RecoveryPageP
           <section>
             <h2>OGV focus</h2>
             {trips.slice(0, 4).map((trip) => (
-              <button key={trip.id} type="button">{trip.voyage.vessel_name}</button>
+              <button
+                disabled={!conflicts.some((conflict) => conflict.trip === trip.id)}
+                key={trip.id}
+                onClick={() => setSelectedId(
+                  conflicts.find((conflict) => conflict.trip === trip.id)?.id ?? null,
+                )}
+                type="button"
+              >
+                {trip.voyage.vessel_name}
+              </button>
             ))}
           </section>
         </aside>
@@ -207,7 +230,14 @@ export function ExceptionCenterPage({ overview, canEdit = false }: RecoveryPageP
   );
 }
 
-export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryPageProps) {
+export function SimulationWorkspacePage({
+  overview,
+  canEdit = false,
+  isActionRunning = false,
+  onPromoteScenario,
+  onRunSimulation,
+  onSubmitApproval,
+}: RecoveryPageProps) {
   const scenarios = overview?.simulationScenarios ?? EMPTY_SCENARIOS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const scenario = scenarios[0];
@@ -223,18 +253,20 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
         <div className="planning-actions">
           <span className="phase-chip">Chunk 5 · Scenario delta</span>
           <button
-            disabled
-            title={canEdit ? "Simulation execution is read-only in this Phase 1 cockpit." : "Your role cannot run simulations."}
+            disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
+            onClick={onRunSimulation}
+            title={!canEdit ? "Your role cannot run simulations." : undefined}
             type="button"
           >
-            Run simulation locked
+            Run simulation
           </button>
           <button
-            disabled
-            title={canEdit ? "Promotion is locked until governed adjustment capture." : "Your role cannot promote scenarios."}
+            disabled={!canEdit || !scenario || !onPromoteScenario || isActionRunning}
+            onClick={onPromoteScenario}
+            title={!canEdit ? "Your role cannot promote scenarios." : undefined}
             type="button"
           >
-            Promote locked
+            Promote to proposed
           </button>
         </div>
       </header>
@@ -259,11 +291,12 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
             <div><dt>Status</dt><dd>{short(scenario?.status)}</dd></div>
           </dl>
           <button
-            disabled
-            title={canEdit ? "Simulation execution is read-only in this Phase 1 cockpit." : "Your role cannot run simulations."}
+            disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
+            onClick={onRunSimulation}
+            title={!canEdit ? "Your role cannot run simulations." : undefined}
             type="button"
           >
-            Run simulation locked
+            Run simulation
           </button>
         </aside>
 
@@ -331,6 +364,13 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
               <strong>Next step</strong>
               <p>Promote to proposed plan, then request dual-party approval.</p>
             </section>
+            <button
+              disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}
+              onClick={onSubmitApproval}
+              type="button"
+            >
+              Submit approval request
+            </button>
           </div>
         </aside>
       </div>

@@ -209,6 +209,7 @@ type MasterDataPageProps = {
   isActionRunning: boolean;
   onExportCatalog: (catalogKey: CatalogKey) => void;
   onImportCatalog: (catalogKey: CatalogKey, selectedRecord: MasterDataRecord | null) => void;
+  onValidateCatalog: (catalogKey: CatalogKey) => void;
 };
 
 export function MasterDataPage({
@@ -217,6 +218,7 @@ export function MasterDataPage({
   isActionRunning,
   onExportCatalog,
   onImportCatalog,
+  onValidateCatalog,
 }: MasterDataPageProps) {
   const [activeCatalogKey, setActiveCatalogKey] = useState<CatalogKey>("tugs");
   const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
@@ -371,7 +373,17 @@ export function MasterDataPage({
                         </td>
                       ))}
                       <td>
-                        <button className="row-menu" type="button">...</button>
+                        <button
+                          aria-label={`View ${record.code}`}
+                          className="row-menu"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedRecordId(record.id);
+                          }}
+                          type="button"
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   );
@@ -439,9 +451,21 @@ export function MasterDataPage({
             </section>
 
             <div className="drawer-actions">
-              <button type="button">Validate</button>
-              <button disabled={!canManage} type="button">Submit for approval</button>
-              <button disabled type="button">Publish config locked</button>
+              <button disabled={isActionRunning} onClick={() => onValidateCatalog(activeCatalog.key)} type="button">
+                Validate
+              </button>
+              <button
+                disabled
+                title={canManage
+                  ? "Master-data approval workflow is locked for this Phase 1 pilot."
+                  : "Your role cannot submit master data for approval."}
+                type="button"
+              >
+                Approval locked
+              </button>
+              <button disabled title="Master-data publishing is controlled by the seed baseline in Phase 1." type="button">
+                Publish config locked
+              </button>
             </div>
           </aside>
         ) : null}

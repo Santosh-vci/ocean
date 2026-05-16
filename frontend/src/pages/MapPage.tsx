@@ -6,6 +6,7 @@ import type { DashboardReadModel, SchedulingOverview } from "../types";
 type LiveResourceMapPageProps = {
   dashboard: DashboardReadModel | null;
   overview: SchedulingOverview | null;
+  canRunSimulation: boolean;
   onNavigate: (path: string) => void;
 };
 
@@ -24,10 +25,16 @@ function short(value: string | undefined | null) {
   return value ? value.replaceAll("_", " ").toUpperCase() : "?";
 }
 
-export function LiveResourceMapPage({ dashboard, overview, onNavigate }: LiveResourceMapPageProps) {
+export function LiveResourceMapPage({
+  dashboard,
+  overview,
+  canRunSimulation,
+  onNavigate,
+}: LiveResourceMapPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const [selectedId, setSelectedId] = useState<number | null>(assignments[0]?.id ?? null);
+  const [mapMode, setMapMode] = useState<"manual" | "tide" | "exception">("manual");
   const selected = assignments.find((assignment) => assignment.id === selectedId) ?? assignments[0];
   const selectedConflict = conflicts.find((conflict) => conflict.trip === selected?.trip);
   const totals = dashboard?.queuePressure.fleet;
@@ -49,7 +56,9 @@ export function LiveResourceMapPage({ dashboard, overview, onNavigate }: LiveRes
           <h1>Live Resource Map</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip secure">Chunk 6 ? Manual state view</span>
+          <span className="phase-chip secure">
+            Chunk 6 ? {mapMode === "manual" ? "Manual state view" : mapMode === "tide" ? "Tide / bridge view" : "Exception view"}
+          </span>
           <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">
             Open assignment board
           </button>
@@ -71,9 +80,33 @@ export function LiveResourceMapPage({ dashboard, overview, onNavigate }: LiveRes
       <div className="live-map-layout">
         <aside className="board-surface map-filter-rail">
           <div className="grid-header"><div><SvgIcon name="map" /><strong>Map mode</strong></div></div>
-          <button className="active" type="button">Manual live state</button>
-          <button onClick={() => onNavigate("/constraints/tide-bridge")} type="button">Tide / bridge</button>
-          <button onClick={() => onNavigate("/exceptions/center")} type="button">Exception overlay</button>
+          <button
+            className={mapMode === "manual" ? "active" : ""}
+            onClick={() => setMapMode("manual")}
+            type="button"
+          >
+            Manual live state
+          </button>
+          <button
+            className={mapMode === "tide" ? "active" : ""}
+            onClick={() => {
+              setMapMode("tide");
+              onNavigate("/constraints/tide-bridge");
+            }}
+            type="button"
+          >
+            Tide / bridge
+          </button>
+          <button
+            className={mapMode === "exception" ? "active" : ""}
+            onClick={() => {
+              setMapMode("exception");
+              onNavigate("/exceptions/center");
+            }}
+            type="button"
+          >
+            Exception overlay
+          </button>
           <section>
             <h2>Asset layers</h2>
             <span>? Tugs</span>
@@ -127,8 +160,13 @@ export function LiveResourceMapPage({ dashboard, overview, onNavigate }: LiveRes
               <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">
                 Open assignment board
               </button>
-              <button onClick={() => onNavigate("/simulation/workspace")} type="button">
-                Run simulation
+              <button
+                disabled={!canRunSimulation}
+                onClick={() => onNavigate("/simulation/workspace")}
+                title={!canRunSimulation ? "Your role cannot run simulations." : undefined}
+                type="button"
+              >
+                Open simulation workspace
               </button>
             </div>
           ) : null}

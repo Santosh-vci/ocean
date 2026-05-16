@@ -16,7 +16,9 @@ type LogisticsPageProps = {
   isActionRunning?: boolean;
   onCreateDraft?: () => void;
   onExport?: () => void;
+  onForceStartJetty?: () => void;
   onRegenerate?: () => void;
+  onSubmitApproval?: () => void;
 };
 
 const EMPTY_ASSIGNMENTS: AssignmentRecord[] = [];
@@ -227,6 +229,7 @@ export function JettyLoadingPage({
   canExport = false,
   isActionRunning = false,
   onExport,
+  onForceStartJetty,
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
@@ -250,13 +253,12 @@ export function JettyLoadingPage({
         <div className="planning-actions">
           <span className="phase-chip">Chunk 4 · Source-side queue</span>
           <button
-            disabled
-            title={canEdit
-              ? "Manual jetty force-start is locked until governed adjustment capture."
-              : "Your role cannot force-start jetty queues."}
+            disabled={!canEdit || !onForceStartJetty || isActionRunning}
+            onClick={onForceStartJetty}
+            title={!canEdit ? "Your role cannot force-start jetty queues." : undefined}
             type="button"
           >
-            Force start locked
+            Force start jetty
           </button>
           <button
             disabled={!canExport || !onExport || isActionRunning}
@@ -411,6 +413,7 @@ export function PublishedPlanPage({
   canCreateDraft = false,
   isActionRunning = false,
   onCreateDraft,
+  onSubmitApproval,
 }: LogisticsPageProps) {
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
@@ -435,6 +438,13 @@ export function PublishedPlanPage({
             type="button"
           >
             Create draft
+          </button>
+          <button
+            disabled={!canCreateDraft || !onSubmitApproval || isActionRunning}
+            onClick={onSubmitApproval}
+            type="button"
+          >
+            Submit approval
           </button>
         </div>
       </header>

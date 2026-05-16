@@ -38,10 +38,13 @@ import type {
   MasterDataCatalogs,
   MasterDataRecord,
   MasterDataOverview,
+  ApprovalRequestRecord,
+  OverrideRequestRecord,
   PlanVersionRecord,
   PlanningOverview,
   RbacOverview,
   SchedulingOverview,
+  SimulationScenarioRecord,
 } from "./types";
 
 function currentHashPath() {
@@ -141,6 +144,9 @@ function App() {
     : false;
   const canPublishSchedule = currentUser
     ? canAccess(currentUser.permissions, "schedule.publish")
+    : false;
+  const canRunSimulation = currentUser
+    ? canEditSchedule && canAccess(currentUser.permissions, "simulation.run")
     : false;
 
   const refreshWorkspaceData = useCallback(async () => {
@@ -251,6 +257,34 @@ function App() {
     setExportError(null);
   }
 
+  async function handleSyncWorkspace() {
+    await runWorkspaceAction("Sync workspace", async () => "Workspace synchronized");
+  }
+
+  function handleOpenNotifications() {
+    if (canViewSchedule) {
+      handleNavigate("/exceptions/center");
+      return;
+    }
+    if (canViewAudit) {
+      handleNavigate("/admin/audit-logs");
+      return;
+    }
+    handleNavigate(navItems[0]?.path ?? "/dashboard/situation");
+  }
+
+  function handleOpenApps() {
+    if (canViewMasterData) {
+      handleNavigate("/admin/master-data");
+      return;
+    }
+    if (canViewExports) {
+      handleNavigate("/admin/export-handoff");
+      return;
+    }
+    handleNavigate(navItems[0]?.path ?? "/dashboard/situation");
+  }
+
   async function handleGenerateExport(command: {
     exportType: ExportType;
     exportFormat: ExportFormat;
@@ -349,6 +383,14 @@ function App() {
     });
   }
 
+  async function handleMasterDataValidate(catalogKey: MasterDataCatalogKey) {
+    await runWorkspaceAction("Master data validate", async () => {
+      const records = masterDataOverview?.catalogs[catalogKey] ?? [];
+      const inactive = records.filter((record) => !record.is_active).length;
+      return `Master data validation complete: ${records.length} ${catalogKey} records, ${inactive} inactive`;
+    });
+  }
+
   async function handleCreateDraft() {
     await runWorkspaceAction("Create draft", async () => {
       const activeVersion = schedulingOverview?.activePlanVersion;
@@ -386,6 +428,128 @@ function App() {
         },
       );
       return `Schedule generated: ${version.plan_code} V${version.version_no}`;
+    });
+  }
+
+  async function handleForceStartJetty() {
+    await runWorkspaceAction("Force start jetty", async () => {
+      const assignment = schedulingOverview?.assignments.find((item) => item.jetty)
+        ?? schedulingOverview?.assignments[0];
+      if (!assignment) {
+        throw new Error("No assignment available for jetty override");
+      }
+      const csrfToken = await getCsrfToken();
+      const override = await apiFetch<OverrideRequestRecord>(
+        `/scheduling/assignments/${assignment.id}/apply-override/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            reason_code: "jetty_delay",
+            description: `Force-started ${assignment.jetty?.code ?? "jetty queue"} from operator cockpit.`,
+            changes: {
+              status: "loading",
+              next_action: "Force-started from operator cockpit; monitor downstream tide/bridge gates.",
+            },
+          }),
+        },
+      );
+      return `Governed jetty override applied: ${override.reason_code.replaceAll("_", " ")}`;
+    });
+  }
+
+  async function handleCreateScenario(conflictId: number | null) {
+    await runWorkspaceAction("Create scenario", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion) {
+        throw new Error("No active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const scenario = await apiFetch<SimulationScenarioRecord>(
+        `/scheduling/plan-versions/${activeVersion.id}/create-scenario/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            ...(conflictId ? { conflict: conflictId } : {}),
+            name: `Operator recovery ${activeVersion.plan_code} V${activeVersion.version_no}`,
+          }),
+        },
+      );
+      handleNavigate("/simulation/workspace");
+      return `Scenario created: ${scenario.scenario_id}`;
+    });
+  }
+
+  function currentScenario() {
+    return schedulingOverview?.simulationScenarios[0] ?? null;
+  }
+
+  async function handleRunSimulation() {
+    await runWorkspaceAction("Run simulation", async () => {
+      const scenario = currentScenario();
+      if (!scenario) {
+        throw new Error("No simulation scenario");
+      }
+      const csrfToken = await getCsrfToken();
+      const simulated = await apiFetch<SimulationScenarioRecord>(
+        `/scheduling/scenarios/${scenario.id}/simulate/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Simulation complete: ${simulated.scenario_id}`;
+    });
+  }
+
+  async function handlePromoteScenario() {
+    await runWorkspaceAction("Promote scenario", async () => {
+      const scenario = currentScenario();
+      if (!scenario) {
+        throw new Error("No simulation scenario");
+      }
+      const csrfToken = await getCsrfToken();
+      const promoted = await apiFetch<SimulationScenarioRecord>(
+        `/scheduling/scenarios/${scenario.id}/promote/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Scenario promoted: ${promoted.scenario_version_ref ?? promoted.scenario_id}`;
+    });
+  }
+
+  async function handleSubmitApproval() {
+    await runWorkspaceAction("Submit approval", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion || ["published", "superseded"].includes(activeVersion.status)) {
+        throw new Error("No submittable active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const approval = await apiFetch<ApprovalRequestRecord>(
+        `/scheduling/plan-versions/${activeVersion.id}/request-approval/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            reason: `Submitted from operator cockpit for ${activeVersion.plan_code} V${activeVersion.version_no}.`,
+          }),
+        },
+      );
+      handleNavigate("/approvals/publishing");
+      return `Approval submitted: ${approval.request_id}`;
     });
   }
 
@@ -498,15 +662,30 @@ function App() {
   const firstAccessiblePath = navItems[0]?.path ?? "/dashboard/situation";
   const routeIsAllowed = navItems.some((item) => item.path === activePath);
   const route = routeIsAllowed ? activePath : firstAccessiblePath;
+  const activePlanStatus = schedulingOverview?.activePlanVersion?.status;
+  const activePlanIsEditable = Boolean(
+    activePlanStatus && !["published", "superseded"].includes(activePlanStatus),
+  );
+  const isWorkspaceActionRunning = Boolean(actionInFlight);
 
   return (
     <main className={sidebarCollapsed ? "operations-shell sidebar-is-collapsed" : "operations-shell"}>
-      <Topbar currentUser={currentUser} onLogout={handleLogout} />
+      <Topbar
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onOpenApps={handleOpenApps}
+        onOpenNotifications={handleOpenNotifications}
+        onSyncWorkspace={handleSyncWorkspace}
+      />
       <Sidebar
         activePath={route}
+        canOpenSystemAudit={canViewAudit}
+        canOpenTerminalSupport={canViewExports}
         collapsed={sidebarCollapsed}
         modules={navModules}
         onNavigate={handleNavigate}
+        onOpenSystemAudit={() => handleNavigate("/admin/audit-logs")}
+        onOpenTerminalSupport={() => handleNavigate("/admin/export-handoff")}
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
       />
       <section className="operations-main">
@@ -515,9 +694,10 @@ function App() {
         {route === "/admin/master-data" && masterDataOverview ? (
           <MasterDataPage
             canManage={canManageMasterData}
-            isActionRunning={actionInFlight === "Master data import" || actionInFlight === "Master data export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExportCatalog={handleMasterDataExport}
             onImportCatalog={handleMasterDataImport}
+            onValidateCatalog={handleMasterDataValidate}
             overview={masterDataOverview}
           />
         ) : null}
@@ -537,7 +717,7 @@ function App() {
           <OgvDemandPage
             canEdit={canEditSchedule}
             canExport={canGenerateExports}
-            isActionRunning={actionInFlight === "Import demand" || actionInFlight === "Export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExportBoard={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
             onImportDemand={handleImportDemand}
             overview={planningOverview}
@@ -547,7 +727,7 @@ function App() {
           <CoalGradeSequencePage
             canEdit={canEditSchedule}
             canExport={canGenerateExports}
-            isActionRunning={actionInFlight === "Export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })}
             overview={planningOverview}
           />
@@ -557,9 +737,9 @@ function App() {
         ) : null}
         {route === "/operations/tug-barge-assignment" && canViewSchedule ? (
           <TugBargeAssignmentPage
-            canEdit={canEditSchedule}
+            canEdit={canEditSchedule && activePlanIsEditable}
             canExport={canGenerateExports}
-            isActionRunning={actionInFlight === "Generate schedule" || actionInFlight === "Export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
             onRegenerate={handleRegeneratePlan}
             overview={schedulingOverview}
@@ -567,17 +747,18 @@ function App() {
         ) : null}
         {route === "/operations/jetty-loading" && canViewSchedule ? (
           <JettyLoadingPage
-            canEdit={canEditSchedule}
+            canEdit={canEditSchedule && activePlanIsEditable}
             canExport={canGenerateExports}
-            isActionRunning={actionInFlight === "Export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            onForceStartJetty={handleForceStartJetty}
             overview={schedulingOverview}
           />
         ) : null}
         {route === "/operations/cts-floating-crane" && canViewSchedule ? (
           <CtsOperationsPage
             canExport={canGenerateExports}
-            isActionRunning={actionInFlight === "Export"}
+            isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
             overview={schedulingOverview}
           />
@@ -585,22 +766,38 @@ function App() {
         {route === "/schedule/published-plan" && canViewSchedule ? (
           <PublishedPlanPage
             canCreateDraft={canEditSchedule}
-            isActionRunning={actionInFlight === "Create draft"}
+            isActionRunning={isWorkspaceActionRunning}
             onCreateDraft={handleCreateDraft}
+            onSubmitApproval={activePlanIsEditable ? handleSubmitApproval : undefined}
             overview={schedulingOverview}
           />
         ) : null}
         {route === "/exceptions/center" && canViewSchedule ? (
-          <ExceptionCenterPage canEdit={canEditSchedule} overview={schedulingOverview} />
+          <ExceptionCenterPage
+            canEdit={canEditSchedule && activePlanIsEditable}
+            isActionRunning={isWorkspaceActionRunning}
+            onCreateScenario={handleCreateScenario}
+            onPublishTriage={canGenerateExports
+              ? () => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })
+              : undefined}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/simulation/workspace" && canEditSchedule ? (
-          <SimulationWorkspacePage canEdit={canEditSchedule} overview={schedulingOverview} />
+          <SimulationWorkspacePage
+            canEdit={canEditSchedule && activePlanIsEditable}
+            isActionRunning={isWorkspaceActionRunning}
+            onPromoteScenario={handlePromoteScenario}
+            onRunSimulation={handleRunSimulation}
+            onSubmitApproval={activePlanIsEditable ? handleSubmitApproval : undefined}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/approvals/publishing" && canApproveSchedule ? (
           <ApprovalsPublishingPage
             canEdit={canApproveSchedule}
             canPublish={canPublishSchedule}
-            isActionRunning={actionInFlight === "Approve plan" || actionInFlight === "Publish plan"}
+            isActionRunning={isWorkspaceActionRunning}
             onApprove={handleApprovePlan}
             onPublish={handlePublishPlan}
             onReject={handleRejectPlan}
@@ -609,6 +806,7 @@ function App() {
         ) : null}
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
+            canRunSimulation={canRunSimulation}
             dashboard={dashboardReadModel}
             onNavigate={handleNavigate}
             overview={schedulingOverview}

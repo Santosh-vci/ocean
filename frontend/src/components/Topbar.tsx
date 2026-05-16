@@ -3,10 +3,19 @@ import { SvgIcon } from "./SvgIcon";
 
 type TopbarProps = {
   currentUser: CurrentUser;
+  onOpenApps: () => void;
+  onOpenNotifications: () => void;
   onLogout: () => void;
+  onSyncWorkspace: () => void;
 };
 
-export function Topbar({ currentUser, onLogout }: TopbarProps) {
+export function Topbar({
+  currentUser,
+  onOpenApps,
+  onOpenNotifications,
+  onLogout,
+  onSyncWorkspace,
+}: TopbarProps) {
   const defaultMembership = currentUser.memberships.find((membership) => membership.is_default);
   const currentRole = currentUser.assignments[0]?.role.name ?? "No role assigned";
   const initials = currentUser.email
@@ -38,13 +47,13 @@ export function Topbar({ currentUser, onLogout }: TopbarProps) {
       </div>
 
       <div className="topbar-actions">
-        <button aria-label="Sync workspace" type="button">
+        <button aria-label="Sync workspace" onClick={onSyncWorkspace} type="button">
           <SvgIcon name="sync" />
         </button>
-        <button aria-label="Notifications" type="button">
+        <button aria-label="Notifications" onClick={onOpenNotifications} type="button">
           <SvgIcon name="bell" />
         </button>
-        <button aria-label="Apps" type="button">
+        <button aria-label="Apps" onClick={onOpenApps} type="button">
           <SvgIcon name="apps" />
         </button>
         <button className="user-pill" onClick={onLogout} title="Sign out" type="button">

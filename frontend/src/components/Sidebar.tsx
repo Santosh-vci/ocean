@@ -7,7 +7,11 @@ type SidebarProps = {
   activePath: string;
   collapsed: boolean;
   modules: NavModule[];
+  canOpenSystemAudit: boolean;
+  canOpenTerminalSupport: boolean;
   onNavigate: (path: string) => void;
+  onOpenSystemAudit: () => void;
+  onOpenTerminalSupport: () => void;
   onToggleCollapsed: () => void;
 };
 
@@ -15,7 +19,11 @@ export function Sidebar({
   activePath,
   collapsed,
   modules,
+  canOpenSystemAudit,
+  canOpenTerminalSupport,
   onNavigate,
+  onOpenSystemAudit,
+  onOpenTerminalSupport,
   onToggleCollapsed,
 }: SidebarProps) {
   const activeModuleId = useMemo(
@@ -119,11 +127,21 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-support">
-        <button type="button" title={collapsed ? "System Audit" : undefined}>
+        <button
+          disabled={!canOpenSystemAudit}
+          onClick={onOpenSystemAudit}
+          type="button"
+          title={collapsed ? "System Audit" : undefined}
+        >
           <SvgIcon name="audit" />
           <span>System Audit</span>
         </button>
-        <button type="button" title={collapsed ? "Terminal Support" : undefined}>
+        <button
+          disabled={!canOpenTerminalSupport}
+          onClick={onOpenTerminalSupport}
+          type="button"
+          title={collapsed ? "Terminal Support" : undefined}
+        >
           <SvgIcon name="help" />
           <span>Terminal Support</span>
         </button>
