@@ -32,6 +32,21 @@ The pack is based on:
 8. `08_Phase_1_Implementation_Spec.md`  
    Product Phase 1 implementation specification: Dockerized target stack, domain model, schedule engine rules, API surface, chunked delivery plan, testing strategy, and phase-exit criteria.
 
+9. `09_Ch0_Ch6_Implementation_Validation.md`
+   Validation matrix for the first six implementation chunks and the gaps closed in the dashboard/read-model pass.
+
+10. `10_Pilot_Readiness_Runbook.md`
+    Docker deployment, health checks, seeded pilot users, UAT scripts, backup rehearsal, restore, and logging rules.
+
+11. `11_API_Contract_Baseline.md`
+    Baseline Phase 1 API contract for authentication, planning, scheduling, dashboard, exports, and audit.
+
+12. `12_Phase_1_Completion_Evidence.md`
+    Runtime proof evidence for the ten Phase 1 definition-of-done stages, with the latest machine-readable evidence file under `docs/evidence/phase1/`.
+
+13. `13_Phase_1_Operator_Manual.md`
+    Stage-by-stage operator instructions for conducting end-to-end Phase 1 planning.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.
@@ -45,4 +60,3 @@ The planning logic must bind:
 - river/tide/bridge constraints
 - live position/status
 - schedule disruption and recovery simulation
-

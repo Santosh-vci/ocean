@@ -56,15 +56,21 @@ docker compose run --rm frontend npm run lint
 # pilot backup rehearsal
 powershell -ExecutionPolicy Bypass -File infra/scripts/backup-rehearsal.ps1
 
+# Phase 1 end-to-end proof run
+docker compose run --rm -e RUN_STARTUP_TASKS=0 api python manage.py phase1_e2e_proof --json
+
 # optional dev tools
 docker compose --profile devtools up flower mailpit
 ```
 
 ## Current milestone
 
-Chunk 8 is the pilot-readiness hardening pass:
+Product Phase 1 now has a repeatable completion proof:
 
-- full Dockerized Phase 1 workflow from demand validation to schedule, approvals, publish, dashboard, and exports;
+- real Dockerized happy-path workflow from demand and cargo layers to manual windows, schedule generation, override, dual approval, publish, audit, and governed export;
+- seeded constraint scenario proving tide, bridge, layer-sequence, barge, jetty, and compatibility blockers;
+- completion evidence in `docs/12_Phase_1_Completion_Evidence.md` and `docs/evidence/phase1/phase1_e2e_evidence.json`;
+- operator instructions in `docs/13_Phase_1_Operator_Manual.md`;
 - governed RBAC/audit/export controls;
 - observability endpoints for liveness, readiness, and admin-only safe metrics;
 - persisted export artifact volume for local Docker runs;

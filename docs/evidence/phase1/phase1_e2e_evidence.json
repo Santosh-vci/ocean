@@ -1,0 +1,371 @@
+﻿{
+  "applicationEvidencePaths": [
+    "http://localhost:8080/#/dashboard/situation",
+    "http://localhost:8080/#/admin/master-data",
+    "http://localhost:8080/#/schedule/ogv-demand",
+    "http://localhost:8080/#/constraints/tide-bridge",
+    "http://localhost:8080/#/schedule/published-plan",
+    "http://localhost:8080/#/approvals/publishing",
+    "http://localhost:8080/#/admin/audit-logs",
+    "http://localhost:8080/#/admin/export-handoff"
+  ],
+  "auditTrail": {
+    "eventCount": 10,
+    "events": [
+      {
+        "action": "phase1.proof.login_roles_verified",
+        "actor": "admin@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.453701+00:00",
+        "objectId": "P1-E2E-20260516033031-01",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.master_data_reviewed",
+        "actor": "admin@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.459452+00:00",
+        "objectId": "P1-E2E-20260516033031-02",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.demand_uploaded",
+        "actor": "berau.scheduler@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.473734+00:00",
+        "objectId": "P1-E2E-20260516033031-03",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.manual_windows_entered",
+        "actor": "abl.dispatcher@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.497224+00:00",
+        "objectId": "P1-E2E-20260516033031-04",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.schedule_generated",
+        "actor": "admin@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.546111+00:00",
+        "objectId": "P1-E2E-20260516033031-05",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.trip_chain_inspected",
+        "actor": "control.tower@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.553841+00:00",
+        "objectId": "P1-E2E-20260516033031-06",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.governed_adjustment_applied",
+        "actor": "abl.dispatcher@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.565127+00:00",
+        "objectId": "P1-E2E-20260516033031-07",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.plan_published",
+        "actor": "control.tower@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.617970+00:00",
+        "objectId": "P1-E2E-20260516033031-08",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.live_version_retrieved",
+        "actor": "control.tower@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.623760+00:00",
+        "objectId": "P1-E2E-20260516033031-09",
+        "objectType": "phase1_e2e_stage"
+      },
+      {
+        "action": "phase1.proof.governed_export_generated",
+        "actor": "control.tower@coalflow.local",
+        "createdAt": "2026-05-16T03:30:31.653820+00:00",
+        "objectId": "P1-E2E-20260516033031-10",
+        "objectType": "phase1_e2e_stage"
+      }
+    ]
+  },
+  "constraintScenario": {
+    "blockingConflictCount": 5,
+    "conflictCount": 7,
+    "examples": [
+      {
+        "blocking": true,
+        "code": "BARGE_UNAVAILABLE",
+        "message": "BRG-KAL-22 is unavailable inside the trip window.",
+        "severity": "critical",
+        "vessel": "MV PACIFIC PRIDE"
+      },
+      {
+        "blocking": true,
+        "code": "BRIDGE_WINDOW_MISSED",
+        "message": "Hold upstream and request next bridge lift.",
+        "severity": "critical",
+        "vessel": "MV NORTH STAR"
+      },
+      {
+        "blocking": true,
+        "code": "LAYER_SEQUENCE_VIOLATION",
+        "message": "Mahoni layer cannot precede Sungkai approval",
+        "severity": "critical",
+        "vessel": "MV NORTH STAR"
+      },
+      {
+        "blocking": true,
+        "code": "TUG_BARGE_INCOMPATIBLE",
+        "message": "BER-TUG-08 is incompatible with BRG-KAL-22.",
+        "severity": "critical",
+        "vessel": "MV GOLDEN ORIOLE"
+      },
+      {
+        "blocking": true,
+        "code": "TUG_BARGE_INCOMPATIBLE",
+        "message": "BER-TUG-08 is incompatible with BRG-KAL-22.",
+        "severity": "critical",
+        "vessel": "MV PACIFIC PRIDE"
+      },
+      {
+        "blocking": false,
+        "code": "JETTY_OVERLAP",
+        "message": "JTY-LATI is reduced during this loading window.",
+        "severity": "warning",
+        "vessel": "MV PACIFIC PRIDE"
+      },
+      {
+        "blocking": false,
+        "code": "TIDE_WINDOW_MISSED",
+        "message": "Use priority tow and reduce loading target if delayed.",
+        "severity": "warning",
+        "vessel": "MV TRITON STAR"
+      }
+    ],
+    "planCode": "PLAN-2026-10-24",
+    "planVersionId": 1,
+    "status": "proposed",
+    "validationStatus": "blocked"
+  },
+  "definitionOfDone": {
+    "expectedStages": 10,
+    "overall": "PASS",
+    "stagesPassed": 10
+  },
+  "generatedAt": "2026-05-16T03:30:31.664875+00:00",
+  "governedExport": {
+    "checksumSha256": "f6b75100ee3b54703946d90edbf78d9824cb2b772607bf8b0e01659c1ea5fbb3",
+    "exportId": "EXP-PLAN-20260516033031-F1137A",
+    "fileName": "coalflow-plan-plan-phase1-e2e-v1-all-network-20260516033031.txt",
+    "format": "print",
+    "recordCount": 2,
+    "storageUri": "coalflow-local/exports/plan/2026/05/16/291b8e72367d4f8eae7e3b41a59b9361-coalflow-plan-plan-phase1-e2e-v1-all-network-20260516033031.txt"
+  },
+  "happyPath": {
+    "approvalRequestId": "APR-PLAN-PHASE1-E2E-V1",
+    "cargoRequirementId": 13,
+    "eventCount": 14,
+    "layerStepIds": [
+      11,
+      12
+    ],
+    "overrideId": 36,
+    "planCode": "PLAN-PHASE1-E2E",
+    "planVersionId": 5,
+    "requiredMt": 64000,
+    "snapshotId": "LIVE-PLAN-PHASE1-E2E-V1",
+    "status": "published",
+    "tripCount": 2,
+    "validationStatus": "feasible",
+    "vesselName": "MV Phase One Reliance",
+    "voyageId": "VOY-PHASE1-HAPPY-001"
+  },
+  "manualWindows": {
+    "assetAvailabilityWindows": 6,
+    "bridgeWindow": "BRDG-P1-E2E-GATE-B",
+    "jettyWindows": 2,
+    "navigationChecks": 2,
+    "tideWindow": "TIDE-P1-E2E-RANTAU"
+  },
+  "runId": "P1-E2E-20260516033031",
+  "stages": [
+    {
+      "actor": "admin@coalflow.local",
+      "applicationRoute": "/me/",
+      "primaryEvidence": "5 seeded users verified with role-shaped permissions",
+      "records": {
+        "ablDispatcher": true,
+        "admin": true,
+        "berauScheduler": true,
+        "controlTowerPublish": true,
+        "viewerReadOnly": true
+      },
+      "result": "PASS",
+      "stage": 1,
+      "title": "Login under correct organization and role"
+    },
+    {
+      "actor": "admin@coalflow.local",
+      "applicationRoute": "/admin/master-data",
+      "primaryEvidence": "4 coal grades, 3 jetties, 17 locations",
+      "records": {
+        "bargeSample": [
+          "BRG-VAL-08",
+          "BRG-NUS-17"
+        ],
+        "coalGrades": 4,
+        "jetties": 3,
+        "jettySample": [
+          "JTY-SUARAN",
+          "JTY-LATI"
+        ],
+        "locations": 17
+      },
+      "result": "PASS",
+      "stage": 2,
+      "title": "Review planning master data"
+    },
+    {
+      "actor": "berau.scheduler@coalflow.local",
+      "applicationRoute": "/schedule/ogv-demand",
+      "primaryEvidence": "VOY-PHASE1-HAPPY-001 / 64000 MT / 2 cargo layers",
+      "records": {
+        "cargoRequirements": [
+          13,
+          14
+        ],
+        "filename": "phase1_e2e_operator_demand.xlsx",
+        "importJobId": 4,
+        "layerSteps": [
+          11,
+          12
+        ],
+        "voyageId": "VOY-PHASE1-HAPPY-001"
+      },
+      "result": "PASS",
+      "stage": 3,
+      "title": "Upload OGV demand and cargo-layer requirements"
+    },
+    {
+      "actor": "abl.dispatcher@coalflow.local",
+      "applicationRoute": "/constraints/tide-bridge",
+      "primaryEvidence": "6 asset windows, TIDE-P1-E2E-RANTAU, BRDG-P1-E2E-GATE-B",
+      "records": {
+        "assetAvailabilityWindows": 6,
+        "bridgeWindow": "BRDG-P1-E2E-GATE-B",
+        "jettyWindows": 2,
+        "navigationChecks": 2,
+        "tideWindow": "TIDE-P1-E2E-RANTAU"
+      },
+      "result": "PASS",
+      "stage": 4,
+      "title": "Enter manual availability plus tide/bridge windows"
+    },
+    {
+      "actor": "admin@coalflow.local",
+      "applicationRoute": "/schedule/published-plan",
+      "primaryEvidence": "PLAN-PHASE1-E2E V1 generated 2 trips with 0 blockers",
+      "records": {
+        "blockingConflictCount": 0,
+        "conflictCount": 0,
+        "planCode": "PLAN-PHASE1-E2E",
+        "planVersionId": 5,
+        "status": "validated",
+        "tripCount": 2,
+        "validationStatus": "feasible"
+      },
+      "result": "PASS",
+      "stage": 5,
+      "title": "Generate a draft schedule"
+    },
+    {
+      "actor": "control.tower@coalflow.local",
+      "applicationRoute": "/operations/tug-barge-assignment",
+      "primaryEvidence": "2 trips / 14 schedule events / 0 conflicts",
+      "records": {
+        "conflicts": [],
+        "eventCount": 14,
+        "tripChain": [
+          {
+            "barge": "BRG-VAL-08",
+            "quantityMt": 32000,
+            "tripId": "PI-PLAN-PHASE1-E2E-0001",
+            "tug": "BER-TUG-08",
+            "vessel": "MV Phase One Reliance"
+          },
+          {
+            "barge": "BRG-NUS-17",
+            "quantityMt": 32000,
+            "tripId": "PI-PLAN-PHASE1-E2E-0002",
+            "tug": "BER-TUG-08",
+            "vessel": "MV Phase One Reliance"
+          }
+        ],
+        "tripCount": 2
+      },
+      "result": "PASS",
+      "stage": 6,
+      "title": "Inspect full trip chain and conflicts"
+    },
+    {
+      "actor": "abl.dispatcher@coalflow.local",
+      "applicationRoute": "/exceptions/center",
+      "primaryEvidence": "Override 36 applied with reason manual_correction",
+      "records": {
+        "changedFields": [
+          "next_action",
+          "next_constraint"
+        ],
+        "description": "Dispatcher confirmed tow readiness after manual VHF check.",
+        "overrideId": 36,
+        "reasonCode": "manual_correction"
+      },
+      "result": "PASS",
+      "stage": 7,
+      "title": "Make governed adjustments with reasons"
+    },
+    {
+      "actor": "control.tower@coalflow.local",
+      "applicationRoute": "/approvals/publishing",
+      "primaryEvidence": "APR-PLAN-PHASE1-E2E-V1 approved and published as LIVE-PLAN-PHASE1-E2E-V1",
+      "records": {
+        "approvalRequestId": "APR-PLAN-PHASE1-E2E-V1",
+        "approvalStatus": "published",
+        "planVersionStatus": "published",
+        "requiredAuthorities": [
+          "berau_scheduler",
+          "abl_dispatcher"
+        ],
+        "snapshotId": "LIVE-PLAN-PHASE1-E2E-V1"
+      },
+      "result": "PASS",
+      "stage": 8,
+      "title": "Submit, approve, and publish a plan"
+    },
+    {
+      "actor": "control.tower@coalflow.local",
+      "applicationRoute": "/admin/audit-logs",
+      "primaryEvidence": "LIVE-PLAN-PHASE1-E2E-V1 active with 8 proof audit events before retrieval marker",
+      "records": {
+        "auditEventsBeforeMarker": 8,
+        "payloadTripCount": 2,
+        "snapshotId": "LIVE-PLAN-PHASE1-E2E-V1",
+        "snapshotStatus": "active"
+      },
+      "result": "PASS",
+      "stage": 9,
+      "title": "Retrieve live published version and audit trail"
+    },
+    {
+      "actor": "control.tower@coalflow.local",
+      "applicationRoute": "/admin/export-handoff",
+      "primaryEvidence": "coalflow-plan-plan-phase1-e2e-v1-all-network-20260516033031.txt / 2 trips / f6b75100ee3b...",
+      "records": {
+        "checksumSha256": "f6b75100ee3b54703946d90edbf78d9824cb2b772607bf8b0e01659c1ea5fbb3",
+        "exportId": "EXP-PLAN-20260516033031-F1137A",
+        "fileName": "coalflow-plan-plan-phase1-e2e-v1-all-network-20260516033031.txt",
+        "recordCount": 2,
+        "storageKey": "exports/plan/2026/05/16/291b8e72367d4f8eae7e3b41a59b9361-coalflow-plan-plan-phase1-e2e-v1-all-network-20260516033031.txt"
+      },
+      "result": "PASS",
+      "stage": 10,
+      "title": "Export the governed schedule"
+    }
+  ]
+}

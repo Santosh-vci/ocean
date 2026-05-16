@@ -35,10 +35,17 @@ docker compose run --rm api python manage.py check
 docker compose run --rm api pytest
 docker compose run --rm frontend npm test -- --run
 docker compose run --rm frontend npm run build
+docker compose run --rm -e RUN_STARTUP_TASKS=0 api python manage.py phase1_e2e_proof --json
 ```
 
 `/api/health/` is a liveness check. `/api/ready/` checks database, cache, and export artifact storage.
 `/api/metrics/` is admin-only and exposes counts only; it must not include customer names, passwords, tokens, or raw payloads.
+
+The Phase 1 proof command creates `PLAN-PHASE1-E2E`, publishes
+`LIVE-PLAN-PHASE1-E2E-V1`, generates a governed export, and leaves the proof records visible in
+the application. The latest captured evidence is documented in
+`docs/12_Phase_1_Completion_Evidence.md`; operator usage is documented in
+`docs/13_Phase_1_Operator_Manual.md`.
 
 ## 3. Seeded pilot users
 

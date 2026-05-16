@@ -19,8 +19,10 @@ Before making material changes, read in order:
 7. `docs/08_Phase_1_Implementation_Spec.md`
 8. `docs/10_Pilot_Readiness_Runbook.md` for deployment, backup, UAT, and incident handling
 9. `docs/11_API_Contract_Baseline.md` before changing API contracts
-10. `docs/berau_abl_seed_data_instructions.md` when creating or extending seed data
-11. any BRD document in `docs/` whose filename starts with `BRD`
+10. `docs/12_Phase_1_Completion_Evidence.md` before claiming Phase 1 completion
+11. `docs/13_Phase_1_Operator_Manual.md` before changing operator-facing workflow
+12. `docs/berau_abl_seed_data_instructions.md` when creating or extending seed data
+13. any BRD document in `docs/` whose filename starts with `BRD`
 
 The hardened frontend zips under `docs/frontend_resources/` are visual references, not production code.
 
@@ -88,6 +90,8 @@ Later phases may add TimescaleDB/ClickHouse, MQTT, Redpanda/Kafka, and dedicated
 - New services need health checks and documented ports.
 - New migrations, seeds, and workers must run inside the container workflow.
 - Export artifacts must persist on the Docker `export_data` volume in local/pilot runs.
+- Phase 1 completion claims must be backed by `python manage.py phase1_e2e_proof --json`
+  running inside Docker, with evidence committed under `docs/evidence/phase1/` when requested.
 
 ## 7. Architecture rules
 
