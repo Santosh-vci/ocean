@@ -24,4 +24,4 @@ Thumbs.db
 # Runtime artifacts
 media/
 staticfiles/
-
+backups/

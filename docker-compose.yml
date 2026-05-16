@@ -66,6 +66,7 @@ services:
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
     volumes:
       - ./backend:/app
+      - export_data:/tmp/coalflow_exports
     depends_on:
       db:
         condition: service_healthy
@@ -98,6 +99,7 @@ services:
     command: celery -A config worker -l info
     volumes:
       - ./backend:/app
+      - export_data:/tmp/coalflow_exports
     depends_on:
       api:
         condition: service_healthy
@@ -124,6 +126,7 @@ services:
     command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
     volumes:
       - ./backend:/app
+      - export_data:/tmp/coalflow_exports
     depends_on:
       api:
         condition: service_healthy
@@ -205,3 +208,4 @@ volumes:
   redis_data:
   minio_data:
   frontend_node_modules:
+  export_data:

@@ -17,8 +17,10 @@ Before making material changes, read in order:
 5. `docs/04_RBAC_and_Django_Architecture_Addendum.md`
 6. `docs/07_Frontend_Build_Handoff_and_Phasewise_Plan.md`
 7. `docs/08_Phase_1_Implementation_Spec.md`
-8. `docs/berau_abl_seed_data_instructions.md` when creating or extending seed data
-9. any BRD document in `docs/` whose filename starts with `BRD`
+8. `docs/10_Pilot_Readiness_Runbook.md` for deployment, backup, UAT, and incident handling
+9. `docs/11_API_Contract_Baseline.md` before changing API contracts
+10. `docs/berau_abl_seed_data_instructions.md` when creating or extending seed data
+11. any BRD document in `docs/` whose filename starts with `BRD`
 
 The hardened frontend zips under `docs/frontend_resources/` are visual references, not production code.
 
@@ -85,6 +87,7 @@ Later phases may add TimescaleDB/ClickHouse, MQTT, Redpanda/Kafka, and dedicated
 - A clean checkout should come alive with `docker compose up --build`.
 - New services need health checks and documented ports.
 - New migrations, seeds, and workers must run inside the container workflow.
+- Export artifacts must persist on the Docker `export_data` volume in local/pilot runs.
 
 ## 7. Architecture rules
 
@@ -99,6 +102,8 @@ Later phases may add TimescaleDB/ClickHouse, MQTT, Redpanda/Kafka, and dedicated
 - Prefer explicit service-layer business logic over burying rules in serializers or views.
 - Use stable reason codes for generated decisions and validation conflicts.
 - Keep published versions immutable.
+- Keep observability endpoints count-only and incident-safe unless a permissioned domain API
+  explicitly authorizes more detail.
 
 ## 8. Domain invariants to protect
 

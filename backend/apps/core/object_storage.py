@@ -65,3 +65,14 @@ def put_export_object(
 
 def read_export_object(*, key: str, bucket: str | None = None) -> bytes:
     return _object_path(key, bucket).read_bytes()
+
+
+def export_storage_health() -> dict:
+    root = _storage_root()
+    bucket_root = root / _bucket_name()
+    bucket_root.mkdir(parents=True, exist_ok=True)
+    return {
+        "root": str(root),
+        "bucket": _bucket_name(),
+        "writable": os.access(bucket_root, os.W_OK),
+    }

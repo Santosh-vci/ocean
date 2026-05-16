@@ -180,6 +180,11 @@ class CargoLayerStep(models.Model):
 
     class Meta:
         ordering = ["voyage__laycan_start", "voyage__voyage_id", "required_sequence_no"]
+        indexes = [
+            models.Index(fields=("voyage", "status", "required_sequence_no")),
+            models.Index(fields=("planned_start", "planned_end")),
+            models.Index(fields=("sequence_violation", "status")),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("voyage", "required_sequence_no"),
@@ -214,6 +219,10 @@ class AssetAvailabilityWindow(models.Model):
 
     class Meta:
         ordering = ["window_start", "asset_type", "asset_code"]
+        indexes = [
+            models.Index(fields=("asset_type", "asset_code", "window_start", "window_end")),
+            models.Index(fields=("status", "window_start")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.asset_code} {self.status}"
@@ -237,6 +246,10 @@ class JettyAvailabilityWindow(models.Model):
 
     class Meta:
         ordering = ["window_start", "jetty__code"]
+        indexes = [
+            models.Index(fields=("jetty", "window_start", "window_end")),
+            models.Index(fields=("status", "window_start")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.jetty.code} {self.status}"
@@ -273,6 +286,10 @@ class TideWindow(models.Model):
 
     class Meta:
         ordering = ["window_start", "code"]
+        indexes = [
+            models.Index(fields=("location", "window_start", "window_end")),
+            models.Index(fields=("is_active", "risk_level", "window_start")),
+        ]
 
     def __str__(self) -> str:
         return self.code
@@ -298,6 +315,10 @@ class BridgeWindow(models.Model):
 
     class Meta:
         ordering = ["window_start", "code"]
+        indexes = [
+            models.Index(fields=("location", "window_start", "window_end")),
+            models.Index(fields=("is_active", "status", "window_start")),
+        ]
 
     def __str__(self) -> str:
         return self.code
@@ -340,7 +361,11 @@ class NavigationConstraintCheck(models.Model):
 
     class Meta:
         ordering = ["eta_gate", "voyage__voyage_id"]
-        indexes = [models.Index(fields=("constraint_type", "status"))]
+        indexes = [
+            models.Index(fields=("constraint_type", "status")),
+            models.Index(fields=("voyage", "constraint_type", "status")),
+            models.Index(fields=("asset_code", "eta_gate")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.voyage.voyage_id} {self.constraint_type} {self.status}"
@@ -376,6 +401,10 @@ class ImportJob(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=("import_type", "status", "created_at")),
+            models.Index(fields=("created_by", "created_at")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.import_type} {self.status}"

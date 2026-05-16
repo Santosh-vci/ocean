@@ -30,6 +30,7 @@ Then open:
 
 - App shell: `http://localhost:8080`
 - API health: `http://localhost:8080/api/health/`
+- API readiness: `http://localhost:8080/api/ready/`
 - Django admin: `http://localhost:8080/admin/`
 - MinIO console: `http://localhost:9001`
 
@@ -52,17 +53,20 @@ docker compose run --rm api ruff check .
 docker compose run --rm frontend npm run test
 docker compose run --rm frontend npm run lint
 
+# pilot backup rehearsal
+powershell -ExecutionPolicy Bypass -File infra/scripts/backup-rehearsal.ps1
+
 # optional dev tools
 docker compose --profile devtools up flower mailpit
 ```
 
 ## Current milestone
 
-Chunk 2 is the governed master-data foundation:
+Chunk 8 is the pilot-readiness hardening pass:
 
-- role-aware shell with collapsible module/submodule navigation;
-- Users/RBAC and audit governance spine;
-- Berau/ABL master-data catalogs for locations, coal grades, mines, stockpiles, jetties, tugs, barges, CTS, routes, loading rates, and compatibility rules;
-- CRUD plus JSON import/export actions behind backend permissions;
-- activation flags and audit events for sensitive configuration changes;
-- hardened Admin / Master Data Console adapted from the frontend resource pack.
+- full Dockerized Phase 1 workflow from demand validation to schedule, approvals, publish, dashboard, and exports;
+- governed RBAC/audit/export controls;
+- observability endpoints for liveness, readiness, and admin-only safe metrics;
+- persisted export artifact volume for local Docker runs;
+- backup/restore rehearsal scripts;
+- pilot runbook and API contract baseline under `docs/`.

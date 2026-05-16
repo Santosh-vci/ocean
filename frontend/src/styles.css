@@ -920,6 +920,7 @@ tbody tr:hover,
   min-width: 0;
   overflow: auto;
   padding: 0 1rem 1rem;
+  scrollbar-gutter: stable;
 }
 
 .audit-strip {
@@ -1411,6 +1412,25 @@ tbody tr:hover,
   border-bottom: 1px solid var(--border-subtle);
   background: rgba(15, 23, 42, 0.98);
   padding: 0.52rem 0.65rem;
+}
+
+.grid-scroll,
+.master-grid-scroll,
+.export-history-scroll,
+.control-timeline-grid,
+.jetty-sections,
+.schedule-gantt {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.planning-table tbody tr,
+.master-data-table tbody tr,
+.jetty-row,
+.timeline-row,
+.exception-card,
+.export-command-list button {
+  contain: layout paint;
 }
 
 .grid-header div {

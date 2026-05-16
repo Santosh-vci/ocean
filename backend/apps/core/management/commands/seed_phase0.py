@@ -41,6 +41,7 @@ from apps.rbac.models import (
 from apps.scheduling.models import (
     ApprovalDecision,
     ApprovalRequest,
+    Assignment,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -258,7 +259,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                "Seeded Chunk 6 organizations, roles, planning data, schedule, "
+                "Seeded Phase 1 pilot organizations, roles, planning data, schedule, "
                 "governance loop, dashboard context, and export handoff permissions."
             )
         )
@@ -1375,41 +1376,44 @@ class Command(BaseCommand):
         ApprovalRequest.objects.filter(plan_version=version).delete()
         OverrideRequest.objects.filter(plan_version=version).delete()
         generate_plan_version(version)
-        first_trip = (
-            version.trips.select_related("assignment", "voyage")
-            .order_by("sequence")
+        first_assignment = (
+            Assignment.objects.select_related("trip", "trip__voyage", "tug")
+            .filter(trip__plan_version=version)
+            .order_by("trip__sequence")
             .first()
         )
+        first_trip = first_assignment.trip if first_assignment else None
         first_conflict = version.conflicts.select_related("trip", "trip__voyage").first()
-        if first_trip and hasattr(first_trip, "assignment"):
-            OverrideRequest.objects.update_or_create(
+        if first_trip and first_assignment:
+            OverrideRequest.objects.filter(
                 plan_version=version,
                 trip=first_trip,
                 reason_code=OverrideRequest.ReasonCode.TUG_BREAKDOWN,
-                defaults={
-                    "assignment": first_trip.assignment,
-                    "description": "Tug availability correction captured for governed replan.",
-                    "requested_change": {
-                        "status": first_trip.assignment.status,
-                        "next_action": "Convert blocker to simulation before dispatch.",
-                    },
-                    "before_state": {
-                        "tripId": first_trip.trip_id,
-                        "tug": first_trip.assignment.tug.code
-                        if first_trip.assignment.tug
-                        else "",
-                        "status": first_trip.assignment.status,
-                    },
-                    "after_state": {
-                        "tripId": first_trip.trip_id,
-                        "status": first_trip.assignment.status,
-                        "nextAction": "Convert blocker to simulation before dispatch.",
-                    },
-                    "status": OverrideRequest.Status.APPLIED,
-                    "requested_by": created_by,
-                    "applied_by": created_by,
-                    "applied_at": timezone.now(),
+            ).delete()
+            OverrideRequest.objects.create(
+                plan_version=version,
+                trip=first_trip,
+                reason_code=OverrideRequest.ReasonCode.TUG_BREAKDOWN,
+                assignment=first_assignment,
+                description="Tug availability correction captured for governed replan.",
+                requested_change={
+                    "status": first_assignment.status,
+                    "next_action": "Convert blocker to simulation before dispatch.",
                 },
+                before_state={
+                    "tripId": first_trip.trip_id,
+                    "tug": first_assignment.tug.code if first_assignment.tug else "",
+                    "status": first_assignment.status,
+                },
+                after_state={
+                    "tripId": first_trip.trip_id,
+                    "status": first_assignment.status,
+                    "nextAction": "Convert blocker to simulation before dispatch.",
+                },
+                status=OverrideRequest.Status.APPLIED,
+                requested_by=created_by,
+                applied_by=created_by,
+                applied_at=timezone.now(),
             )
 
         approval_request, _ = ApprovalRequest.objects.update_or_create(

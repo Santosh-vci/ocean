@@ -33,8 +33,10 @@ class AuditEvent(models.Model):
         indexes = [
             models.Index(fields=("action", "created_at")),
             models.Index(fields=("object_type", "object_id")),
+            models.Index(fields=("organization", "created_at")),
+            models.Index(fields=("actor", "created_at")),
+            models.Index(fields=("request_id",)),
         ]
 
     def __str__(self) -> str:
         return f"{self.action} {self.object_type}:{self.object_id}"
-

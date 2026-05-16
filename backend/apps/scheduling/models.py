@@ -142,6 +142,11 @@ class Trip(models.Model):
 
     class Meta:
         ordering = ["plan_version", "sequence", "trip_id"]
+        indexes = [
+            models.Index(fields=("plan_version", "status", "planned_start")),
+            models.Index(fields=("plan_version", "planned_start")),
+            models.Index(fields=("voyage", "plan_version")),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("plan_version", "trip_id"),
@@ -218,6 +223,10 @@ class Assignment(models.Model):
 
     class Meta:
         ordering = ["planned_departure", "trip__trip_id"]
+        indexes = [
+            models.Index(fields=("status", "planned_departure")),
+            models.Index(fields=("owner_organization", "planned_departure")),
+        ]
 
     def __str__(self) -> str:
         return f"{self.trip.trip_id} assignment"
@@ -252,6 +261,10 @@ class ScheduleEvent(models.Model):
 
     class Meta:
         ordering = ["trip", "sequence"]
+        indexes = [
+            models.Index(fields=("planned_at", "status")),
+            models.Index(fields=("resource_code", "planned_at")),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=("trip", "sequence"),
@@ -393,7 +406,10 @@ class ApprovalRequest(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        indexes = [models.Index(fields=("status", "created_at"))]
+        indexes = [
+            models.Index(fields=("status", "created_at")),
+            models.Index(fields=("plan_version", "status", "created_at")),
+        ]
 
     def __str__(self) -> str:
         return self.request_id
@@ -480,7 +496,10 @@ class PublishedPlanSnapshot(models.Model):
 
     class Meta:
         ordering = ["-published_at"]
-        indexes = [models.Index(fields=("plan", "status"))]
+        indexes = [
+            models.Index(fields=("plan", "status")),
+            models.Index(fields=("status", "published_at")),
+        ]
 
     def __str__(self) -> str:
         return self.snapshot_id
