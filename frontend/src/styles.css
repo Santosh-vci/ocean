@@ -909,10 +909,34 @@ tbody tr:hover,
 .operations-main {
   grid-column: 2;
   grid-row: 2;
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   display: block;
+}
+
+.workspace-action-banner {
+  position: absolute;
+  top: 0.65rem;
+  right: 1.2rem;
+  z-index: 90;
+  max-width: min(36rem, calc(100% - 2.4rem));
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  border-radius: 999px;
+  background: rgba(7, 18, 36, 0.94);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.28);
+  color: var(--primary);
+  padding: 0.42rem 0.75rem;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+
+.workspace-action-banner.critical {
+  border-color: rgba(248, 113, 113, 0.5);
+  color: var(--status-critical);
 }
 
 .workspace-page {

@@ -11,6 +11,12 @@ import type {
 type LogisticsPageProps = {
   overview: SchedulingOverview | null;
   canEdit?: boolean;
+  canCreateDraft?: boolean;
+  canExport?: boolean;
+  isActionRunning?: boolean;
+  onCreateDraft?: () => void;
+  onExport?: () => void;
+  onRegenerate?: () => void;
 };
 
 const EMPTY_ASSIGNMENTS: AssignmentRecord[] = [];
@@ -68,7 +74,14 @@ function selectedTripFor(
   return trips.find((trip) => trip.id === selectedAssignment?.trip) ?? trips[0];
 }
 
-export function TugBargeAssignmentPage({ overview, canEdit = false }: LogisticsPageProps) {
+export function TugBargeAssignmentPage({
+  overview,
+  canEdit = false,
+  canExport = false,
+  isActionRunning = false,
+  onExport,
+  onRegenerate,
+}: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
@@ -90,8 +103,20 @@ export function TugBargeAssignmentPage({ overview, canEdit = false }: LogisticsP
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 4 · Fleet feasibility</span>
-          <button disabled={!canEdit} type="button">Regenerate plan</button>
-          <button type="button">Export chain</button>
+          <button
+            disabled={!canEdit || !onRegenerate || isActionRunning}
+            onClick={onRegenerate}
+            type="button"
+          >
+            Regenerate plan
+          </button>
+          <button
+            disabled={!canExport || !onExport || isActionRunning}
+            onClick={onExport}
+            type="button"
+          >
+            Export chain
+          </button>
         </div>
       </header>
 
@@ -196,7 +221,13 @@ export function TugBargeAssignmentPage({ overview, canEdit = false }: LogisticsP
   );
 }
 
-export function JettyLoadingPage({ overview, canEdit = false }: LogisticsPageProps) {
+export function JettyLoadingPage({
+  overview,
+  canEdit = false,
+  canExport = false,
+  isActionRunning = false,
+  onExport,
+}: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
@@ -218,8 +249,22 @@ export function JettyLoadingPage({ overview, canEdit = false }: LogisticsPagePro
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 4 · Source-side queue</span>
-          <button disabled={!canEdit} type="button">Force start jetty</button>
-          <button type="button">Export loading plan</button>
+          <button
+            disabled
+            title={canEdit
+              ? "Manual jetty force-start is locked until governed adjustment capture."
+              : "Your role cannot force-start jetty queues."}
+            type="button"
+          >
+            Force start locked
+          </button>
+          <button
+            disabled={!canExport || !onExport || isActionRunning}
+            onClick={onExport}
+            type="button"
+          >
+            Export loading plan
+          </button>
         </div>
       </header>
 
@@ -278,7 +323,12 @@ export function JettyLoadingPage({ overview, canEdit = false }: LogisticsPagePro
   );
 }
 
-export function CtsOperationsPage({ overview }: LogisticsPageProps) {
+export function CtsOperationsPage({
+  overview,
+  canExport = false,
+  isActionRunning = false,
+  onExport,
+}: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
@@ -295,7 +345,13 @@ export function CtsOperationsPage({ overview }: LogisticsPageProps) {
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 4 · Transshipment capacity</span>
-          <button type="button">Export CTS queue</button>
+          <button
+            disabled={!canExport || !onExport || isActionRunning}
+            onClick={onExport}
+            type="button"
+          >
+            Export CTS queue
+          </button>
         </div>
       </header>
 
@@ -350,7 +406,12 @@ export function CtsOperationsPage({ overview }: LogisticsPageProps) {
   );
 }
 
-export function PublishedPlanPage({ overview }: LogisticsPageProps) {
+export function PublishedPlanPage({
+  overview,
+  canCreateDraft = false,
+  isActionRunning = false,
+  onCreateDraft,
+}: LogisticsPageProps) {
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const activeVersion = overview?.activePlanVersion;
@@ -368,7 +429,13 @@ export function PublishedPlanPage({ overview }: LogisticsPageProps) {
           <span className={`phase-chip ${activeVersion?.validation_status === "feasible" ? "secure" : ""}`}>
             {activeVersion?.plan_code ?? "No version"} · V{activeVersion?.version_no ?? "—"}
           </span>
-          <button type="button">Create replan candidate</button>
+          <button
+            disabled={!canCreateDraft || !onCreateDraft || isActionRunning}
+            onClick={onCreateDraft}
+            type="button"
+          >
+            Create draft
+          </button>
         </div>
       </header>
 

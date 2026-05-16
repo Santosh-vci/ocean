@@ -6,6 +6,10 @@ import type { CargoLayerStepRecord, OGVVoyageRecord, PlanningOverview } from "..
 type OgvDemandPageProps = {
   overview: PlanningOverview | null;
   canEdit: boolean;
+  canExport: boolean;
+  isActionRunning: boolean;
+  onExportBoard: () => void;
+  onImportDemand: () => void;
 };
 
 function mt(value: number) {
@@ -33,7 +37,14 @@ function stageLabel(step: CargoLayerStepRecord) {
   return `H${step.hatch_no}/L${step.layer_no} ${step.coal_grade.code}`;
 }
 
-export function OgvDemandPage({ overview, canEdit }: OgvDemandPageProps) {
+export function OgvDemandPage({
+  overview,
+  canEdit,
+  canExport,
+  isActionRunning,
+  onExportBoard,
+  onImportDemand,
+}: OgvDemandPageProps) {
   const voyages = overview?.voyages ?? [];
   const [selectedVoyageId, setSelectedVoyageId] = useState<number | null>(voyages[0]?.id ?? null);
   const selectedVoyage = voyages.find((voyage) => voyage.id === selectedVoyageId) ?? voyages[0];
@@ -62,8 +73,12 @@ export function OgvDemandPage({ overview, canEdit }: OgvDemandPageProps) {
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 3 · Intake</span>
-          <button disabled={!canEdit} type="button">Import demand</button>
-          <button type="button">Export board</button>
+          <button disabled={!canEdit || isActionRunning} onClick={onImportDemand} type="button">
+            Import demand
+          </button>
+          <button disabled={!canExport || isActionRunning} onClick={onExportBoard} type="button">
+            Export board
+          </button>
         </div>
       </header>
 

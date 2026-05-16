@@ -6,6 +6,9 @@ import type { CargoLayerStepRecord, PlanningOverview } from "../types";
 type CoalGradeSequencePageProps = {
   overview: PlanningOverview | null;
   canEdit: boolean;
+  canExport: boolean;
+  isActionRunning: boolean;
+  onExport: () => void;
 };
 
 const EMPTY_STEPS: CargoLayerStepRecord[] = [];
@@ -30,7 +33,13 @@ function severity(step: CargoLayerStepRecord) {
   return "ok";
 }
 
-export function CoalGradeSequencePage({ overview, canEdit }: CoalGradeSequencePageProps) {
+export function CoalGradeSequencePage({
+  overview,
+  canEdit,
+  canExport,
+  isActionRunning,
+  onExport,
+}: CoalGradeSequencePageProps) {
   const steps = overview?.cargoLayerSteps ?? EMPTY_STEPS;
   const [selectedStepId, setSelectedStepId] = useState<number | null>(steps[0]?.id ?? null);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? steps[0];
@@ -55,8 +64,18 @@ export function CoalGradeSequencePage({ overview, canEdit }: CoalGradeSequencePa
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 3 · Layering</span>
-          <button disabled={!canEdit} type="button">Edit sequence</button>
-          <button type="button">Export QC view</button>
+          <button
+            disabled
+            title={canEdit
+              ? "Direct sequence editing is locked for Phase 1 governed planning."
+              : "Your role cannot edit coal grade sequence."}
+            type="button"
+          >
+            Edit sequence locked
+          </button>
+          <button disabled={!canExport || isActionRunning} onClick={onExport} type="button">
+            Export QC view
+          </button>
         </div>
       </header>
 

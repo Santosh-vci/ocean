@@ -206,9 +206,18 @@ function fieldRows(record: MasterDataRecord) {
 type MasterDataPageProps = {
   overview: MasterDataOverview;
   canManage: boolean;
+  isActionRunning: boolean;
+  onExportCatalog: (catalogKey: CatalogKey) => void;
+  onImportCatalog: (catalogKey: CatalogKey, selectedRecord: MasterDataRecord | null) => void;
 };
 
-export function MasterDataPage({ overview, canManage }: MasterDataPageProps) {
+export function MasterDataPage({
+  overview,
+  canManage,
+  isActionRunning,
+  onExportCatalog,
+  onImportCatalog,
+}: MasterDataPageProps) {
   const [activeCatalogKey, setActiveCatalogKey] = useState<CatalogKey>("tugs");
   const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
@@ -252,8 +261,20 @@ export function MasterDataPage({ overview, canManage }: MasterDataPageProps) {
               value={query}
             />
           </label>
-          <button disabled={!canManage} type="button">Import</button>
-          <button type="button">Export</button>
+          <button
+            disabled={!canManage || !selectedRecord || isActionRunning}
+            onClick={() => onImportCatalog(activeCatalog.key, selectedRecord)}
+            type="button"
+          >
+            Import
+          </button>
+          <button
+            disabled={isActionRunning}
+            onClick={() => onExportCatalog(activeCatalog.key)}
+            type="button"
+          >
+            Export
+          </button>
         </div>
       </header>
 

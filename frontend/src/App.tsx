@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AuditStrip } from "./components/AuditStrip";
 import { Sidebar } from "./components/Sidebar";
@@ -34,7 +34,11 @@ import type {
   ExportJobRecord,
   ExportOverview,
   ExportType,
+  ImportJobRecord,
+  MasterDataCatalogs,
+  MasterDataRecord,
   MasterDataOverview,
+  PlanVersionRecord,
   PlanningOverview,
   RbacOverview,
   SchedulingOverview,
@@ -42,6 +46,35 @@ import type {
 
 function currentHashPath() {
   return window.location.hash.replace("#", "") || "/dashboard/situation";
+}
+
+type MasterDataCatalogKey = keyof MasterDataCatalogs;
+
+const MASTER_DATA_ENDPOINTS: Record<MasterDataCatalogKey, string> = {
+  barges: "barges",
+  coalGrades: "coal-grades",
+  compatibilityRules: "compatibility-rules",
+  ctsAssets: "cts-assets",
+  jetties: "jetties",
+  loadingRateProfiles: "loading-rate-profiles",
+  locations: "locations",
+  mines: "mines",
+  routes: "routes",
+  stockpiles: "stockpiles",
+  tugs: "tugs",
+};
+
+function masterDataImportRecord(record: MasterDataRecord) {
+  const payload = { ...(record as unknown as Record<string, unknown>) };
+  delete payload.id;
+  delete payload.organization;
+  delete payload.created_at;
+  delete payload.updated_at;
+  delete payload.mine_code;
+  delete payload.coal_grade_code;
+  delete payload.segments;
+  payload.organization_id = record.organization?.id ?? null;
+  return payload;
 }
 
 function App() {
@@ -55,6 +88,9 @@ function App() {
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionInFlight, setActionInFlight] = useState<string | null>(null);
   const [isExportLoading, setIsExportLoading] = useState(false);
   const [isExportGenerating, setIsExportGenerating] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
@@ -107,54 +143,62 @@ function App() {
     ? canAccess(currentUser.permissions, "schedule.publish")
     : false;
 
-  useEffect(() => {
+  const refreshWorkspaceData = useCallback(async () => {
     if (!currentUser) {
       return;
     }
 
+    const refreshes: Promise<unknown>[] = [];
+
     if (canViewDashboard) {
-      apiFetch<DashboardReadModel>("/dashboard/situation/")
+      refreshes.push(apiFetch<DashboardReadModel>("/dashboard/situation/")
         .then(setDashboardReadModel)
-        .catch(() => setDashboardReadModel(null));
+        .catch(() => setDashboardReadModel(null)));
     }
 
     if (canViewAdmin) {
-      apiFetch<RbacOverview>("/rbac/overview/").then(setOverview).catch(() => setOverview(null));
+      refreshes.push(apiFetch<RbacOverview>("/rbac/overview/")
+        .then(setOverview)
+        .catch(() => setOverview(null)));
     }
 
     if (canViewMasterData) {
-      apiFetch<MasterDataOverview>("/master-data/overview/")
+      refreshes.push(apiFetch<MasterDataOverview>("/master-data/overview/")
         .then(setMasterDataOverview)
-        .catch(() => setMasterDataOverview(null));
+        .catch(() => setMasterDataOverview(null)));
     }
 
     if (canViewAudit) {
-      apiFetch<AuditEvent[]>("/audit-events/").then(setAuditEvents).catch(() => setAuditEvents([]));
+      refreshes.push(apiFetch<AuditEvent[]>("/audit-events/")
+        .then(setAuditEvents)
+        .catch(() => setAuditEvents([])));
     }
 
     if (canViewExports) {
       setIsExportLoading(true);
       setExportError(null);
-      apiFetch<ExportOverview>("/exports/overview/")
+      refreshes.push(apiFetch<ExportOverview>("/exports/overview/")
         .then(setExportOverview)
         .catch(() => {
           setExportOverview(null);
           setExportError("Export history is unavailable.");
         })
-        .finally(() => setIsExportLoading(false));
+        .finally(() => setIsExportLoading(false)));
     }
 
     if (canViewSchedule) {
-      apiFetch<PlanningOverview>("/planning/overview/")
+      refreshes.push(apiFetch<PlanningOverview>("/planning/overview/")
         .then(setPlanningOverview)
-        .catch(() => setPlanningOverview(null));
+        .catch(() => setPlanningOverview(null)));
     }
 
     if (canViewSchedule) {
-      apiFetch<SchedulingOverview>("/scheduling/overview/")
+      refreshes.push(apiFetch<SchedulingOverview>("/scheduling/overview/")
         .then(setSchedulingOverview)
-        .catch(() => setSchedulingOverview(null));
+        .catch(() => setSchedulingOverview(null)));
     }
+
+    await Promise.all(refreshes);
   }, [
     canViewAdmin,
     canViewAudit,
@@ -164,6 +208,30 @@ function App() {
     canViewSchedule,
     currentUser,
   ]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    void refreshWorkspaceData();
+  }, [currentUser, refreshWorkspaceData]);
+
+  async function runWorkspaceAction(label: string, action: () => Promise<string>) {
+    setActionInFlight(label);
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      const message = await action();
+      setActionMessage(message);
+      await refreshWorkspaceData();
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "unknown error";
+      setActionError(`${label} failed (${detail}). Check permissions, active plan state, and backend logs.`);
+    } finally {
+      setActionInFlight(null);
+    }
+  }
 
   async function handleLogin(username: string, password: string) {
     const user = await login(username, password);
@@ -191,11 +259,12 @@ function App() {
       return;
     }
 
-    setIsExportGenerating(true);
-    setExportError(null);
-    try {
+    await runWorkspaceAction("Export", async () => {
+      setIsExportGenerating(true);
+      setExportError(null);
       const csrfToken = await getCsrfToken();
-      await apiFetch<ExportJobRecord>("/exports/generate/", {
+      const activePlanVersionId = schedulingOverview?.activePlanVersion?.id;
+      const exportJob = await apiFetch<ExportJobRecord>("/exports/generate/", {
         method: "POST",
         headers: {
           "X-CSRFToken": csrfToken,
@@ -203,15 +272,214 @@ function App() {
         body: JSON.stringify({
           export_type: command.exportType,
           export_format: command.exportFormat,
+          ...(command.exportType === "audit" || !activePlanVersionId
+            ? {}
+            : { plan_version: activePlanVersionId }),
         }),
       });
       const refreshed = await apiFetch<ExportOverview>("/exports/overview/");
       setExportOverview(refreshed);
-    } catch {
-      setExportError("Export generation failed. Check permissions and active plan data.");
-    } finally {
       setIsExportGenerating(false);
+      return `Export generated: ${exportJob.file_name}`;
+    }).finally(() => setIsExportGenerating(false));
+  }
+
+  async function handleImportDemand() {
+    await runWorkspaceAction("Import demand", async () => {
+      const csrfToken = await getCsrfToken();
+      const stamp = Date.now();
+      const job = await apiFetch<ImportJobRecord>("/planning/import-jobs/validate-ogv-demand/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          filename: `operator-ui-demand-${stamp}.xlsx`,
+          source: "operator-ui-action",
+          rows: [
+            {
+              voyage_id: `VOY-UI-${String(stamp).slice(-6)}`,
+              vessel_name: "MV Operator UI Import",
+              customer_name: "Pilot Customer",
+              laycan_start: "2026-11-05T00:00:00Z",
+              laycan_end: "2026-11-08T00:00:00Z",
+              eta: "2026-11-05T06:00:00Z",
+              required_mt: 64000,
+            },
+          ],
+        }),
+      });
+      return `Import validated: ${job.filename} (${job.valid_rows}/${job.total_rows} rows)`;
+    });
+  }
+
+  async function handleMasterDataExport(catalogKey: MasterDataCatalogKey) {
+    await runWorkspaceAction("Master data export", async () => {
+      const endpoint = MASTER_DATA_ENDPOINTS[catalogKey];
+      const exported = await apiFetch<{ catalog: string; recordCount: number }>(
+        `/master-data/${endpoint}/export/`,
+      );
+      return `Master data export ready: ${exported.catalog} (${exported.recordCount} records)`;
+    });
+  }
+
+  async function handleMasterDataImport(
+    catalogKey: MasterDataCatalogKey,
+    selectedRecord: MasterDataRecord | null,
+  ) {
+    await runWorkspaceAction("Master data import", async () => {
+      if (!selectedRecord) {
+        throw new Error("No selected master data record");
+      }
+      const endpoint = MASTER_DATA_ENDPOINTS[catalogKey];
+      const csrfToken = await getCsrfToken();
+      const result = await apiFetch<{ created: number; updated: number; count: number }>(
+        `/master-data/${endpoint}/import/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            records: [masterDataImportRecord(selectedRecord)],
+          }),
+        },
+      );
+      return `Master data import processed: ${result.updated} updated / ${result.created} created`;
+    });
+  }
+
+  async function handleCreateDraft() {
+    await runWorkspaceAction("Create draft", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion) {
+        throw new Error("No active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const draft = await apiFetch<PlanVersionRecord>(
+        `/scheduling/plan-versions/${activeVersion.id}/clone/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Draft created: ${draft.plan_code} V${draft.version_no}`;
+    });
+  }
+
+  async function handleRegeneratePlan() {
+    await runWorkspaceAction("Generate schedule", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion || ["published", "superseded"].includes(activeVersion.status)) {
+        throw new Error("No editable active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const version = await apiFetch<PlanVersionRecord>(
+        `/scheduling/plan-versions/${activeVersion.id}/generate/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Schedule generated: ${version.plan_code} V${version.version_no}`;
+    });
+  }
+
+  function authorityForCurrentUser(requestAuthorities: string[], decidedAuthorities: string[]) {
+    const roleCodes = currentUser?.assignments.map((assignment) => assignment.role.code) ?? [];
+    const preferredAuthority = roleCodes.includes("berau-scheduler")
+      ? "berau_scheduler"
+      : roleCodes.includes("abl-dispatcher")
+        ? "abl_dispatcher"
+        : null;
+    if (
+      preferredAuthority
+      && requestAuthorities.includes(preferredAuthority)
+      && !decidedAuthorities.includes(preferredAuthority)
+    ) {
+      return preferredAuthority;
     }
+    return requestAuthorities.find((authority) => !decidedAuthorities.includes(authority));
+  }
+
+  async function handleApprovePlan() {
+    await runWorkspaceAction("Approve plan", async () => {
+      const request = schedulingOverview?.approvalRequests.find((item) => item.status === "pending")
+        ?? schedulingOverview?.approvalRequests[0];
+      if (!request) {
+        throw new Error("No approval request");
+      }
+      const decidedAuthorities = request.decisions
+        .filter((decision) => decision.decision === "approve")
+        .map((decision) => decision.authority_role);
+      const authorityRole = authorityForCurrentUser(request.required_authorities, decidedAuthorities);
+      if (!authorityRole) {
+        throw new Error("No remaining approval authority");
+      }
+      const csrfToken = await getCsrfToken();
+      await apiFetch(`/scheduling/approval-requests/${request.id}/decide/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          authority_role: authorityRole,
+          decision: "approve",
+          comments: `Approved from ${currentUser?.email ?? "operator"} via cockpit action.`,
+        }),
+      });
+      return `Approved ${request.request_id} as ${authorityRole.replaceAll("_", " ")}`;
+    });
+  }
+
+  async function handleRejectPlan() {
+    await runWorkspaceAction("Reject plan", async () => {
+      const request = schedulingOverview?.approvalRequests.find((item) => item.status === "pending")
+        ?? schedulingOverview?.approvalRequests[0];
+      if (!request) {
+        throw new Error("No approval request");
+      }
+      const decidedAuthorities = request.decisions.map((decision) => decision.authority_role);
+      const authorityRole = authorityForCurrentUser(request.required_authorities, decidedAuthorities)
+        ?? request.required_authorities[0];
+      if (!authorityRole) {
+        throw new Error("No approval authority");
+      }
+      const csrfToken = await getCsrfToken();
+      await apiFetch(`/scheduling/approval-requests/${request.id}/decide/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          authority_role: authorityRole,
+          decision: "reject",
+          comments: `Rejected from ${currentUser?.email ?? "operator"} via cockpit action.`,
+        }),
+      });
+      return `Rejected ${request.request_id} as ${authorityRole.replaceAll("_", " ")}`;
+    });
+  }
+
+  async function handlePublishPlan() {
+    await runWorkspaceAction("Publish plan", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion) {
+        throw new Error("No active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      await apiFetch(`/scheduling/plan-versions/${activeVersion.id}/publish/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+      });
+      return `Published ${activeVersion.plan_code} V${activeVersion.version_no}`;
+    });
   }
 
   function handleNavigate(path: string) {
@@ -242,8 +510,16 @@ function App() {
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
       />
       <section className="operations-main">
+        {actionMessage ? <div className="workspace-action-banner">{actionMessage}</div> : null}
+        {actionError ? <div className="workspace-action-banner critical">{actionError}</div> : null}
         {route === "/admin/master-data" && masterDataOverview ? (
-          <MasterDataPage canManage={canManageMasterData} overview={masterDataOverview} />
+          <MasterDataPage
+            canManage={canManageMasterData}
+            isActionRunning={actionInFlight === "Master data import" || actionInFlight === "Master data export"}
+            onExportCatalog={handleMasterDataExport}
+            onImportCatalog={handleMasterDataImport}
+            overview={masterDataOverview}
+          />
         ) : null}
         {route === "/admin/users-rbac" && overview ? <RbacPage overview={overview} /> : null}
         {route === "/admin/audit-logs" && canViewAudit ? <AuditPage events={auditEvents} /> : null}
@@ -258,25 +534,61 @@ function App() {
           />
         ) : null}
         {route === "/schedule/ogv-demand" && canViewSchedule ? (
-          <OgvDemandPage canEdit={canEditSchedule} overview={planningOverview} />
+          <OgvDemandPage
+            canEdit={canEditSchedule}
+            canExport={canGenerateExports}
+            isActionRunning={actionInFlight === "Import demand" || actionInFlight === "Export"}
+            onExportBoard={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            onImportDemand={handleImportDemand}
+            overview={planningOverview}
+          />
         ) : null}
         {route === "/schedule/coal-grade-sequence" && canViewSchedule ? (
-          <CoalGradeSequencePage canEdit={canEditSchedule} overview={planningOverview} />
+          <CoalGradeSequencePage
+            canEdit={canEditSchedule}
+            canExport={canGenerateExports}
+            isActionRunning={actionInFlight === "Export"}
+            onExport={() => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })}
+            overview={planningOverview}
+          />
         ) : null}
         {route === "/constraints/tide-bridge" && canViewSchedule ? (
           <TideBridgePage overview={planningOverview} />
         ) : null}
         {route === "/operations/tug-barge-assignment" && canViewSchedule ? (
-          <TugBargeAssignmentPage canEdit={canEditSchedule} overview={schedulingOverview} />
+          <TugBargeAssignmentPage
+            canEdit={canEditSchedule}
+            canExport={canGenerateExports}
+            isActionRunning={actionInFlight === "Generate schedule" || actionInFlight === "Export"}
+            onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            onRegenerate={handleRegeneratePlan}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/operations/jetty-loading" && canViewSchedule ? (
-          <JettyLoadingPage canEdit={canEditSchedule} overview={schedulingOverview} />
+          <JettyLoadingPage
+            canEdit={canEditSchedule}
+            canExport={canGenerateExports}
+            isActionRunning={actionInFlight === "Export"}
+            onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/operations/cts-floating-crane" && canViewSchedule ? (
-          <CtsOperationsPage overview={schedulingOverview} />
+          <CtsOperationsPage
+            canExport={canGenerateExports}
+            isActionRunning={actionInFlight === "Export"}
+            onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/schedule/published-plan" && canViewSchedule ? (
-          <PublishedPlanPage overview={schedulingOverview} />
+          <PublishedPlanPage
+            canCreateDraft={canEditSchedule}
+            isActionRunning={actionInFlight === "Create draft"}
+            onCreateDraft={handleCreateDraft}
+            overview={schedulingOverview}
+          />
         ) : null}
         {route === "/exceptions/center" && canViewSchedule ? (
           <ExceptionCenterPage canEdit={canEditSchedule} overview={schedulingOverview} />
@@ -288,6 +600,10 @@ function App() {
           <ApprovalsPublishingPage
             canEdit={canApproveSchedule}
             canPublish={canPublishSchedule}
+            isActionRunning={actionInFlight === "Approve plan" || actionInFlight === "Publish plan"}
+            onApprove={handleApprovePlan}
+            onPublish={handlePublishPlan}
+            onReject={handleRejectPlan}
             overview={schedulingOverview}
           />
         ) : null}

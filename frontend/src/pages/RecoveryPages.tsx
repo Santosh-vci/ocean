@@ -12,6 +12,10 @@ import type {
 type RecoveryPageProps = {
   overview: SchedulingOverview | null;
   canEdit?: boolean;
+  isActionRunning?: boolean;
+  onApprove?: () => void;
+  onPublish?: () => void;
+  onReject?: () => void;
   canPublish?: boolean;
 };
 
@@ -79,8 +83,18 @@ export function ExceptionCenterPage({ overview, canEdit = false }: RecoveryPageP
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 5 · Active triage</span>
-          <button disabled={!canEdit} type="button">Convert to scenario</button>
-          <button type="button">Publish triage view</button>
+          <button
+            disabled
+            title={canEdit
+              ? "Scenario conversion is locked until governed adjustment capture."
+              : "Your role cannot convert exceptions to scenarios."}
+            type="button"
+          >
+            Scenario locked
+          </button>
+          <button disabled title="Triage publishing is outside Phase 1 action scope." type="button">
+            Publish triage locked
+          </button>
         </div>
       </header>
 
@@ -208,8 +222,20 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Chunk 5 · Scenario delta</span>
-          <button disabled={!canEdit} type="button">Run simulation</button>
-          <button disabled={!canEdit} type="button">Promote to proposed</button>
+          <button
+            disabled
+            title={canEdit ? "Simulation execution is read-only in this Phase 1 cockpit." : "Your role cannot run simulations."}
+            type="button"
+          >
+            Run simulation locked
+          </button>
+          <button
+            disabled
+            title={canEdit ? "Promotion is locked until governed adjustment capture." : "Your role cannot promote scenarios."}
+            type="button"
+          >
+            Promote locked
+          </button>
         </div>
       </header>
 
@@ -232,7 +258,13 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
             <div><dt>Source conflict</dt><dd>{scenario?.source_conflict_code ?? "Manual"}</dd></div>
             <div><dt>Status</dt><dd>{short(scenario?.status)}</dd></div>
           </dl>
-          <button disabled={!canEdit} type="button">Run simulation</button>
+          <button
+            disabled
+            title={canEdit ? "Simulation execution is read-only in this Phase 1 cockpit." : "Your role cannot run simulations."}
+            type="button"
+          >
+            Run simulation locked
+          </button>
         </aside>
 
         <section className="board-surface simulation-main">
@@ -309,6 +341,10 @@ export function SimulationWorkspacePage({ overview, canEdit = false }: RecoveryP
 export function ApprovalsPublishingPage({
   overview,
   canEdit = false,
+  isActionRunning = false,
+  onApprove,
+  onPublish,
+  onReject,
   canPublish = false,
 }: RecoveryPageProps) {
   const requests = overview?.approvalRequests ?? EMPTY_APPROVALS;
@@ -329,7 +365,13 @@ export function ApprovalsPublishingPage({
           <span className={`phase-chip ${readyToPublish ? "secure" : ""}`}>
             {readyToPublish ? "Ready to publish" : "Publish blocked"}
           </span>
-          <button disabled={!canPublish || !readyToPublish} type="button">Publish plan</button>
+          <button
+            disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
+            onClick={onPublish}
+            type="button"
+          >
+            Publish plan
+          </button>
         </div>
       </header>
 
@@ -407,9 +449,27 @@ export function ApprovalsPublishingPage({
                 })}
               </section>
               <div className="approval-actions">
-                <button disabled={!canEdit} type="button">Approve</button>
-                <button disabled={!canEdit} type="button">Reject</button>
-                <button disabled={!canPublish || !readyToPublish} type="button">Publish</button>
+                <button
+                  disabled={!canEdit || request.status !== "pending" || !onApprove || isActionRunning}
+                  onClick={onApprove}
+                  type="button"
+                >
+                  Approve
+                </button>
+                <button
+                  disabled={!canEdit || request.status !== "pending" || !onReject || isActionRunning}
+                  onClick={onReject}
+                  type="button"
+                >
+                  Reject
+                </button>
+                <button
+                  disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
+                  onClick={onPublish}
+                  type="button"
+                >
+                  Publish
+                </button>
               </div>
             </div>
           ) : null}
