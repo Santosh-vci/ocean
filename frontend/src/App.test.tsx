@@ -81,6 +81,12 @@ test("exposes chunk 6 live map through fleet visibility", () => {
   );
 });
 
+test("exposes chunk 7 governed exports through export visibility", () => {
+  expect(visibleNavItems(["dashboard.view", "export.view"]).map((item) => item.label)).toContain(
+    "Exports & Handoff",
+  );
+});
+
 test("renders the role-aware dashboard shell", async () => {
   render(<App />);
 

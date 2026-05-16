@@ -118,6 +118,7 @@ If a code change weakens one of these distinctions, stop and reconsider the mode
 ## 9. Security and governance
 
 - Enforce permissions at API and service layer.
+- Governed export generation is a backend authority (`export.generate`), not a UI affordance.
 - Audit all sensitive mutations:
   - plan changes;
   - approvals;
@@ -125,6 +126,9 @@ If a code change weakens one of these distinctions, stop and reconsider the mode
   - master-data edits;
   - role or scope changes;
   - exports.
+- Export artifacts must carry storage bucket/key, checksum, record count, creator, access scope,
+  and audit event metadata. Object storage is the file boundary; the database records authority
+  and provenance.
 - Keep organization/data-scope tests close to the code that grants access.
 - Never let UI-only behavior become the security boundary.
 - Require reason capture for overrides and rejection flows.

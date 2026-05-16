@@ -1,20 +1,28 @@
 from django.db.models import Count, F, Q, Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from apps.audit.mixins import AuditMutationMixin
 from apps.audit.services import record_audit_event
+from apps.core.object_storage import read_export_object
 from apps.rbac.permissions import RequiresAccessPermission
 
+from .export_services import (
+    create_governed_export,
+    export_jobs_visible_to_user,
+    export_overview_for_user,
+)
 from .models import (
     ApprovalDecision,
     ApprovalRequest,
     Assignment,
     Conflict,
+    ExportJob,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -29,6 +37,7 @@ from .serializers import (
     ApprovalRequestSerializer,
     AssignmentSerializer,
     ConflictSerializer,
+    ExportJobSerializer,
     OverrideRequestSerializer,
     PlanSerializer,
     PlanVersionSerializer,
@@ -381,6 +390,58 @@ class PublishedPlanSnapshotViewSet(SchedulingViewSet):
         "published_by",
     ).all()
     serializer_class = PublishedPlanSnapshotSerializer
+
+
+class ExportJobViewSet(ReadOnlyModelViewSet):
+    serializer_class = ExportJobSerializer
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "export.view",
+        "retrieve": "export.view",
+        "overview": "export.view",
+        "download": "export.view",
+        "generate": "export.generate",
+    }
+
+    def get_queryset(self):
+        return export_jobs_visible_to_user(self.request.user)
+
+    @action(detail=False, methods=["get"], url_path="overview")
+    def overview(self, request):
+        jobs = self.get_queryset()[:30]
+        return Response(
+            {
+                **export_overview_for_user(request.user),
+                "exports": ExportJobSerializer(jobs, many=True).data,
+            }
+        )
+
+    @action(detail=False, methods=["post"], url_path="generate")
+    def generate(self, request):
+        plan_version = None
+        plan_version_id = request.data.get("plan_version")
+        if plan_version_id:
+            plan_version = get_object_or_404(PlanVersion, pk=plan_version_id)
+        export_job = create_governed_export(
+            actor=request.user,
+            export_type=request.data.get("export_type", ExportJob.ExportType.PLAN),
+            export_format=request.data.get("export_format", ExportJob.ExportFormat.JSON),
+            plan_version=plan_version,
+            request=request,
+        )
+        return Response(ExportJobSerializer(export_job).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"], url_path="download")
+    def download(self, request, pk=None):
+        export_job = self.get_object()
+        content = read_export_object(
+            key=export_job.storage_key,
+            bucket=export_job.storage_bucket,
+        )
+        response = HttpResponse(content, content_type=export_job.content_type)
+        response["Content-Disposition"] = f'attachment; filename="{export_job.file_name}"'
+        response["X-Content-SHA256"] = export_job.checksum_sha256
+        return response
 
 
 class SimulationScenarioViewSet(SchedulingViewSet):

@@ -712,6 +712,62 @@ export type PublishedPlanSnapshotRecord = {
   published_at: string;
 };
 
+export type ExportType = "plan" | "conflict" | "audit";
+export type ExportFormat = "json" | "csv" | "print";
+
+export type ExportJobRecord = {
+  id: number;
+  export_id: string;
+  export_type: ExportType;
+  export_format: ExportFormat;
+  status: string;
+  plan_version: number | null;
+  plan_version_ref: string | null;
+  organization: number | null;
+  organization_name: string | null;
+  storage_bucket: string;
+  storage_key: string;
+  storage_uri: string;
+  file_name: string;
+  content_type: string;
+  checksum_sha256: string;
+  size_bytes: number;
+  record_count: number;
+  scope: {
+    scope_type: string;
+    label: string;
+    organization_id: number | null;
+    organization_name: string | null;
+    redactions: string[];
+  };
+  payload: Record<string, unknown>;
+  failure_reason: string;
+  created_by: number | null;
+  created_by_email: string | null;
+  created_at: string;
+  download_url: string;
+};
+
+export type ExportOverview = {
+  summary: {
+    total: number;
+    plan: number;
+    conflict: number;
+    audit: number;
+  };
+  scope: {
+    scope_type: string;
+    label: string;
+    organization_id: number | null;
+    organization_name: string | null;
+    redactions: string[];
+  };
+  canGenerate: boolean;
+  allowedTypes: Array<{ value: ExportType; label: string }>;
+  allowedFormats: ExportFormat[];
+  exports: ExportJobRecord[];
+};
+
 export type SimulationScenarioRecord = {
   id: number;
   scenario_id: string;

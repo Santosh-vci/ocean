@@ -18,6 +18,7 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    ExportJob,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -340,6 +341,50 @@ class PublishedPlanSnapshotSerializer(serializers.ModelSerializer):
             "published_at",
         )
         read_only_fields = fields
+
+
+class ExportJobSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    download_url = serializers.SerializerMethodField()
+    storage_uri = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExportJob
+        fields = (
+            "id",
+            "export_id",
+            "export_type",
+            "export_format",
+            "status",
+            "plan_version",
+            "plan_version_ref",
+            "organization",
+            "organization_name",
+            "storage_bucket",
+            "storage_key",
+            "storage_uri",
+            "file_name",
+            "content_type",
+            "checksum_sha256",
+            "size_bytes",
+            "record_count",
+            "scope",
+            "payload",
+            "failure_reason",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "download_url",
+        )
+        read_only_fields = fields
+
+    def get_download_url(self, obj) -> str:
+        return f"/api/exports/{obj.pk}/download/"
+
+    def get_storage_uri(self, obj) -> str:
+        return f"object://{obj.storage_bucket}/{obj.storage_key}"
 
 
 class SimulationScenarioSerializer(serializers.ModelSerializer):

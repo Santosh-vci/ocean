@@ -209,6 +209,14 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "audit.view",
         icon: "audit",
       },
+      {
+        path: "/admin/export-handoff",
+        label: "Exports & Handoff",
+        module: "Admin Console",
+        requiredPermission: "export.view",
+        icon: "account-tree",
+        phase: "Chunk 7",
+      },
     ],
   },
 ];

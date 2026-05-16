@@ -5,6 +5,7 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    ExportJob,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -83,6 +84,31 @@ class PublishedPlanSnapshotAdmin(admin.ModelAdmin):
     list_display = ("snapshot_id", "plan", "plan_version", "status", "published_by")
     list_filter = ("status",)
     search_fields = ("snapshot_id", "plan__code")
+
+
+@admin.register(ExportJob)
+class ExportJobAdmin(admin.ModelAdmin):
+    list_display = (
+        "export_id",
+        "export_type",
+        "export_format",
+        "status",
+        "record_count",
+        "created_by",
+        "created_at",
+    )
+    list_filter = ("export_type", "export_format", "status", "organization")
+    search_fields = ("export_id", "file_name", "storage_key")
+    readonly_fields = (
+        "export_id",
+        "storage_bucket",
+        "storage_key",
+        "checksum_sha256",
+        "size_bytes",
+        "record_count",
+        "payload",
+        "created_at",
+    )
 
 
 @admin.register(SimulationScenario)

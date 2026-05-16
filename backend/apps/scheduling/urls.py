@@ -7,6 +7,7 @@ from .views import (
     AssignmentViewSet,
     ConflictViewSet,
     DashboardSituationView,
+    ExportJobViewSet,
     OverrideRequestViewSet,
     PlanVersionViewSet,
     PlanViewSet,
@@ -36,6 +37,7 @@ router.register(
     PublishedPlanSnapshotViewSet,
     basename="published-snapshot",
 )
+router.register("exports", ExportJobViewSet, basename="export")
 router.register("scheduling/scenarios", SimulationScenarioViewSet, basename="simulation-scenario")
 
 overview = SchedulingOverviewViewSet.as_view({"get": "overview"})

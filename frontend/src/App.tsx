@@ -3,11 +3,12 @@
 import { AuditStrip } from "./components/AuditStrip";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
-import { apiFetch, login, logout } from "./lib/api";
+import { apiFetch, getCsrfToken, login, logout } from "./lib/api";
 import { canAccess, visibleNavItems, visibleNavModules } from "./lib/navigation";
 import { AuditPage } from "./pages/AuditPage";
 import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ExportHandoffPage } from "./pages/ExportHandoffPage";
 import { LoginPage } from "./pages/LoginPage";
 import {
   CtsOperationsPage,
@@ -29,6 +30,10 @@ import type {
   AuditEvent,
   CurrentUser,
   DashboardReadModel,
+  ExportFormat,
+  ExportJobRecord,
+  ExportOverview,
+  ExportType,
   MasterDataOverview,
   PlanningOverview,
   RbacOverview,
@@ -47,7 +52,11 @@ function App() {
   const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
   const [schedulingOverview, setSchedulingOverview] = useState<SchedulingOverview | null>(null);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
+  const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExportLoading, setIsExportLoading] = useState(false);
+  const [isExportGenerating, setIsExportGenerating] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -77,6 +86,10 @@ function App() {
   );
   const canViewAudit = currentUser ? canAccess(currentUser.permissions, "audit.view") : false;
   const canViewDashboard = currentUser ? canAccess(currentUser.permissions, "dashboard.view") : false;
+  const canViewExports = currentUser ? canAccess(currentUser.permissions, "export.view") : false;
+  const canGenerateExports = currentUser
+    ? canAccess(currentUser.permissions, "export.generate")
+    : false;
   const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
   const canViewAdmin = currentUser ? canAccess(currentUser.permissions, "admin.view") : false;
   const canViewMasterData = currentUser
@@ -119,6 +132,18 @@ function App() {
       apiFetch<AuditEvent[]>("/audit-events/").then(setAuditEvents).catch(() => setAuditEvents([]));
     }
 
+    if (canViewExports) {
+      setIsExportLoading(true);
+      setExportError(null);
+      apiFetch<ExportOverview>("/exports/overview/")
+        .then(setExportOverview)
+        .catch(() => {
+          setExportOverview(null);
+          setExportError("Export history is unavailable.");
+        })
+        .finally(() => setIsExportLoading(false));
+    }
+
     if (canViewSchedule) {
       apiFetch<PlanningOverview>("/planning/overview/")
         .then(setPlanningOverview)
@@ -134,6 +159,7 @@ function App() {
     canViewAdmin,
     canViewAudit,
     canViewDashboard,
+    canViewExports,
     canViewMasterData,
     canViewSchedule,
     currentUser,
@@ -152,7 +178,40 @@ function App() {
     setPlanningOverview(null);
     setSchedulingOverview(null);
     setDashboardReadModel(null);
+    setExportOverview(null);
     setAuditEvents([]);
+    setExportError(null);
+  }
+
+  async function handleGenerateExport(command: {
+    exportType: ExportType;
+    exportFormat: ExportFormat;
+  }) {
+    if (!canGenerateExports) {
+      return;
+    }
+
+    setIsExportGenerating(true);
+    setExportError(null);
+    try {
+      const csrfToken = await getCsrfToken();
+      await apiFetch<ExportJobRecord>("/exports/generate/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          export_type: command.exportType,
+          export_format: command.exportFormat,
+        }),
+      });
+      const refreshed = await apiFetch<ExportOverview>("/exports/overview/");
+      setExportOverview(refreshed);
+    } catch {
+      setExportError("Export generation failed. Check permissions and active plan data.");
+    } finally {
+      setIsExportGenerating(false);
+    }
   }
 
   function handleNavigate(path: string) {
@@ -188,6 +247,16 @@ function App() {
         ) : null}
         {route === "/admin/users-rbac" && overview ? <RbacPage overview={overview} /> : null}
         {route === "/admin/audit-logs" && canViewAudit ? <AuditPage events={auditEvents} /> : null}
+        {route === "/admin/export-handoff" && canViewExports ? (
+          <ExportHandoffPage
+            canGenerate={canGenerateExports}
+            error={exportError}
+            isGenerating={isExportGenerating}
+            isLoading={isExportLoading}
+            onGenerate={handleGenerateExport}
+            overview={exportOverview}
+          />
+        ) : null}
         {route === "/schedule/ogv-demand" && canViewSchedule ? (
           <OgvDemandPage canEdit={canEditSchedule} overview={planningOverview} />
         ) : null}

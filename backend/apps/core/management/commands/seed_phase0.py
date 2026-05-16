@@ -84,6 +84,8 @@ class Command(BaseCommand):
             ("masterdata.view", "masterdata", "view", "View master data"),
             ("masterdata.manage", "masterdata", "manage", "Manage master data"),
             ("audit.view", "audit", "view", "View audit events"),
+            ("export.view", "export", "view", "View governed export history"),
+            ("export.generate", "export", "generate", "Generate governed export artifacts"),
             ("admin.view", "admin", "view", "View admin consoles"),
             ("admin.manage_users", "admin", "manage_users", "Manage users and organizations"),
         ]
@@ -140,6 +142,7 @@ class Command(BaseCommand):
                     permissions["simulation.run"],
                     permissions["masterdata.view"],
                     permissions["audit.view"],
+                    permissions["export.view"],
                 ],
             },
             "abl-dispatcher": {
@@ -154,6 +157,7 @@ class Command(BaseCommand):
                     permissions["schedule.approve"],
                     permissions["simulation.run"],
                     permissions["audit.view"],
+                    permissions["export.view"],
                 ],
             },
             "joint-control-tower-manager": {
@@ -167,6 +171,8 @@ class Command(BaseCommand):
                     permissions["simulation.run"],
                     permissions["fleet.view"],
                     permissions["audit.view"],
+                    permissions["export.view"],
+                    permissions["export.generate"],
                 ],
             },
             "read-only-viewer": {
@@ -253,7 +259,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 "Seeded Chunk 6 organizations, roles, planning data, schedule, "
-                "governance loop, and dashboard context."
+                "governance loop, dashboard context, and export handoff permissions."
             )
         )
 

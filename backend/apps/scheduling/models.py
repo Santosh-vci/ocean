@@ -486,6 +486,69 @@ class PublishedPlanSnapshot(models.Model):
         return self.snapshot_id
 
 
+class ExportJob(models.Model):
+    class ExportType(models.TextChoices):
+        PLAN = "plan", "Plan"
+        CONFLICT = "conflict", "Conflict"
+        AUDIT = "audit", "Audit"
+
+    class ExportFormat(models.TextChoices):
+        JSON = "json", "JSON"
+        CSV = "csv", "CSV"
+        PRINT = "print", "Printable text"
+
+    class Status(models.TextChoices):
+        GENERATED = "generated", "Generated"
+        FAILED = "failed", "Failed"
+
+    export_id = models.CharField(max_length=96, unique=True)
+    export_type = models.CharField(max_length=32, choices=ExportType.choices)
+    export_format = models.CharField(max_length=16, choices=ExportFormat.choices)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.GENERATED)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="export_jobs",
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="schedule_exports",
+    )
+    storage_bucket = models.CharField(max_length=120)
+    storage_key = models.CharField(max_length=512)
+    file_name = models.CharField(max_length=220)
+    content_type = models.CharField(max_length=120)
+    checksum_sha256 = models.CharField(max_length=64)
+    size_bytes = models.PositiveIntegerField(default=0)
+    record_count = models.PositiveIntegerField(default=0)
+    scope = models.JSONField(default=dict, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    failure_reason = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_export_jobs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=("export_type", "status", "created_at")),
+            models.Index(fields=("organization", "created_at")),
+        ]
+
+    def __str__(self) -> str:
+        return self.export_id
+
+
 class SimulationScenario(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
