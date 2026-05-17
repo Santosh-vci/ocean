@@ -22,6 +22,8 @@ from apps.scheduling.models import (
     PlanVersion,
     PublishedPlanSnapshot,
     ScheduleEvent,
+    ScenarioAssumption,
+    ScenarioRun,
     SimulationScenario,
     Trip,
 )
@@ -655,6 +657,149 @@ def test_transition_scenario_api_contract_preserves_current_response_shape():
     assert promote_response.status_code == 200
     assert promote_response.data["status"] == SimulationScenario.Status.PROPOSED
     assert promote_response.data["scenario_version"] is not None
+
+
+@pytest.mark.django_db
+def test_scenario_sources_assumptions_and_run_queue_are_persisted_and_audited():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-assumption-editor")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    conflict = baseline.conflicts.order_by("id").first()
+
+    client = APIClient()
+    client.force_authenticate(user)
+    manual_response = client.post(
+        f"/api/scheduling/plan-versions/{baseline.id}/create-scenario/",
+        {"name": "Manual what-if"},
+        format="json",
+    )
+    linked_response = client.post(
+        f"/api/scheduling/plan-versions/{baseline.id}/create-scenario/",
+        {"conflict": conflict.id if conflict else None, "name": "Conflict what-if"},
+        format="json",
+    )
+    assignment = baseline.trips.order_by("sequence").first().assignment
+    override_response = client.post(
+        f"/api/scheduling/assignments/{assignment.id}/apply-override/",
+        {
+            "reason_code": OverrideRequest.ReasonCode.MANUAL_CORRECTION,
+            "description": "Manual scenario source.",
+            "changes": {"next_action": "Create scenario source."},
+        },
+        format="json",
+    )
+    override_scenario_response = client.post(
+        f"/api/scheduling/plan-versions/{baseline.id}/create-scenario/",
+        {"override": override_response.data["id"], "name": "Override what-if"},
+        format="json",
+    )
+    assumption_response = client.post(
+        f"/api/scheduling/scenarios/{manual_response.data['id']}/assumptions/",
+        {
+            "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+            "scope_type": ScenarioAssumption.ScopeType.TRIP,
+            "scope_id": baseline.trips.order_by("sequence").first().id,
+            "payload": {"delay_minutes": 90},
+        },
+        format="json",
+    )
+    run_response = client.post(
+        f"/api/scheduling/scenarios/{manual_response.data['id']}/runs/",
+        {},
+        format="json",
+    )
+
+    assert manual_response.status_code == 201
+    assert linked_response.status_code == 201
+    assert override_response.status_code == 201
+    assert override_scenario_response.status_code == 201
+    assert manual_response.data["source_kind"] == SimulationScenario.SourceKind.MANUAL
+    assert linked_response.data["source_kind"] == SimulationScenario.SourceKind.CONFLICT
+    assert override_scenario_response.data["source_kind"] == SimulationScenario.SourceKind.OVERRIDE
+    assert assumption_response.status_code == 201
+    assert assumption_response.data["payload"]["delay_minutes"] == 90
+    assert run_response.status_code == 201
+    assert run_response.data["status"] == ScenarioRun.Status.QUEUED
+    assert ScenarioAssumption.objects.filter(scenario_id=manual_response.data["id"]).count() == 1
+    assert ScenarioRun.objects.filter(scenario_id=manual_response.data["id"]).count() == 1
+    assert AuditEvent.objects.filter(action="simulation.assumption.create").exists()
+    assert AuditEvent.objects.filter(action="simulation.run.create").exists()
+
+
+@pytest.mark.django_db
+def test_new_assumption_resets_simulated_scenario_and_proposed_scenario_rejects_inputs():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-mutation-guard")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    simulate_scenario(scenario=scenario, actor=user)
+    scenario.refresh_from_db()
+    assert scenario.status == SimulationScenario.Status.SIMULATED
+
+    client = APIClient()
+    client.force_authenticate(user)
+    reset_response = client.post(
+        f"/api/scheduling/scenarios/{scenario.id}/assumptions/",
+        {
+            "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+            "scope_type": ScenarioAssumption.ScopeType.TRIP,
+            "scope_id": baseline.trips.order_by("sequence").first().id,
+            "payload": {"delay_minutes": 30},
+        },
+        format="json",
+    )
+    scenario.refresh_from_db()
+    assert reset_response.status_code == 201
+    assert scenario.status == SimulationScenario.Status.DRAFT
+    assert scenario.impact_summary == {}
+    assert scenario.delta_summary == {}
+
+    simulate_scenario(scenario=scenario, actor=user)
+    promote_scenario_to_proposed(scenario=scenario, actor=user)
+    blocked_response = client.post(
+        f"/api/scheduling/scenarios/{scenario.id}/assumptions/",
+        {
+            "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+            "scope_type": ScenarioAssumption.ScopeType.TRIP,
+            "scope_id": baseline.trips.order_by("sequence").first().id,
+            "payload": {"delay_minutes": 45},
+        },
+        format="json",
+    )
+
+    assert blocked_response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_simulation_action_creates_succeeded_run_record():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-runner")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.post(f"/api/scheduling/scenarios/{scenario.id}/simulate/")
+
+    assert response.status_code == 200
+    run = ScenarioRun.objects.get(scenario=scenario)
+    assert run.status == ScenarioRun.Status.SUCCEEDED
+    assert run.summary["mode"] == "transition"
+    assert response.data["runs"][0]["run_id"] == run.run_id
 
 
 @pytest.mark.django_db

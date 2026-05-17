@@ -2601,6 +2601,162 @@ tbody tr:hover,
   margin: 0 0.65rem 0.65rem;
 }
 
+.scenario-create-panel,
+.scenario-list-panel,
+.scenario-assumption-panel,
+.scenario-assumption-list {
+  display: grid;
+  gap: 0.45rem;
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.65rem;
+}
+
+.scenario-create-panel label,
+.scenario-assumption-panel label {
+  display: grid;
+  gap: 0.28rem;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scenario-create-panel input,
+.scenario-assumption-panel input,
+.scenario-assumption-panel select {
+  width: 100%;
+  min-height: 1.85rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.2rem;
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0 0.5rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.68rem;
+}
+
+.scenario-create-panel button,
+.scenario-assumption-panel button {
+  min-height: 1.9rem;
+  border: 1px solid rgba(137, 206, 255, 0.45);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--primary);
+  padding: 0 0.65rem;
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.scenario-create-panel button,
+.scenario-assumption-panel button,
+.scenario-list-panel button {
+  margin: 0;
+}
+
+.scenario-create-panel button:disabled,
+.scenario-assumption-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.scenario-list-panel h2,
+.scenario-assumption-panel h2,
+.scenario-assumption-list h2 {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.scenario-list-panel button,
+.scenario-list-panel > span,
+.scenario-assumption-list span {
+  display: grid;
+  gap: 0.1rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.42rem 0.5rem;
+  text-align: left;
+}
+
+.scenario-list-panel button.active {
+  border-color: rgba(137, 206, 255, 0.55);
+  color: var(--primary);
+}
+
+.scenario-list-panel strong,
+.scenario-assumption-list strong {
+  overflow: hidden;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-list-panel span,
+.scenario-assumption-list em {
+  color: var(--on-surface-variant);
+  font-size: 0.61rem;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.scenario-run-list {
+  display: grid;
+  gap: 0.45rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.75rem;
+}
+
+.scenario-run-list > strong {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scenario-run-list span {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.18rem 0.45rem;
+  align-items: center;
+}
+
+.scenario-run-list em {
+  grid-row: 1 / span 2;
+  margin: 0;
+  font-style: normal;
+}
+
+.scenario-run-list b,
+.scenario-run-list small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-run-list b {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.67rem;
+}
+
+.scenario-run-list small,
+.scenario-run-note {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+}
+
+.scenario-run-note {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .simulation-main {
   gap: 0.65rem;
 }
@@ -2711,8 +2867,7 @@ tbody tr:hover,
 
 @media (max-width: 1280px) {
   .exception-layout,
-  .approval-layout,
-  .simulation-layout {
+  .approval-layout {
     grid-template-columns: 1fr;
   }
 
@@ -2725,6 +2880,12 @@ tbody tr:hover,
     min-height: 1.25rem;
     width: 1px;
     align-self: center;
+  }
+}
+
+@media (max-width: 1180px) {
+  .simulation-layout {
+    grid-template-columns: 1fr;
   }
 }
 

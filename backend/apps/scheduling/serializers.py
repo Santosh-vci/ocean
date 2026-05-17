@@ -25,6 +25,8 @@ from .models import (
     PlanVersion,
     PublishedPlanSnapshot,
     ScheduleEvent,
+    ScenarioAssumption,
+    ScenarioRun,
     SimulationScenario,
     Trip,
 )
@@ -420,6 +422,68 @@ class ExportJobSerializer(serializers.ModelSerializer):
         return f"object://{obj.storage_bucket}/{obj.storage_key}"
 
 
+class ScenarioAssumptionSerializer(serializers.ModelSerializer):
+    scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
+    created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+
+    class Meta:
+        model = ScenarioAssumption
+        fields = (
+            "id",
+            "scenario",
+            "scenario_ref",
+            "assumption_id",
+            "kind",
+            "scope_type",
+            "scope_id",
+            "payload",
+            "effective_from",
+            "effective_to",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "scenario",
+            "scenario_ref",
+            "assumption_id",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "updated_at",
+        )
+
+
+class ScenarioRunSerializer(serializers.ModelSerializer):
+    scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
+    baseline_version_ref = serializers.CharField(source="baseline_version", read_only=True)
+    created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+
+    class Meta:
+        model = ScenarioRun
+        fields = (
+            "id",
+            "scenario",
+            "scenario_ref",
+            "run_id",
+            "baseline_version",
+            "baseline_version_ref",
+            "status",
+            "algorithm_version",
+            "input_hash",
+            "started_at",
+            "completed_at",
+            "summary",
+            "created_by",
+            "created_by_email",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
 class SimulationScenarioSerializer(serializers.ModelSerializer):
     baseline_version_ref = serializers.CharField(source="baseline_version", read_only=True)
     scenario_version_ref = serializers.CharField(source="scenario_version", read_only=True)
@@ -428,7 +492,17 @@ class SimulationScenarioSerializer(serializers.ModelSerializer):
         source="source_conflict.message",
         read_only=True,
     )
+    source_override_reason_code = serializers.CharField(
+        source="source_override.reason_code",
+        read_only=True,
+    )
+    source_override_description = serializers.CharField(
+        source="source_override.description",
+        read_only=True,
+    )
     created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+    assumptions = ScenarioAssumptionSerializer(many=True, read_only=True)
+    runs = ScenarioRunSerializer(many=True, read_only=True)
 
     class Meta:
         model = SimulationScenario
@@ -444,12 +518,18 @@ class SimulationScenarioSerializer(serializers.ModelSerializer):
             "source_conflict",
             "source_conflict_code",
             "source_conflict_message",
+            "source_override",
+            "source_override_reason_code",
+            "source_override_description",
+            "source_kind",
             "status",
             "recovery_actions",
             "impact_summary",
             "delta_summary",
             "created_by",
             "created_by_email",
+            "assumptions",
+            "runs",
             "created_at",
             "updated_at",
         )
@@ -458,12 +538,18 @@ class SimulationScenarioSerializer(serializers.ModelSerializer):
             "scenario_id",
             "scenario_version",
             "scenario_version_ref",
+            "source_override",
+            "source_override_reason_code",
+            "source_override_description",
+            "source_kind",
             "status",
             "recovery_actions",
             "impact_summary",
             "delta_summary",
             "created_by",
             "created_by_email",
+            "assumptions",
+            "runs",
             "created_at",
             "updated_at",
         )

@@ -12,6 +12,8 @@ from .models import (
     PlanVersion,
     PublishedPlanSnapshot,
     ScheduleEvent,
+    ScenarioAssumption,
+    ScenarioRun,
     SimulationScenario,
     Trip,
 )
@@ -122,6 +124,29 @@ class ExportJobAdmin(admin.ModelAdmin):
 
 @admin.register(SimulationScenario)
 class SimulationScenarioAdmin(admin.ModelAdmin):
-    list_display = ("scenario_id", "name", "baseline_version", "scenario_version", "status")
-    list_filter = ("status", "scenario_type")
+    list_display = (
+        "scenario_id",
+        "name",
+        "baseline_version",
+        "scenario_version",
+        "source_kind",
+        "status",
+    )
+    list_filter = ("status", "scenario_type", "source_kind")
     search_fields = ("scenario_id", "name")
+
+
+@admin.register(ScenarioAssumption)
+class ScenarioAssumptionAdmin(admin.ModelAdmin):
+    list_display = ("assumption_id", "scenario", "kind", "scope_type", "scope_id", "created_by")
+    list_filter = ("kind", "scope_type")
+    search_fields = ("assumption_id", "scenario__scenario_id")
+    readonly_fields = ("assumption_id", "created_at", "updated_at")
+
+
+@admin.register(ScenarioRun)
+class ScenarioRunAdmin(admin.ModelAdmin):
+    list_display = ("run_id", "scenario", "status", "algorithm_version", "created_by")
+    list_filter = ("status", "algorithm_version")
+    search_fields = ("run_id", "scenario__scenario_id", "input_hash")
+    readonly_fields = ("run_id", "input_hash", "created_at", "updated_at")

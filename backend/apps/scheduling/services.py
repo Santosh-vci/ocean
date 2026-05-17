@@ -1,3 +1,5 @@
+import hashlib
+import json
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -30,6 +32,8 @@ from .models import (
     PlanVersion,
     PublishedPlanSnapshot,
     ScheduleEvent,
+    ScenarioAssumption,
+    ScenarioRun,
     SimulationScenario,
     Trip,
 )
@@ -808,28 +812,101 @@ def create_scenario_from_conflict(
     *,
     baseline_version: PlanVersion,
     source_conflict: Conflict | None,
+    source_override: OverrideRequest | None = None,
     actor,
     name: str = "",
 ) -> SimulationScenario:
     if source_conflict and source_conflict.plan_version_id != baseline_version.id:
         raise ValidationError("Scenario source conflict must belong to the baseline version.")
+    if source_override and source_override.plan_version_id != baseline_version.id:
+        raise ValidationError("Scenario source override must belong to the baseline version.")
+    if source_conflict and source_override:
+        raise ValidationError("A scenario can have either a conflict or override source, not both.")
 
-    scenario_id = f"SIM-{baseline_version.plan.code}-V{baseline_version.version_no}"
-    scenario, _ = SimulationScenario.objects.get_or_create(
-        scenario_id=scenario_id,
-        defaults={
-            "name": name or "Recovery scenario",
-            "scenario_type": "conflict_recovery",
-            "baseline_version": baseline_version,
-            "source_conflict": source_conflict,
-            "status": SimulationScenario.Status.DRAFT,
-            "created_by": actor,
-        },
+    source_kind = (
+        SimulationScenario.SourceKind.CONFLICT
+        if source_conflict
+        else SimulationScenario.SourceKind.OVERRIDE
+        if source_override
+        else SimulationScenario.SourceKind.MANUAL
+    )
+    sequence = baseline_version.baseline_scenarios.count() + 1
+    scenario = SimulationScenario.objects.create(
+        scenario_id=f"SIM-{baseline_version.plan.code}-V{baseline_version.version_no}-{sequence:02d}",
+        name=name or "Recovery scenario",
+        scenario_type="conflict_recovery",
+        baseline_version=baseline_version,
+        source_conflict=source_conflict,
+        source_override=source_override,
+        source_kind=source_kind,
+        status=SimulationScenario.Status.DRAFT,
+        created_by=actor,
     )
     return scenario
 
 
-def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
+def create_scenario_assumption(
+    *,
+    scenario: SimulationScenario,
+    actor,
+    kind: str,
+    scope_type: str,
+    scope_id: int | None,
+    payload: dict | None = None,
+    effective_from=None,
+    effective_to=None,
+) -> ScenarioAssumption:
+    _assert_scenario_inputs_mutable(scenario)
+    normalized_payload = payload or {}
+    _validate_scenario_assumption_payload(kind=kind, payload=normalized_payload)
+
+    assumption_sequence = scenario.assumptions.count() + 1
+    assumption = ScenarioAssumption.objects.create(
+        scenario=scenario,
+        assumption_id=f"ASM-{scenario.scenario_id}-{assumption_sequence:02d}",
+        kind=kind,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        payload=normalized_payload,
+        effective_from=effective_from,
+        effective_to=effective_to,
+        created_by=actor,
+    )
+    _mark_scenario_inputs_changed(scenario)
+    return assumption
+
+
+def create_scenario_run(
+    *,
+    scenario: SimulationScenario,
+    actor,
+    status: str = ScenarioRun.Status.QUEUED,
+    algorithm_version: str = "phase2-transition-v1",
+    summary: dict | None = None,
+    started_at=None,
+    completed_at=None,
+) -> ScenarioRun:
+    if scenario.status in {
+        SimulationScenario.Status.PROPOSED,
+        SimulationScenario.Status.CANCELED,
+    }:
+        raise ValidationError("Proposed or canceled scenarios cannot accept new runs.")
+    run_sequence = scenario.runs.count() + 1
+    return ScenarioRun.objects.create(
+        scenario=scenario,
+        run_id=f"RUN-{scenario.scenario_id}-{run_sequence:02d}",
+        baseline_version=scenario.baseline_version,
+        status=status,
+        algorithm_version=algorithm_version,
+        input_hash=_scenario_input_hash(scenario),
+        summary=summary or {},
+        started_at=started_at,
+        completed_at=completed_at,
+        created_by=actor,
+    )
+
+
+def simulate_scenario(*, scenario: SimulationScenario, actor=None) -> SimulationScenario:
     if scenario.status in {
         SimulationScenario.Status.PROPOSED,
         SimulationScenario.Status.CANCELED,
@@ -837,6 +914,21 @@ def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
         raise ValidationError("Only draft or simulated scenarios can be simulated.")
 
     conflict = scenario.source_conflict
+    override = scenario.source_override
+    source_label = (
+        conflict.code
+        if conflict
+        else override.reason_code.upper()
+        if override
+        else "MANUAL_SCENARIO"
+    )
+    affected_vessel = (
+        conflict.trip.voyage.vessel_name
+        if conflict and conflict.trip
+        else override.trip.voyage.vessel_name
+        if override and override.trip
+        else ""
+    )
     actions = [
         "Reassign available tug against earliest feasible tide window.",
         "Hold barge queue at source jetty until route gate clears.",
@@ -844,8 +936,8 @@ def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
     ]
     scenario.recovery_actions = actions
     scenario.impact_summary = {
-        "sourceConflict": conflict.code if conflict else "MANUAL_SCENARIO",
-        "affectedVessel": conflict.trip.voyage.vessel_name if conflict and conflict.trip else "",
+        "sourceConflict": source_label,
+        "affectedVessel": affected_vessel,
         "feasibilityPct": 89 if conflict else 96,
     }
     scenario.delta_summary = {
@@ -863,6 +955,19 @@ def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
             "status",
             "updated_at",
         ]
+    )
+    now = timezone.now()
+    create_scenario_run(
+        scenario=scenario,
+        actor=actor,
+        status=ScenarioRun.Status.SUCCEEDED,
+        summary={
+            "mode": "transition",
+            "impactSummary": scenario.impact_summary,
+            "deltaSummary": scenario.delta_summary,
+        },
+        started_at=now,
+        completed_at=now,
     )
     return scenario
 
@@ -887,6 +992,87 @@ def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> Simu
         scenario.scenario_version.save(update_fields=["status", "updated_at"])
         scenario.save(update_fields=["scenario_version", "status", "updated_at"])
     return scenario
+
+
+def _assert_scenario_inputs_mutable(scenario: SimulationScenario) -> None:
+    if scenario.status in {
+        SimulationScenario.Status.PROPOSED,
+        SimulationScenario.Status.CANCELED,
+    }:
+        raise ValidationError("Proposed or canceled scenarios cannot accept new assumptions.")
+
+
+def _mark_scenario_inputs_changed(scenario: SimulationScenario) -> None:
+    if scenario.status != SimulationScenario.Status.SIMULATED:
+        return
+    scenario.status = SimulationScenario.Status.DRAFT
+    scenario.recovery_actions = []
+    scenario.impact_summary = {}
+    scenario.delta_summary = {}
+    scenario.save(
+        update_fields=[
+            "status",
+            "recovery_actions",
+            "impact_summary",
+            "delta_summary",
+            "updated_at",
+        ]
+    )
+
+
+def _validate_scenario_assumption_payload(*, kind: str, payload: dict) -> None:
+    if not isinstance(payload, dict):
+        raise ValidationError({"payload": "Assumption payload must be an object."})
+
+    requirements = {
+        ScenarioAssumption.Kind.TRIP_DELAY: ("delay_minutes",),
+        ScenarioAssumption.Kind.ASSET_OUTAGE: ("asset_code",),
+        ScenarioAssumption.Kind.RATE_CHANGE: ("rate_tph",),
+        ScenarioAssumption.Kind.WINDOW_CHANGE: ("window_code",),
+        ScenarioAssumption.Kind.OGV_ETA_CHANGE: ("eta",),
+        ScenarioAssumption.Kind.MANUAL_REASSIGNMENT: ("assignment_id",),
+    }
+    required_keys = requirements.get(kind)
+    if required_keys is None:
+        raise ValidationError({"kind": "Unsupported assumption kind."})
+
+    missing = [key for key in required_keys if payload.get(key) in {None, ""}]
+    if missing:
+        raise ValidationError({"payload": f"Missing required fields: {', '.join(missing)}."})
+
+    if kind == ScenarioAssumption.Kind.TRIP_DELAY:
+        delay_minutes = payload.get("delay_minutes")
+        if not isinstance(delay_minutes, int) or delay_minutes < 0:
+            raise ValidationError(
+                {"payload": {"delay_minutes": "Delay minutes must be a non-negative integer."}}
+            )
+    if kind == ScenarioAssumption.Kind.RATE_CHANGE:
+        rate_tph = payload.get("rate_tph")
+        if not isinstance(rate_tph, (int, float)) or rate_tph <= 0:
+            raise ValidationError(
+                {"payload": {"rate_tph": "Rate TPH must be a positive number."}}
+            )
+
+
+def _scenario_input_hash(scenario: SimulationScenario) -> str:
+    assumptions = list(
+        scenario.assumptions.order_by("created_at", "id").values(
+            "assumption_id",
+            "kind",
+            "scope_type",
+            "scope_id",
+            "payload",
+            "effective_from",
+            "effective_to",
+        )
+    )
+    payload = {
+        "baselineVersion": scenario.baseline_version_id,
+        "scenario": scenario.scenario_id,
+        "assumptions": assumptions,
+    }
+    canonical = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:

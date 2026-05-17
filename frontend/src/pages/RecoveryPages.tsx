@@ -6,22 +6,39 @@ import type {
   ConflictRecord,
   ImpactChainNodeRecord,
   OverrideRequestRecord,
+  ScenarioAssumptionRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TripRecord,
 } from "../types";
+
+export type ScenarioSourceInput = {
+  kind: "manual" | "conflict" | "override";
+  id?: number | null;
+  name?: string;
+};
+
+export type ScenarioAssumptionDraft = {
+  kind: string;
+  scope_type: string;
+  scope_id: number | null;
+  payload: Record<string, unknown>;
+  effective_from?: string | null;
+  effective_to?: string | null;
+};
 
 type RecoveryPageProps = {
   overview: SchedulingOverview | null;
   canEdit?: boolean;
   isActionRunning?: boolean;
   onApprove?: () => void;
-  onCreateScenario?: (conflictId: number | null) => void;
+  onCreateAssumption?: (scenarioId: number, assumption: ScenarioAssumptionDraft) => void;
+  onCreateScenario?: (source: ScenarioSourceInput) => void;
   onPublish?: () => void;
   onReject?: () => void;
-  onRunSimulation?: () => void;
+  onRunSimulation?: (scenarioId?: number) => void;
   onSubmitApproval?: () => void;
-  onPromoteScenario?: () => void;
+  onPromoteScenario?: (scenarioId?: number) => void;
   onPublishTriage?: () => void;
   canPublish?: boolean;
 };
@@ -36,6 +53,16 @@ const EMPTY_TRIPS: TripRecord[] = [];
 const EMPTY_APPROVALS: ApprovalRequestRecord[] = [];
 const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
+const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
+
+const ASSUMPTION_OPTIONS = [
+  { value: "trip_delay", label: "Trip delay", scopeType: "trip" },
+  { value: "asset_outage", label: "Asset outage", scopeType: "asset" },
+  { value: "rate_change", label: "Rate change", scopeType: "asset" },
+  { value: "window_change", label: "Window change", scopeType: "window" },
+  { value: "ogv_eta_change", label: "OGV ETA change", scopeType: "ogv" },
+  { value: "manual_reassignment", label: "Manual reassignment", scopeType: "assignment" },
+] as const;
 
 const OVERRIDE_STATE_KEYS: Record<string, string> = {
   next_action: "nextAction",
@@ -148,6 +175,25 @@ function approvalCoverage(request: ApprovalRequestRecord | undefined) {
   };
 }
 
+function assumptionSummary(assumption: ScenarioAssumptionRecord) {
+  switch (assumption.kind) {
+    case "trip_delay":
+      return `+${num(assumption.payload.delay_minutes, 0)}m`;
+    case "asset_outage":
+      return String(assumption.payload.asset_code ?? "asset outage");
+    case "rate_change":
+      return `${String(assumption.payload.rate_tph ?? "?")} TPH`;
+    case "window_change":
+      return String(assumption.payload.window_code ?? "window change");
+    case "ogv_eta_change":
+      return dt(String(assumption.payload.eta ?? ""));
+    case "manual_reassignment":
+      return `Assignment ${String(assumption.payload.assignment_id ?? "?")}`;
+    default:
+      return "Configured";
+  }
+}
+
 export function ExceptionCenterPage({
   overview,
   canEdit = false,
@@ -190,7 +236,13 @@ export function ExceptionCenterPage({
           <span className="phase-chip">Active triage</span>
           <button
             disabled={!canEdit || !onCreateScenario || isActionRunning}
-            onClick={() => onCreateScenario?.(selectedConflict?.id ?? null)}
+            onClick={() => onCreateScenario?.(
+              selectedConflict
+                ? { kind: "conflict", id: selectedConflict.id }
+                : selectedOverride
+                  ? { kind: "override", id: selectedOverride.id }
+                  : { kind: "manual" },
+            )}
             title={!canEdit ? "Your role cannot convert exceptions to scenarios." : undefined}
             type="button"
           >
@@ -384,14 +436,120 @@ export function SimulationWorkspacePage({
   overview,
   canEdit = false,
   isActionRunning = false,
+  onCreateAssumption,
+  onCreateScenario,
   onPromoteScenario,
   onRunSimulation,
   onSubmitApproval,
 }: RecoveryPageProps) {
   const scenarios = overview?.simulationScenarios ?? EMPTY_SCENARIOS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const scenario = scenarios[0];
+  const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
+  const [manualScenarioName, setManualScenarioName] = useState("");
+  const [assumptionKind, setAssumptionKind] = useState("trip_delay");
+  const [tripId, setTripId] = useState("");
+  const [delayMinutes, setDelayMinutes] = useState("120");
+  const [assetCode, setAssetCode] = useState("");
+  const [rateTph, setRateTph] = useState("1800");
+  const [windowCode, setWindowCode] = useState("");
+  const [effectiveFrom, setEffectiveFrom] = useState("");
+  const [effectiveTo, setEffectiveTo] = useState("");
+  const [ogvEta, setOgvEta] = useState("");
+  const [assignmentId, setAssignmentId] = useState("");
+  const [replacementTug, setReplacementTug] = useState("");
+  const [replacementBarge, setReplacementBarge] = useState("");
+  const scenario = scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0];
+  const assumptions = scenario?.assumptions ?? EMPTY_ASSUMPTIONS;
+  const latestRun = scenario?.runs[0];
+  const selectedAssumptionOption = ASSUMPTION_OPTIONS.find(
+    (option) => option.value === assumptionKind,
+  ) ?? ASSUMPTION_OPTIONS[0];
+  const selectedTripId = tripId || String(trips[0]?.id ?? "");
+  const selectedTrip = trips.find((trip) => trip.id === Number(selectedTripId));
+  const selectedAssignmentId = assignmentId || String(
+    trips.find((trip) => trip.assignment)?.assignment?.id ?? "",
+  );
+  const selectedAssignmentTrip = trips.find(
+    (trip) => trip.assignment?.id === Number(selectedAssignmentId),
+  );
   const remainingRisk = num(scenario?.delta_summary.remainingViolations, 0);
+  const sourceLabel = scenario?.source_kind === "conflict"
+    ? scenario.source_conflict_code ?? "Conflict"
+    : scenario?.source_kind === "override"
+      ? short(scenario.source_override_reason_code)
+      : "Manual";
+
+  function createAssumption() {
+    if (!scenario || !onCreateAssumption) return;
+    let draft: ScenarioAssumptionDraft;
+
+    switch (assumptionKind) {
+      case "asset_outage":
+        draft = {
+          kind: assumptionKind,
+          scope_type: selectedAssumptionOption.scopeType,
+          scope_id: null,
+          payload: { asset_code: assetCode.trim() },
+          effective_from: effectiveFrom ? new Date(effectiveFrom).toISOString() : null,
+          effective_to: effectiveTo ? new Date(effectiveTo).toISOString() : null,
+        };
+        break;
+      case "rate_change":
+        draft = {
+          kind: assumptionKind,
+          scope_type: selectedAssumptionOption.scopeType,
+          scope_id: null,
+          payload: {
+            asset_code: assetCode.trim(),
+            rate_tph: Number(rateTph),
+          },
+          effective_from: effectiveFrom ? new Date(effectiveFrom).toISOString() : null,
+          effective_to: effectiveTo ? new Date(effectiveTo).toISOString() : null,
+        };
+        break;
+      case "window_change":
+        draft = {
+          kind: assumptionKind,
+          scope_type: selectedAssumptionOption.scopeType,
+          scope_id: null,
+          payload: { window_code: windowCode.trim() },
+          effective_from: effectiveFrom ? new Date(effectiveFrom).toISOString() : null,
+          effective_to: effectiveTo ? new Date(effectiveTo).toISOString() : null,
+        };
+        break;
+      case "ogv_eta_change":
+        draft = {
+          kind: assumptionKind,
+          scope_type: selectedAssumptionOption.scopeType,
+          scope_id: selectedTrip?.voyage.id ?? null,
+          payload: { eta: ogvEta ? new Date(ogvEta).toISOString() : "" },
+        };
+        break;
+      case "manual_reassignment":
+        draft = {
+          kind: assumptionKind,
+          scope_type: selectedAssumptionOption.scopeType,
+          scope_id: Number(selectedAssignmentId) || null,
+          payload: {
+            assignment_id: Number(selectedAssignmentId) || null,
+            tug_code: replacementTug.trim(),
+            barge_code: replacementBarge.trim(),
+          },
+        };
+        break;
+      case "trip_delay":
+      default:
+        draft = {
+          kind: "trip_delay",
+          scope_type: "trip",
+          scope_id: Number(selectedTripId) || null,
+          payload: { delay_minutes: Number(delayMinutes) },
+        };
+        break;
+    }
+
+    onCreateAssumption(scenario.id, draft);
+  }
 
   return (
     <section className="workspace-page recovery-board simulation-board">
@@ -404,7 +562,7 @@ export function SimulationWorkspacePage({
           <span className="phase-chip">Scenario delta</span>
           <button
             disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
-            onClick={onRunSimulation}
+            onClick={() => onRunSimulation?.(scenario?.id)}
             title={!canEdit ? "Your role cannot run simulations." : undefined}
             type="button"
           >
@@ -412,7 +570,7 @@ export function SimulationWorkspacePage({
           </button>
           <button
             disabled={!canEdit || !scenario || !onPromoteScenario || isActionRunning}
-            onClick={onPromoteScenario}
+            onClick={() => onPromoteScenario?.(scenario?.id)}
             title={!canEdit ? "Your role cannot promote scenarios." : undefined}
             type="button"
           >
@@ -434,20 +592,213 @@ export function SimulationWorkspacePage({
           <div className="grid-header">
             <div><SvgIcon name="settings" /><strong>Scenario configuration</strong></div>
           </div>
+          <section className="scenario-create-panel">
+            <label>
+              New scenario
+              <input
+                onChange={(event) => setManualScenarioName(event.target.value)}
+                placeholder="Manual what-if name"
+                value={manualScenarioName}
+              />
+            </label>
+            <button
+              disabled={!canEdit || !onCreateScenario || isActionRunning}
+              onClick={() => onCreateScenario?.({
+                kind: "manual",
+                name: manualScenarioName.trim() || undefined,
+              })}
+              type="button"
+            >
+              Create manual
+            </button>
+          </section>
+
+          <section className="scenario-list-panel">
+            <h2>Scenarios</h2>
+            {scenarios.length ? scenarios.map((item) => (
+              <button
+                className={scenario?.id === item.id ? "active" : ""}
+                key={item.id}
+                onClick={() => setSelectedScenarioId(item.id)}
+                type="button"
+              >
+                <strong>{item.scenario_id}</strong>
+                <span>{short(item.source_kind)} / {short(item.status)}</span>
+              </button>
+            )) : <span>No scenarios yet</span>}
+          </section>
+
           <dl>
             <div><dt>Scenario name</dt><dd>{scenario?.name ?? "No scenario"}</dd></div>
             <div><dt>Scenario type</dt><dd>{short(scenario?.scenario_type)}</dd></div>
-            <div><dt>Source conflict</dt><dd>{scenario?.source_conflict_code ?? "Manual"}</dd></div>
+            <div><dt>Source</dt><dd>{sourceLabel}</dd></div>
             <div><dt>Status</dt><dd>{short(scenario?.status)}</dd></div>
           </dl>
-          <button
-            disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
-            onClick={onRunSimulation}
-            title={!canEdit ? "Your role cannot run simulations." : undefined}
-            type="button"
-          >
-            Run simulation
-          </button>
+
+          <section className="scenario-assumption-panel">
+            <h2>Assumption editor</h2>
+            <label>
+              Kind
+              <select
+                onChange={(event) => setAssumptionKind(event.target.value)}
+                value={assumptionKind}
+              >
+                {ASSUMPTION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            {assumptionKind === "trip_delay" ? (
+              <>
+                <label>
+                  Trip
+                  <select onChange={(event) => setTripId(event.target.value)} value={selectedTripId}>
+                    {trips.map((trip) => (
+                      <option key={trip.id} value={trip.id}>{trip.trip_id}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Delay minutes
+                  <input
+                    min="0"
+                    onChange={(event) => setDelayMinutes(event.target.value)}
+                    type="number"
+                    value={delayMinutes}
+                  />
+                </label>
+              </>
+            ) : null}
+
+            {assumptionKind === "asset_outage" || assumptionKind === "rate_change" ? (
+              <label>
+                Asset code
+                <input
+                  onChange={(event) => setAssetCode(event.target.value)}
+                  placeholder="BER-TUG-08"
+                  value={assetCode}
+                />
+              </label>
+            ) : null}
+
+            {assumptionKind === "rate_change" ? (
+              <label>
+                Rate TPH
+                <input
+                  min="1"
+                  onChange={(event) => setRateTph(event.target.value)}
+                  type="number"
+                  value={rateTph}
+                />
+              </label>
+            ) : null}
+
+            {assumptionKind === "window_change" ? (
+              <label>
+                Window code
+                <input
+                  onChange={(event) => setWindowCode(event.target.value)}
+                  placeholder="TIDE-OPERATING-01"
+                  value={windowCode}
+                />
+              </label>
+            ) : null}
+
+            {["asset_outage", "rate_change", "window_change"].includes(assumptionKind) ? (
+              <>
+                <label>
+                  Effective from
+                  <input
+                    onChange={(event) => setEffectiveFrom(event.target.value)}
+                    type="datetime-local"
+                    value={effectiveFrom}
+                  />
+                </label>
+                <label>
+                  Effective to
+                  <input
+                    onChange={(event) => setEffectiveTo(event.target.value)}
+                    type="datetime-local"
+                    value={effectiveTo}
+                  />
+                </label>
+              </>
+            ) : null}
+
+            {assumptionKind === "ogv_eta_change" ? (
+              <>
+                <label>
+                  OGV
+                  <select onChange={(event) => setTripId(event.target.value)} value={selectedTripId}>
+                    {trips.map((trip) => (
+                      <option key={trip.id} value={trip.id}>{trip.voyage.vessel_name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  New ETA
+                  <input
+                    onChange={(event) => setOgvEta(event.target.value)}
+                    type="datetime-local"
+                    value={ogvEta}
+                  />
+                </label>
+              </>
+            ) : null}
+
+            {assumptionKind === "manual_reassignment" ? (
+              <>
+                <label>
+                  Assignment
+                  <select
+                    onChange={(event) => setAssignmentId(event.target.value)}
+                    value={selectedAssignmentId}
+                  >
+                    {trips.filter((trip) => trip.assignment).map((trip) => (
+                      <option key={trip.assignment?.id} value={trip.assignment?.id}>
+                        {trip.trip_id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Tug code
+                  <input
+                    onChange={(event) => setReplacementTug(event.target.value)}
+                    placeholder={selectedAssignmentTrip?.assignment?.tug?.code ?? "BER-TUG-08"}
+                    value={replacementTug}
+                  />
+                </label>
+                <label>
+                  Barge code
+                  <input
+                    onChange={(event) => setReplacementBarge(event.target.value)}
+                    placeholder={selectedAssignmentTrip?.assignment?.barge?.code ?? "BRG-VAL-08"}
+                    value={replacementBarge}
+                  />
+                </label>
+              </>
+            ) : null}
+
+            <button
+              disabled={!canEdit || !scenario || !onCreateAssumption || isActionRunning}
+              onClick={createAssumption}
+              type="button"
+            >
+              Add assumption
+            </button>
+          </section>
+
+          <section className="scenario-assumption-list">
+            <h2>Assumptions</h2>
+            {assumptions.length ? assumptions.map((assumption) => (
+              <span key={assumption.id}>
+                <strong>{short(assumption.kind)}</strong>
+                <em>{assumptionSummary(assumption)}</em>
+              </span>
+            )) : <span>No assumptions configured</span>}
+          </section>
         </aside>
 
         <section className="board-surface simulation-main">
@@ -514,6 +865,16 @@ export function SimulationWorkspacePage({
               <strong>Next step</strong>
               <p>Promote to proposed plan, then request dual-party approval.</p>
             </section>
+            <section className="scenario-run-list">
+              <strong>Run queue</strong>
+              {scenario?.runs.length ? scenario.runs.slice(0, 4).map((run) => (
+                <span key={run.id}>
+                  <em className={`status-chip ${statusTone(run.status)}`}>{short(run.status)}</em>
+                  <b>{run.run_id}</b>
+                  <small>{run.completed_at ? dt(run.completed_at) : dt(run.created_at)}</small>
+                </span>
+              )) : <p>No scenario runs yet.</p>}
+            </section>
             <button
               disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}
               onClick={onSubmitApproval}
@@ -521,6 +882,11 @@ export function SimulationWorkspacePage({
             >
               Submit approval request
             </button>
+            {latestRun ? (
+              <p className="scenario-run-note">
+                Latest run {latestRun.run_id} used input hash {latestRun.input_hash.slice(0, 12)}.
+              </p>
+            ) : null}
           </div>
         </aside>
       </div>

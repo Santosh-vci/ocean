@@ -28,6 +28,8 @@ from .models import (
     PlanVersion,
     PublishedPlanSnapshot,
     ScheduleEvent,
+    ScenarioAssumption,
+    ScenarioRun,
     SimulationScenario,
     Trip,
 )
@@ -43,6 +45,8 @@ from .serializers import (
     PlanVersionSerializer,
     PublishedPlanSnapshotSerializer,
     ScheduleEventSerializer,
+    ScenarioAssumptionSerializer,
+    ScenarioRunSerializer,
     SimulationScenarioSerializer,
     TripSerializer,
 )
@@ -51,7 +55,9 @@ from .services import (
     clone_plan_version,
     compute_plan_diff,
     create_plan_version,
+    create_scenario_assumption,
     create_scenario_from_conflict,
+    create_scenario_run,
     generate_plan_version,
     promote_scenario_to_proposed,
     publish_plan_version,
@@ -127,6 +133,8 @@ class SchedulingViewSet(AuditMutationMixin, ModelViewSet):
         "create_scenario": "schedule.edit",
         "simulate": "schedule.edit",
         "promote": "schedule.edit",
+        "assumptions": "schedule.edit",
+        "runs": "schedule.edit",
         "create": "schedule.edit",
         "update": "schedule.edit",
         "partial_update": "schedule.edit",
@@ -261,9 +269,14 @@ class PlanVersionViewSet(SchedulingViewSet):
         conflict_id = request.data.get("conflict")
         if conflict_id:
             conflict = get_object_or_404(Conflict, pk=conflict_id, plan_version=version)
+        override = None
+        override_id = request.data.get("override")
+        if override_id:
+            override = get_object_or_404(OverrideRequest, pk=override_id, plan_version=version)
         scenario = create_scenario_from_conflict(
             baseline_version=version,
             source_conflict=conflict,
+            source_override=override,
             actor=request.user,
             name=request.data.get("name", ""),
         )
@@ -274,7 +287,12 @@ class PlanVersionViewSet(SchedulingViewSet):
             object_type="simulation_scenario",
             object_id=str(scenario.pk),
             object_repr=scenario.scenario_id,
-            metadata={"plan_version": str(version), "source_conflict": conflict_id},
+            metadata={
+                "plan_version": str(version),
+                "source_conflict": conflict_id,
+                "source_override": override_id,
+                "source_kind": scenario.source_kind,
+            },
             request=request,
         )
         return Response(SimulationScenarioSerializer(scenario).data, status=status.HTTP_201_CREATED)
@@ -500,13 +518,18 @@ class SimulationScenarioViewSet(SchedulingViewSet):
         "source_conflict",
         "source_conflict__trip",
         "source_conflict__trip__voyage",
+        "source_override",
+        "source_override__trip",
+        "source_override__trip__voyage",
         "created_by",
-    ).all()
+    ).prefetch_related("assumptions", "runs").all()
     serializer_class = SimulationScenarioSerializer
 
     @action(detail=True, methods=["post"], url_path="simulate")
     def simulate(self, request, pk=None):
-        scenario = simulate_scenario(scenario=self.get_object())
+        scenario = simulate_scenario(scenario=self.get_object(), actor=request.user)
+        scenario = self.get_queryset().get(pk=scenario.pk)
+        latest_run = scenario.runs.order_by("-created_at", "-id").first()
         record_audit_event(
             actor=request.user,
             organization=scenario.baseline_version.plan.organization,
@@ -514,7 +537,10 @@ class SimulationScenarioViewSet(SchedulingViewSet):
             object_type="simulation_scenario",
             object_id=str(scenario.pk),
             object_repr=scenario.scenario_id,
-            metadata=scenario.delta_summary,
+            metadata={
+                **scenario.delta_summary,
+                "run_id": latest_run.run_id if latest_run else None,
+            },
             request=request,
         )
         return Response(SimulationScenarioSerializer(scenario).data)
@@ -533,6 +559,73 @@ class SimulationScenarioViewSet(SchedulingViewSet):
             request=request,
         )
         return Response(SimulationScenarioSerializer(scenario).data)
+
+    @action(detail=True, methods=["get", "post"], url_path="assumptions")
+    def assumptions(self, request, pk=None):
+        scenario = self.get_object()
+        if request.method.lower() == "get":
+            assumptions = scenario.assumptions.select_related("scenario", "created_by")
+            return Response(ScenarioAssumptionSerializer(assumptions, many=True).data)
+
+        serializer = ScenarioAssumptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        assumption = create_scenario_assumption(
+            scenario=scenario,
+            actor=request.user,
+            kind=serializer.validated_data["kind"],
+            scope_type=serializer.validated_data["scope_type"],
+            scope_id=serializer.validated_data.get("scope_id"),
+            payload=serializer.validated_data.get("payload", {}),
+            effective_from=serializer.validated_data.get("effective_from"),
+            effective_to=serializer.validated_data.get("effective_to"),
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=scenario.baseline_version.plan.organization,
+            action="simulation.assumption.create",
+            object_type="scenario_assumption",
+            object_id=str(assumption.pk),
+            object_repr=assumption.assumption_id,
+            metadata={
+                "scenario_id": scenario.scenario_id,
+                "kind": assumption.kind,
+                "scope_type": assumption.scope_type,
+                "scope_id": assumption.scope_id,
+            },
+            request=request,
+        )
+        return Response(
+            ScenarioAssumptionSerializer(assumption).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["get", "post"], url_path="runs")
+    def runs(self, request, pk=None):
+        scenario = self.get_object()
+        if request.method.lower() == "get":
+            runs = scenario.runs.select_related("scenario", "baseline_version", "created_by")
+            return Response(ScenarioRunSerializer(runs, many=True).data)
+
+        run = create_scenario_run(
+            scenario=scenario,
+            actor=request.user,
+            status=ScenarioRun.Status.QUEUED,
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=scenario.baseline_version.plan.organization,
+            action="simulation.run.create",
+            object_type="scenario_run",
+            object_id=str(run.pk),
+            object_repr=run.run_id,
+            metadata={
+                "scenario_id": scenario.scenario_id,
+                "status": run.status,
+                "input_hash": run.input_hash,
+            },
+            request=request,
+        )
+        return Response(ScenarioRunSerializer(run).data, status=status.HTTP_201_CREATED)
 
 
 class SchedulingOverviewViewSet(SchedulingViewSet):
@@ -618,8 +711,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "source_conflict",
                 "source_conflict__trip",
                 "source_conflict__trip__voyage",
+                "source_override",
+                "source_override__trip",
+                "source_override__trip__voyage",
                 "created_by",
-            )
+            ).prefetch_related("assumptions", "runs")
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),

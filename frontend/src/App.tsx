@@ -23,6 +23,8 @@ import { RbacPage } from "./pages/RbacPage";
 import {
   ApprovalsPublishingPage,
   ExceptionCenterPage,
+  type ScenarioAssumptionDraft,
+  type ScenarioSourceInput,
   SimulationWorkspacePage,
 } from "./pages/RecoveryPages";
 import { TideBridgePage } from "./pages/TideBridgePage";
@@ -555,7 +557,7 @@ function App() {
     });
   }
 
-  async function handleCreateScenario(conflictId: number | null) {
+  async function handleCreateScenario(source: ScenarioSourceInput) {
     await runWorkspaceAction("Create scenario", async () => {
       const activeVersion = schedulingOverview?.activePlanVersion;
       if (!activeVersion) {
@@ -570,8 +572,10 @@ function App() {
             "X-CSRFToken": csrfToken,
           },
           body: JSON.stringify({
-            ...(conflictId ? { conflict: conflictId } : {}),
-            name: `Operator recovery ${activeVersion.plan_code} V${activeVersion.version_no}`,
+            ...(source.kind === "conflict" && source.id ? { conflict: source.id } : {}),
+            ...(source.kind === "override" && source.id ? { override: source.id } : {}),
+            name: source.name
+              ?? `Operator recovery ${activeVersion.plan_code} V${activeVersion.version_no}`,
           }),
         },
       );
@@ -580,13 +584,32 @@ function App() {
     });
   }
 
-  function currentScenario() {
-    return schedulingOverview?.simulationScenarios[0] ?? null;
+  async function handleCreateAssumption(
+    scenarioId: number,
+    assumption: ScenarioAssumptionDraft,
+  ) {
+    await runWorkspaceAction("Add assumption", async () => {
+      const csrfToken = await getCsrfToken();
+      await apiFetch(`/scheduling/scenarios/${scenarioId}/assumptions/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify(assumption),
+      });
+      return `Scenario assumption added: ${assumption.kind.replaceAll("_", " ")}`;
+    });
   }
 
-  async function handleRunSimulation() {
+  function currentScenario(scenarioId?: number) {
+    return schedulingOverview?.simulationScenarios.find((scenario) => scenario.id === scenarioId)
+      ?? schedulingOverview?.simulationScenarios[0]
+      ?? null;
+  }
+
+  async function handleRunSimulation(scenarioId?: number) {
     await runWorkspaceAction("Run simulation", async () => {
-      const scenario = currentScenario();
+      const scenario = currentScenario(scenarioId);
       if (!scenario) {
         throw new Error("No simulation scenario");
       }
@@ -604,9 +627,9 @@ function App() {
     });
   }
 
-  async function handlePromoteScenario() {
+  async function handlePromoteScenario(scenarioId?: number) {
     await runWorkspaceAction("Promote scenario", async () => {
-      const scenario = currentScenario();
+      const scenario = currentScenario(scenarioId);
       if (!scenario) {
         throw new Error("No simulation scenario");
       }
@@ -887,6 +910,8 @@ function App() {
           <SimulationWorkspacePage
             canEdit={canEditSchedule && activePlanIsEditable}
             isActionRunning={isWorkspaceActionRunning}
+            onCreateAssumption={handleCreateAssumption}
+            onCreateScenario={handleCreateScenario}
             onPromoteScenario={handlePromoteScenario}
             onRunSimulation={handleRunSimulation}
             onSubmitApproval={activePlanIsEditable ? handleSubmitApproval : undefined}

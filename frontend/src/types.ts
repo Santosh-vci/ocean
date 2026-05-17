@@ -816,10 +816,52 @@ export type SimulationScenarioRecord = {
   source_conflict: number | null;
   source_conflict_code: string | null;
   source_conflict_message: string | null;
+  source_override: number | null;
+  source_override_reason_code: string | null;
+  source_override_description: string | null;
+  source_kind: "manual" | "conflict" | "override" | string;
   status: string;
   recovery_actions: string[];
   impact_summary: Record<string, unknown>;
   delta_summary: Record<string, unknown>;
+  created_by: number | null;
+  created_by_email: string | null;
+  assumptions: ScenarioAssumptionRecord[];
+  runs: ScenarioRunRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ScenarioAssumptionRecord = {
+  id: number;
+  scenario: number;
+  scenario_ref: string;
+  assumption_id: string;
+  kind: string;
+  scope_type: string;
+  scope_id: number | null;
+  payload: Record<string, unknown>;
+  effective_from: string | null;
+  effective_to: string | null;
+  created_by: number | null;
+  created_by_email: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ScenarioRunRecord = {
+  id: number;
+  scenario: number;
+  scenario_ref: string;
+  run_id: string;
+  baseline_version: number;
+  baseline_version_ref: string;
+  status: string;
+  algorithm_version: string;
+  input_hash: string;
+  started_at: string | null;
+  completed_at: string | null;
+  summary: Record<string, unknown>;
   created_by: number | null;
   created_by_email: string | null;
   created_at: string;

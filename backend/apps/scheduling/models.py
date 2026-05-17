@@ -637,6 +637,11 @@ class SimulationScenario(models.Model):
         PROPOSED = "proposed", "Proposed"
         CANCELED = "canceled", "Canceled"
 
+    class SourceKind(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        CONFLICT = "conflict", "Conflict"
+        OVERRIDE = "override", "Override"
+
     scenario_id = models.CharField(max_length=80, unique=True)
     name = models.CharField(max_length=160)
     scenario_type = models.CharField(max_length=80)
@@ -659,6 +664,18 @@ class SimulationScenario(models.Model):
         blank=True,
         related_name="simulation_scenarios",
     )
+    source_override = models.ForeignKey(
+        OverrideRequest,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="simulation_scenarios",
+    )
+    source_kind = models.CharField(
+        max_length=32,
+        choices=SourceKind.choices,
+        default=SourceKind.MANUAL,
+    )
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.DRAFT)
     recovery_actions = models.JSONField(default=list, blank=True)
     impact_summary = models.JSONField(default=dict, blank=True)
@@ -679,3 +696,107 @@ class SimulationScenario(models.Model):
 
     def __str__(self) -> str:
         return self.scenario_id
+
+
+class ScenarioAssumption(models.Model):
+    class Kind(models.TextChoices):
+        TRIP_DELAY = "trip_delay", "Trip delay"
+        ASSET_OUTAGE = "asset_outage", "Asset outage"
+        RATE_CHANGE = "rate_change", "Rate change"
+        WINDOW_CHANGE = "window_change", "Window change"
+        OGV_ETA_CHANGE = "ogv_eta_change", "OGV ETA change"
+        MANUAL_REASSIGNMENT = "manual_reassignment", "Manual reassignment"
+
+    class ScopeType(models.TextChoices):
+        TRIP = "trip", "Trip"
+        ASSIGNMENT = "assignment", "Assignment"
+        ASSET = "asset", "Asset"
+        WINDOW = "window", "Window"
+        OGV = "ogv", "OGV"
+
+    scenario = models.ForeignKey(
+        SimulationScenario,
+        on_delete=models.CASCADE,
+        related_name="assumptions",
+    )
+    assumption_id = models.CharField(max_length=96, unique=True)
+    kind = models.CharField(max_length=48, choices=Kind.choices)
+    scope_type = models.CharField(max_length=32, choices=ScopeType.choices)
+    scope_id = models.PositiveBigIntegerField(null=True, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    effective_from = models.DateTimeField(null=True, blank=True)
+    effective_to = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_scenario_assumptions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(fields=("scenario", "kind", "created_at")),
+            models.Index(fields=("scope_type", "scope_id")),
+        ]
+
+    @property
+    def organization(self):
+        return self.scenario.baseline_version.plan.organization
+
+    def __str__(self) -> str:
+        return self.assumption_id
+
+
+class ScenarioRun(models.Model):
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    scenario = models.ForeignKey(
+        SimulationScenario,
+        on_delete=models.CASCADE,
+        related_name="runs",
+    )
+    run_id = models.CharField(max_length=96, unique=True)
+    baseline_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="scenario_runs",
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.QUEUED)
+    algorithm_version = models.CharField(max_length=80)
+    input_hash = models.CharField(max_length=64)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    summary = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_scenario_runs",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=("scenario", "status", "created_at")),
+            models.Index(fields=("baseline_version", "created_at")),
+            models.Index(fields=("input_hash",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.scenario.baseline_version.plan.organization
+
+    def __str__(self) -> str:
+        return self.run_id
