@@ -1,0 +1,275 @@
+﻿{
+  "approvalGate": {
+    "publishBlockedByRisk": true,
+    "requestId": "APR-PLAN-2026-05-18-V2",
+    "requiredAuthorities": [
+      "berau_scheduler",
+      "abl_dispatcher"
+    ],
+    "status": "pending"
+  },
+  "audit": {
+    "actions": [
+      "phase2.proof.seed_pack_verified",
+      "phase2.proof.projections_verified",
+      "phase2.proof.multi_run_compared",
+      "phase2.proof.selected_run_promoted",
+      "phase2.proof.approval_gate_verified",
+      "phase2.proof.scenario_diff_exported",
+      "phase2.proof.audit_verified"
+    ],
+    "eventCount": 7
+  },
+  "browserEvidenceTargets": [
+    "/simulation/workspace",
+    "/approvals/publishing",
+    "/admin/export-handoff",
+    "/admin/audit-logs"
+  ],
+  "definitionOfDone": {
+    "expectedStages": 7,
+    "overall": "PASS",
+    "stagesPassed": 7
+  },
+  "evidenceFile": "docs/evidence/phase2/phase2_scenario_evidence.json",
+  "generatedAt": "2026-05-17T14:22:10.164874+00:00",
+  "governedExport": {
+    "checksumSha256": "7700596a639d17145a7795e1fb76c18dbad967f37df43b04f3499d5546b8e952",
+    "downloadUrl": "/api/exports/25/download/",
+    "exportId": "EXP-SCENARIO_DIFF-20260517142210-533EB9",
+    "fileName": "coalflow-scenario_diff-plan-2026-05-18-v2-all-network-20260517142210.json",
+    "recordCount": 6
+  },
+  "multiRunComparison": {
+    "runs": [
+      {
+        "changedTripCount": 5,
+        "inputHash": "7fe1d04e413224b7064ea88423b23392604a057f7aa7ef97ebce5edd7ce6e30e",
+        "maxDelayMinutes": 60,
+        "runId": "RUN-SIM-MULTI-CANDIDATE-01"
+      },
+      {
+        "changedTripCount": 6,
+        "inputHash": "6a9cd1bdbca61be5589b6ae7b1d40a47fe0a39b5eec1135f1e4f3d5c68980bd0",
+        "maxDelayMinutes": 120,
+        "runId": "RUN-SIM-MULTI-CANDIDATE-02"
+      }
+    ],
+    "scenarioId": "SIM-MULTI-CANDIDATE"
+  },
+  "projectionSummary": {
+    "runs": [
+      {
+        "changedTripCount": 6,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-JETTY-DELAY-01",
+        "scenarioId": "SIM-JETTY-DELAY",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 6,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-TUG-OUTAGE-01",
+        "scenarioId": "SIM-TUG-OUTAGE",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 0,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-TIDE-RECOVERY-01",
+        "scenarioId": "SIM-TIDE-RECOVERY",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 6,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-CTS-RATE-01",
+        "scenarioId": "SIM-CTS-RATE",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 1,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-TOPUP-DEMAND-01",
+        "scenarioId": "SIM-TOPUP-DEMAND",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 1,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-MANUAL-REASSIGNMENT-01",
+        "scenarioId": "SIM-MANUAL-REASSIGNMENT",
+        "tripProjections": 6
+      },
+      {
+        "changedTripCount": 6,
+        "constraintEvaluations": 15,
+        "eventProjections": 42,
+        "ogvProjections": 4,
+        "resourceUtilizations": 10,
+        "runId": "RUN-SIM-MULTI-CANDIDATE-02",
+        "scenarioId": "SIM-MULTI-CANDIDATE",
+        "tripProjections": 6
+      }
+    ],
+    "scenarioCount": 7,
+    "totalConstraintEvaluations": 105,
+    "totalTripProjections": 42
+  },
+  "promotedCandidate": {
+    "candidateStatus": "proposed",
+    "candidateValidation": "blocked",
+    "candidateVersionId": 46,
+    "candidateVersionRef": "PLAN-2026-05-18 V2",
+    "diffSummary": {
+      "changedTripCount": 6,
+      "delayDeltaMinutes": 720,
+      "quantityDeltaMt": 0
+    },
+    "lineage": {
+      "algorithmVersion": "phase2-projection-v1",
+      "assumptionIds": [
+        "ASM-SIM-JETTY-DELAY-01"
+      ],
+      "baselineVersionId": 45,
+      "baselineVersionRef": "PLAN-2026-05-18 V1",
+      "promotedAt": "2026-05-17T14:22:10.115622+00:00",
+      "promotedBy": "admin@coalflow.local",
+      "scenarioId": "SIM-JETTY-DELAY",
+      "scenarioPk": 98,
+      "selectedRunId": 51,
+      "selectedRunRef": "RUN-SIM-JETTY-DELAY-01"
+    },
+    "scenarioId": "SIM-JETTY-DELAY"
+  },
+  "runId": "P2-SCENARIO-20260517142209",
+  "scenarioPack": [
+    {
+      "assumptionKinds": [
+        "rate_change"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-CTS-RATE",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "trip_delay"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-JETTY-DELAY",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "manual_reassignment"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-MANUAL-REASSIGNMENT",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "trip_delay",
+        "trip_delay"
+      ],
+      "runCount": 2,
+      "scenarioId": "SIM-MULTI-CANDIDATE",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "window_change"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-TIDE-RECOVERY",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "trip_delay",
+        "ogv_eta_change"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-TOPUP-DEMAND",
+      "status": "simulated"
+    },
+    {
+      "assumptionKinds": [
+        "asset_outage"
+      ],
+      "runCount": 1,
+      "scenarioId": "SIM-TUG-OUTAGE",
+      "status": "simulated"
+    }
+  ],
+  "stages": [
+    {
+      "auditAction": "phase2.proof.seed_pack_verified",
+      "primaryEvidence": "7 scenarios",
+      "result": "PASS",
+      "stage": 1,
+      "title": "Seed scenario pack"
+    },
+    {
+      "auditAction": "phase2.proof.projections_verified",
+      "primaryEvidence": "42 trip projections",
+      "result": "PASS",
+      "stage": 2,
+      "title": "Projection rows"
+    },
+    {
+      "auditAction": "phase2.proof.multi_run_compared",
+      "primaryEvidence": "2 runs",
+      "result": "PASS",
+      "stage": 3,
+      "title": "Multi-run comparison"
+    },
+    {
+      "auditAction": "phase2.proof.selected_run_promoted",
+      "primaryEvidence": "PLAN-2026-05-18 V2",
+      "result": "PASS",
+      "stage": 4,
+      "title": "Selected-run promotion"
+    },
+    {
+      "auditAction": "phase2.proof.approval_gate_verified",
+      "primaryEvidence": "APR-PLAN-2026-05-18-V2",
+      "result": "PASS",
+      "stage": 5,
+      "title": "Approval gate"
+    },
+    {
+      "auditAction": "phase2.proof.scenario_diff_exported",
+      "primaryEvidence": "EXP-SCENARIO_DIFF-20260517142210-533EB9",
+      "result": "PASS",
+      "stage": 6,
+      "title": "Governed scenario diff export"
+    },
+    {
+      "auditAction": "phase2.proof.audit_verified",
+      "primaryEvidence": "6 proof events before marker",
+      "result": "PASS",
+      "stage": 7,
+      "title": "Audit evidence"
+    }
+  ]
+}

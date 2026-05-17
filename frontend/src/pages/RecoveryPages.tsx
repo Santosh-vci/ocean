@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
@@ -6,10 +6,13 @@ import { formatGridDateLabel } from "../lib/gridDate";
 import type {
   ApprovalRequestRecord,
   ConflictRecord,
+  ImpactChainAssessmentRecord,
   ImpactChainNodeRecord,
   OverrideRequestRecord,
   ScenarioAssumptionRecord,
   ScenarioConstraintEvaluationRecord,
+  ScenarioOgvProjectionRecord,
+  ScenarioResourceUtilizationRecord,
   ScenarioRunRecord,
   ScenarioTripProjectionRecord,
   SchedulingOverview,
@@ -59,6 +62,10 @@ const EMPTY_APPROVALS: ApprovalRequestRecord[] = [];
 const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
+const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
+const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
+const EMPTY_RESOURCE_UTILIZATIONS: ScenarioResourceUtilizationRecord[] = [];
+const EMPTY_IMPACT_ASSESSMENTS: ImpactChainAssessmentRecord[] = [];
 
 const ASSUMPTION_OPTIONS = [
   { value: "trip_delay", label: "Trip delay", scopeType: "trip" },
@@ -530,45 +537,70 @@ export function SimulationWorkspacePage({
   const [replacementBarge, setReplacementBarge] = useState("");
   const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
   const [selectedConstraintId, setSelectedConstraintId] = useState<number | null>(null);
-  const scenario = scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0];
+  const scenario = useMemo(
+    () => scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0],
+    [scenarios, selectedScenarioId],
+  );
   const assumptions = scenario?.assumptions ?? EMPTY_ASSUMPTIONS;
-  const latestRun = scenario?.runs.find((item) => item.id === selectedRunId) ?? scenario?.runs[0];
-  const constraints = latestRun?.constraint_evaluations ?? [];
-  const ogvProjections = latestRun?.ogv_projections ?? [];
-  const utilizationRows = latestRun?.resource_utilizations ?? [];
-  const selectedConstraint = constraints.find((item) => item.id === selectedConstraintId)
-    ?? constraints[0];
-  const selectedAssessment = (latestRun?.impact_assessments ?? []).find(
-    (item) => item.trip === selectedConstraint?.trip,
-  ) ?? (latestRun?.impact_assessments ?? [])[0];
+  const latestRun = useMemo(
+    () => scenario?.runs.find((item) => item.id === selectedRunId) ?? scenario?.runs[0],
+    [scenario, selectedRunId],
+  );
+  const constraints = latestRun?.constraint_evaluations ?? EMPTY_CONSTRAINT_EVALUATIONS;
+  const ogvProjections = latestRun?.ogv_projections ?? EMPTY_OGV_PROJECTIONS;
+  const utilizationRows = latestRun?.resource_utilizations ?? EMPTY_RESOURCE_UTILIZATIONS;
+  const selectedConstraint = useMemo(
+    () => constraints.find((item) => item.id === selectedConstraintId) ?? constraints[0],
+    [constraints, selectedConstraintId],
+  );
+  const impactAssessments = latestRun?.impact_assessments ?? EMPTY_IMPACT_ASSESSMENTS;
+  const selectedAssessment = useMemo(
+    () => impactAssessments.find((item) => item.trip === selectedConstraint?.trip)
+      ?? impactAssessments[0],
+    [impactAssessments, selectedConstraint],
+  );
   const selectedImpactNodes = selectedAssessment?.nodes ?? [];
-  const projectedTrips = new Map(
-    (latestRun?.trip_projections ?? []).map((projection) => [projection.trip, projection]),
-  );
-  const projectedTripsByRef = new Map(
-    (latestRun?.trip_projections ?? []).map((projection) => [projection.trip_ref, projection]),
-  );
-  const comparisonRows = trips.map((trip) => ({
-    trip,
-    projection: projectedTrips.get(trip.id) ?? projectedTripsByRef.get(
-      typeof trip.selection_reason.scenario_projection === "object"
-        && trip.selection_reason.scenario_projection
-        && "sourceTrip" in trip.selection_reason.scenario_projection
-        ? String(trip.selection_reason.scenario_projection.sourceTrip)
-        : typeof trip.selection_reason.cloned_from === "string"
-          ? trip.selection_reason.cloned_from
-          : trip.trip_id,
+  const projectedTrips = useMemo(
+    () => new Map(
+      (latestRun?.trip_projections ?? []).map((projection) => [projection.trip, projection]),
     ),
-  }));
-  const changedRows = comparisonRows.filter((row) => projectionChanged(row.projection));
-  const visibleComparisonRows = changedRows.length ? changedRows : comparisonRows.slice(0, 6);
-  const timelineRows = visibleComparisonRows.slice(0, 8);
-  const timelineTimes = timelineRows.flatMap((row) => [
-    new Date(row.projection?.baseline_start ?? row.trip.planned_start).getTime(),
-    new Date(row.projection?.baseline_end ?? row.trip.planned_end).getTime(),
-    new Date(row.projection?.projected_start ?? row.trip.planned_start).getTime(),
-    new Date(row.projection?.projected_end ?? row.trip.planned_end).getTime(),
-  ]).filter((value) => Number.isFinite(value));
+    [latestRun],
+  );
+  const projectedTripsByRef = useMemo(
+    () => new Map(
+      (latestRun?.trip_projections ?? []).map((projection) => [projection.trip_ref, projection]),
+    ),
+    [latestRun],
+  );
+  const comparisonRows = useMemo(
+    () => trips.map((trip) => ({
+      trip,
+      projection: projectedTrips.get(trip.id) ?? projectedTripsByRef.get(
+        typeof trip.selection_reason.scenario_projection === "object"
+          && trip.selection_reason.scenario_projection
+          && "sourceTrip" in trip.selection_reason.scenario_projection
+          ? String(trip.selection_reason.scenario_projection.sourceTrip)
+          : typeof trip.selection_reason.cloned_from === "string"
+            ? trip.selection_reason.cloned_from
+            : trip.trip_id,
+      ),
+    })),
+    [projectedTrips, projectedTripsByRef, trips],
+  );
+  const visibleComparisonRows = useMemo(() => {
+    const changedRows = comparisonRows.filter((row) => projectionChanged(row.projection));
+    return changedRows.length ? changedRows : comparisonRows.slice(0, 6);
+  }, [comparisonRows]);
+  const timelineRows = useMemo(() => visibleComparisonRows.slice(0, 8), [visibleComparisonRows]);
+  const timelineTimes = useMemo(
+    () => timelineRows.flatMap((row) => [
+      new Date(row.projection?.baseline_start ?? row.trip.planned_start).getTime(),
+      new Date(row.projection?.baseline_end ?? row.trip.planned_end).getTime(),
+      new Date(row.projection?.projected_start ?? row.trip.planned_start).getTime(),
+      new Date(row.projection?.projected_end ?? row.trip.planned_end).getTime(),
+    ]).filter((value) => Number.isFinite(value)),
+    [timelineRows],
+  );
   const timelineStart = timelineTimes.length ? Math.min(...timelineTimes) : Date.now();
   const timelineEnd = timelineTimes.length ? Math.max(...timelineTimes) : timelineStart + 1;
   const timelineSpan = Math.max(timelineEnd - timelineStart, 1);

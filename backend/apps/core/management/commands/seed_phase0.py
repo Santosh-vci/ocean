@@ -1461,8 +1461,6 @@ class Command(BaseCommand):
         start_date = self._seed_start_date()
         plan_code = f"PLAN-{start_date:%Y-%m-%d}"
         approval_request_id = f"APR-{plan_code}-V1"
-        scenario_id = f"SIM-{plan_code}-TUG-OUTAGE"
-
         baseline_plan = Plan.objects.filter(name="Berau-ABL Feasible Schedule Horizon").first()
         if baseline_plan and baseline_plan.code != plan_code:
             baseline_plan.code = plan_code
@@ -1492,12 +1490,13 @@ class Command(BaseCommand):
         ApprovalRequest.objects.filter(plan_version=version).delete()
         OverrideRequest.objects.filter(plan_version=version).delete()
         generate_plan_version(version)
-        first_assignment = (
+        assignments = list(
             Assignment.objects.select_related("trip", "trip__voyage", "tug")
             .filter(trip__plan_version=version)
             .order_by("trip__sequence")
-            .first()
+            .all()
         )
+        first_assignment = assignments[0] if assignments else None
         first_trip = first_assignment.trip if first_assignment else None
         first_override = None
         if first_trip and first_assignment:
@@ -1561,30 +1560,267 @@ class Command(BaseCommand):
         version.status = PlanVersion.Status.PROPOSED
         version.save(update_fields=["status", "updated_at"])
 
-        scenario, _ = SimulationScenario.objects.update_or_create(
-            scenario_id=scenario_id,
-            defaults={
+        self._seed_phase2_scenario_pack(
+            version=version,
+            created_by=created_by,
+            first_override=first_override,
+        )
+
+    def _seed_phase2_scenario_pack(self, *, version, created_by, first_override):
+        assignments = list(
+            Assignment.objects.select_related(
+                "trip",
+                "trip__voyage",
+                "tug",
+                "barge",
+                "jetty",
+                "cts",
+            )
+            .filter(trip__plan_version=version)
+            .order_by("trip__sequence")
+            .all()
+        )
+        if not assignments:
+            return
+
+        first_assignment = assignments[0]
+        first_trip = first_assignment.trip
+        second_assignment = assignments[1] if len(assignments) > 1 else first_assignment
+        last_assignment = assignments[-1]
+        first_tide_window = TideWindow.objects.order_by("window_start").first()
+        replacement_tug = (
+            Tug.objects.exclude(code=first_assignment.tug.code if first_assignment.tug else "")
+            .filter(status=Tug.Status.AVAILABLE)
+            .order_by("code")
+            .first()
+        )
+        cts_assignment = next((item for item in assignments if item.cts), first_assignment)
+        cts_code = cts_assignment.cts.code if cts_assignment.cts else ""
+
+        jetty_override = self._seed_override(
+            plan_version=version,
+            trip=first_trip,
+            assignment=first_assignment,
+            reason_code=OverrideRequest.ReasonCode.JETTY_DELAY,
+            description="Seeded jetty delay scenario source for Phase 2 proof.",
+            actor=created_by,
+        )
+
+        scenario_specs = [
+            {
+                "scenario_id": "SIM-JETTY-DELAY",
+                "name": "Jetty delay propagation",
+                "scenario_type": "jetty_delay",
+                "source_override": jetty_override,
+                "source_kind": SimulationScenario.SourceKind.OVERRIDE,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+                        "scope_type": ScenarioAssumption.ScopeType.TRIP,
+                        "scope_id": first_trip.id,
+                        "payload": {"delay_minutes": 120},
+                    }
+                ],
+            },
+            {
+                "scenario_id": "SIM-TUG-OUTAGE",
                 "name": "Tug outage recovery",
                 "scenario_type": "tug_breakdown_recovery",
-                "baseline_version": version,
-                "scenario_version": None,
-                "source_conflict": None,
                 "source_override": first_override,
                 "source_kind": SimulationScenario.SourceKind.OVERRIDE,
-                "status": SimulationScenario.Status.DRAFT,
-                "created_by": created_by,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.ASSET_OUTAGE,
+                        "scope_type": ScenarioAssumption.ScopeType.ASSET,
+                        "scope_id": None,
+                        "payload": {"asset_code": first_assignment.tug.code},
+                        "effective_from": first_trip.planned_start,
+                        "effective_to": first_trip.planned_start + timedelta(hours=3),
+                    }
+                ] if first_assignment.tug else [],
+            },
+            {
+                "scenario_id": "SIM-TIDE-RECOVERY",
+                "name": "Tide recovery gate shift",
+                "scenario_type": "tide_bridge_recovery",
+                "source_kind": SimulationScenario.SourceKind.MANUAL,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.WINDOW_CHANGE,
+                        "scope_type": ScenarioAssumption.ScopeType.WINDOW,
+                        "scope_id": None,
+                        "payload": {"window_code": first_tide_window.code},
+                        "effective_from": first_trip.planned_start - timedelta(hours=2),
+                        "effective_to": first_trip.planned_start - timedelta(hours=1),
+                    }
+                ] if first_tide_window else [],
+            },
+            {
+                "scenario_id": "SIM-CTS-RATE",
+                "name": "CTS rate degradation",
+                "scenario_type": "cts_rate_degradation",
+                "source_kind": SimulationScenario.SourceKind.MANUAL,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.RATE_CHANGE,
+                        "scope_type": ScenarioAssumption.ScopeType.ASSET,
+                        "scope_id": None,
+                        "payload": {"asset_code": cts_code, "rate_tph": 950},
+                        "effective_from": cts_assignment.trip.planned_start,
+                        "effective_to": cts_assignment.trip.planned_end + timedelta(hours=12),
+                    }
+                ] if cts_code else [],
+            },
+            {
+                "scenario_id": "SIM-TOPUP-DEMAND",
+                "name": "Top-up demand queue impact",
+                "scenario_type": "topup_demand_successor",
+                "source_kind": SimulationScenario.SourceKind.MANUAL,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+                        "scope_type": ScenarioAssumption.ScopeType.TRIP,
+                        "scope_id": last_assignment.trip.id,
+                        "payload": {"delay_minutes": 90},
+                    },
+                    {
+                        "kind": ScenarioAssumption.Kind.OGV_ETA_CHANGE,
+                        "scope_type": ScenarioAssumption.ScopeType.OGV,
+                        "scope_id": last_assignment.trip.voyage_id,
+                        "payload": {
+                            "eta": (
+                                last_assignment.trip.voyage.eta + timedelta(hours=6)
+                            ).isoformat()
+                        },
+                    },
+                ],
+            },
+            {
+                "scenario_id": "SIM-MANUAL-REASSIGNMENT",
+                "name": "Manual tug reassignment",
+                "scenario_type": "manual_reassignment",
+                "source_kind": SimulationScenario.SourceKind.MANUAL,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.MANUAL_REASSIGNMENT,
+                        "scope_type": ScenarioAssumption.ScopeType.ASSIGNMENT,
+                        "scope_id": first_assignment.id,
+                        "payload": {
+                            "assignment_id": first_assignment.id,
+                            "tug_code": replacement_tug.code,
+                        },
+                    }
+                ] if replacement_tug else [],
+            },
+            {
+                "scenario_id": "SIM-MULTI-CANDIDATE",
+                "name": "Multi-run recovery comparison",
+                "scenario_type": "multi_scenario_comparison",
+                "source_kind": SimulationScenario.SourceKind.MANUAL,
+                "assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+                        "scope_type": ScenarioAssumption.ScopeType.TRIP,
+                        "scope_id": second_assignment.trip.id,
+                        "payload": {"delay_minutes": 60},
+                    }
+                ],
+                "second_run_assumptions": [
+                    {
+                        "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+                        "scope_type": ScenarioAssumption.ScopeType.TRIP,
+                        "scope_id": first_trip.id,
+                        "payload": {"delay_minutes": 120},
+                    }
+                ],
+            },
+        ]
+
+        for spec in scenario_specs:
+            scenario = self._create_seed_scenario(
+                version=version,
+                created_by=created_by,
+                spec=spec,
+            )
+            if scenario.assumptions.exists():
+                simulate_scenario(scenario=scenario, actor=created_by)
+            for assumption in spec.get("second_run_assumptions", []):
+                create_scenario_assumption(
+                    scenario=scenario,
+                    actor=created_by,
+                    kind=assumption["kind"],
+                    scope_type=assumption["scope_type"],
+                    scope_id=assumption.get("scope_id"),
+                    payload=assumption.get("payload", {}),
+                    effective_from=assumption.get("effective_from"),
+                    effective_to=assumption.get("effective_to"),
+                )
+            if spec.get("second_run_assumptions"):
+                simulate_scenario(scenario=scenario, actor=created_by)
+
+    def _seed_override(
+        self,
+        *,
+        plan_version,
+        trip,
+        assignment,
+        reason_code,
+        description,
+        actor,
+    ):
+        if not trip or not assignment:
+            return None
+        override, _ = OverrideRequest.objects.update_or_create(
+            plan_version=plan_version,
+            trip=trip,
+            reason_code=reason_code,
+            defaults={
+                "assignment": assignment,
+                "description": description,
+                "requested_change": {
+                    "status": assignment.status,
+                    "next_action": "Convert source event to simulation before dispatch.",
+                },
+                "before_state": {
+                    "tripId": trip.trip_id,
+                    "status": assignment.status,
+                },
+                "after_state": {
+                    "tripId": trip.trip_id,
+                    "status": assignment.status,
+                    "nextAction": "Convert source event to simulation before dispatch.",
+                },
+                "status": OverrideRequest.Status.APPLIED,
+                "requested_by": actor,
+                "applied_by": actor,
+                "applied_at": timezone.now(),
             },
         )
-        scenario.assumptions.all().delete()
-        if first_trip and first_assignment and first_assignment.tug:
+        return override
+
+    def _create_seed_scenario(self, *, version, created_by, spec):
+        SimulationScenario.objects.filter(scenario_id=spec["scenario_id"]).delete()
+        scenario = SimulationScenario.objects.create(
+            scenario_id=spec["scenario_id"],
+            name=spec["name"],
+            scenario_type=spec["scenario_type"],
+            baseline_version=version,
+            scenario_version=None,
+            source_conflict=None,
+            source_override=spec.get("source_override"),
+            source_kind=spec.get("source_kind", SimulationScenario.SourceKind.MANUAL),
+            status=SimulationScenario.Status.DRAFT,
+            created_by=created_by,
+        )
+        for assumption in spec.get("assumptions", []):
             create_scenario_assumption(
                 scenario=scenario,
                 actor=created_by,
-                kind=ScenarioAssumption.Kind.ASSET_OUTAGE,
-                scope_type=ScenarioAssumption.ScopeType.ASSET,
-                scope_id=None,
-                payload={"asset_code": first_assignment.tug.code},
-                effective_from=first_trip.planned_start,
-                effective_to=first_trip.planned_start + timedelta(hours=3),
+                kind=assumption["kind"],
+                scope_type=assumption["scope_type"],
+                scope_id=assumption.get("scope_id"),
+                payload=assumption.get("payload", {}),
+                effective_from=assumption.get("effective_from"),
+                effective_to=assumption.get("effective_to"),
             )
-        simulate_scenario(scenario=scenario)
+        return scenario

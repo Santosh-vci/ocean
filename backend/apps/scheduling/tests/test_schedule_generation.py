@@ -1410,5 +1410,7 @@ def test_scheduling_overview_includes_scenario_when_active_version_is_scenario_o
 
     assert response.status_code == 200
     assert response.data["activePlanVersion"]["id"] == scenario_version.id
-    assert response.data["validation"]["scenarioCount"] == 1
-    assert response.data["simulationScenarios"][0]["id"] == scenario.id
+    scenario_ids = {item["scenario_id"] for item in response.data["simulationScenarios"]}
+    assert response.data["validation"]["scenarioCount"] == len(scenario_ids)
+    assert scenario.scenario_id in scenario_ids
+    assert "SIM-JETTY-DELAY" in scenario_ids

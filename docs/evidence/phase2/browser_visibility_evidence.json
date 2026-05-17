@@ -1,0 +1,43 @@
+{
+  "capturedAt": "2026-05-17T14:27:00Z",
+  "routeChecks": [
+    {
+      "route": "/simulation/workspace",
+      "screenshot": "docs/evidence/phase2/screenshots/01_simulation_workspace.png",
+      "visibleEvidence": [
+        "Simulation Workspace",
+        "SIM-MULTI-CANDIDATE",
+        "RUN-SIM-MULTI-CANDIDATE-02",
+        "Baseline vs scenario output"
+      ]
+    },
+    {
+      "route": "/approvals/publishing",
+      "screenshot": "docs/evidence/phase2/screenshots/02_approvals_publishing.png",
+      "visibleEvidence": [
+        "Plan Approvals & Publishing",
+        "Scenario source",
+        "SIM-JETTY-DELAY",
+        "Publish blocked"
+      ]
+    },
+    {
+      "route": "/admin/export-handoff",
+      "screenshot": "docs/evidence/phase2/screenshots/03_export_handoff.png",
+      "visibleEvidence": [
+        "Exports & Handoff",
+        "Scenario diff",
+        "Checksum"
+      ]
+    },
+    {
+      "route": "/admin/audit-logs",
+      "screenshot": "docs/evidence/phase2/screenshots/04_audit_logs.png",
+      "visibleEvidence": [
+        "Audit",
+        "phase2.proof",
+        "phase2.proof.selected_run_promoted"
+      ]
+    }
+  ]
+}

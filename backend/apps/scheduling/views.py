@@ -803,8 +803,12 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 .select_related("plan_version", "requested_by")
                 .prefetch_related("decisions")
             )
+            scenario_baselines = [active_version.id]
+            if active_version.source_version_id:
+                scenario_baselines.append(active_version.source_version_id)
             scenarios = SimulationScenario.objects.filter(
-                Q(baseline_version=active_version) | Q(scenario_version=active_version)
+                Q(baseline_version_id__in=scenario_baselines)
+                | Q(scenario_version=active_version)
             ).select_related(
                 "baseline_version",
                 "scenario_version",

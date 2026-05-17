@@ -50,6 +50,15 @@ The pack is based on:
 14. `14_Phase_2_Implementation_Spec.md`
     Product Phase 2 implementation specification for simulation and scenario planning: assumption model, run architecture, projection engine, UI/API expansion, delivery chunks, and later-phase compatibility.
 
+15. `15_Phase_2_Scenario_Proof_Evidence.md`
+    Runtime proof evidence for the Phase 2 scenario-planning flow, including the seeded scenario pack, selected-run promotion, governed export, audit lineage, and browser-visible evidence.
+
+16. `16_Phase_2_Scenario_Operator_Guide.md`
+    Operator-facing explanation of each seeded Phase 2 what-if scenario, manual scenario-building steps, and the governance path after scenarios exist.
+
+17. `17_Phase_3_Implementation_Spec.md`
+    Product Phase 3 implementation specification for GPS/AIS live tracking using Synthetic Live Data Mode, telemetry ingestion, geofence events, ETA variance, delay alerts, live map upgrades, and scenario handoff.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

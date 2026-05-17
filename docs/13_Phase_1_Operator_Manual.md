@@ -55,6 +55,26 @@ This is not an operator step. Use it only for regression evidence.
 docker compose run --rm -e RUN_STARTUP_TASKS=0 api python manage.py phase1_e2e_proof --json
 ```
 
+### 1.5 Generate Phase 2 scenario proof evidence, if required
+
+This is also a regression step, not a live operator action. Use it when validating that the Phase 2 scenario workspace, selected-run promotion, approval gate, scenario-diff export, and audit lineage are still wired end to end.
+
+```text
+docker compose run --rm -e RUN_STARTUP_TASKS=0 api python manage.py phase2_scenario_proof --json
+```
+
+The proof reseeds the pilot data by default and verifies these scenario families:
+
+- `SIM-JETTY-DELAY`;
+- `SIM-TUG-OUTAGE`;
+- `SIM-TIDE-RECOVERY`;
+- `SIM-CTS-RATE`;
+- `SIM-TOPUP-DEMAND`;
+- `SIM-MANUAL-REASSIGNMENT`;
+- `SIM-MULTI-CANDIDATE`.
+
+To keep a host-side evidence copy, redirect the JSON output to `docs/evidence/phase2/phase2_scenario_evidence.json`.
+
 ## 2. Login roles
 
 | Role | User | Password | Operational use |
@@ -161,18 +181,19 @@ Acceptance evidence: the adjustment is not a silent table edit; it is captured a
 
 ### Stage 7A — Optional Simulation Workspace check
 
-Use this check before Phase 1 closure if the operator wants to exercise the transition scenario surface that product Phase 2 will expand. Phase 1 does not include a rich optimizer, but it does include a governed scenario shell that can run a deterministic recovery delta and promote the scenario output to a proposed plan.
+Use this check before Phase 1 closure if the operator wants to exercise the transition scenario surface that product Phase 2 expands. The current Phase 2 workspace now supports seeded and manually created what-if scenarios, assumption capture, deterministic scenario runs, baseline-vs-scenario comparison, selected-run promotion, approval gating, scenario-diff export, and audit lineage. It still does not perform fleet-wide optimization or automatically choose the best recovery plan.
 
 1. Open **Recovery Loop → Exception Center**.
 2. If active conflicts exist, select the conflict to test and click **Convert to scenario**.
 3. If no active conflicts exist, click **Convert to scenario** anyway to create a manual scenario against the active plan version.
 4. Open **Recovery Loop → Simulation Workspace**.
-5. Confirm the active scenario ID, source conflict or `Manual`, status, feasibility, OGV delay, demurrage risk, and remaining violations are visible.
+5. Confirm the active scenario ID, source conflict/override/manual source, status, selected run, changed trips, max delay, and remaining risk flags are visible.
 6. Click **Run simulation**.
-7. Confirm the baseline-vs-scenario table and recovery action list update.
-8. Optional: click **Promote to proposed** only if the operator intentionally wants to create a proposed successor version for approval review.
+7. Confirm the baseline-vs-scenario table, two-lane timeline, constraint evaluations, OGV projections, resource utilization, impact-chain nodes, and recovery action list update.
+8. Optional: select another run in the run ledger to compare a different assumption set before promotion.
+9. Optional: click **Promote to proposed** only if the operator intentionally wants to create a proposed successor version for approval review.
 
-Acceptance evidence: a scenario is visible in Simulation Workspace, simulation deltas are visible, recovery actions are listed, and audit events exist for scenario creation/simulation/promotion when those actions are used.
+Acceptance evidence: a scenario is visible in Simulation Workspace, calculated projection rows are visible, recovery actions are listed, selected-run lineage is retained if promoted, and audit events exist for scenario creation/simulation/promotion when those actions are used.
 
 ### Stage 7B — Optional top-up successor plan
 
