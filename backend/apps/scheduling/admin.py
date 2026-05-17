@@ -13,7 +13,9 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioEventProjection,
     ScenarioRun,
+    ScenarioTripProjection,
     SimulationScenario,
     Trip,
 )
@@ -150,3 +152,19 @@ class ScenarioRunAdmin(admin.ModelAdmin):
     list_filter = ("status", "algorithm_version")
     search_fields = ("run_id", "scenario__scenario_id", "input_hash")
     readonly_fields = ("run_id", "input_hash", "created_at", "updated_at")
+
+
+@admin.register(ScenarioTripProjection)
+class ScenarioTripProjectionAdmin(admin.ModelAdmin):
+    list_display = ("run", "trip", "projected_start", "projected_end", "delay_minutes")
+    list_filter = ("projected_status",)
+    search_fields = ("run__run_id", "trip__trip_id")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ScenarioEventProjection)
+class ScenarioEventProjectionAdmin(admin.ModelAdmin):
+    list_display = ("run", "trip", "event_type", "projected_at", "delay_minutes")
+    list_filter = ("event_type", "projected_status")
+    search_fields = ("run__run_id", "trip__trip_id", "event__resource_code")
+    readonly_fields = ("created_at",)

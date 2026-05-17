@@ -14,6 +14,7 @@ from .views import (
     PublishedPlanSnapshotViewSet,
     ScheduleEventViewSet,
     SchedulingOverviewViewSet,
+    ScenarioRunViewSet,
     SimulationScenarioViewSet,
     TripViewSet,
 )
@@ -39,6 +40,7 @@ router.register(
 )
 router.register("exports", ExportJobViewSet, basename="export")
 router.register("scheduling/scenarios", SimulationScenarioViewSet, basename="simulation-scenario")
+router.register("scheduling/scenario-runs", ScenarioRunViewSet, basename="scenario-run")
 
 overview = SchedulingOverviewViewSet.as_view({"get": "overview"})
 

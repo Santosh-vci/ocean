@@ -800,3 +800,90 @@ class ScenarioRun(models.Model):
 
     def __str__(self) -> str:
         return self.run_id
+
+
+class ScenarioTripProjection(models.Model):
+    run = models.ForeignKey(
+        ScenarioRun,
+        on_delete=models.CASCADE,
+        related_name="trip_projections",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        related_name="scenario_trip_projections",
+    )
+    baseline_start = models.DateTimeField()
+    baseline_end = models.DateTimeField()
+    projected_start = models.DateTimeField()
+    projected_end = models.DateTimeField()
+    projected_status = models.CharField(max_length=32)
+    delay_minutes = models.IntegerField(default=0)
+    assignment_delta = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["trip__sequence", "trip__trip_id"]
+        indexes = [
+            models.Index(fields=("run", "projected_start")),
+            models.Index(fields=("trip", "delay_minutes")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "trip"),
+                name="unique_scenario_run_trip_projection",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return f"{self.run.run_id} {self.trip.trip_id}"
+
+
+class ScenarioEventProjection(models.Model):
+    run = models.ForeignKey(
+        ScenarioRun,
+        on_delete=models.CASCADE,
+        related_name="event_projections",
+    )
+    event = models.ForeignKey(
+        ScheduleEvent,
+        on_delete=models.CASCADE,
+        related_name="scenario_event_projections",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        related_name="scenario_event_projections",
+    )
+    event_type = models.CharField(max_length=40)
+    baseline_at = models.DateTimeField()
+    projected_at = models.DateTimeField()
+    projected_status = models.CharField(max_length=32)
+    delay_minutes = models.IntegerField(default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["trip__sequence", "event__sequence"]
+        indexes = [
+            models.Index(fields=("run", "projected_at")),
+            models.Index(fields=("trip", "event_type")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "event"),
+                name="unique_scenario_run_event_projection",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return f"{self.run.run_id} {self.event}"

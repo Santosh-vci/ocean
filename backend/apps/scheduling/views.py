@@ -29,7 +29,9 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioEventProjection,
     ScenarioRun,
+    ScenarioTripProjection,
     SimulationScenario,
     Trip,
 )
@@ -46,7 +48,9 @@ from .serializers import (
     PublishedPlanSnapshotSerializer,
     ScheduleEventSerializer,
     ScenarioAssumptionSerializer,
+    ScenarioEventProjectionSerializer,
     ScenarioRunSerializer,
+    ScenarioTripProjectionSerializer,
     SimulationScenarioSerializer,
     TripSerializer,
 )
@@ -522,7 +526,10 @@ class SimulationScenarioViewSet(SchedulingViewSet):
         "source_override__trip",
         "source_override__trip__voyage",
         "created_by",
-    ).prefetch_related("assumptions", "runs").all()
+    ).prefetch_related(
+        "assumptions",
+        "runs__trip_projections__trip",
+    ).all()
     serializer_class = SimulationScenarioSerializer
 
     @action(detail=True, methods=["post"], url_path="simulate")
@@ -626,6 +633,42 @@ class SimulationScenarioViewSet(SchedulingViewSet):
             request=request,
         )
         return Response(ScenarioRunSerializer(run).data, status=status.HTTP_201_CREATED)
+
+
+class ScenarioRunViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "projections": "schedule.view",
+    }
+    queryset = ScenarioRun.objects.select_related(
+        "scenario",
+        "baseline_version",
+        "created_by",
+    ).prefetch_related(
+        "trip_projections__trip",
+        "event_projections__trip",
+        "event_projections__event",
+    )
+    serializer_class = ScenarioRunSerializer
+
+    @action(detail=True, methods=["get"], url_path="projections")
+    def projections(self, request, pk=None):
+        run = self.get_object()
+        return Response(
+            {
+                "run": ScenarioRunSerializer(run).data,
+                "trip_projections": ScenarioTripProjectionSerializer(
+                    run.trip_projections.select_related("trip"),
+                    many=True,
+                ).data,
+                "event_projections": ScenarioEventProjectionSerializer(
+                    run.event_projections.select_related("trip", "event"),
+                    many=True,
+                ).data,
+            }
+        )
 
 
 class SchedulingOverviewViewSet(SchedulingViewSet):

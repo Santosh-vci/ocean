@@ -461,6 +461,9 @@ export function SimulationWorkspacePage({
   const scenario = scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0];
   const assumptions = scenario?.assumptions ?? EMPTY_ASSUMPTIONS;
   const latestRun = scenario?.runs[0];
+  const projectedTrips = new Map(
+    (latestRun?.trip_projections ?? []).map((projection) => [projection.trip, projection]),
+  );
   const selectedAssumptionOption = ASSUMPTION_OPTIONS.find(
     (option) => option.value === assumptionKind,
   ) ?? ASSUMPTION_OPTIONS[0];
@@ -815,19 +818,26 @@ export function SimulationWorkspacePage({
                 </tr>
               </thead>
               <tbody>
-                {trips.slice(0, 6).map((trip) => (
-                  <tr key={trip.id}>
-                    <td>{String(trip.sequence).padStart(2, "0")}</td>
-                    <td><strong>{trip.voyage.vessel_name}</strong><br />{trip.cargo_layer_step?.coal_grade.code ?? "-"}</td>
-                    <td>{trip.origin_jetty?.code ?? "UNASSIGNED"}</td>
-                    <td>{trip.assignment?.tug?.code ?? "NONE"} / {trip.assignment?.barge?.code ?? "NONE"}</td>
-                    <td>{trip.assignment?.cts?.code ?? "NONE"}</td>
-                    <td>{dt(trip.planned_start)}</td>
-                    <td className="success-text">{dt(trip.planned_start)}</td>
-                    <td>{dt(trip.planned_end)}</td>
-                    <td className={trip.status === "blocked" ? "critical-text" : "success-text"}>{dt(trip.planned_end)}</td>
-                  </tr>
-                ))}
+                {trips.slice(0, 6).map((trip) => {
+                  const projection = projectedTrips.get(trip.id);
+                  return (
+                    <tr key={trip.id}>
+                      <td>{String(trip.sequence).padStart(2, "0")}</td>
+                      <td><strong>{trip.voyage.vessel_name}</strong><br />{trip.cargo_layer_step?.coal_grade.code ?? "-"}</td>
+                      <td>{trip.origin_jetty?.code ?? "UNASSIGNED"}</td>
+                      <td>{trip.assignment?.tug?.code ?? "NONE"} / {trip.assignment?.barge?.code ?? "NONE"}</td>
+                      <td>{trip.assignment?.cts?.code ?? "NONE"}</td>
+                      <td>{dt(trip.planned_start)}</td>
+                      <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
+                        {dt(projection?.projected_start ?? trip.planned_start)}
+                      </td>
+                      <td>{dt(trip.planned_end)}</td>
+                      <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
+                        {dt(projection?.projected_end ?? trip.planned_end)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

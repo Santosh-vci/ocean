@@ -23,13 +23,16 @@ from apps.scheduling.models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioEventProjection,
     ScenarioRun,
+    ScenarioTripProjection,
     SimulationScenario,
     Trip,
 )
 from apps.scheduling.services import (
     clone_plan_version,
     compute_plan_diff,
+    create_scenario_assumption,
     create_scenario_from_conflict,
     generate_plan_version,
     promote_scenario_to_proposed,
@@ -798,8 +801,189 @@ def test_simulation_action_creates_succeeded_run_record():
     assert response.status_code == 200
     run = ScenarioRun.objects.get(scenario=scenario)
     assert run.status == ScenarioRun.Status.SUCCEEDED
-    assert run.summary["mode"] == "transition"
+    assert run.summary["mode"] == "projection"
+    assert run.trip_projections.count() == baseline.trips.count()
     assert response.data["runs"][0]["run_id"] == run.run_id
+
+
+@pytest.mark.django_db
+def test_trip_delay_scenario_persists_projection_chain_without_mutating_baseline():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-trip-delay")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    first_trip, second_trip = list(baseline.trips.order_by("sequence")[:2])
+    first_baseline_start = first_trip.planned_start
+    second_baseline_start = second_trip.planned_start
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=first_trip.id,
+        payload={"delay_minutes": 120},
+    )
+
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    first_projection = ScenarioTripProjection.objects.get(run=run, trip=first_trip)
+    second_projection = ScenarioTripProjection.objects.get(run=run, trip=second_trip)
+    first_load_start = ScenarioEventProjection.objects.get(
+        run=run,
+        trip=first_trip,
+        event_type=ScheduleEvent.EventType.LOAD_START,
+    )
+
+    first_trip.refresh_from_db()
+    second_trip.refresh_from_db()
+    assert first_projection.delay_minutes == 120
+    assert second_projection.delay_minutes == 120
+    assert first_load_start.delay_minutes == 120
+    assert first_trip.planned_start == first_baseline_start
+    assert second_trip.planned_start == second_baseline_start
+    assert second_projection.metadata["dependencySources"][0]["tripId"] == first_trip.trip_id
+
+
+@pytest.mark.django_db
+def test_asset_outage_and_rate_change_scenarios_persist_deterministic_projection_deltas():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-asset-rate")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    assignment = trip.assignment
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.ASSET_OUTAGE,
+        scope_type=ScenarioAssumption.ScopeType.ASSET,
+        scope_id=None,
+        payload={"asset_code": assignment.tug.code},
+        effective_from=trip.planned_start,
+        effective_to=trip.planned_start + timedelta(hours=3),
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.RATE_CHANGE,
+        scope_type=ScenarioAssumption.ScopeType.ASSET,
+        scope_id=None,
+        payload={"asset_code": assignment.jetty.code, "rate_tph": 1000},
+    )
+
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    projection = ScenarioTripProjection.objects.get(run=run, trip=trip)
+    load_start = ScenarioEventProjection.objects.get(
+        run=run,
+        trip=trip,
+        event_type=ScheduleEvent.EventType.LOAD_START,
+    )
+    load_complete = ScenarioEventProjection.objects.get(
+        run=run,
+        trip=trip,
+        event_type=ScheduleEvent.EventType.LOAD_COMPLETE,
+    )
+
+    assert projection.delay_minutes > 180
+    assert projection.metadata["loadDurationDeltaMinutes"] > 0
+    assert load_start.delay_minutes == 180
+    assert load_complete.delay_minutes > load_start.delay_minutes
+
+
+@pytest.mark.django_db
+def test_window_change_scenario_reuses_window_evaluation_for_simulation_assessment():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-window-change")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    assignment = trip.assignment
+    tide_projection = trip.events.get(
+        event_type=ScheduleEvent.EventType.TIDE_GATE,
+    ).planned_at
+    replace_gate_windows(
+        assignment=assignment,
+        bridge_start=tide_projection - timedelta(hours=3),
+        bridge_end=tide_projection - timedelta(hours=2),
+        tide_start=tide_projection - timedelta(hours=1),
+        tide_end=tide_projection + timedelta(hours=1),
+    )
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.WINDOW_CHANGE,
+        scope_type=ScenarioAssumption.ScopeType.WINDOW,
+        scope_id=None,
+        payload={"window_code": "TIDE-IMPACT-TEST"},
+        effective_from=tide_projection + timedelta(hours=2),
+        effective_to=tide_projection + timedelta(hours=3),
+    )
+
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    assessment = ImpactChainAssessment.objects.get(
+        assessment_id=f"ICA-{run.run_id}-T{trip.id:04d}",
+    )
+
+    assert assessment.status == ImpactChainAssessment.Status.WARNING
+    assert assessment.metadata["scenarioRunId"] == run.run_id
+    assert assessment.metadata["sourceAssumptionIds"]
+    assert any(node["label"] == "TIDE WINDOW WAIT" for node in assessment.nodes)
+
+
+@pytest.mark.django_db
+def test_scenario_run_projection_endpoint_returns_trip_and_event_rows():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-projection-reader")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=trip.id,
+        payload={"delay_minutes": 45},
+    )
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.get(f"/api/scheduling/scenario-runs/{run.id}/projections/")
+
+    assert response.status_code == 200
+    assert response.data["run"]["run_id"] == run.run_id
+    assert len(response.data["trip_projections"]) == baseline.trips.count()
+    assert len(response.data["event_projections"]) == ScheduleEvent.objects.filter(
+        trip__plan_version=baseline,
+    ).count()
 
 
 @pytest.mark.django_db

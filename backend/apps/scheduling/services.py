@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -33,7 +34,9 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioEventProjection,
     ScenarioRun,
+    ScenarioTripProjection,
     SimulationScenario,
     Trip,
 )
@@ -343,20 +346,24 @@ def _serializable_event_projections(event_projections: dict) -> dict:
     }
 
 
-def _evaluate_bridge_window(*, assignment: Assignment, projected_at):
+def _evaluate_bridge_window(*, assignment: Assignment, projected_at, window_overrides=None):
     if projected_at is None:
         return _missing_window_eval(kind="bridge", label="BRIDGE ETA UNKNOWN")
-    windows = BridgeWindow.objects.filter(is_active=True).exclude(
+    windows = list(BridgeWindow.objects.filter(is_active=True).exclude(
         status=BridgeWindow.Status.CLOSED,
-    )
+    ))
     return _evaluate_window_set(
         kind="bridge",
         projected_at=projected_at,
-        windows=windows,
+        windows=_apply_window_overrides(
+            kind="bridge",
+            windows=windows,
+            window_overrides=window_overrides or {},
+        ),
     )
 
 
-def _evaluate_tide_window(*, assignment: Assignment, projected_at):
+def _evaluate_tide_window(*, assignment: Assignment, projected_at, window_overrides=None):
     if projected_at is None:
         return _missing_window_eval(kind="tide", label="TIDE ETA UNKNOWN")
     windows = TideWindow.objects.filter(is_active=True).exclude(
@@ -371,7 +378,11 @@ def _evaluate_tide_window(*, assignment: Assignment, projected_at):
     return _evaluate_window_set(
         kind="tide",
         projected_at=projected_at,
-        windows=windows,
+        windows=_apply_window_overrides(
+            kind="tide",
+            windows=list(windows),
+            window_overrides=window_overrides or {},
+        ),
     )
 
 
@@ -881,7 +892,7 @@ def create_scenario_run(
     scenario: SimulationScenario,
     actor,
     status: str = ScenarioRun.Status.QUEUED,
-    algorithm_version: str = "phase2-transition-v1",
+    algorithm_version: str = "phase2-projection-v1",
     summary: dict | None = None,
     started_at=None,
     completed_at=None,
@@ -913,39 +924,17 @@ def simulate_scenario(*, scenario: SimulationScenario, actor=None) -> Simulation
     }:
         raise ValidationError("Only draft or simulated scenarios can be simulated.")
 
-    conflict = scenario.source_conflict
-    override = scenario.source_override
-    source_label = (
-        conflict.code
-        if conflict
-        else override.reason_code.upper()
-        if override
-        else "MANUAL_SCENARIO"
+    now = timezone.now()
+    run = create_scenario_run(
+        scenario=scenario,
+        actor=actor,
+        status=ScenarioRun.Status.RUNNING,
+        started_at=now,
     )
-    affected_vessel = (
-        conflict.trip.voyage.vessel_name
-        if conflict and conflict.trip
-        else override.trip.voyage.vessel_name
-        if override and override.trip
-        else ""
-    )
-    actions = [
-        "Reassign available tug against earliest feasible tide window.",
-        "Hold barge queue at source jetty until route gate clears.",
-        "Preserve OGV hatch/layer order before approval promotion.",
-    ]
-    scenario.recovery_actions = actions
-    scenario.impact_summary = {
-        "sourceConflict": source_label,
-        "affectedVessel": affected_vessel,
-        "feasibilityPct": 89 if conflict else 96,
-    }
-    scenario.delta_summary = {
-        "delayDeltaMinutes": -210 if conflict else 0,
-        "demurrageDeltaUsd": -42000 if conflict else 0,
-        "fleetUtilizationPct": 6,
-        "remainingViolations": 1 if conflict else 0,
-    }
+    projection_summary = calculate_scenario_run_projections(run=run)
+    scenario.recovery_actions = _scenario_recovery_actions(projection_summary)
+    scenario.impact_summary = projection_summary["impactSummary"]
+    scenario.delta_summary = projection_summary["deltaSummary"]
     scenario.status = SimulationScenario.Status.SIMULATED
     scenario.save(
         update_fields=[
@@ -956,20 +945,54 @@ def simulate_scenario(*, scenario: SimulationScenario, actor=None) -> Simulation
             "updated_at",
         ]
     )
-    now = timezone.now()
-    create_scenario_run(
-        scenario=scenario,
-        actor=actor,
-        status=ScenarioRun.Status.SUCCEEDED,
-        summary={
-            "mode": "transition",
-            "impactSummary": scenario.impact_summary,
-            "deltaSummary": scenario.delta_summary,
-        },
-        started_at=now,
-        completed_at=now,
-    )
+    run.status = ScenarioRun.Status.SUCCEEDED
+    run.summary = {
+        "mode": "projection",
+        **projection_summary,
+    }
+    run.completed_at = timezone.now()
+    run.save(update_fields=["status", "summary", "completed_at", "updated_at"])
     return scenario
+
+
+def calculate_scenario_run_projections(*, run: ScenarioRun) -> dict:
+    states, edges = _build_baseline_schedule_graph(run.baseline_version)
+    assumptions = list(
+        run.scenario.assumptions.order_by("created_at", "id")
+    )
+    window_overrides = _apply_scenario_assumptions(
+        states=states,
+        assumptions=assumptions,
+    )
+    _propagate_projection_graph(states=states, edges=edges)
+
+    ScenarioTripProjection.objects.filter(run=run).delete()
+    ScenarioEventProjection.objects.filter(run=run).delete()
+    trip_projections = []
+    event_projection_index = {}
+    for state in states.values():
+        trip_projection, event_projections = _persist_projection_state(
+            run=run,
+            state=state,
+        )
+        trip_projections.append(trip_projection)
+        event_projection_index[state["trip"].id] = {
+            event_projection.event_type: event_projection
+            for event_projection in event_projections
+        }
+
+    assessments = _create_simulation_impact_assessments(
+        run=run,
+        states=states,
+        event_projection_index=event_projection_index,
+        window_overrides=window_overrides,
+    )
+    return _scenario_projection_summary(
+        run=run,
+        assumptions=assumptions,
+        trip_projections=trip_projections,
+        assessments=assessments,
+    )
 
 
 def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> SimulationScenario:
@@ -1073,6 +1096,612 @@ def _scenario_input_hash(scenario: SimulationScenario) -> str:
     }
     canonical = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _build_baseline_schedule_graph(plan_version: PlanVersion):
+    trips = list(
+        plan_version.trips.select_related(
+            "voyage",
+            "cargo_layer_step",
+            "origin_jetty",
+            "assignment__tug",
+            "assignment__barge",
+            "assignment__jetty",
+            "assignment__cts",
+        )
+        .prefetch_related("events")
+        .order_by("sequence", "trip_id")
+    )
+    states = {}
+    edges = {trip.id: [] for trip in trips}
+    last_resource_trip = {}
+    last_voyage_trip = {}
+
+    for trip in trips:
+        assignment = getattr(trip, "assignment", None)
+        states[trip.id] = {
+            "trip": trip,
+            "assignment": assignment,
+            "baseline_start": trip.planned_start,
+            "baseline_end": trip.planned_end,
+            "projected_start": trip.planned_start,
+            "projected_end": trip.planned_end,
+            "direct_shift_minutes": 0,
+            "start_shift_minutes": 0,
+            "load_duration_delta_minutes": 0,
+            "discharge_duration_delta_minutes": 0,
+            "direct_assumption_ids": [],
+            "dependency_sources": [],
+            "assumption_effects": [],
+        }
+
+        for resource_kind, resource_code in _assignment_resource_codes(assignment):
+            predecessor_id = last_resource_trip.get((resource_kind, resource_code))
+            if predecessor_id:
+                edges[trip.id].append(
+                    {
+                        "from": predecessor_id,
+                        "kind": resource_kind,
+                    }
+                )
+            last_resource_trip[(resource_kind, resource_code)] = trip.id
+
+        if trip.cargo_layer_step_id:
+            predecessor_id = last_voyage_trip.get(trip.voyage_id)
+            if predecessor_id:
+                edges[trip.id].append(
+                    {
+                        "from": predecessor_id,
+                        "kind": "cargo_layer",
+                    }
+                )
+            last_voyage_trip[trip.voyage_id] = trip.id
+
+    return states, edges
+
+
+def _assignment_resource_codes(assignment: Assignment | None) -> list[tuple[str, str]]:
+    if assignment is None:
+        return []
+    resources = [
+        ("tug", assignment.tug.code if assignment.tug else ""),
+        ("barge", assignment.barge.code if assignment.barge else ""),
+        ("jetty", assignment.jetty.code if assignment.jetty else ""),
+        ("cts", assignment.cts.code if assignment.cts else ""),
+    ]
+    return [(kind, code) for kind, code in resources if code]
+
+
+def _apply_scenario_assumptions(*, states: dict, assumptions: list[ScenarioAssumption]) -> dict:
+    window_overrides = {}
+    for assumption in assumptions:
+        if assumption.kind == ScenarioAssumption.Kind.TRIP_DELAY:
+            state = states.get(assumption.scope_id)
+            if state is None:
+                continue
+            delay_minutes = int(assumption.payload["delay_minutes"])
+            state["direct_shift_minutes"] += delay_minutes
+            _record_assumption_effect(
+                state=state,
+                assumption=assumption,
+                effect={"delayMinutes": delay_minutes},
+            )
+            continue
+
+        if assumption.kind == ScenarioAssumption.Kind.ASSET_OUTAGE:
+            _apply_asset_outage_assumption(
+                states=states,
+                assumption=assumption,
+            )
+            continue
+
+        if assumption.kind == ScenarioAssumption.Kind.RATE_CHANGE:
+            _apply_rate_change_assumption(
+                states=states,
+                assumption=assumption,
+            )
+            continue
+
+        if assumption.kind == ScenarioAssumption.Kind.WINDOW_CHANGE:
+            window_code = str(assumption.payload["window_code"]).strip()
+            if not window_code:
+                continue
+            window_overrides[window_code] = {
+                "window_start": assumption.effective_from,
+                "window_end": assumption.effective_to,
+                "assumption_id": assumption.assumption_id,
+            }
+    return window_overrides
+
+
+def _apply_asset_outage_assumption(*, states: dict, assumption: ScenarioAssumption) -> None:
+    asset_code = str(assumption.payload["asset_code"]).strip()
+    if not asset_code or assumption.effective_from is None or assumption.effective_to is None:
+        return
+
+    for state in states.values():
+        assignment = state["assignment"]
+        resource_codes = {code for _, code in _assignment_resource_codes(assignment)}
+        if asset_code not in resource_codes:
+            continue
+        if not _overlaps(
+            start=state["baseline_start"],
+            end=state["baseline_end"],
+            window_start=assumption.effective_from,
+            window_end=assumption.effective_to,
+        ):
+            continue
+        delay_minutes = max(
+            0,
+            _ceil_minutes(assumption.effective_to - state["baseline_start"]),
+        )
+        state["direct_shift_minutes"] = max(state["direct_shift_minutes"], delay_minutes)
+        _record_assumption_effect(
+            state=state,
+            assumption=assumption,
+            effect={
+                "assetCode": asset_code,
+                "delayMinutes": delay_minutes,
+                "effectiveFrom": assumption.effective_from.isoformat(),
+                "effectiveTo": assumption.effective_to.isoformat(),
+            },
+        )
+
+
+def _apply_rate_change_assumption(*, states: dict, assumption: ScenarioAssumption) -> None:
+    asset_code = str(assumption.payload.get("asset_code", "")).strip()
+    if not asset_code:
+        return
+    rate_tph = float(assumption.payload["rate_tph"])
+
+    for state in states.values():
+        assignment = state["assignment"]
+        if assignment is None:
+            continue
+        if (
+            assumption.effective_from
+            and assumption.effective_to
+            and not _overlaps(
+                start=state["baseline_start"],
+                end=state["baseline_end"],
+                window_start=assumption.effective_from,
+                window_end=assumption.effective_to,
+            )
+        ):
+            continue
+        events_by_type = _events_by_type(state["trip"])
+        if assignment.jetty and assignment.jetty.code == asset_code:
+            baseline_minutes = _event_span_minutes(
+                events_by_type=events_by_type,
+                start_type=ScheduleEvent.EventType.LOAD_START,
+                end_type=ScheduleEvent.EventType.LOAD_COMPLETE,
+            )
+            projected_minutes = _duration_minutes_for_rate(
+                quantity_mt=state["trip"].planned_quantity_mt,
+                rate_tph=rate_tph,
+            )
+            delta_minutes = projected_minutes - baseline_minutes
+            state["load_duration_delta_minutes"] += delta_minutes
+            _record_assumption_effect(
+                state=state,
+                assumption=assumption,
+                effect={
+                    "assetCode": asset_code,
+                    "rateTph": rate_tph,
+                    "phase": "load",
+                    "durationDeltaMinutes": delta_minutes,
+                },
+            )
+        if assignment.cts and assignment.cts.code == asset_code:
+            baseline_minutes = _event_span_minutes(
+                events_by_type=events_by_type,
+                start_type=ScheduleEvent.EventType.ARRIVE_CTS,
+                end_type=ScheduleEvent.EventType.DISCHARGE_COMPLETE,
+            )
+            projected_minutes = _duration_minutes_for_rate(
+                quantity_mt=state["trip"].planned_quantity_mt,
+                rate_tph=rate_tph,
+            )
+            delta_minutes = projected_minutes - baseline_minutes
+            state["discharge_duration_delta_minutes"] += delta_minutes
+            _record_assumption_effect(
+                state=state,
+                assumption=assumption,
+                effect={
+                    "assetCode": asset_code,
+                    "rateTph": rate_tph,
+                    "phase": "discharge",
+                    "durationDeltaMinutes": delta_minutes,
+                },
+            )
+
+
+def _record_assumption_effect(
+    *,
+    state: dict,
+    assumption: ScenarioAssumption,
+    effect: dict,
+) -> None:
+    state["direct_assumption_ids"].append(assumption.assumption_id)
+    state["assumption_effects"].append(
+        {
+            "assumptionId": assumption.assumption_id,
+            "kind": assumption.kind,
+            **effect,
+        }
+    )
+
+
+def _propagate_projection_graph(*, states: dict, edges: dict) -> None:
+    ordered_states = sorted(
+        states.values(),
+        key=lambda state: (
+            state["trip"].sequence,
+            state["trip"].trip_id,
+        ),
+    )
+    for state in ordered_states:
+        dependency_shift_minutes = 0
+        dependency_sources = []
+        for edge in edges[state["trip"].id]:
+            predecessor = states[edge["from"]]
+            required_shift_minutes = max(
+                0,
+                _ceil_minutes(
+                    predecessor["projected_end"] - predecessor["baseline_end"]
+                ),
+            )
+            if required_shift_minutes > dependency_shift_minutes:
+                dependency_shift_minutes = required_shift_minutes
+            if required_shift_minutes:
+                dependency_sources.append(
+                    {
+                        "tripId": predecessor["trip"].trip_id,
+                        "kind": edge["kind"],
+                        "delayMinutes": required_shift_minutes,
+                    }
+                )
+
+        state["dependency_sources"] = dependency_sources
+        state["start_shift_minutes"] = max(
+            state["direct_shift_minutes"],
+            dependency_shift_minutes,
+        )
+        state["projected_start"] = state["baseline_start"] + timedelta(
+            minutes=state["start_shift_minutes"]
+        )
+        state["projected_end"] = state["baseline_end"] + timedelta(
+            minutes=(
+                state["start_shift_minutes"]
+                + state["load_duration_delta_minutes"]
+                + state["discharge_duration_delta_minutes"]
+            )
+        )
+
+
+def _persist_projection_state(*, run: ScenarioRun, state: dict):
+    trip = state["trip"]
+    assignment = state["assignment"]
+    event_projections = []
+    for event in trip.events.order_by("sequence"):
+        event_delta_minutes = state["start_shift_minutes"]
+        if event.sequence >= _event_sequence(trip, ScheduleEvent.EventType.LOAD_COMPLETE):
+            event_delta_minutes += state["load_duration_delta_minutes"]
+        if event.event_type == ScheduleEvent.EventType.DISCHARGE_COMPLETE:
+            event_delta_minutes += state["discharge_duration_delta_minutes"]
+        projected_at = event.planned_at + timedelta(minutes=event_delta_minutes)
+        event_projections.append(
+            ScenarioEventProjection.objects.create(
+                run=run,
+                event=event,
+                trip=trip,
+                event_type=event.event_type,
+                baseline_at=event.planned_at,
+                projected_at=projected_at,
+                projected_status=(
+                    ScheduleEvent.Status.DELAYED
+                    if event_delta_minutes
+                    else event.status
+                ),
+                delay_minutes=event_delta_minutes,
+                metadata={
+                    "sourceAssumptionIds": state["direct_assumption_ids"],
+                    "dependencySources": state["dependency_sources"],
+                },
+            )
+        )
+
+    event_index = {
+        projection.event_type: projection
+        for projection in event_projections
+    }
+    assignment_delta = {}
+    if assignment:
+        departure = event_index.get(ScheduleEvent.EventType.DEPART_JETTY)
+        arrival = event_index.get(ScheduleEvent.EventType.ARRIVE_CTS)
+        assignment_delta = {
+            "plannedDeparture": assignment.planned_departure.isoformat(),
+            "projectedDeparture": (
+                departure.projected_at.isoformat() if departure else None
+            ),
+            "plannedArrival": assignment.planned_arrival.isoformat(),
+            "projectedArrival": (
+                arrival.projected_at.isoformat() if arrival else None
+            ),
+        }
+
+    trip_projection = ScenarioTripProjection.objects.create(
+        run=run,
+        trip=trip,
+        baseline_start=state["baseline_start"],
+        baseline_end=state["baseline_end"],
+        projected_start=state["projected_start"],
+        projected_end=state["projected_end"],
+        projected_status=trip.status,
+        delay_minutes=_ceil_minutes(state["projected_end"] - state["baseline_end"]),
+        assignment_delta=assignment_delta,
+        metadata={
+            "sourceAssumptionIds": state["direct_assumption_ids"],
+            "dependencySources": state["dependency_sources"],
+            "assumptionEffects": state["assumption_effects"],
+            "loadDurationDeltaMinutes": state["load_duration_delta_minutes"],
+            "dischargeDurationDeltaMinutes": state["discharge_duration_delta_minutes"],
+        },
+    )
+    return trip_projection, event_projections
+
+
+def _create_simulation_impact_assessments(
+    *,
+    run: ScenarioRun,
+    states: dict,
+    event_projection_index: dict,
+    window_overrides: dict,
+) -> list[ImpactChainAssessment]:
+    assessments = []
+    for state in states.values():
+        trip = state["trip"]
+        assignment = state["assignment"]
+        if assignment is None:
+            continue
+        projections = event_projection_index.get(trip.id, {})
+        bridge_projection = projections.get(ScheduleEvent.EventType.BRIDGE_CROSS)
+        tide_projection = projections.get(ScheduleEvent.EventType.TIDE_GATE)
+        bridge_eval = _evaluate_bridge_window(
+            assignment=assignment,
+            projected_at=bridge_projection.projected_at if bridge_projection else None,
+            window_overrides=window_overrides,
+        )
+        tide_eval = _evaluate_tide_window(
+            assignment=assignment,
+            projected_at=tide_projection.projected_at if tide_projection else None,
+            window_overrides=window_overrides,
+        )
+        window_assumption_ids = _window_assumption_ids(
+            evaluations=[bridge_eval, tide_eval],
+            window_overrides=window_overrides,
+        )
+        delay_minutes = _ceil_minutes(state["projected_start"] - state["baseline_start"])
+        if (
+            not state["direct_assumption_ids"]
+            and not window_assumption_ids
+            and not state["dependency_sources"]
+            and bridge_eval["status"] == ImpactChainAssessment.Status.OK
+            and tide_eval["status"] == ImpactChainAssessment.Status.OK
+        ):
+            continue
+        nodes = _simulation_impact_nodes(
+            run=run,
+            state=state,
+            delay_minutes=delay_minutes,
+            bridge_eval=bridge_eval,
+            tide_eval=tide_eval,
+            source_assumption_ids=[
+                *state["direct_assumption_ids"],
+                *window_assumption_ids,
+            ],
+        )
+        assessment = ImpactChainAssessment.objects.create(
+            assessment_id=f"ICA-{run.run_id}-T{trip.id:04d}",
+            plan_version=run.baseline_version,
+            trip=trip,
+            assignment=assignment,
+            source_kind=ImpactChainAssessment.SourceKind.SIMULATION,
+            status=_worst_status(node["status"] for node in nodes),
+            delay_minutes=delay_minutes,
+            nodes=nodes,
+            metadata={
+                "algorithmVersion": run.algorithm_version,
+                "calculatedAt": timezone.now().isoformat(),
+                "scenarioId": run.scenario.scenario_id,
+                "scenarioRunId": run.run_id,
+                "sourceAssumptionIds": [
+                    *state["direct_assumption_ids"],
+                    *window_assumption_ids,
+                ],
+                "dependencySources": state["dependency_sources"],
+                "bridgeWindowId": bridge_eval.get("window_id"),
+                "tideWindowId": tide_eval.get("window_id"),
+            },
+        )
+        assessments.append(assessment)
+    return assessments
+
+
+def _simulation_impact_nodes(
+    *,
+    run: ScenarioRun,
+    state: dict,
+    delay_minutes: int,
+    bridge_eval: dict,
+    tide_eval: dict,
+    source_assumption_ids: list[str],
+) -> list[dict]:
+    trip = state["trip"]
+    delay_status = (
+        ImpactChainAssessment.Status.WARNING if delay_minutes else ImpactChainAssessment.Status.OK
+    )
+    navigation_status = _worst_status([bridge_eval["status"], tide_eval["status"]])
+    source_label = (
+        state["assumption_effects"][0]["kind"].replace("_", " ").upper()
+        if state["assumption_effects"]
+        else "WINDOW CHANGE"
+        if source_assumption_ids
+        else "DEPENDENCY PROPAGATION"
+    )
+    return [
+        {
+            "id": "source",
+            "type": "source_event",
+            "label": source_label,
+            "value": run.run_id,
+            "status": delay_status,
+            "detail": ", ".join(source_assumption_ids) or "Inherited from prior trip.",
+            "plannedAt": state["baseline_start"].isoformat(),
+            "projectedAt": state["projected_start"].isoformat(),
+        },
+        {
+            "id": "logistics",
+            "type": "logistics_delay",
+            "label": "TRIP DELAY",
+            "value": f"+{delay_minutes}m",
+            "status": delay_status,
+            "detail": "Projected start after direct assumptions and dependency propagation.",
+        },
+        _window_node(node_id="bridge", evaluation=bridge_eval),
+        _window_node(node_id="tide", evaluation=tide_eval),
+        {
+            "id": "target",
+            "type": "final_risk_target",
+            "label": "FINAL RISK TARGET",
+            "value": trip.voyage.vessel_name,
+            "status": navigation_status,
+            "detail": trip.trip_id,
+        },
+    ]
+
+
+def _scenario_projection_summary(
+    *,
+    run: ScenarioRun,
+    assumptions: list[ScenarioAssumption],
+    trip_projections: list[ScenarioTripProjection],
+    assessments: list[ImpactChainAssessment],
+) -> dict:
+    conflict = run.scenario.source_conflict
+    override = run.scenario.source_override
+    source_label = (
+        conflict.code
+        if conflict
+        else override.reason_code.upper()
+        if override
+        else "MANUAL_SCENARIO"
+    )
+    affected_vessel = (
+        conflict.trip.voyage.vessel_name
+        if conflict and conflict.trip
+        else override.trip.voyage.vessel_name
+        if override and override.trip
+        else ""
+    )
+    changed_trips = [projection for projection in trip_projections if projection.delay_minutes]
+    critical_count = sum(
+        assessment.status == ImpactChainAssessment.Status.CRITICAL
+        for assessment in assessments
+    )
+    warning_count = sum(
+        assessment.status == ImpactChainAssessment.Status.WARNING
+        for assessment in assessments
+    )
+    max_delay = max((projection.delay_minutes for projection in trip_projections), default=0)
+    feasibility_pct = max(0, 100 - (critical_count * 20) - (warning_count * 5))
+    return {
+        "impactSummary": {
+            "sourceConflict": source_label,
+            "affectedVessel": affected_vessel,
+            "feasibilityPct": feasibility_pct,
+            "assumptionCount": len(assumptions),
+            "projectedTripCount": len(trip_projections),
+            "changedTripCount": len(changed_trips),
+        },
+        "deltaSummary": {
+            "delayDeltaMinutes": max_delay,
+            "demurrageDeltaUsd": 0,
+            "fleetUtilizationPct": 0,
+            "remainingViolations": critical_count,
+            "warningWindowCount": warning_count,
+        },
+        "projectionSummary": {
+            "tripProjectionCount": len(trip_projections),
+            "changedTripCount": len(changed_trips),
+            "impactAssessmentCount": len(assessments),
+            "maxDelayMinutes": max_delay,
+        },
+    }
+
+
+def _scenario_recovery_actions(summary: dict) -> list[str]:
+    projection_summary = summary["projectionSummary"]
+    actions = [
+        (
+            f"Review {projection_summary['changedTripCount']} changed trip projection"
+            f"{'' if projection_summary['changedTripCount'] == 1 else 's'}."
+        )
+    ]
+    if summary["deltaSummary"]["remainingViolations"]:
+        actions.append("Review projected critical window misses before promotion.")
+    elif summary["deltaSummary"]["warningWindowCount"]:
+        actions.append("Review projected tight-window margins before promotion.")
+    else:
+        actions.append("Projected bridge and tide gates remain feasible.")
+    return actions
+
+
+def _apply_window_overrides(*, kind: str, windows: list, window_overrides: dict) -> list:
+    adjusted_windows = []
+    for window in windows:
+        override = window_overrides.get(window.code)
+        if override and override["window_start"] and override["window_end"]:
+            window.window_start = override["window_start"]
+            window.window_end = override["window_end"]
+        adjusted_windows.append(window)
+    return adjusted_windows
+
+
+def _window_assumption_ids(*, evaluations: list[dict], window_overrides: dict) -> list[str]:
+    assumption_ids = []
+    for evaluation in evaluations:
+        override = window_overrides.get(evaluation.get("window_code"))
+        if override and override["assumption_id"] not in assumption_ids:
+            assumption_ids.append(override["assumption_id"])
+    return assumption_ids
+
+
+def _events_by_type(trip: Trip) -> dict[str, ScheduleEvent]:
+    return {event.event_type: event for event in trip.events.all()}
+
+
+def _event_span_minutes(*, events_by_type: dict, start_type: str, end_type: str) -> int:
+    start_event = events_by_type[start_type]
+    end_event = events_by_type[end_type]
+    return _ceil_minutes(end_event.planned_at - start_event.planned_at)
+
+
+def _event_sequence(trip: Trip, event_type: str) -> int:
+    event = next(event for event in trip.events.all() if event.event_type == event_type)
+    return event.sequence
+
+
+def _duration_minutes_for_rate(*, quantity_mt: int, rate_tph: float) -> int:
+    return math.ceil((quantity_mt / rate_tph) * 60)
+
+
+def _overlaps(*, start, end, window_start, window_end) -> bool:
+    return start < window_end and end > window_start
+
+
+def _ceil_minutes(delta: timedelta) -> int:
+    return math.ceil(delta.total_seconds() / 60)
 
 
 def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:

@@ -26,7 +26,9 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioEventProjection,
     ScenarioRun,
+    ScenarioTripProjection,
     SimulationScenario,
     Trip,
 )
@@ -456,10 +458,58 @@ class ScenarioAssumptionSerializer(serializers.ModelSerializer):
         )
 
 
+class ScenarioTripProjectionSerializer(serializers.ModelSerializer):
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+
+    class Meta:
+        model = ScenarioTripProjection
+        fields = (
+            "id",
+            "run",
+            "trip",
+            "trip_ref",
+            "baseline_start",
+            "baseline_end",
+            "projected_start",
+            "projected_end",
+            "projected_status",
+            "delay_minutes",
+            "assignment_delta",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class ScenarioEventProjectionSerializer(serializers.ModelSerializer):
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+    event_ref = serializers.CharField(source="event", read_only=True)
+
+    class Meta:
+        model = ScenarioEventProjection
+        fields = (
+            "id",
+            "run",
+            "event",
+            "event_ref",
+            "trip",
+            "trip_ref",
+            "event_type",
+            "baseline_at",
+            "projected_at",
+            "projected_status",
+            "delay_minutes",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
 class ScenarioRunSerializer(serializers.ModelSerializer):
     scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
     baseline_version_ref = serializers.CharField(source="baseline_version", read_only=True)
     created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+    trip_projections = ScenarioTripProjectionSerializer(many=True, read_only=True)
 
     class Meta:
         model = ScenarioRun
@@ -478,6 +528,7 @@ class ScenarioRunSerializer(serializers.ModelSerializer):
             "summary",
             "created_by",
             "created_by_email",
+            "trip_projections",
             "created_at",
             "updated_at",
         )

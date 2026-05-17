@@ -864,8 +864,25 @@ export type ScenarioRunRecord = {
   summary: Record<string, unknown>;
   created_by: number | null;
   created_by_email: string | null;
+  trip_projections: ScenarioTripProjectionRecord[];
   created_at: string;
   updated_at: string;
+};
+
+export type ScenarioTripProjectionRecord = {
+  id: number;
+  run: number;
+  trip: number;
+  trip_ref: string;
+  baseline_start: string;
+  baseline_end: string;
+  projected_start: string;
+  projected_end: string;
+  projected_status: string;
+  delay_minutes: number;
+  assignment_delta: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
 };
 
 export type SchedulingOverview = {
