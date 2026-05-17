@@ -59,6 +59,7 @@ from apps.scheduling.services import (
     generate_plan_version,
     simulate_scenario,
 )
+from apps.telemetry.models import AssetIdentity, PositionPing, TelemetrySource
 
 
 class Command(BaseCommand):
@@ -115,6 +116,8 @@ class Command(BaseCommand):
             ("audit.view", "audit", "view", "View audit events"),
             ("export.view", "export", "view", "View governed export history"),
             ("export.generate", "export", "generate", "Generate governed export artifacts"),
+            ("telemetry.view", "telemetry", "view", "View live tracking telemetry"),
+            ("telemetry.ingest", "telemetry", "ingest", "Ingest telemetry pings"),
             ("admin.view", "admin", "view", "View admin consoles"),
             ("admin.manage_users", "admin", "manage_users", "Manage users and organizations"),
         ]
@@ -170,6 +173,7 @@ class Command(BaseCommand):
                     permissions["schedule.approve"],
                     permissions["simulation.run"],
                     permissions["masterdata.view"],
+                    permissions["telemetry.view"],
                     permissions["audit.view"],
                     permissions["export.view"],
                 ],
@@ -185,6 +189,8 @@ class Command(BaseCommand):
                     permissions["fleet.assign"],
                     permissions["schedule.approve"],
                     permissions["simulation.run"],
+                    permissions["telemetry.view"],
+                    permissions["telemetry.ingest"],
                     permissions["audit.view"],
                     permissions["export.view"],
                 ],
@@ -199,6 +205,8 @@ class Command(BaseCommand):
                     permissions["schedule.publish"],
                     permissions["simulation.run"],
                     permissions["fleet.view"],
+                    permissions["telemetry.view"],
+                    permissions["telemetry.ingest"],
                     permissions["audit.view"],
                     permissions["export.view"],
                     permissions["export.generate"],
@@ -211,6 +219,7 @@ class Command(BaseCommand):
                     permissions["dashboard.view"],
                     permissions["schedule.view"],
                     permissions["fleet.view"],
+                    permissions["telemetry.view"],
                 ],
             },
         }
@@ -285,6 +294,7 @@ class Command(BaseCommand):
             self._reset_operational_data()
 
         self._seed_master_data(berau=berau, abl=abl)
+        self._seed_telemetry_foundation()
         if options["master_data_only"]:
             self.stdout.write(
                 self.style.SUCCESS(
@@ -359,6 +369,8 @@ class Command(BaseCommand):
         )
 
     def _reset_operational_data(self):
+        PositionPing.objects.all().delete()
+
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
         ApprovalDecision.objects.all().delete()
@@ -383,6 +395,87 @@ class Command(BaseCommand):
         ImportJob.objects.all().delete()
 
         AuditEvent.objects.all().delete()
+
+    def _seed_telemetry_foundation(self):
+        gps_source, _ = TelemetrySource.objects.update_or_create(
+            source_id="SYN-GPS-PHASE3",
+            defaults={
+                "name": "Phase 3 Synthetic GPS Replay",
+                "source_type": TelemetrySource.SourceType.SYNTHETIC_GPS,
+                "status": TelemetrySource.Status.ACTIVE,
+                "freshness_threshold_seconds": 900,
+                "metadata": {
+                    "seeded": True,
+                    "purpose": "Chunk 3.0 telemetry foundation identity mapping",
+                },
+            },
+        )
+        ais_source, _ = TelemetrySource.objects.update_or_create(
+            source_id="SYN-AIS-PHASE3",
+            defaults={
+                "name": "Phase 3 Synthetic AIS Replay",
+                "source_type": TelemetrySource.SourceType.SYNTHETIC_AIS,
+                "status": TelemetrySource.Status.ACTIVE,
+                "freshness_threshold_seconds": 900,
+                "metadata": {
+                    "seeded": True,
+                    "purpose": "Chunk 3.0 telemetry foundation identity mapping",
+                },
+            },
+        )
+
+        for tug in Tug.objects.order_by("code"):
+            AssetIdentity.objects.update_or_create(
+                source=gps_source,
+                external_id=tug.gps_device_id or f"SYN-{tug.code}",
+                defaults={
+                    "asset_type": AssetIdentity.AssetType.TUG,
+                    "asset_object_id": tug.id,
+                    "asset_code": tug.code,
+                    "external_id_type": AssetIdentity.ExternalIdType.TRACKER_ID,
+                    "is_primary": True,
+                    "metadata": {"seeded": True},
+                },
+            )
+            if tug.ais_mmsi:
+                AssetIdentity.objects.update_or_create(
+                    source=ais_source,
+                    external_id=tug.ais_mmsi,
+                    defaults={
+                        "asset_type": AssetIdentity.AssetType.TUG,
+                        "asset_object_id": tug.id,
+                        "asset_code": tug.code,
+                        "external_id_type": AssetIdentity.ExternalIdType.MMSI,
+                        "is_primary": False,
+                        "metadata": {"seeded": True},
+                    },
+                )
+        for barge in Barge.objects.order_by("code"):
+            AssetIdentity.objects.update_or_create(
+                source=gps_source,
+                external_id=f"SYN-{barge.code}",
+                defaults={
+                    "asset_type": AssetIdentity.AssetType.BARGE,
+                    "asset_object_id": barge.id,
+                    "asset_code": barge.code,
+                    "external_id_type": AssetIdentity.ExternalIdType.SYNTHETIC_ID,
+                    "is_primary": True,
+                    "metadata": {"seeded": True},
+                },
+            )
+        for cts in CTSAsset.objects.order_by("code"):
+            AssetIdentity.objects.update_or_create(
+                source=gps_source,
+                external_id=f"SYN-{cts.code}",
+                defaults={
+                    "asset_type": AssetIdentity.AssetType.CTS,
+                    "asset_object_id": cts.id,
+                    "asset_code": cts.code,
+                    "external_id_type": AssetIdentity.ExternalIdType.SYNTHETIC_ID,
+                    "is_primary": True,
+                    "metadata": {"seeded": True},
+                },
+            )
 
     def _seed_start_date(self):
         return timezone.localdate() + timedelta(days=1)

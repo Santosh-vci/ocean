@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.masters",
     "apps.planning",
     "apps.scheduling",
+    "apps.telemetry",
 ]
 
 MIDDLEWARE = [
