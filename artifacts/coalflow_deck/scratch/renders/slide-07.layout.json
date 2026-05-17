@@ -1,0 +1,3916 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/5wnrnp",
+    "id": "5wnrnp",
+    "slide": 7,
+    "layoutId": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g7adsji5",
+      "id": "1",
+      "name": "slide-panel-7",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.5"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmhk3q5o",
+      "id": "2",
+      "name": "s7-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.7.0"
+      },
+      "geometry": "rect",
+      "text": "ROADMAP — NEAR TERM",
+      "textPreview": "ROADMAP — NEAR TERM",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ROADMAP — NEAR TERM"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ROADMAP — NEAR TERM",
+          "runs": [
+            {
+              "index": 1,
+              "text": "ROADMAP — NEAR TERM",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1kre1w7",
+      "id": "3",
+      "name": "s7-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6"
+      },
+      "geometry": "rect",
+      "text": "First build the planner’s spine.",
+      "textPreview": "First build the planner’s spine.",
+      "resolvedFontSize": 52,
+      "resolvedTextStyle": {
+        "fontSize": 52,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "First build the planner’s spine."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "First build the planner’s spine.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "First build the planner’s spine.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90je9cvi",
+      "id": "4",
+      "name": "s7-body",
+      "bbox": [
+        78,
+        196,
+        1058,
+        30
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.2"
+      },
+      "geometry": "rect",
+      "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+      "textPreview": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gfmlkjm1",
+      "id": "5",
+      "name": "s7-rule",
+      "bbox": [
+        78,
+        252,
+        240,
+        4
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.7.1"
+      },
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rytsvu9k",
+      "id": "6",
+      "name": "s7-panel1",
+      "bbox": [
+        78,
+        281.6,
+        570.67,
+        480
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yd0z6103",
+      "id": "7",
+      "name": "s7a",
+      "bbox": [
+        102,
+        304,
+        522,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.0.0"
+      },
+      "geometry": "rect",
+      "text": "NOW",
+      "textPreview": "NOW",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NOW"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NOW",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NOW",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cvixcze",
+      "id": "8",
+      "name": "s7-title1",
+      "bbox": [
+        102,
+        338,
+        522,
+        40
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.0.1"
+      },
+      "geometry": "rect",
+      "text": "1. Digital scheduling model",
+      "textPreview": "1. Digital scheduling model",
+      "resolvedFontSize": 33,
+      "resolvedTextStyle": {
+        "fontSize": 33,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1. Digital scheduling model"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1. Digital scheduling model",
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. Digital scheduling model",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gr2p8nqx",
+      "id": "9",
+      "name": "s7-body1",
+      "bbox": [
+        102,
+        394,
+        522,
+        90
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.0.2"
+      },
+      "geometry": "rect",
+      "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+      "textPreview": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Replace Excel with structured demand, manual"
+          },
+          {
+            "index": 2,
+            "text": "availability, conflicts, approvals, and a published"
+          },
+          {
+            "index": 3,
+            "text": "plan."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ahoza1gv",
+      "id": "10",
+      "name": "s7-kicker1",
+      "bbox": [
+        102,
+        608,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1.0"
+      },
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/32lszqtc",
+      "id": "11",
+      "name": "s7-note1",
+      "bbox": [
+        102,
+        640,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1.1"
+      },
+      "geometry": "rect",
+      "text": "OGV demand • constraints • approvals",
+      "textPreview": "OGV demand • constraints • approvals",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV demand • constraints • approvals"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV demand • constraints • approvals",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV demand • constraints • approvals",
+              "fontSize": 23,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sneloj2t",
+      "id": "12",
+      "name": "s7-maturity1",
+      "bbox": [
+        102,
+        680,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1.2"
+      },
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l87ed8ba",
+      "id": "13",
+      "name": "s7-maturity-body1",
+      "bbox": [
+        102,
+        712,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Manual → governed",
+      "textPreview": "Manual → governed",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manual → governed"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manual → governed",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manual → governed",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/at47y1kr",
+      "id": "14",
+      "name": "s7-panel2",
+      "bbox": [
+        674.67,
+        281.6,
+        570.67,
+        480
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3ex0nuxc",
+      "id": "15",
+      "name": "s7b",
+      "bbox": [
+        698,
+        304,
+        522,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.0.0"
+      },
+      "geometry": "rect",
+      "text": "NEXT",
+      "textPreview": "NEXT",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NEXT",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/szqtcj6t",
+      "id": "16",
+      "name": "s7-title2",
+      "bbox": [
+        698,
+        338,
+        522,
+        40
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.0.1"
+      },
+      "geometry": "rect",
+      "text": "2. Simulation + scenarios",
+      "textPreview": "2. Simulation + scenarios",
+      "resolvedFontSize": 33,
+      "resolvedTextStyle": {
+        "fontSize": 33,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2. Simulation + scenarios"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2. Simulation + scenarios",
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. Simulation + scenarios",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lkjm1cfa",
+      "id": "17",
+      "name": "s7-body2",
+      "bbox": [
+        698,
+        394,
+        522,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.0.2"
+      },
+      "geometry": "rect",
+      "text": "Test delays, outages, and window changes before committing a new version.",
+      "textPreview": "Test delays, outages, and window changes before committing a new version.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Test delays, outages, and window changes before"
+          },
+          {
+            "index": 2,
+            "text": "committing a new version."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Test delays, outages, and window changes before committing a new version.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Test delays, outages, and window changes before committing a new version.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ex0nuxc3",
+      "id": "18",
+      "name": "s7-kicker2",
+      "bbox": [
+        698,
+        608,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.0"
+      },
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3itgfmlk",
+      "id": "19",
+      "name": "s7-note2",
+      "bbox": [
+        698,
+        640,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.1"
+      },
+      "geometry": "rect",
+      "text": "Baseline vs revised plan",
+      "textPreview": "Baseline vs revised plan",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Baseline vs revised plan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Baseline vs revised plan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Baseline vs revised plan",
+              "fontSize": 23,
+              "color": "#2F8C73"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vahoza1g",
+      "id": "20",
+      "name": "s7-maturity2",
+      "bbox": [
+        698,
+        680,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.2"
+      },
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6tovahoz",
+      "id": "21",
+      "name": "s7-maturity-body2",
+      "bbox": [
+        698,
+        712,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Reactive → comparative",
+      "textPreview": "Reactive → comparative",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Reactive → comparative"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Reactive → comparative",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Reactive → comparative",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg7adsji",
+      "id": "22",
+      "name": "s7-panel3",
+      "bbox": [
+        1271.33,
+        281.6,
+        570.67,
+        480
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovahoza1",
+      "id": "23",
+      "name": "s7c",
+      "bbox": [
+        1296,
+        304,
+        522,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.0.0"
+      },
+      "geometry": "rect",
+      "text": "THEN",
+      "textPreview": "THEN",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "THEN"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "THEN",
+          "runs": [
+            {
+              "index": 1,
+              "text": "THEN",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z25kb6xk",
+      "id": "24",
+      "name": "s7-title3",
+      "bbox": [
+        1296,
+        338,
+        522,
+        40
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.0.1"
+      },
+      "geometry": "rect",
+      "text": "3. GPS / AIS tracking",
+      "textPreview": "3. GPS / AIS tracking",
+      "resolvedFontSize": 33,
+      "resolvedTextStyle": {
+        "fontSize": 33,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3. GPS / AIS tracking"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3. GPS / AIS tracking",
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. GPS / AIS tracking",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcrmhk3",
+      "id": "25",
+      "name": "s7-body3",
+      "bbox": [
+        1296,
+        394,
+        522,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.0.2"
+      },
+      "geometry": "rect",
+      "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+      "textPreview": "Connect planned schedules to live movement, geofences, and ETA variance.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Connect planned schedules to live movement,"
+          },
+          {
+            "index": 2,
+            "text": "geofences, and ETA variance."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d8v6psfi",
+      "id": "26",
+      "name": "s7-kicker3",
+      "bbox": [
+        1296,
+        608,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.1.0"
+      },
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onyd0z61",
+      "id": "27",
+      "name": "s7-note3",
+      "bbox": [
+        1296,
+        640,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.1.1"
+      },
+      "geometry": "rect",
+      "text": "Plan vs actual movement",
+      "textPreview": "Plan vs actual movement",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Plan vs actual movement"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Plan vs actual movement",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Plan vs actual movement",
+              "fontSize": 23,
+              "color": "#C8852C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vy90je9c",
+      "id": "28",
+      "name": "s7-maturity3",
+      "bbox": [
+        1296,
+        680,
+        522,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.1.2"
+      },
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "29",
+      "name": "s7-maturity-body3",
+      "bbox": [
+        1296,
+        712,
+        522,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.1.3"
+      },
+      "geometry": "rect",
+      "text": "Planned → observable",
+      "textPreview": "Planned → observable",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Planned → observable"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Planned → observable",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Planned → observable",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g7adsji5",
+      "id": "30",
+      "name": "s7-bottom-panel",
+      "bbox": [
+        78,
+        787.6,
+        1764,
+        64.8
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.5"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9s36hcrm",
+      "id": "31",
+      "name": "s7-bottom-note",
+      "bbox": [
+        102,
+        806,
+        1716,
+        30
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.5.0"
+      },
+      "geometry": "rect",
+      "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+      "textPreview": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The current demo sits at the first milestone: the governed planning spine is already visible."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+              "fontSize": 24,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1kre1w7",
+      "id": "32",
+      "name": "spacer-7",
+      "bbox": [
+        80,
+        880,
+        1768,
+        96
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 33,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rmhk3q5o",
+      "id": "33",
+      "name": "source-7",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.7.0"
+      },
+      "geometry": "rect",
+      "text": "Source: project roadmap docs.",
+      "textPreview": "Source: project roadmap docs.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project roadmap docs."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project roadmap docs.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project roadmap docs.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 34,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gfmlkjm1",
+      "id": "34",
+      "name": "page-7",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.7.1"
+      },
+      "geometry": "rect",
+      "text": "07",
+      "textPreview": "07",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07",
+          "runs": [
+            {
+              "index": 1,
+              "text": "07",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "panel",
+        "name": "slide-panel-7",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "snappedFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "column",
+            "name": "slide-root-7",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1213.31,
+              "height": 983.2
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.0.0",
+                "kind": "text",
+                "name": "s7-eyebrow",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 19.2
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 20
+                },
+                "children": [],
+                "text": "ROADMAP — NEAR TERM",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/rmhk3q5o",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.1",
+                "kind": "text",
+                "name": "s7-title",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 62.4
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 62.4
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 108,
+                  "width": 1764,
+                  "height": 64
+                },
+                "children": [],
+                "text": "First build the planner’s spine.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/y1kre1w7",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.2",
+                "kind": "text",
+                "name": "s7-body",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1180
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1057.31,
+                  "height": 30
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 195.6,
+                  "width": 1057.31,
+                  "height": 30
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 196,
+                  "width": 1058,
+                  "height": 30
+                },
+                "children": [],
+                "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/90je9cvi",
+                  "id": "4",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.3",
+                "kind": "rule",
+                "name": "s7-rule",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fixed",
+                    "value": 240
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 4
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 240,
+                  "height": 4
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 251.6,
+                  "width": 240,
+                  "height": 4
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 252,
+                  "width": 240,
+                  "height": 4
+                },
+                "children": [],
+                "weight": 4,
+                "element": {
+                  "aid": "sh/gfmlkjm1",
+                  "id": "5",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.4",
+                "kind": "grid",
+                "name": "s7-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 480
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 52,
+                  "height": 0
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 281.6,
+                  "width": 1764,
+                  "height": 480
+                },
+                "children": [
+                  {
+                    "path": "0.0.4.0",
+                    "kind": "panel",
+                    "name": "s7-panel1",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 48,
+                      "height": 44
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.0.0",
+                        "kind": "column",
+                        "name": "s7-col1",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 268.8
+                        },
+                        "frame": {
+                          "left": 102,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "kind": "column",
+                            "name": "s7-col1-top",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 120.8
+                            },
+                            "frame": {
+                              "left": 102,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 180.8
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.0.0.0.0",
+                                "kind": "text",
+                                "name": "s7a",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 19.2
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 304,
+                                  "width": 522,
+                                  "height": 20
+                                },
+                                "children": [],
+                                "text": "NOW",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/yd0z6103",
+                                  "id": "7",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.0.1",
+                                "kind": "text",
+                                "name": "s7-title1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 39.6
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 338,
+                                  "width": 522,
+                                  "height": 40
+                                },
+                                "children": [],
+                                "text": "1. Digital scheduling model",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/9cvixcze",
+                                  "id": "8",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.0.2",
+                                "kind": "text",
+                                "name": "s7-body1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 30
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 90
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 394,
+                                  "width": 522,
+                                  "height": 90
+                                },
+                                "children": [],
+                                "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/gr2p8nqx",
+                                  "id": "9",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 16,
+                            "effectiveGap": 16,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 102,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 180.8
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.0.0.0.0",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.0.1",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.0.2",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 90
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "kind": "column",
+                            "name": "s7-col1-bottom",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 132
+                            },
+                            "frame": {
+                              "left": 102,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.0.0.1.0",
+                                "kind": "text",
+                                "name": "s7-kicker1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 608,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "USER SEES",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/ahoza1gv",
+                                  "id": "10",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.1",
+                                "kind": "text",
+                                "name": "s7-note1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 640,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "OGV demand • constraints • approvals",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/32lszqtc",
+                                  "id": "11",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.2",
+                                "kind": "text",
+                                "name": "s7-maturity1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 680,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "PLANNING MATURITY",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/sneloj2t",
+                                  "id": "12",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.3",
+                                "kind": "text",
+                                "name": "s7-maturity-body1",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 102,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 102,
+                                  "top": 712,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "Manual → governed",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/l87ed8ba",
+                                  "id": "13",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 12,
+                            "effectiveGap": 12,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 102,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.0.0.1.0",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.1",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.2",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.1.3",
+                                "frame": {
+                                  "left": 102,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 16,
+                        "effectiveGap": 123.2,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 102,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "frame": {
+                              "left": 102,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 180.8
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "frame": {
+                              "left": 102,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 22,
+                      "right": 24,
+                      "bottom": 22,
+                      "left": 24
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 102,
+                      "top": 303.6,
+                      "width": 522.67,
+                      "height": 436
+                    },
+                    "element": {
+                      "aid": "sh/rytsvu9k",
+                      "id": "6",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "kind": "panel",
+                    "name": "s7-panel2",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 48,
+                      "height": 44
+                    },
+                    "frame": {
+                      "left": 674.67,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "snappedFrame": {
+                      "left": 674.67,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.1.0",
+                        "kind": "column",
+                        "name": "s7-col2",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 268.8
+                        },
+                        "frame": {
+                          "left": 698.67,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "kind": "column",
+                            "name": "s7-col2-top",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 120.8
+                            },
+                            "frame": {
+                              "left": 698.67,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.1.0.0.0",
+                                "kind": "text",
+                                "name": "s7b",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 19.2
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 304,
+                                  "width": 522,
+                                  "height": 20
+                                },
+                                "children": [],
+                                "text": "NEXT",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/3ex0nuxc",
+                                  "id": "15",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.0.1",
+                                "kind": "text",
+                                "name": "s7-title2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 39.6
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 338,
+                                  "width": 522,
+                                  "height": 40
+                                },
+                                "children": [],
+                                "text": "2. Simulation + scenarios",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/szqtcj6t",
+                                  "id": "16",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.0.2",
+                                "kind": "text",
+                                "name": "s7-body2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 30
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 60
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 394,
+                                  "width": 522,
+                                  "height": 60
+                                },
+                                "children": [],
+                                "text": "Test delays, outages, and window changes before committing a new version.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/lkjm1cfa",
+                                  "id": "17",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 16,
+                            "effectiveGap": 16,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 698.67,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.1.0.0.0",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.0.1",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.0.2",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 60
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "kind": "column",
+                            "name": "s7-col2-bottom",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 132
+                            },
+                            "frame": {
+                              "left": 698.67,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.1.0.1.0",
+                                "kind": "text",
+                                "name": "s7-kicker2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 608,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "USER SEES",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/ex0nuxc3",
+                                  "id": "18",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.1",
+                                "kind": "text",
+                                "name": "s7-note2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 640,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "Baseline vs revised plan",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/3itgfmlk",
+                                  "id": "19",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.2",
+                                "kind": "text",
+                                "name": "s7-maturity2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 680,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "PLANNING MATURITY",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/vahoza1g",
+                                  "id": "20",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.3",
+                                "kind": "text",
+                                "name": "s7-maturity-body2",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 698,
+                                  "top": 712,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "Reactive → comparative",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/6tovahoz",
+                                  "id": "21",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 12,
+                            "effectiveGap": 12,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 698.67,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.1.0.1.0",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.1",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.2",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.3",
+                                "frame": {
+                                  "left": 698.67,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 16,
+                        "effectiveGap": 153.2,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 698.67,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "frame": {
+                              "left": 698.67,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "frame": {
+                              "left": 698.67,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 22,
+                      "right": 24,
+                      "bottom": 22,
+                      "left": 24
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 698.67,
+                      "top": 303.6,
+                      "width": 522.67,
+                      "height": 436
+                    },
+                    "element": {
+                      "aid": "sh/at47y1kr",
+                      "id": "14",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.2",
+                    "kind": "panel",
+                    "name": "s7-panel3",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 48,
+                      "height": 44
+                    },
+                    "frame": {
+                      "left": 1271.33,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "snappedFrame": {
+                      "left": 1271.33,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.2.0",
+                        "kind": "column",
+                        "name": "s7-col3",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 268.8
+                        },
+                        "frame": {
+                          "left": 1295.33,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.2.0.0",
+                            "kind": "column",
+                            "name": "s7-col3-top",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 120.8
+                            },
+                            "frame": {
+                              "left": 1295.33,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.2.0.0.0",
+                                "kind": "text",
+                                "name": "s7c",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 19.2
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 304,
+                                  "width": 522,
+                                  "height": 20
+                                },
+                                "children": [],
+                                "text": "THEN",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/ovahoza1",
+                                  "id": "23",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.0.1",
+                                "kind": "text",
+                                "name": "s7-title3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 39.6
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 338,
+                                  "width": 522,
+                                  "height": 40
+                                },
+                                "children": [],
+                                "text": "3. GPS / AIS tracking",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/z25kb6xk",
+                                  "id": "24",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.0.2",
+                                "kind": "text",
+                                "name": "s7-body3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 30
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 60
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 394,
+                                  "width": 522,
+                                  "height": 60
+                                },
+                                "children": [],
+                                "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/6hcrmhk3",
+                                  "id": "25",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 16,
+                            "effectiveGap": 16,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 1295.33,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.2.0.0.0",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 303.6,
+                                  "width": 522.67,
+                                  "height": 19.2
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.0.1",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 338.8,
+                                  "width": 522.67,
+                                  "height": 39.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.0.2",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 394.4,
+                                  "width": 522.67,
+                                  "height": 60
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.2.0.1",
+                            "kind": "column",
+                            "name": "s7-col3-bottom",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 132
+                            },
+                            "frame": {
+                              "left": 1295.33,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.2.0.1.0",
+                                "kind": "text",
+                                "name": "s7-kicker3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 608,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "USER SEES",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/d8v6psfi",
+                                  "id": "26",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.1",
+                                "kind": "text",
+                                "name": "s7-note3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 640,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "Plan vs actual movement",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/onyd0z61",
+                                  "id": "27",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.2",
+                                "kind": "text",
+                                "name": "s7-maturity3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 20.4
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 680,
+                                  "width": 522,
+                                  "height": 22
+                                },
+                                "children": [],
+                                "text": "PLANNING MATURITY",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/vy90je9c",
+                                  "id": "28",
+                                  "kind": "shape"
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.3",
+                                "kind": "text",
+                                "name": "s7-maturity-body3",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 27.6
+                                },
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                },
+                                "snappedFrame": {
+                                  "left": 1296,
+                                  "top": 712,
+                                  "width": 522,
+                                  "height": 28
+                                },
+                                "children": [],
+                                "text": "Planned → observable",
+                                "transform": "none",
+                                "element": {
+                                  "aid": "sh/6dcbulwv",
+                                  "id": "29",
+                                  "kind": "shape"
+                                }
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 12,
+                            "effectiveGap": 12,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 1295.33,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.2.0.1.0",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 607.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.1",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 640,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.2",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 679.6,
+                                  "width": 522.67,
+                                  "height": 20.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.2.0.1.3",
+                                "frame": {
+                                  "left": 1295.33,
+                                  "top": 712,
+                                  "width": 522.67,
+                                  "height": 27.6
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 16,
+                        "effectiveGap": 153.2,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 1295.33,
+                          "top": 303.6,
+                          "width": 522.67,
+                          "height": 436
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.2.0.0",
+                            "frame": {
+                              "left": 1295.33,
+                              "top": 303.6,
+                              "width": 522.67,
+                              "height": 150.8
+                            }
+                          },
+                          {
+                            "path": "0.0.4.2.0.1",
+                            "frame": {
+                              "left": 1295.33,
+                              "top": 607.6,
+                              "width": 522.67,
+                              "height": 132
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 22,
+                      "right": 24,
+                      "bottom": 22,
+                      "left": 24
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 1295.33,
+                      "top": 303.6,
+                      "width": 522.67,
+                      "height": 436
+                    },
+                    "element": {
+                      "aid": "sh/dg7adsji",
+                      "id": "22",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 26,
+                "rowGap": 0,
+                "alignItems": "stretch",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 281.6,
+                  "width": 1764,
+                  "height": 480
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  "auto"
+                ],
+                "columnSizes": [
+                  570.67,
+                  570.67,
+                  570.67
+                ],
+                "rowSizes": [
+                  480
+                ],
+                "cells": [
+                  {
+                    "path": "0.0.4.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 78,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 674.67,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    }
+                  },
+                  {
+                    "path": "0.0.4.2",
+                    "column": 2,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 1271.33,
+                      "top": 281.6,
+                      "width": 570.67,
+                      "height": 480
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.0.5",
+                "kind": "panel",
+                "name": "s7-bottom-panel",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 48,
+                  "height": 64.8
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 787.6,
+                  "width": 1764,
+                  "height": 64.8
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 787.6,
+                  "width": 1764,
+                  "height": 64.8
+                },
+                "children": [
+                  {
+                    "path": "0.0.5.0",
+                    "kind": "text",
+                    "name": "s7-bottom-note",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 28.8
+                    },
+                    "frame": {
+                      "left": 102,
+                      "top": 805.6,
+                      "width": 1716,
+                      "height": 28.8
+                    },
+                    "snappedFrame": {
+                      "left": 102,
+                      "top": 806,
+                      "width": 1716,
+                      "height": 30
+                    },
+                    "children": [],
+                    "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/9s36hcrm",
+                      "id": "31",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 18,
+                  "right": 24,
+                  "bottom": 18,
+                  "left": 24
+                },
+                "align": "start",
+                "justify": "start",
+                "contentFrame": {
+                  "left": 102,
+                  "top": 805.6,
+                  "width": 1716,
+                  "height": 28.8
+                },
+                "element": {
+                  "aid": "sh/g7adsji5",
+                  "id": "30",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.6",
+                "kind": "shape",
+                "name": "spacer-7",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fill",
+                    "value": 1
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 0
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 878.4,
+                  "width": 1764,
+                  "height": 96.8
+                },
+                "snappedFrame": {
+                  "left": 80,
+                  "top": 880,
+                  "width": 1768,
+                  "height": 96
+                },
+                "children": [],
+                "geometry": "rect",
+                "element": {
+                  "aid": "sh/y1kre1w7",
+                  "id": "32",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.7",
+                "kind": "row",
+                "name": "footer-7",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 62,
+                  "height": 16.8
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "children": [
+                  {
+                    "path": "0.0.7.0",
+                    "kind": "text",
+                    "name": "source-7",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "Source: project roadmap docs.",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/rmhk3q5o",
+                      "id": "33",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.7.1",
+                    "kind": "text",
+                    "name": "page-7",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fixed",
+                        "value": 42
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 42,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "07",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/gfmlkjm1",
+                      "id": "34",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "gap": 20,
+                "effectiveGap": 20,
+                "justifyOffset": 0,
+                "align": "center",
+                "justify": "start",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "items": [
+                  {
+                    "path": "0.0.7.0",
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    }
+                  },
+                  {
+                    "path": "0.0.7.1",
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    }
+                  }
+                ]
+              }
+            ],
+            "padding": {
+              "top": 62,
+              "right": 78,
+              "bottom": 62,
+              "left": 78
+            },
+            "gap": 26,
+            "effectiveGap": 26,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 78,
+              "top": 62,
+              "width": 1764,
+              "height": 956
+            },
+            "items": [
+              {
+                "path": "0.0.0",
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                }
+              },
+              {
+                "path": "0.0.1",
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 62.4
+                }
+              },
+              {
+                "path": "0.0.2",
+                "frame": {
+                  "left": 78,
+                  "top": 195.6,
+                  "width": 1057.31,
+                  "height": 30
+                }
+              },
+              {
+                "path": "0.0.3",
+                "frame": {
+                  "left": 78,
+                  "top": 251.6,
+                  "width": 240,
+                  "height": 4
+                }
+              },
+              {
+                "path": "0.0.4",
+                "frame": {
+                  "left": 78,
+                  "top": 281.6,
+                  "width": 1764,
+                  "height": 480
+                }
+              },
+              {
+                "path": "0.0.5",
+                "frame": {
+                  "left": 78,
+                  "top": 787.6,
+                  "width": 1764,
+                  "height": 64.8
+                }
+              },
+              {
+                "path": "0.0.6",
+                "frame": {
+                  "left": 78,
+                  "top": 878.4,
+                  "width": 1764,
+                  "height": 96.8
+                }
+              },
+              {
+                "path": "0.0.7",
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "align": "start",
+        "justify": "start",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "element": {
+          "aid": "sh/g7adsji5",
+          "id": "1",
+          "kind": "shape"
+        }
+      }
+    }
+  ]
+}

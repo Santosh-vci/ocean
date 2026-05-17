@@ -1,0 +1,1447 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/0z61032l",
+    "id": "0z61032l",
+    "slide": 8,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qd4vmtwr",
+      "id": "1",
+      "name": "slide-panel-7",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x4nap4r6",
+      "id": "2",
+      "name": "s7-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "ROADMAP — NEAR TERM",
+      "textPreview": "ROADMAP — NEAR TERM",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ROADMAP — NEAR TERM"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ROADMAP — NEAR TERM",
+          "runs": [
+            {
+              "index": 1,
+              "text": "ROADMAP — NEAR TERM",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8jqh0fep",
+      "id": "3",
+      "name": "s7-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "First build the planner’s spine.",
+      "textPreview": "First build the planner’s spine.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "First build the planner’s spine."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "First build the planner’s spine.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "First build the planner’s spine.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fa9w3m94",
+      "id": "4",
+      "name": "s7-body",
+      "bbox": [
+        78,
+        196,
+        1058,
+        30
+      ],
+      "geometry": "rect",
+      "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+      "textPreview": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The product matures in layers: structured planning first, consequence modeling next, then live evidence.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpg3ex0n",
+      "id": "5",
+      "name": "s7-rule",
+      "bbox": [
+        78,
+        252,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xczed8v6",
+      "id": "6",
+      "name": "s7-panel1",
+      "bbox": [
+        78,
+        281.6,
+        570.67,
+        480
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8v6psfil",
+      "id": "7",
+      "name": "s7a",
+      "bbox": [
+        102,
+        304,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "NOW",
+      "textPreview": "NOW",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NOW"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NOW",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NOW",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/je9cvixc",
+      "id": "8",
+      "name": "s7-title1",
+      "bbox": [
+        102,
+        338,
+        522,
+        40
+      ],
+      "geometry": "rect",
+      "text": "1. Digital scheduling model",
+      "textPreview": "1. Digital scheduling model",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1. Digital scheduling model"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1. Digital scheduling model",
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. Digital scheduling model",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtcj6tov",
+      "id": "9",
+      "name": "s7-body1",
+      "bbox": [
+        102,
+        394,
+        522,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+      "textPreview": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Replace Excel with structured demand, manual"
+          },
+          {
+            "index": 2,
+            "text": "availability, conflicts, approvals, and a published"
+          },
+          {
+            "index": 3,
+            "text": "plan."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Replace Excel with structured demand, manual availability, conflicts, approvals, and a published plan.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/svu9knih",
+      "id": "10",
+      "name": "s7-kicker1",
+      "bbox": [
+        102,
+        608,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hgn29gr2",
+      "id": "11",
+      "name": "s7-note1",
+      "bbox": [
+        102,
+        640,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "OGV demand • constraints • approvals",
+      "textPreview": "OGV demand • constraints • approvals",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV demand • constraints • approvals"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV demand • constraints • approvals",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV demand • constraints • approvals",
+              "fontSize": 23,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ap4r65wj",
+      "id": "12",
+      "name": "s7-maturity1",
+      "bbox": [
+        102,
+        680,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/za1gvy90",
+      "id": "13",
+      "name": "s7-maturity-body1",
+      "bbox": [
+        102,
+        712,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Manual → governed",
+      "textPreview": "Manual → governed",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manual → governed"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manual → governed",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manual → governed",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s36hcrmh",
+      "id": "14",
+      "name": "s7-panel2",
+      "bbox": [
+        674.67,
+        281.6,
+        570.67,
+        480
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hoza1gvy",
+      "id": "15",
+      "name": "s7b",
+      "bbox": [
+        698,
+        304,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "NEXT",
+      "textPreview": "NEXT",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NEXT",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a1gvy90j",
+      "id": "16",
+      "name": "s7-title2",
+      "bbox": [
+        698,
+        338,
+        522,
+        40
+      ],
+      "geometry": "rect",
+      "text": "2. Simulation + scenarios",
+      "textPreview": "2. Simulation + scenarios",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2. Simulation + scenarios"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2. Simulation + scenarios",
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. Simulation + scenarios",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zidonyd0",
+      "id": "17",
+      "name": "s7-body2",
+      "bbox": [
+        698,
+        394,
+        522,
+        60
+      ],
+      "geometry": "rect",
+      "text": "Test delays, outages, and window changes before committing a new version.",
+      "textPreview": "Test delays, outages, and window changes before committing a new version.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Test delays, outages, and window changes before"
+          },
+          {
+            "index": 2,
+            "text": "committing a new version."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Test delays, outages, and window changes before committing a new version.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Test delays, outages, and window changes before committing a new version.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s72x4nap",
+      "id": "18",
+      "name": "s7-kicker2",
+      "bbox": [
+        698,
+        608,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lszqtcj6",
+      "id": "19",
+      "name": "s7-note2",
+      "bbox": [
+        698,
+        640,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Baseline vs revised plan",
+      "textPreview": "Baseline vs revised plan",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Baseline vs revised plan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Baseline vs revised plan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Baseline vs revised plan",
+              "fontSize": 23,
+              "color": "#2F8C73"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pg3ex0nu",
+      "id": "20",
+      "name": "s7-maturity2",
+      "bbox": [
+        698,
+        680,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wval87ed",
+      "id": "21",
+      "name": "s7-maturity-body2",
+      "bbox": [
+        698,
+        712,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Reactive → comparative",
+      "textPreview": "Reactive → comparative",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Reactive → comparative"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Reactive → comparative",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Reactive → comparative",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7adsji5s",
+      "id": "22",
+      "name": "s7-panel3",
+      "bbox": [
+        1271.33,
+        281.6,
+        570.67,
+        480
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/epkzupwb",
+      "id": "23",
+      "name": "s7c",
+      "bbox": [
+        1296,
+        304,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "THEN",
+      "textPreview": "THEN",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "THEN"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "THEN",
+          "runs": [
+            {
+              "index": 1,
+              "text": "THEN",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "24",
+      "name": "s7-title3",
+      "bbox": [
+        1296,
+        338,
+        522,
+        40
+      ],
+      "geometry": "rect",
+      "text": "3. GPS / AIS tracking",
+      "textPreview": "3. GPS / AIS tracking",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3. GPS / AIS tracking"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3. GPS / AIS tracking",
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. GPS / AIS tracking",
+              "fontSize": 33,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7mp0bi9",
+      "id": "25",
+      "name": "s7-body3",
+      "bbox": [
+        1296,
+        394,
+        522,
+        60
+      ],
+      "geometry": "rect",
+      "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+      "textPreview": "Connect planned schedules to live movement, geofences, and ETA variance.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Connect planned schedules to live movement,"
+          },
+          {
+            "index": 2,
+            "text": "geofences, and ETA variance."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Connect planned schedules to live movement, geofences, and ETA variance.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mp0bi9s",
+      "id": "26",
+      "name": "s7-kicker3",
+      "bbox": [
+        1296,
+        608,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "USER SEES",
+      "textPreview": "USER SEES",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "USER SEES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "USER SEES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "USER SEES",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e1w7mp0b",
+      "id": "27",
+      "name": "s7-note3",
+      "bbox": [
+        1296,
+        640,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Plan vs actual movement",
+      "textPreview": "Plan vs actual movement",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Plan vs actual movement"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Plan vs actual movement",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Plan vs actual movement",
+              "fontSize": 23,
+              "color": "#C8852C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l0rqd4vm",
+      "id": "28",
+      "name": "s7-maturity3",
+      "bbox": [
+        1296,
+        680,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PLANNING MATURITY",
+      "textPreview": "PLANNING MATURITY",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PLANNING MATURITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PLANNING MATURITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "PLANNING MATURITY",
+              "fontSize": 17,
+              "color": "#53656D",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wfyxobm5",
+      "id": "29",
+      "name": "s7-maturity-body3",
+      "bbox": [
+        1296,
+        712,
+        522,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Planned → observable",
+      "textPreview": "Planned → observable",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Planned → observable"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Planned → observable",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Planned → observable",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a9w3m94f",
+      "id": "30",
+      "name": "s7-bottom-panel",
+      "bbox": [
+        78,
+        787.6,
+        1764,
+        64.8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zupwb2hw",
+      "id": "31",
+      "name": "s7-bottom-note",
+      "bbox": [
+        102,
+        806,
+        1716,
+        30
+      ],
+      "geometry": "rect",
+      "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+      "textPreview": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The current demo sits at the first milestone: the governed planning spine is already visible."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The current demo sits at the first milestone: the governed planning spine is already visible.",
+              "fontSize": 24,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfil0rqd",
+      "id": "32",
+      "name": "spacer-7",
+      "bbox": [
+        80,
+        880,
+        1768,
+        96
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 33,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/h0fepkzu",
+      "id": "33",
+      "name": "source-7",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Source: project roadmap docs.",
+      "textPreview": "Source: project roadmap docs.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project roadmap docs."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project roadmap docs.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project roadmap docs.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 34,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/al87ed8b",
+      "id": "34",
+      "name": "page-7",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "07",
+      "textPreview": "07",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07",
+          "runs": [
+            {
+              "index": 1,
+              "text": "07",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

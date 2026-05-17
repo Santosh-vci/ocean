@@ -49,11 +49,16 @@ from apps.scheduling.models import (
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    ScenarioAssumption,
     ScheduleEvent,
     SimulationScenario,
     Trip,
 )
-from apps.scheduling.services import clone_plan_version, generate_plan_version, simulate_scenario
+from apps.scheduling.services import (
+    create_scenario_assumption,
+    generate_plan_version,
+    simulate_scenario,
+)
 
 
 class Command(BaseCommand):
@@ -675,7 +680,15 @@ class Command(BaseCommand):
                 "GPS-770",
                 Tug.Status.AVAILABLE,
             ),
-            ("BER-TUG-08", "Coastal Sentry 08", 2800, 36.0, "525001232", "GPS-768", Tug.Status.AVAILABLE),
+            (
+                "BER-TUG-08",
+                "Coastal Sentry 08",
+                2800,
+                36.0,
+                "525001232",
+                "GPS-768",
+                Tug.Status.AVAILABLE,
+            ),
             (
                 "BER-TUG-04",
                 "Mahakam Puller 04",
@@ -1448,7 +1461,7 @@ class Command(BaseCommand):
         start_date = self._seed_start_date()
         plan_code = f"PLAN-{start_date:%Y-%m-%d}"
         approval_request_id = f"APR-{plan_code}-V1"
-        scenario_id = f"SIM-{plan_code}-A"
+        scenario_id = f"SIM-{plan_code}-TUG-OUTAGE"
 
         baseline_plan = Plan.objects.filter(name="Berau-ABL Feasible Schedule Horizon").first()
         if baseline_plan and baseline_plan.code != plan_code:
@@ -1486,14 +1499,14 @@ class Command(BaseCommand):
             .first()
         )
         first_trip = first_assignment.trip if first_assignment else None
-        first_conflict = version.conflicts.select_related("trip", "trip__voyage").first()
+        first_override = None
         if first_trip and first_assignment:
             OverrideRequest.objects.filter(
                 plan_version=version,
                 trip=first_trip,
                 reason_code=OverrideRequest.ReasonCode.TUG_BREAKDOWN,
             ).delete()
-            OverrideRequest.objects.create(
+            first_override = OverrideRequest.objects.create(
                 plan_version=version,
                 trip=first_trip,
                 reason_code=OverrideRequest.ReasonCode.TUG_BREAKDOWN,
@@ -1548,19 +1561,30 @@ class Command(BaseCommand):
         version.status = PlanVersion.Status.PROPOSED
         version.save(update_fields=["status", "updated_at"])
 
-        scenario_version = PlanVersion.objects.filter(plan=plan, version_no=2).first()
-        if scenario_version is None:
-            scenario_version = clone_plan_version(source_version=version, created_by=created_by)
         scenario, _ = SimulationScenario.objects.update_or_create(
             scenario_id=scenario_id,
             defaults={
-                "name": "Tug reassignment A",
+                "name": "Tug outage recovery",
                 "scenario_type": "tug_breakdown_recovery",
                 "baseline_version": version,
-                "scenario_version": scenario_version,
-                "source_conflict": first_conflict,
-                "status": SimulationScenario.Status.SIMULATED,
+                "scenario_version": None,
+                "source_conflict": None,
+                "source_override": first_override,
+                "source_kind": SimulationScenario.SourceKind.OVERRIDE,
+                "status": SimulationScenario.Status.DRAFT,
                 "created_by": created_by,
             },
         )
+        scenario.assumptions.all().delete()
+        if first_trip and first_assignment and first_assignment.tug:
+            create_scenario_assumption(
+                scenario=scenario,
+                actor=created_by,
+                kind=ScenarioAssumption.Kind.ASSET_OUTAGE,
+                scope_type=ScenarioAssumption.ScopeType.ASSET,
+                scope_id=None,
+                payload={"asset_code": first_assignment.tug.code},
+                effective_from=first_trip.planned_start,
+                effective_to=first_trip.planned_start + timedelta(hours=3),
+            )
         simulate_scenario(scenario=scenario)

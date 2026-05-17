@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import type {
   AssignmentRecord,
@@ -30,13 +31,7 @@ function mt(value: number) {
 }
 
 function dt(value: string | null | undefined) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
+  return <GridDate value={value} />;
 }
 
 function datetimeLocalValue(value: string | null | undefined, offsetMinutes = 0) {

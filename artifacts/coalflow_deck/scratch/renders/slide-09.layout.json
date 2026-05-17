@@ -1,0 +1,3038 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/316kn5",
+    "id": "316kn5",
+    "slide": 9,
+    "layoutId": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8z25kb6x",
+      "id": "1",
+      "name": "slide-panel-9",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/je9cvixc",
+      "id": "2",
+      "name": "s9-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.0"
+      },
+      "geometry": "rect",
+      "text": "OPEN QUESTIONS",
+      "textPreview": "OPEN QUESTIONS",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OPEN QUESTIONS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OPEN QUESTIONS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OPEN QUESTIONS",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtcj6tov",
+      "id": "3",
+      "name": "s9-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.1"
+      },
+      "geometry": "rect",
+      "text": "The minute nuances are where the tool earns trust.",
+      "textPreview": "The minute nuances are where the tool earns trust.",
+      "resolvedFontSize": 52,
+      "resolvedTextStyle": {
+        "fontSize": 52,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The minute nuances are where the tool earns trust."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The minute nuances are where the tool earns trust.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The minute nuances are where the tool earns trust.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xs72x4na",
+      "id": "4",
+      "name": "s9-body",
+      "bbox": [
+        78,
+        196,
+        1228,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.2"
+      },
+      "geometry": "rect",
+      "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+      "textPreview": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only"
+          },
+          {
+            "index": 2,
+            "text": "operators know."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87ed8bat",
+      "id": "5",
+      "name": "s9-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.3"
+      },
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fmlkjm1c",
+      "id": "6",
+      "name": "s9-panel1",
+      "bbox": [
+        78,
+        311.6,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q1orytsv",
+      "id": "7",
+      "name": "s9-k1",
+      "bbox": [
+        100,
+        332,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.0"
+      },
+      "geometry": "rect",
+      "text": "CONSTRAINTS",
+      "textPreview": "CONSTRAINTS",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CONSTRAINTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CONSTRAINTS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CONSTRAINTS",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x4nap4r6",
+      "id": "8",
+      "name": "s9-q1",
+      "bbox": [
+        100,
+        400,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1"
+      },
+      "geometry": "rect",
+      "text": "Which constraints are truly hard\n—and which are negotiable in practice?",
+      "textPreview": "Which constraints are truly hard | —and which are negotiable in practice?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Which constraints are truly hard"
+          },
+          {
+            "index": 2,
+            "text": "—and which are negotiable in practice?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Which constraints are truly hard",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Which constraints are truly hard",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "—and which are negotiable in practice?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "—and which are negotiable in practice?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8jqh0fep",
+      "id": "9",
+      "name": "s9-panel2",
+      "bbox": [
+        974,
+        311.6,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mp0bi9s3",
+      "id": "10",
+      "name": "s9-k2",
+      "bbox": [
+        996,
+        332,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.0"
+      },
+      "geometry": "rect",
+      "text": "OVERRIDES",
+      "textPreview": "OVERRIDES",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OVERRIDES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OVERRIDES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OVERRIDES",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bat47y1k",
+      "id": "11",
+      "name": "s9-q2",
+      "bbox": [
+        996,
+        400,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1"
+      },
+      "geometry": "rect",
+      "text": "What operator overrides recur often enough\nto become product logic?",
+      "textPreview": "What operator overrides recur often enough | to become product logic?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What operator overrides recur often enough"
+          },
+          {
+            "index": 2,
+            "text": "to become product logic?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What operator overrides recur often enough",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What operator overrides recur often enough",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "to become product logic?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "to become product logic?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4vmtwra5",
+      "id": "12",
+      "name": "s9-panel3",
+      "bbox": [
+        78,
+        504.27,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tgfmlkjm",
+      "id": "13",
+      "name": "s9-k3",
+      "bbox": [
+        100,
+        524,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.0"
+      },
+      "geometry": "rect",
+      "text": "EVIDENCE",
+      "textPreview": "EVIDENCE",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "EVIDENCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "EVIDENCE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "EVIDENCE",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m1cfa9w3",
+      "id": "14",
+      "name": "s9-q3",
+      "bbox": [
+        100,
+        592,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.2.0.1"
+      },
+      "geometry": "rect",
+      "text": "How fresh must AIS / GPS evidence be\nbefore dispatch trusts it?",
+      "textPreview": "How fresh must AIS / GPS evidence be | before dispatch trusts it?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "How fresh must AIS / GPS evidence be"
+          },
+          {
+            "index": 2,
+            "text": "before dispatch trusts it?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "How fresh must AIS / GPS evidence be",
+          "runs": [
+            {
+              "index": 1,
+              "text": "How fresh must AIS / GPS evidence be",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "before dispatch trusts it?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "before dispatch trusts it?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bm58z25k",
+      "id": "15",
+      "name": "s9-panel4",
+      "bbox": [
+        974,
+        504.27,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.3"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/47y1kre1",
+      "id": "16",
+      "name": "s9-k4",
+      "bbox": [
+        996,
+        524,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.3.0.0"
+      },
+      "geometry": "rect",
+      "text": "SIGNALS",
+      "textPreview": "SIGNALS",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SIGNALS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SIGNALS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "SIGNALS",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tsvu9kni",
+      "id": "17",
+      "name": "s9-q4",
+      "bbox": [
+        996,
+        592,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.3.0.1"
+      },
+      "geometry": "rect",
+      "text": "Which environmental or safety signals\nchange the plan, not just the ETA?",
+      "textPreview": "Which environmental or safety signals | change the plan, not just the ETA?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Which environmental or safety signals"
+          },
+          {
+            "index": 2,
+            "text": "change the plan, not just the ETA?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Which environmental or safety signals",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Which environmental or safety signals",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "change the plan, not just the ETA?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "change the plan, not just the ETA?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m58z25kb",
+      "id": "18",
+      "name": "s9-panel5",
+      "bbox": [
+        78,
+        696.93,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.4"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bq1oryts",
+      "id": "19",
+      "name": "s9-k5",
+      "bbox": [
+        100,
+        716,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.4.0.0"
+      },
+      "geometry": "rect",
+      "text": "GOVERNANCE",
+      "textPreview": "GOVERNANCE",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "GOVERNANCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "GOVERNANCE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "GOVERNANCE",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mp0bi9s",
+      "id": "20",
+      "name": "s9-q5",
+      "bbox": [
+        100,
+        784,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.4.0.1"
+      },
+      "geometry": "rect",
+      "text": "Where must human approval remain explicit,\neven if the system recommends a move?",
+      "textPreview": "Where must human approval remain explicit, | even if the system recommends a move?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Where must human approval remain explicit,"
+          },
+          {
+            "index": 2,
+            "text": "even if the system recommends a move?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Where must human approval remain explicit,",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Where must human approval remain explicit,",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "even if the system recommends a move?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "even if the system recommends a move?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e1w7mp0b",
+      "id": "21",
+      "name": "s9-panel6",
+      "bbox": [
+        974,
+        696.93,
+        868,
+        174.67
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.5"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "22",
+      "name": "s9-k6",
+      "bbox": [
+        996,
+        716,
+        824,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.5.0.0"
+      },
+      "geometry": "rect",
+      "text": "TRUST",
+      "textPreview": "TRUST",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TRUST"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TRUST",
+          "runs": [
+            {
+              "index": 1,
+              "text": "TRUST",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7mp0bi9",
+      "id": "23",
+      "name": "s9-q6",
+      "bbox": [
+        996,
+        784,
+        824,
+        68
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.5.0.1"
+      },
+      "geometry": "rect",
+      "text": "What would make this feel indispensable\non a difficult day—not just elegant on a normal one?",
+      "textPreview": "What would make this feel indispensable | on a difficult day—not just elegant on a normal one?",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What would make this feel indispensable"
+          },
+          {
+            "index": 2,
+            "text": "on a difficult day—not just elegant on a normal one?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What would make this feel indispensable",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What would make this feel indispensable",
+              "fontSize": 28,
+              "color": "#0E6B83"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "on a difficult day—not just elegant on a normal one?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "on a difficult day—not just elegant on a normal one?",
+              "fontSize": 28,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7adsji5s",
+      "id": "24",
+      "name": "spacer-9",
+      "bbox": [
+        80,
+        896,
+        1768,
+        80
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.5"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/epkzupwb",
+      "id": "25",
+      "name": "source-9",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6.0"
+      },
+      "geometry": "rect",
+      "text": "Source: project assumptions and current build scope.",
+      "textPreview": "Source: project assumptions and current build scope.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project assumptions and current build scope."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project assumptions and current build scope.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project assumptions and current build scope.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pg3ex0nu",
+      "id": "26",
+      "name": "page-9",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6.1"
+      },
+      "geometry": "rect",
+      "text": "09",
+      "textPreview": "09",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "09",
+          "runs": [
+            {
+              "index": 1,
+              "text": "09",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "panel",
+        "name": "slide-panel-9",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "snappedFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "column",
+            "name": "slide-root-9",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1383.4,
+              "height": 1002.4
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.0.0",
+                "kind": "text",
+                "name": "s9-eyebrow",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 19.2
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 20
+                },
+                "children": [],
+                "text": "OPEN QUESTIONS",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/je9cvixc",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.1",
+                "kind": "text",
+                "name": "s9-title",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 62.4
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 62.4
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 108,
+                  "width": 1764,
+                  "height": 64
+                },
+                "children": [],
+                "text": "The minute nuances are where the tool earns trust.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/qtcj6tov",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.2",
+                "kind": "text",
+                "name": "s9-body",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1320
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1227.4,
+                  "height": 60
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 195.6,
+                  "width": 1227.4,
+                  "height": 60
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 196,
+                  "width": 1228,
+                  "height": 60
+                },
+                "children": [],
+                "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/xs72x4na",
+                  "id": "4",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.3",
+                "kind": "rule",
+                "name": "s9-rule",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fixed",
+                    "value": 240
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 4
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 240,
+                  "height": 4
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 281.6,
+                  "width": 240,
+                  "height": 4
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 282,
+                  "width": 240,
+                  "height": 4
+                },
+                "children": [],
+                "weight": 4,
+                "element": {
+                  "aid": "sh/87ed8bat",
+                  "id": "5",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.4",
+                "kind": "grid",
+                "name": "s9-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 560
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 28,
+                  "height": 36
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 311.6,
+                  "width": 1764,
+                  "height": 560
+                },
+                "children": [
+                  {
+                    "path": "0.0.4.0",
+                    "kind": "panel",
+                    "name": "s9-panel1",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.0.0",
+                        "kind": "column",
+                        "name": "s9-panel1-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 100,
+                          "top": 331.6,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "kind": "text",
+                            "name": "s9-k1",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 331.6,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 332,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "CONSTRAINTS",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/q1orytsv",
+                              "id": "7",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "kind": "text",
+                            "name": "s9-q1",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 399.07,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 400,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "Which constraints are truly hard\n—and which are negotiable in practice?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/x4nap4r6",
+                              "id": "8",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 100,
+                          "top": 331.6,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "frame": {
+                              "left": 100,
+                              "top": 331.6,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "frame": {
+                              "left": 100,
+                              "top": 399.07,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 100,
+                      "top": 331.6,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/fmlkjm1c",
+                      "id": "6",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "kind": "panel",
+                    "name": "s9-panel2",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 974,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 974,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.1.0",
+                        "kind": "column",
+                        "name": "s9-panel2-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 996,
+                          "top": 331.6,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "kind": "text",
+                            "name": "s9-k2",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 331.6,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 332,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "OVERRIDES",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/mp0bi9s3",
+                              "id": "10",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "kind": "text",
+                            "name": "s9-q2",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 399.07,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 400,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "What operator overrides recur often enough\nto become product logic?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/bat47y1k",
+                              "id": "11",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 996,
+                          "top": 331.6,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "frame": {
+                              "left": 996,
+                              "top": 331.6,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "frame": {
+                              "left": 996,
+                              "top": 399.07,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 996,
+                      "top": 331.6,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/8jqh0fep",
+                      "id": "9",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.2",
+                    "kind": "panel",
+                    "name": "s9-panel3",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.2.0",
+                        "kind": "column",
+                        "name": "s9-panel3-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 100,
+                          "top": 524.27,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.2.0.0",
+                            "kind": "text",
+                            "name": "s9-k3",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 524.27,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 524,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "EVIDENCE",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/tgfmlkjm",
+                              "id": "13",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.2.0.1",
+                            "kind": "text",
+                            "name": "s9-q3",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 591.73,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 592,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "How fresh must AIS / GPS evidence be\nbefore dispatch trusts it?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/m1cfa9w3",
+                              "id": "14",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 100,
+                          "top": 524.27,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.2.0.0",
+                            "frame": {
+                              "left": 100,
+                              "top": 524.27,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.2.0.1",
+                            "frame": {
+                              "left": 100,
+                              "top": 591.73,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 100,
+                      "top": 524.27,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/4vmtwra5",
+                      "id": "12",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.3",
+                    "kind": "panel",
+                    "name": "s9-panel4",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 974,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 974,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.3.0",
+                        "kind": "column",
+                        "name": "s9-panel4-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 996,
+                          "top": 524.27,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.3.0.0",
+                            "kind": "text",
+                            "name": "s9-k4",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 524.27,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 524,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "SIGNALS",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/47y1kre1",
+                              "id": "16",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.3.0.1",
+                            "kind": "text",
+                            "name": "s9-q4",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 591.73,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 592,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "Which environmental or safety signals\nchange the plan, not just the ETA?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/tsvu9kni",
+                              "id": "17",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 996,
+                          "top": 524.27,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.3.0.0",
+                            "frame": {
+                              "left": 996,
+                              "top": 524.27,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.3.0.1",
+                            "frame": {
+                              "left": 996,
+                              "top": 591.73,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 996,
+                      "top": 524.27,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/bm58z25k",
+                      "id": "15",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.4",
+                    "kind": "panel",
+                    "name": "s9-panel5",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.4.0",
+                        "kind": "column",
+                        "name": "s9-panel5-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 100,
+                          "top": 716.93,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.4.0.0",
+                            "kind": "text",
+                            "name": "s9-k5",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 716.93,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 716,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "GOVERNANCE",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/bq1oryts",
+                              "id": "19",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.4.0.1",
+                            "kind": "text",
+                            "name": "s9-q5",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 100,
+                              "top": 784.4,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 100,
+                              "top": 784,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "Where must human approval remain explicit,\neven if the system recommends a move?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/7mp0bi9s",
+                              "id": "20",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 100,
+                          "top": 716.93,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.4.0.0",
+                            "frame": {
+                              "left": 100,
+                              "top": 716.93,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.4.0.1",
+                            "frame": {
+                              "left": 100,
+                              "top": 784.4,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 100,
+                      "top": 716.93,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/m58z25kb",
+                      "id": "18",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.5",
+                    "kind": "panel",
+                    "name": "s9-panel6",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 44,
+                      "height": 40
+                    },
+                    "frame": {
+                      "left": 974,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "snappedFrame": {
+                      "left": 974,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.5.0",
+                        "kind": "column",
+                        "name": "s9-panel6-col",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 99.6
+                        },
+                        "frame": {
+                          "left": 996,
+                          "top": 716.93,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.5.0.0",
+                            "kind": "text",
+                            "name": "s9-k6",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 20.4
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 716.93,
+                              "width": 824,
+                              "height": 20.4
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 716,
+                              "width": 824,
+                              "height": 22
+                            },
+                            "children": [],
+                            "text": "TRUST",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/psfil0rq",
+                              "id": "22",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.5.0.1",
+                            "kind": "text",
+                            "name": "s9-q6",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 67.2
+                            },
+                            "frame": {
+                              "left": 996,
+                              "top": 784.4,
+                              "width": 824,
+                              "height": 67.2
+                            },
+                            "snappedFrame": {
+                              "left": 996,
+                              "top": 784,
+                              "width": 824,
+                              "height": 68
+                            },
+                            "children": [],
+                            "text": "What would make this feel indispensable\non a difficult day—not just elegant on a normal one?",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/w7mp0bi9",
+                              "id": "23",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 12,
+                        "effectiveGap": 47.07,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "between",
+                        "contentFrame": {
+                          "left": 996,
+                          "top": 716.93,
+                          "width": 824,
+                          "height": 134.67
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.5.0.0",
+                            "frame": {
+                              "left": 996,
+                              "top": 716.93,
+                              "width": 824,
+                              "height": 20.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.5.0.1",
+                            "frame": {
+                              "left": 996,
+                              "top": 784.4,
+                              "width": 824,
+                              "height": 67.2
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 20,
+                      "right": 22,
+                      "bottom": 20,
+                      "left": 22
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 996,
+                      "top": 716.93,
+                      "width": 824,
+                      "height": 134.67
+                    },
+                    "element": {
+                      "aid": "sh/e1w7mp0b",
+                      "id": "21",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 28,
+                "rowGap": 18,
+                "alignItems": "stretch",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 311.6,
+                  "width": 1764,
+                  "height": 560
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "rows": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "columnSizes": [
+                  868,
+                  868
+                ],
+                "rowSizes": [
+                  174.67,
+                  174.67,
+                  174.67
+                ],
+                "cells": [
+                  {
+                    "path": "0.0.4.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 78,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 974,
+                      "top": 311.6,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  },
+                  {
+                    "path": "0.0.4.2",
+                    "column": 0,
+                    "row": 1,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 78,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  },
+                  {
+                    "path": "0.0.4.3",
+                    "column": 1,
+                    "row": 1,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 974,
+                      "top": 504.27,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  },
+                  {
+                    "path": "0.0.4.4",
+                    "column": 0,
+                    "row": 2,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 78,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  },
+                  {
+                    "path": "0.0.4.5",
+                    "column": 1,
+                    "row": 2,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 974,
+                      "top": 696.93,
+                      "width": 868,
+                      "height": 174.67
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.0.5",
+                "kind": "shape",
+                "name": "spacer-9",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fill",
+                    "value": 1
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 0
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 897.6,
+                  "width": 1764,
+                  "height": 77.6
+                },
+                "snappedFrame": {
+                  "left": 80,
+                  "top": 896,
+                  "width": 1768,
+                  "height": 80
+                },
+                "children": [],
+                "geometry": "rect",
+                "element": {
+                  "aid": "sh/7adsji5s",
+                  "id": "24",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.6",
+                "kind": "row",
+                "name": "footer-9",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 62,
+                  "height": 16.8
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "children": [
+                  {
+                    "path": "0.0.6.0",
+                    "kind": "text",
+                    "name": "source-9",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "Source: project assumptions and current build scope.",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/epkzupwb",
+                      "id": "25",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.6.1",
+                    "kind": "text",
+                    "name": "page-9",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fixed",
+                        "value": 42
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 42,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "09",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/pg3ex0nu",
+                      "id": "26",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "gap": 20,
+                "effectiveGap": 20,
+                "justifyOffset": 0,
+                "align": "center",
+                "justify": "start",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "items": [
+                  {
+                    "path": "0.0.6.0",
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    }
+                  },
+                  {
+                    "path": "0.0.6.1",
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    }
+                  }
+                ]
+              }
+            ],
+            "padding": {
+              "top": 62,
+              "right": 78,
+              "bottom": 62,
+              "left": 78
+            },
+            "gap": 26,
+            "effectiveGap": 26,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 78,
+              "top": 62,
+              "width": 1764,
+              "height": 956
+            },
+            "items": [
+              {
+                "path": "0.0.0",
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                }
+              },
+              {
+                "path": "0.0.1",
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 62.4
+                }
+              },
+              {
+                "path": "0.0.2",
+                "frame": {
+                  "left": 78,
+                  "top": 195.6,
+                  "width": 1227.4,
+                  "height": 60
+                }
+              },
+              {
+                "path": "0.0.3",
+                "frame": {
+                  "left": 78,
+                  "top": 281.6,
+                  "width": 240,
+                  "height": 4
+                }
+              },
+              {
+                "path": "0.0.4",
+                "frame": {
+                  "left": 78,
+                  "top": 311.6,
+                  "width": 1764,
+                  "height": 560
+                }
+              },
+              {
+                "path": "0.0.5",
+                "frame": {
+                  "left": 78,
+                  "top": 897.6,
+                  "width": 1764,
+                  "height": 77.6
+                }
+              },
+              {
+                "path": "0.0.6",
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "align": "start",
+        "justify": "start",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "element": {
+          "aid": "sh/8z25kb6x",
+          "id": "1",
+          "kind": "shape"
+        }
+      }
+    }
+  ]
+}

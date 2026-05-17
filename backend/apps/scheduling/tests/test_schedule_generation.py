@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
-from apps.masters.models import Location
+from apps.masters.models import AssetCompatibilityRule, Location
 from apps.organizations.models import Organization
 from apps.planning.models import BridgeWindow, TideWindow
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
@@ -735,6 +735,49 @@ def test_scenario_sources_assumptions_and_run_queue_are_persisted_and_audited():
 
 
 @pytest.mark.django_db
+def test_seeded_scenario_proves_a_real_baseline_bound_delta():
+    call_command("seed_phase0")
+    scenario = SimulationScenario.objects.get(scenario_id__contains="TUG-OUTAGE")
+    run = scenario.runs.order_by("-created_at").first()
+
+    assert scenario.scenario_version_id is None
+    assert list(scenario.assumptions.values_list("kind", flat=True)) == [
+        ScenarioAssumption.Kind.ASSET_OUTAGE
+    ]
+    assert run.summary["projectionSummary"]["changedTripCount"] > 0
+    assert run.summary["deltaSummary"]["delayDeltaMinutes"] > 0
+    assert run.summary["utilizationSummary"]["totalWaitingMinutes"] > 0
+    assert ScenarioConstraintEvaluation.objects.filter(
+        run=run,
+        code="ASSET_OUTAGE_OVERLAP",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_scenario_assumptions_reject_scope_outside_baseline():
+    call_command("seed_phase0")
+    baseline = seeded_plan_version()
+    other_version = clone_plan_version(source_version=baseline)
+    user = User.objects.create_user("scenario-scope-guard")
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+
+    with pytest.raises(ValidationError):
+        create_scenario_assumption(
+            scenario=scenario,
+            actor=user,
+            kind=ScenarioAssumption.Kind.TRIP_DELAY,
+            scope_type=ScenarioAssumption.ScopeType.TRIP,
+            scope_id=other_version.trips.order_by("sequence").first().id,
+            payload={"delay_minutes": 60},
+        )
+
+
+@pytest.mark.django_db
 def test_new_assumption_resets_simulated_scenario_and_proposed_scenario_rejects_inputs():
     call_command("seed_phase0")
     organization = Organization.objects.get(slug="coalflow-platform")
@@ -904,6 +947,11 @@ def test_asset_outage_and_rate_change_scenarios_persist_deterministic_projection
     assert projection.metadata["loadDurationDeltaMinutes"] > 0
     assert load_start.delay_minutes == 180
     assert load_complete.delay_minutes > load_start.delay_minutes
+    assert ScenarioConstraintEvaluation.objects.filter(
+        run=run,
+        code="ASSET_OUTAGE_OVERLAP",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).exists()
 
 
 @pytest.mark.django_db
@@ -951,6 +999,83 @@ def test_window_change_scenario_reuses_window_evaluation_for_simulation_assessme
     assert assessment.metadata["scenarioRunId"] == run.run_id
     assert assessment.metadata["sourceAssumptionIds"]
     assert any(node["label"] == "TIDE WINDOW WAIT" for node in assessment.nodes)
+
+
+@pytest.mark.django_db
+def test_ogv_eta_change_shifts_voyage_completion_and_demurrage_projection():
+    call_command("seed_phase0")
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    trip.voyage.demurrage_rate_usd_per_day = Decimal("24000.00")
+    trip.voyage.save(update_fields=["demurrage_rate_usd_per_day", "updated_at"])
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=None,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=None,
+        kind=ScenarioAssumption.Kind.OGV_ETA_CHANGE,
+        scope_type=ScenarioAssumption.ScopeType.OGV,
+        scope_id=trip.voyage_id,
+        payload={"eta": (trip.voyage.eta + timedelta(days=3)).isoformat()},
+    )
+
+    simulate_scenario(scenario=scenario)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    voyage_projection = ScenarioOgvProjection.objects.get(run=run, voyage=trip.voyage)
+
+    assert voyage_projection.completion_delta_minutes >= 4320
+    assert voyage_projection.demurrage_delta_usd > 0
+    assert run.summary["projectionSummary"]["changedTripCount"] > 0
+
+
+@pytest.mark.django_db
+def test_manual_reassignment_persists_resource_delta_and_rechecks_compatibility():
+    call_command("seed_phase0")
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    assignment = trip.assignment
+    AssetCompatibilityRule.objects.create(
+        code="CMP-TEST-TUG09-BRGKAL22",
+        name="Test incompatible replacement pair",
+        organization=trip.voyage.organization,
+        rule_type="tug_barge",
+        left_code="BER-TUG-09",
+        right_code="BRG-KAL-22",
+        is_compatible=False,
+    )
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=None,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=None,
+        kind=ScenarioAssumption.Kind.MANUAL_REASSIGNMENT,
+        scope_type=ScenarioAssumption.ScopeType.ASSIGNMENT,
+        scope_id=assignment.id,
+        payload={
+            "assignment_id": assignment.id,
+            "tug_code": "BER-TUG-09",
+            "barge_code": "BRG-KAL-22",
+        },
+    )
+
+    simulate_scenario(scenario=scenario)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    projection = ScenarioTripProjection.objects.get(run=run, trip=trip)
+
+    assert projection.assignment_delta["resourceChanged"] is True
+    assert projection.assignment_delta["projectedResources"]["tug"] == "BER-TUG-09"
+    assert ScenarioConstraintEvaluation.objects.filter(
+        run=run,
+        code="TUG_BARGE_INCOMPATIBLE",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).exists()
+    assert run.summary["projectionSummary"]["changedTripCount"] > 0
 
 
 @pytest.mark.django_db

@@ -1,0 +1,3913 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/cxggut",
+    "id": "cxggut",
+    "slide": 1,
+    "layoutId": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "14a4305b-e573-4bdb-af3f-e3364aff2c29",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "33229232-3219-4099-9d65-2ffa0e26d151",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y90je9cv",
+      "id": "1",
+      "name": "slide-panel-1",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wjudg7a",
+      "id": "2",
+      "name": "s1-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.0"
+      },
+      "geometry": "rect",
+      "text": "BUSINESS CONTEXT",
+      "textPreview": "BUSINESS CONTEXT",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BUSINESS CONTEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BUSINESS CONTEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BUSINESS CONTEXT",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbq1oryt",
+      "id": "3",
+      "name": "s1-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        70
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.1"
+      },
+      "geometry": "rect",
+      "text": "Berau output meets ABL fleet scale.",
+      "textPreview": "Berau output meets ABL fleet scale.",
+      "resolvedFontSize": 58,
+      "resolvedTextStyle": {
+        "fontSize": 58,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Berau output meets ABL fleet scale."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Berau output meets ABL fleet scale.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Berau output meets ABL fleet scale.",
+              "fontSize": 58,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n29gr2p8",
+      "id": "4",
+      "name": "s1-body",
+      "bbox": [
+        78,
+        202,
+        1248,
+        60
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.2"
+      },
+      "geometry": "rect",
+      "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+      "textPreview": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset"
+          },
+          {
+            "index": 2,
+            "text": "network."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yhgn29gr",
+      "id": "5",
+      "name": "s1-rule",
+      "bbox": [
+        78,
+        288,
+        240,
+        4
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.3"
+      },
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/58z25kb6",
+      "id": "6",
+      "name": "s1-left-panel",
+      "bbox": [
+        78,
+        318.8,
+        823.65,
+        620
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gn29gr2p",
+      "id": "7",
+      "name": "s1-left-eyebrow",
+      "bbox": [
+        108,
+        346,
+        764,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.0"
+      },
+      "geometry": "rect",
+      "text": "BERAU COAL",
+      "textPreview": "BERAU COAL",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BERAU COAL"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BERAU COAL",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BERAU COAL",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/neloj2t8",
+      "id": "8",
+      "name": "s1-berau-hero",
+      "bbox": [
+        108,
+        384,
+        764,
+        100
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.1"
+      },
+      "geometry": "rect",
+      "text": "35.9 Mt",
+      "textPreview": "35.9 Mt",
+      "resolvedFontSize": 82,
+      "resolvedTextStyle": {
+        "fontSize": 82,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "35.9 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "35.9 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "35.9 Mt",
+              "fontSize": 82,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ytsvu9kn",
+      "id": "9",
+      "name": "s1-berau-label",
+      "bbox": [
+        108,
+        500,
+        764,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.2"
+      },
+      "geometry": "rect",
+      "text": "Coal production in 2024",
+      "textPreview": "Coal production in 2024",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Coal production in 2024"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Coal production in 2024",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Coal production in 2024",
+              "fontSize": 22,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/83itgfml",
+      "id": "10",
+      "name": "s1-left-rule",
+      "bbox": [
+        108,
+        544,
+        764,
+        2
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.3"
+      },
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xobm58z2",
+      "id": "11",
+      "name": "metric-value-s1a",
+      "bbox": [
+        108,
+        564,
+        368,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.4.0.0"
+      },
+      "geometry": "rect",
+      "text": "≈3.0 Mt",
+      "textPreview": "≈3.0 Mt",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈3.0 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈3.0 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈3.0 Mt",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qxs72x4n",
+      "id": "12",
+      "name": "metric-label-s1a",
+      "bbox": [
+        108,
+        640,
+        368,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.4.0.1"
+      },
+      "geometry": "rect",
+      "text": "Average / month",
+      "textPreview": "Average / month",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Average / month"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Average / month",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Average / month",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fil0rqd4",
+      "id": "13",
+      "name": "metric-value-s1b",
+      "bbox": [
+        502,
+        564,
+        368,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.4.1.0"
+      },
+      "geometry": "rect",
+      "text": "≈98 kt",
+      "textPreview": "≈98 kt",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈98 kt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈98 kt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈98 kt",
+              "fontSize": 54,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4fu18jqh",
+      "id": "14",
+      "name": "metric-label-s1b",
+      "bbox": [
+        502,
+        640,
+        368,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.4.1.1"
+      },
+      "geometry": "rect",
+      "text": "Average / day",
+      "textPreview": "Average / day",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Average / day"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Average / day",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Average / day",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x0nuxc3y",
+      "id": "15",
+      "name": "s1-left-note",
+      "bbox": [
+        108,
+        680,
+        764,
+        54
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.0.0.5"
+      },
+      "geometry": "rect",
+      "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+      "textPreview": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS"
+          },
+          {
+            "index": 2,
+            "text": "move is assigned."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m94fu18j",
+      "id": "16",
+      "name": "s1-right-panel",
+      "bbox": [
+        931.65,
+        318.8,
+        910.35,
+        620
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1"
+      },
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fu18jqh0",
+      "id": "17",
+      "name": "s1-right-eyebrow",
+      "bbox": [
+        962,
+        346,
+        850,
+        20
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.0"
+      },
+      "geometry": "rect",
+      "text": "ABL OCEAN-FLEET PARTNER",
+      "textPreview": "ABL OCEAN-FLEET PARTNER",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ABL OCEAN-FLEET PARTNER"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ABL OCEAN-FLEET PARTNER",
+          "runs": [
+            {
+              "index": 1,
+              "text": "ABL OCEAN-FLEET PARTNER",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4r65wjud",
+      "id": "18",
+      "name": "metric-value-s1c",
+      "bbox": [
+        962,
+        384,
+        412,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.0.0"
+      },
+      "geometry": "rect",
+      "text": "100M+",
+      "textPreview": "100M+",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "100M+"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "100M+",
+          "runs": [
+            {
+              "index": 1,
+              "text": "100M+",
+              "fontSize": 54,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xc3ylc7u",
+      "id": "19",
+      "name": "metric-label-s1c",
+      "bbox": [
+        962,
+        458,
+        412,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.0.1"
+      },
+      "geometry": "rect",
+      "text": "Tonnes transshipped / year",
+      "textPreview": "Tonnes transshipped / year",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tonnes transshipped / year"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tonnes transshipped / year",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tonnes transshipped / year",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x4nap4r6",
+      "id": "20",
+      "name": "metric-value-s1d",
+      "bbox": [
+        1400,
+        384,
+        412,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.1.0"
+      },
+      "geometry": "rect",
+      "text": "20–55 kt",
+      "textPreview": "20–55 kt",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "20–55 kt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "20–55 kt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "20–55 kt",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8jqh0fep",
+      "id": "21",
+      "name": "metric-label-s1d",
+      "bbox": [
+        1400,
+        458,
+        412,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.1.1.1"
+      },
+      "geometry": "rect",
+      "text": "CTS throughput / day",
+      "textPreview": "CTS throughput / day",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CTS throughput / day"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CTS throughput / day",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CTS throughput / day",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fyxobm58",
+      "id": "22",
+      "name": "s1-right-rule",
+      "bbox": [
+        962,
+        498,
+        850,
+        2
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.2"
+      },
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qd4vmtwr",
+      "id": "23",
+      "name": "metric-value-s1e",
+      "bbox": [
+        962,
+        518,
+        272,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.0.0"
+      },
+      "geometry": "rect",
+      "text": "15",
+      "textPreview": "15",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "15"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "15",
+          "runs": [
+            {
+              "index": 1,
+              "text": "15",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xczed8v6",
+      "id": "24",
+      "name": "metric-label-s1e",
+      "bbox": [
+        962,
+        594,
+        272,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.0.1"
+      },
+      "geometry": "rect",
+      "text": "Cargo Transfer Ships",
+      "textPreview": "Cargo Transfer Ships",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cargo Transfer Ships"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cargo Transfer Ships",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cargo Transfer Ships",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8v6psfil",
+      "id": "25",
+      "name": "metric-value-s1f",
+      "bbox": [
+        1252,
+        518,
+        272,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.1.0"
+      },
+      "geometry": "rect",
+      "text": "61",
+      "textPreview": "61",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "61"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "61",
+          "runs": [
+            {
+              "index": 1,
+              "text": "61",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fa9w3m94",
+      "id": "26",
+      "name": "metric-label-s1f",
+      "bbox": [
+        1252,
+        594,
+        272,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.1.1"
+      },
+      "geometry": "rect",
+      "text": "Tug + barge sets",
+      "textPreview": "Tug + barge sets",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tug + barge sets"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tug + barge sets",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tug + barge sets",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpg3ex0n",
+      "id": "27",
+      "name": "metric-value-s1g",
+      "bbox": [
+        1540,
+        518,
+        272,
+        66
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.2.0"
+      },
+      "geometry": "rect",
+      "text": "11",
+      "textPreview": "11",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "11"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "11",
+          "runs": [
+            {
+              "index": 1,
+              "text": "11",
+              "fontSize": 54,
+              "color": "#B9654A",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1gvy90je",
+      "id": "28",
+      "name": "metric-label-s1g",
+      "bbox": [
+        1540,
+        594,
+        272,
+        22
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.3.2.1"
+      },
+      "geometry": "rect",
+      "text": "Ocean-going vessels",
+      "textPreview": "Ocean-going vessels",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ocean-going vessels"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ocean-going vessels",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ocean-going vessels",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8z25kb6x",
+      "id": "29",
+      "name": "s1-right-note",
+      "bbox": [
+        962,
+        716,
+        850,
+        28
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.4.1.0.4"
+      },
+      "geometry": "rect",
+      "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+      "textPreview": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The software has to turn this capacity into a coordinated sequence, not merely display it."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hwfyxob",
+      "id": "30",
+      "name": "spacer-1",
+      "bbox": [
+        80,
+        968,
+        1768,
+        8
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.5"
+      },
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r2p8nqxs",
+      "id": "31",
+      "name": "source-1",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6.0"
+      },
+      "geometry": "rect",
+      "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+      "textPreview": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kjm1cfa9",
+      "id": "32",
+      "name": "page-1",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "composeSource": {
+        "run": 1,
+        "path": "0.0.6.1"
+      },
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "bold": true,
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": [
+    {
+      "index": 1,
+      "frame": {
+        "left": 0,
+        "top": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      "baseUnit": 8,
+      "root": {
+        "path": "0",
+        "kind": "panel",
+        "name": "slide-panel-1",
+        "requestedSize": {
+          "width": {
+            "mode": "fill",
+            "value": 1
+          },
+          "height": {
+            "mode": "fill",
+            "value": 1
+          }
+        },
+        "intrinsicSize": {
+          "width": 0,
+          "height": 0
+        },
+        "frame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "snappedFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "children": [
+          {
+            "path": "0.0",
+            "kind": "column",
+            "name": "slide-root-1",
+            "requestedSize": {
+              "width": {
+                "mode": "fill",
+                "value": 1
+              },
+              "height": {
+                "mode": "fill",
+                "value": 1
+              }
+            },
+            "intrinsicSize": {
+              "width": 1403.71,
+              "height": 1069.6
+            },
+            "frame": {
+              "left": 0,
+              "top": 0,
+              "width": 1920,
+              "height": 1080
+            },
+            "children": [
+              {
+                "path": "0.0.0",
+                "kind": "text",
+                "name": "s1-eyebrow",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 19.2
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 20
+                },
+                "children": [],
+                "text": "BUSINESS CONTEXT",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/5wjudg7a",
+                  "id": "2",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.1",
+                "kind": "text",
+                "name": "s1-title",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 69.6
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 69.6
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 108,
+                  "width": 1764,
+                  "height": 70
+                },
+                "children": [],
+                "text": "Berau output meets ABL fleet scale.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/gbq1oryt",
+                  "id": "3",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.2",
+                "kind": "text",
+                "name": "s1-body",
+                "requestedSize": {
+                  "width": {
+                    "mode": "wrap",
+                    "max": 1320
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 1247.71,
+                  "height": 60
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 202.8,
+                  "width": 1247.71,
+                  "height": 60
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 202,
+                  "width": 1248,
+                  "height": 60
+                },
+                "children": [],
+                "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+                "transform": "none",
+                "element": {
+                  "aid": "sh/n29gr2p8",
+                  "id": "4",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.3",
+                "kind": "rule",
+                "name": "s1-rule",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fixed",
+                    "value": 240
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 4
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 240,
+                  "height": 4
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 288.8,
+                  "width": 240,
+                  "height": 4
+                },
+                "snappedFrame": {
+                  "left": 78,
+                  "top": 288,
+                  "width": 240,
+                  "height": 4
+                },
+                "children": [],
+                "weight": 4,
+                "element": {
+                  "aid": "sh/yhgn29gr",
+                  "id": "5",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.4",
+                "kind": "grid",
+                "name": "s1-grid",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fixed",
+                    "value": 620
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 30,
+                  "height": 0
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 318.8,
+                  "width": 1764,
+                  "height": 620
+                },
+                "children": [
+                  {
+                    "path": "0.0.4.0",
+                    "kind": "panel",
+                    "name": "s1-left-panel",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 60,
+                      "height": 56
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 318.8,
+                      "width": 823.65,
+                      "height": 620
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 318.8,
+                      "width": 823.65,
+                      "height": 620
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.0.0",
+                        "kind": "column",
+                        "name": "s1-left",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 358.8
+                        },
+                        "frame": {
+                          "left": 108,
+                          "top": 346.8,
+                          "width": 763.65,
+                          "height": 564
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "kind": "text",
+                            "name": "s1-left-eyebrow",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 19.2
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 346.8,
+                              "width": 763.65,
+                              "height": 19.2
+                            },
+                            "snappedFrame": {
+                              "left": 108,
+                              "top": 346,
+                              "width": 764,
+                              "height": 20
+                            },
+                            "children": [],
+                            "text": "BERAU COAL",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/gn29gr2p",
+                              "id": "7",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "kind": "text",
+                            "name": "s1-berau-hero",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 98.4
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 384,
+                              "width": 763.65,
+                              "height": 98.4
+                            },
+                            "snappedFrame": {
+                              "left": 108,
+                              "top": 384,
+                              "width": 764,
+                              "height": 100
+                            },
+                            "children": [],
+                            "text": "35.9 Mt",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/neloj2t8",
+                              "id": "8",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.2",
+                            "kind": "text",
+                            "name": "s1-berau-label",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.4
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 500.4,
+                              "width": 763.65,
+                              "height": 26.4
+                            },
+                            "snappedFrame": {
+                              "left": 108,
+                              "top": 500,
+                              "width": 764,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "Coal production in 2024",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/ytsvu9kn",
+                              "id": "9",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.3",
+                            "kind": "rule",
+                            "name": "s1-left-rule",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 2
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 2
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 544.8,
+                              "width": 763.65,
+                              "height": 2
+                            },
+                            "snappedFrame": {
+                              "left": 108,
+                              "top": 544,
+                              "width": 764,
+                              "height": 2
+                            },
+                            "children": [],
+                            "weight": 2,
+                            "element": {
+                              "aid": "sh/83itgfml",
+                              "id": "10",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.4",
+                            "kind": "row",
+                            "name": "s1-left-metrics",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 26,
+                              "height": 96.4
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 564.8,
+                              "width": 763.65,
+                              "height": 96.4
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.0.0.4.0",
+                                "kind": "column",
+                                "name": "metric-s1a",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 108,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.0.0.4.0.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1a",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 108,
+                                      "top": 564.8,
+                                      "width": 368.83,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 108,
+                                      "top": 564,
+                                      "width": 368,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "≈3.0 Mt",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/xobm58z2",
+                                      "id": "11",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.0.0.4.0.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1a",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 108,
+                                      "top": 639.6,
+                                      "width": 368.83,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 108,
+                                      "top": 640,
+                                      "width": 368,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Average / month",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/qxs72x4n",
+                                      "id": "12",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 108,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.0.0.4.0.0",
+                                    "frame": {
+                                      "left": 108,
+                                      "top": 564.8,
+                                      "width": 368.83,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.0.0.4.0.1",
+                                    "frame": {
+                                      "left": 108,
+                                      "top": 639.6,
+                                      "width": 368.83,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "path": "0.0.4.0.0.4.1",
+                                "kind": "column",
+                                "name": "metric-s1b",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 502.83,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.0.0.4.1.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1b",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 502.83,
+                                      "top": 564.8,
+                                      "width": 368.83,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 502,
+                                      "top": 564,
+                                      "width": 368,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "≈98 kt",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/fil0rqd4",
+                                      "id": "13",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.0.0.4.1.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1b",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 502.83,
+                                      "top": 639.6,
+                                      "width": 368.83,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 502,
+                                      "top": 640,
+                                      "width": 368,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Average / day",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/4fu18jqh",
+                                      "id": "14",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 502.83,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.0.0.4.1.0",
+                                    "frame": {
+                                      "left": 502.83,
+                                      "top": 564.8,
+                                      "width": 368.83,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.0.0.4.1.1",
+                                    "frame": {
+                                      "left": 502.83,
+                                      "top": 639.6,
+                                      "width": 368.83,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 26,
+                            "effectiveGap": 26,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 108,
+                              "top": 564.8,
+                              "width": 763.65,
+                              "height": 96.4
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.0.0.4.0",
+                                "frame": {
+                                  "left": 108,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.0.0.4.1",
+                                "frame": {
+                                  "left": 502.83,
+                                  "top": 564.8,
+                                  "width": 368.83,
+                                  "height": 96.4
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.0.0.5",
+                            "kind": "text",
+                            "name": "s1-left-note",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.4
+                            },
+                            "frame": {
+                              "left": 108,
+                              "top": 679.2,
+                              "width": 763.65,
+                              "height": 52.8
+                            },
+                            "snappedFrame": {
+                              "left": 108,
+                              "top": 680,
+                              "width": 764,
+                              "height": 54
+                            },
+                            "children": [],
+                            "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/x0nuxc3y",
+                              "id": "15",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 18,
+                        "effectiveGap": 18,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 108,
+                          "top": 346.8,
+                          "width": 763.65,
+                          "height": 564
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.0.0.0",
+                            "frame": {
+                              "left": 108,
+                              "top": 346.8,
+                              "width": 763.65,
+                              "height": 19.2
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.1",
+                            "frame": {
+                              "left": 108,
+                              "top": 384,
+                              "width": 763.65,
+                              "height": 98.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.2",
+                            "frame": {
+                              "left": 108,
+                              "top": 500.4,
+                              "width": 763.65,
+                              "height": 26.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.3",
+                            "frame": {
+                              "left": 108,
+                              "top": 544.8,
+                              "width": 763.65,
+                              "height": 2
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.4",
+                            "frame": {
+                              "left": 108,
+                              "top": 564.8,
+                              "width": 763.65,
+                              "height": 96.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.0.0.5",
+                            "frame": {
+                              "left": 108,
+                              "top": 679.2,
+                              "width": 763.65,
+                              "height": 52.8
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 28,
+                      "right": 30,
+                      "bottom": 28,
+                      "left": 30
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 108,
+                      "top": 346.8,
+                      "width": 763.65,
+                      "height": 564
+                    },
+                    "element": {
+                      "aid": "sh/58z25kb6",
+                      "id": "6",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "kind": "panel",
+                    "name": "s1-right-panel",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "fill",
+                        "value": 1
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 60,
+                      "height": 56
+                    },
+                    "frame": {
+                      "left": 931.65,
+                      "top": 318.8,
+                      "width": 910.35,
+                      "height": 620
+                    },
+                    "snappedFrame": {
+                      "left": 931.65,
+                      "top": 318.8,
+                      "width": 910.35,
+                      "height": 620
+                    },
+                    "children": [
+                      {
+                        "path": "0.0.4.1.0",
+                        "kind": "column",
+                        "name": "s1-right",
+                        "requestedSize": {
+                          "width": {
+                            "mode": "fill",
+                            "value": 1
+                          },
+                          "height": {
+                            "mode": "fill",
+                            "value": 1
+                          }
+                        },
+                        "intrinsicSize": {
+                          "width": 0,
+                          "height": 396
+                        },
+                        "frame": {
+                          "left": 961.65,
+                          "top": 346.8,
+                          "width": 850.35,
+                          "height": 564
+                        },
+                        "children": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "kind": "text",
+                            "name": "s1-right-eyebrow",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 19.2
+                            },
+                            "frame": {
+                              "left": 961.65,
+                              "top": 346.8,
+                              "width": 850.35,
+                              "height": 19.2
+                            },
+                            "snappedFrame": {
+                              "left": 962,
+                              "top": 346,
+                              "width": 850,
+                              "height": 20
+                            },
+                            "children": [],
+                            "text": "ABL OCEAN-FLEET PARTNER",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/fu18jqh0",
+                              "id": "17",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "kind": "row",
+                            "name": "s1-right-top",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 28,
+                              "height": 96.4
+                            },
+                            "frame": {
+                              "left": 961.65,
+                              "top": 384,
+                              "width": 850.35,
+                              "height": 96.4
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.1.0.1.0",
+                                "kind": "column",
+                                "name": "metric-s1c",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 961.65,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.1.0.1.0.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1c",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 384,
+                                      "width": 411.18,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 962,
+                                      "top": 384,
+                                      "width": 412,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "100M+",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/4r65wjud",
+                                      "id": "18",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.1.0.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1c",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 458.8,
+                                      "width": 411.18,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 962,
+                                      "top": 458,
+                                      "width": 412,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Tonnes transshipped / year",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/xc3ylc7u",
+                                      "id": "19",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 961.65,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.1.0.1.0.0",
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 384,
+                                      "width": 411.18,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.1.0.1",
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 458.8,
+                                      "width": 411.18,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.1",
+                                "kind": "column",
+                                "name": "metric-s1d",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 1400.83,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.1.0.1.1.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1d",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 1400.83,
+                                      "top": 384,
+                                      "width": 411.18,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1400,
+                                      "top": 384,
+                                      "width": 412,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "20–55 kt",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/x4nap4r6",
+                                      "id": "20",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.1.1.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1d",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 1400.83,
+                                      "top": 458.8,
+                                      "width": 411.18,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1400,
+                                      "top": 458,
+                                      "width": 412,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "CTS throughput / day",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/8jqh0fep",
+                                      "id": "21",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 1400.83,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.1.0.1.1.0",
+                                    "frame": {
+                                      "left": 1400.83,
+                                      "top": 384,
+                                      "width": 411.18,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.1.1.1",
+                                    "frame": {
+                                      "left": 1400.83,
+                                      "top": 458.8,
+                                      "width": 411.18,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "gap": 28,
+                            "effectiveGap": 28,
+                            "justifyOffset": 0,
+                            "align": "start",
+                            "justify": "start",
+                            "contentFrame": {
+                              "left": 961.65,
+                              "top": 384,
+                              "width": 850.35,
+                              "height": 96.4
+                            },
+                            "items": [
+                              {
+                                "path": "0.0.4.1.0.1.0",
+                                "frame": {
+                                  "left": 961.65,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.1.1",
+                                "frame": {
+                                  "left": 1400.83,
+                                  "top": 384,
+                                  "width": 411.18,
+                                  "height": 96.4
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.1.0.2",
+                            "kind": "rule",
+                            "name": "s1-right-rule",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 2
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 2
+                            },
+                            "frame": {
+                              "left": 961.65,
+                              "top": 498.4,
+                              "width": 850.35,
+                              "height": 2
+                            },
+                            "snappedFrame": {
+                              "left": 962,
+                              "top": 498,
+                              "width": 850,
+                              "height": 2
+                            },
+                            "children": [],
+                            "weight": 2,
+                            "element": {
+                              "aid": "sh/fyxobm58",
+                              "id": "22",
+                              "kind": "shape"
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.3",
+                            "kind": "grid",
+                            "name": "s1-right-grid",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "fixed",
+                                "value": 180
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 36,
+                              "height": 0
+                            },
+                            "frame": {
+                              "left": 961.65,
+                              "top": 518.4,
+                              "width": 850.35,
+                              "height": 180
+                            },
+                            "children": [
+                              {
+                                "path": "0.0.4.1.0.3.0",
+                                "kind": "column",
+                                "name": "metric-s1e",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 961.65,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.1.0.3.0.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1e",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 962,
+                                      "top": 518,
+                                      "width": 272,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "15",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/qd4vmtwr",
+                                      "id": "23",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.0.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1e",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 962,
+                                      "top": 594,
+                                      "width": 272,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Cargo Transfer Ships",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/xczed8v6",
+                                      "id": "24",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 961.65,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.1.0.3.0.0",
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.0.1",
+                                    "frame": {
+                                      "left": 961.65,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "path": "0.0.4.1.0.3.1",
+                                "kind": "column",
+                                "name": "metric-s1f",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 1251.1,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.1.0.3.1.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1f",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 1251.1,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1252,
+                                      "top": 518,
+                                      "width": 272,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "61",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/8v6psfil",
+                                      "id": "25",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.1.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1f",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 1251.1,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1252,
+                                      "top": 594,
+                                      "width": 272,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Tug + barge sets",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/fa9w3m94",
+                                      "id": "26",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 1251.1,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.1.0.3.1.0",
+                                    "frame": {
+                                      "left": 1251.1,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.1.1",
+                                    "frame": {
+                                      "left": 1251.1,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "path": "0.0.4.1.0.3.2",
+                                "kind": "column",
+                                "name": "metric-s1g",
+                                "requestedSize": {
+                                  "width": {
+                                    "mode": "fill",
+                                    "value": 1
+                                  },
+                                  "height": {
+                                    "mode": "hug"
+                                  }
+                                },
+                                "intrinsicSize": {
+                                  "width": 0,
+                                  "height": 96.4
+                                },
+                                "frame": {
+                                  "left": 1540.55,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "children": [
+                                  {
+                                    "path": "0.0.4.1.0.3.2.0",
+                                    "kind": "text",
+                                    "name": "metric-value-s1g",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 64.8
+                                    },
+                                    "frame": {
+                                      "left": 1540.55,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1540,
+                                      "top": 518,
+                                      "width": 272,
+                                      "height": 66
+                                    },
+                                    "children": [],
+                                    "text": "11",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/qpg3ex0n",
+                                      "id": "27",
+                                      "kind": "shape"
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.2.1",
+                                    "kind": "text",
+                                    "name": "metric-label-s1g",
+                                    "requestedSize": {
+                                      "width": {
+                                        "mode": "fill",
+                                        "value": 1
+                                      },
+                                      "height": {
+                                        "mode": "hug"
+                                      }
+                                    },
+                                    "intrinsicSize": {
+                                      "width": 0,
+                                      "height": 21.6
+                                    },
+                                    "frame": {
+                                      "left": 1540.55,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    },
+                                    "snappedFrame": {
+                                      "left": 1540,
+                                      "top": 594,
+                                      "width": 272,
+                                      "height": 22
+                                    },
+                                    "children": [],
+                                    "text": "Ocean-going vessels",
+                                    "transform": "none",
+                                    "element": {
+                                      "aid": "sh/1gvy90je",
+                                      "id": "28",
+                                      "kind": "shape"
+                                    }
+                                  }
+                                ],
+                                "padding": {
+                                  "top": 0,
+                                  "right": 0,
+                                  "bottom": 0,
+                                  "left": 0
+                                },
+                                "gap": 10,
+                                "effectiveGap": 10,
+                                "justifyOffset": 0,
+                                "align": "start",
+                                "justify": "start",
+                                "contentFrame": {
+                                  "left": 1540.55,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                },
+                                "items": [
+                                  {
+                                    "path": "0.0.4.1.0.3.2.0",
+                                    "frame": {
+                                      "left": 1540.55,
+                                      "top": 518.4,
+                                      "width": 271.45,
+                                      "height": 64.8
+                                    }
+                                  },
+                                  {
+                                    "path": "0.0.4.1.0.3.2.1",
+                                    "frame": {
+                                      "left": 1540.55,
+                                      "top": 593.2,
+                                      "width": 271.45,
+                                      "height": 21.6
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "padding": {
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0,
+                              "left": 0
+                            },
+                            "columnGap": 18,
+                            "rowGap": 0,
+                            "alignItems": "stretch",
+                            "justifyItems": "stretch",
+                            "contentFrame": {
+                              "left": 961.65,
+                              "top": 518.4,
+                              "width": 850.35,
+                              "height": 180
+                            },
+                            "columns": [
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              },
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "rows": [
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "autoRows": "auto",
+                            "resolvedRows": [
+                              {
+                                "mode": "fr",
+                                "value": 1
+                              }
+                            ],
+                            "columnSizes": [
+                              271.45,
+                              271.45,
+                              271.45
+                            ],
+                            "rowSizes": [
+                              180
+                            ],
+                            "cells": [
+                              {
+                                "path": "0.0.4.1.0.3.0",
+                                "column": 0,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 961.65,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.3.1",
+                                "column": 1,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 1251.1,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                }
+                              },
+                              {
+                                "path": "0.0.4.1.0.3.2",
+                                "column": 2,
+                                "row": 0,
+                                "columnSpan": 1,
+                                "rowSpan": 1,
+                                "cellFrame": {
+                                  "left": 1540.55,
+                                  "top": 518.4,
+                                  "width": 271.45,
+                                  "height": 180
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "path": "0.0.4.1.0.4",
+                            "kind": "text",
+                            "name": "s1-right-note",
+                            "requestedSize": {
+                              "width": {
+                                "mode": "fill",
+                                "value": 1
+                              },
+                              "height": {
+                                "mode": "hug"
+                              }
+                            },
+                            "intrinsicSize": {
+                              "width": 0,
+                              "height": 26.4
+                            },
+                            "frame": {
+                              "left": 961.65,
+                              "top": 716.4,
+                              "width": 850.35,
+                              "height": 26.4
+                            },
+                            "snappedFrame": {
+                              "left": 962,
+                              "top": 716,
+                              "width": 850,
+                              "height": 28
+                            },
+                            "children": [],
+                            "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+                            "transform": "none",
+                            "element": {
+                              "aid": "sh/8z25kb6x",
+                              "id": "29",
+                              "kind": "shape"
+                            }
+                          }
+                        ],
+                        "padding": {
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0,
+                          "left": 0
+                        },
+                        "gap": 18,
+                        "effectiveGap": 18,
+                        "justifyOffset": 0,
+                        "align": "start",
+                        "justify": "start",
+                        "contentFrame": {
+                          "left": 961.65,
+                          "top": 346.8,
+                          "width": 850.35,
+                          "height": 564
+                        },
+                        "items": [
+                          {
+                            "path": "0.0.4.1.0.0",
+                            "frame": {
+                              "left": 961.65,
+                              "top": 346.8,
+                              "width": 850.35,
+                              "height": 19.2
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.1",
+                            "frame": {
+                              "left": 961.65,
+                              "top": 384,
+                              "width": 850.35,
+                              "height": 96.4
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.2",
+                            "frame": {
+                              "left": 961.65,
+                              "top": 498.4,
+                              "width": 850.35,
+                              "height": 2
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.3",
+                            "frame": {
+                              "left": 961.65,
+                              "top": 518.4,
+                              "width": 850.35,
+                              "height": 180
+                            }
+                          },
+                          {
+                            "path": "0.0.4.1.0.4",
+                            "frame": {
+                              "left": 961.65,
+                              "top": 716.4,
+                              "width": 850.35,
+                              "height": 26.4
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "padding": {
+                      "top": 28,
+                      "right": 30,
+                      "bottom": 28,
+                      "left": 30
+                    },
+                    "align": "start",
+                    "justify": "start",
+                    "contentFrame": {
+                      "left": 961.65,
+                      "top": 346.8,
+                      "width": 850.35,
+                      "height": 564
+                    },
+                    "element": {
+                      "aid": "sh/m94fu18j",
+                      "id": "16",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "columnGap": 30,
+                "rowGap": 0,
+                "alignItems": "stretch",
+                "justifyItems": "stretch",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 318.8,
+                  "width": 1764,
+                  "height": 620
+                },
+                "columns": [
+                  {
+                    "mode": "fr",
+                    "value": 0.95
+                  },
+                  {
+                    "mode": "fr",
+                    "value": 1.05
+                  }
+                ],
+                "rows": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "autoRows": "auto",
+                "resolvedRows": [
+                  {
+                    "mode": "fr",
+                    "value": 1
+                  }
+                ],
+                "columnSizes": [
+                  823.65,
+                  910.35
+                ],
+                "rowSizes": [
+                  620
+                ],
+                "cells": [
+                  {
+                    "path": "0.0.4.0",
+                    "column": 0,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 78,
+                      "top": 318.8,
+                      "width": 823.65,
+                      "height": 620
+                    }
+                  },
+                  {
+                    "path": "0.0.4.1",
+                    "column": 1,
+                    "row": 0,
+                    "columnSpan": 1,
+                    "rowSpan": 1,
+                    "cellFrame": {
+                      "left": 931.65,
+                      "top": 318.8,
+                      "width": 910.35,
+                      "height": 620
+                    }
+                  }
+                ]
+              },
+              {
+                "path": "0.0.5",
+                "kind": "shape",
+                "name": "spacer-1",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "fill",
+                    "value": 1
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 0,
+                  "height": 0
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 964.8,
+                  "width": 1764,
+                  "height": 10.4
+                },
+                "snappedFrame": {
+                  "left": 80,
+                  "top": 968,
+                  "width": 1768,
+                  "height": 8
+                },
+                "children": [],
+                "geometry": "rect",
+                "element": {
+                  "aid": "sh/2hwfyxob",
+                  "id": "30",
+                  "kind": "shape"
+                }
+              },
+              {
+                "path": "0.0.6",
+                "kind": "row",
+                "name": "footer-1",
+                "requestedSize": {
+                  "width": {
+                    "mode": "fill",
+                    "value": 1
+                  },
+                  "height": {
+                    "mode": "hug"
+                  }
+                },
+                "intrinsicSize": {
+                  "width": 62,
+                  "height": 16.8
+                },
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "children": [
+                  {
+                    "path": "0.0.6.0",
+                    "kind": "text",
+                    "name": "source-1",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fill",
+                        "value": 1
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 0,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/r2p8nqxs",
+                      "id": "31",
+                      "kind": "shape"
+                    }
+                  },
+                  {
+                    "path": "0.0.6.1",
+                    "kind": "text",
+                    "name": "page-1",
+                    "requestedSize": {
+                      "width": {
+                        "mode": "fixed",
+                        "value": 42
+                      },
+                      "height": {
+                        "mode": "hug"
+                      }
+                    },
+                    "intrinsicSize": {
+                      "width": 42,
+                      "height": 16.8
+                    },
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "snappedFrame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    },
+                    "children": [],
+                    "text": "01",
+                    "transform": "none",
+                    "element": {
+                      "aid": "sh/kjm1cfa9",
+                      "id": "32",
+                      "kind": "shape"
+                    }
+                  }
+                ],
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "gap": 20,
+                "effectiveGap": 20,
+                "justifyOffset": 0,
+                "align": "center",
+                "justify": "start",
+                "contentFrame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                },
+                "items": [
+                  {
+                    "path": "0.0.6.0",
+                    "frame": {
+                      "left": 78,
+                      "top": 1002,
+                      "width": 1702,
+                      "height": 16
+                    }
+                  },
+                  {
+                    "path": "0.0.6.1",
+                    "frame": {
+                      "left": 1800,
+                      "top": 1002,
+                      "width": 42,
+                      "height": 16
+                    }
+                  }
+                ]
+              }
+            ],
+            "padding": {
+              "top": 62,
+              "right": 78,
+              "bottom": 62,
+              "left": 78
+            },
+            "gap": 26,
+            "effectiveGap": 26,
+            "justifyOffset": 0,
+            "align": "start",
+            "justify": "start",
+            "contentFrame": {
+              "left": 78,
+              "top": 62,
+              "width": 1764,
+              "height": 956
+            },
+            "items": [
+              {
+                "path": "0.0.0",
+                "frame": {
+                  "left": 78,
+                  "top": 62,
+                  "width": 1764,
+                  "height": 19.2
+                }
+              },
+              {
+                "path": "0.0.1",
+                "frame": {
+                  "left": 78,
+                  "top": 107.2,
+                  "width": 1764,
+                  "height": 69.6
+                }
+              },
+              {
+                "path": "0.0.2",
+                "frame": {
+                  "left": 78,
+                  "top": 202.8,
+                  "width": 1247.71,
+                  "height": 60
+                }
+              },
+              {
+                "path": "0.0.3",
+                "frame": {
+                  "left": 78,
+                  "top": 288.8,
+                  "width": 240,
+                  "height": 4
+                }
+              },
+              {
+                "path": "0.0.4",
+                "frame": {
+                  "left": 78,
+                  "top": 318.8,
+                  "width": 1764,
+                  "height": 620
+                }
+              },
+              {
+                "path": "0.0.5",
+                "frame": {
+                  "left": 78,
+                  "top": 964.8,
+                  "width": 1764,
+                  "height": 10.4
+                }
+              },
+              {
+                "path": "0.0.6",
+                "frame": {
+                  "left": 78,
+                  "top": 1001.2,
+                  "width": 1764,
+                  "height": 16.8
+                }
+              }
+            ]
+          }
+        ],
+        "padding": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "align": "start",
+        "justify": "start",
+        "contentFrame": {
+          "left": 0,
+          "top": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "element": {
+          "aid": "sh/y90je9cv",
+          "id": "1",
+          "kind": "shape"
+        }
+      }
+    }
+  ]
+}

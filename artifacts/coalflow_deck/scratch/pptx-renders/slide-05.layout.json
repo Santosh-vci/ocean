@@ -1,0 +1,963 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/mlkjm1cf",
+    "id": "mlkjm1cf",
+    "slide": 6,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vahoza1g",
+      "id": "1",
+      "name": "slide-panel-5",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovahoza1",
+      "id": "2",
+      "name": "s5-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "BRIDGE TO THE DEMO",
+      "textPreview": "BRIDGE TO THE DEMO",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BRIDGE TO THE DEMO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BRIDGE TO THE DEMO",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BRIDGE TO THE DEMO",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg7adsji",
+      "id": "3",
+      "name": "s5-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "When we say “constraint-aware,” this is what users will see.",
+      "textPreview": "When we say “constraint-aware,” this is what users will see.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "When we say “constraint-aware,” this is what users will see."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "When we say “constraint-aware,” this is what users will see.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "When we say “constraint-aware,” this is what users will see.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcrmhk3",
+      "id": "4",
+      "name": "s5-body",
+      "bbox": [
+        78,
+        196,
+        846,
+        30
+      ],
+      "geometry": "rect",
+      "text": "The current product already exposes the spine of the operating model you just saw.",
+      "textPreview": "The current product already exposes the spine of the operating model you just saw.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The current product already exposes the spine of the operating model you just saw."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The current product already exposes the spine of the operating model you just saw.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The current product already exposes the spine of the operating model you just saw.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z25kb6xk",
+      "id": "5",
+      "name": "s5-rule",
+      "bbox": [
+        78,
+        252,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onyd0z61",
+      "id": "6",
+      "name": "s5-q1",
+      "bbox": [
+        78,
+        282,
+        822,
+        34
+      ],
+      "geometry": "rect",
+      "text": "1. What demand must be served?",
+      "textPreview": "1. What demand must be served?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1. What demand must be served?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1. What demand must be served?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. What demand must be served?",
+              "fontSize": 27,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d8v6psfi",
+      "id": "7",
+      "name": "s5-q2",
+      "bbox": [
+        78,
+        332,
+        822,
+        34
+      ],
+      "geometry": "rect",
+      "text": "2. Which windows constrain movement?",
+      "textPreview": "2. Which windows constrain movement?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2. Which windows constrain movement?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2. Which windows constrain movement?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. Which windows constrain movement?",
+              "fontSize": 27,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "8",
+      "name": "s5-q3",
+      "bbox": [
+        78,
+        382,
+        822,
+        34
+      ],
+      "geometry": "rect",
+      "text": "3. What plan is safe to publish?",
+      "textPreview": "3. What plan is safe to publish?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3. What plan is safe to publish?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3. What plan is safe to publish?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. What plan is safe to publish?",
+              "fontSize": 27,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vy90je9c",
+      "id": "9",
+      "name": "s5-q4",
+      "bbox": [
+        78,
+        432,
+        822,
+        34
+      ],
+      "geometry": "rect",
+      "text": "4. Who approved the version now in force?",
+      "textPreview": "4. Who approved the version now in force?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "4. Who approved the version now in force?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "4. Who approved the version now in force?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "4. Who approved the version now in force?",
+              "fontSize": 27,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nuxc3ylc",
+      "id": "10",
+      "name": "s5-left-rule",
+      "bbox": [
+        78,
+        484,
+        822,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y90je9cv",
+      "id": "11",
+      "name": "s5-left-note",
+      "bbox": [
+        78,
+        504,
+        822,
+        60
+      ],
+      "geometry": "rect",
+      "text": "The live demo follows the same story:\nOGV demand → constraints → approvals → published plan.",
+      "textPreview": "The live demo follows the same story: | OGV demand → constraints → approvals → published plan.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The live demo follows the same story:"
+          },
+          {
+            "index": 2,
+            "text": "OGV demand → constraints → approvals → published plan."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The live demo follows the same story:",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The live demo follows the same story:",
+              "fontSize": 25,
+              "color": "#0E6B83"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "OGV demand → constraints → approvals → published plan.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV demand → constraints → approvals → published plan.",
+              "fontSize": 25,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wjudg7a",
+      "id": "12",
+      "name": "screen-title-a",
+      "bbox": [
+        932,
+        282,
+        446,
+        24
+      ],
+      "geometry": "rect",
+      "text": "OGV Demand & Laycan",
+      "textPreview": "OGV Demand & Laycan",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV Demand & Laycan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV Demand & Laycan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV Demand & Laycan",
+              "fontSize": 20,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbq1oryt",
+      "id": "13",
+      "name": "screen-image-panel-a",
+      "bbox": [
+        932.7,
+        317.6,
+        445.65,
+        240
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 14,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/m58z25kb",
+      "id": "27",
+      "name": "screen-image-a",
+      "bbox": [
+        963.53,
+        329.6,
+        384,
+        216
+      ],
+      "geometry": "roundRect",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "/ppt/media/image.png",
+        "contentType": "image/png",
+        "byteLength": 120926
+      },
+      "fillImage": {
+        "assetId": "/ppt/media/image.png",
+        "contentType": "image/png",
+        "byteLength": 120926
+      }
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yhgn29gr",
+      "id": "15",
+      "name": "screen-title-b",
+      "bbox": [
+        1396,
+        282,
+        446,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Tide & Bridge Window",
+      "textPreview": "Tide & Bridge Window",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tide & Bridge Window"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tide & Bridge Window",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tide & Bridge Window",
+              "fontSize": 20,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/58z25kb6",
+      "id": "16",
+      "name": "screen-image-panel-b",
+      "bbox": [
+        1396.35,
+        317.6,
+        445.65,
+        240
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 17,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/tsvu9kni",
+      "id": "28",
+      "name": "screen-image-b",
+      "bbox": [
+        1427.18,
+        329.6,
+        384,
+        216
+      ],
+      "geometry": "roundRect",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "/ppt/media/image2.png",
+        "contentType": "image/png",
+        "byteLength": 123901
+      },
+      "fillImage": {
+        "assetId": "/ppt/media/image2.png",
+        "contentType": "image/png",
+        "byteLength": 123901
+      }
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/neloj2t8",
+      "id": "18",
+      "name": "screen-title-c",
+      "bbox": [
+        932,
+        576,
+        446,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Approvals",
+      "textPreview": "Approvals",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Approvals"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Approvals",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Approvals",
+              "fontSize": 20,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ytsvu9kn",
+      "id": "19",
+      "name": "screen-image-panel-c",
+      "bbox": [
+        932.7,
+        611.6,
+        445.65,
+        240
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 20,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/47y1kre1",
+      "id": "29",
+      "name": "screen-image-c",
+      "bbox": [
+        963.53,
+        623.6,
+        384,
+        216
+      ],
+      "geometry": "roundRect",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "/ppt/media/image3.png",
+        "contentType": "image/png",
+        "byteLength": 91513
+      },
+      "fillImage": {
+        "assetId": "/ppt/media/image3.png",
+        "contentType": "image/png",
+        "byteLength": 91513
+      }
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vixczed8",
+      "id": "21",
+      "name": "screen-title-d",
+      "bbox": [
+        1396,
+        576,
+        446,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Published Plan",
+      "textPreview": "Published Plan",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Published Plan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Published Plan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Published Plan",
+              "fontSize": 20,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k3q5o7qp",
+      "id": "22",
+      "name": "screen-image-panel-d",
+      "bbox": [
+        1396.35,
+        611.6,
+        445.65,
+        240
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 23,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/e1w7mp0b",
+      "id": "30",
+      "name": "screen-image-d",
+      "bbox": [
+        1427.18,
+        623.6,
+        384,
+        216
+      ],
+      "geometry": "roundRect",
+      "contentType": "image/png",
+      "asset": {
+        "assetId": "/ppt/media/image4.png",
+        "contentType": "image/png",
+        "byteLength": 101673
+      },
+      "fillImage": {
+        "assetId": "/ppt/media/image4.png",
+        "contentType": "image/png",
+        "byteLength": 101673
+      }
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6psfil0r",
+      "id": "24",
+      "name": "spacer-5",
+      "bbox": [
+        80,
+        880,
+        1768,
+        96
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/val87ed8",
+      "id": "25",
+      "name": "source-5",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Source: current Coalflow Tower product evidence.",
+      "textPreview": "Source: current Coalflow Tower product evidence.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: current Coalflow Tower product evidence."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: current Coalflow Tower product evidence.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: current Coalflow Tower product evidence.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kre1w7mp",
+      "id": "26",
+      "name": "page-5",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

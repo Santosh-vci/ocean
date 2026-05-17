@@ -1,0 +1,1097 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/qh0fepkz",
+    "id": "qh0fepkz",
+    "slide": 10,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vahoza1g",
+      "id": "1",
+      "name": "slide-panel-9",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovahoza1",
+      "id": "2",
+      "name": "s9-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "OPEN QUESTIONS",
+      "textPreview": "OPEN QUESTIONS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OPEN QUESTIONS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OPEN QUESTIONS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OPEN QUESTIONS",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg7adsji",
+      "id": "3",
+      "name": "s9-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "The minute nuances are where the tool earns trust.",
+      "textPreview": "The minute nuances are where the tool earns trust.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The minute nuances are where the tool earns trust."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The minute nuances are where the tool earns trust.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The minute nuances are where the tool earns trust.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcrmhk3",
+      "id": "4",
+      "name": "s9-body",
+      "bbox": [
+        78,
+        196,
+        1228,
+        60
+      ],
+      "geometry": "rect",
+      "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+      "textPreview": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only"
+          },
+          {
+            "index": 2,
+            "text": "operators know."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "We can build a strong first version from generic operating knowledge. The best version will come from the tacit rules only operators know.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z25kb6xk",
+      "id": "5",
+      "name": "s9-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onyd0z61",
+      "id": "6",
+      "name": "s9-panel1",
+      "bbox": [
+        78,
+        311.6,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d8v6psfi",
+      "id": "7",
+      "name": "s9-k1",
+      "bbox": [
+        100,
+        332,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "CONSTRAINTS",
+      "textPreview": "CONSTRAINTS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CONSTRAINTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CONSTRAINTS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CONSTRAINTS",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "8",
+      "name": "s9-q1",
+      "bbox": [
+        100,
+        400,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "Which constraints are truly hard\n—and which are negotiable in practice?",
+      "textPreview": "Which constraints are truly hard | —and which are negotiable in practice?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Which constraints are truly hard"
+          },
+          {
+            "index": 2,
+            "text": "—and which are negotiable in practice?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Which constraints are truly hard",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Which constraints are truly hard",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "—and which are negotiable in practice?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "—and which are negotiable in practice?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vy90je9c",
+      "id": "9",
+      "name": "s9-panel2",
+      "bbox": [
+        974,
+        311.6,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nuxc3ylc",
+      "id": "10",
+      "name": "s9-k2",
+      "bbox": [
+        996,
+        332,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "OVERRIDES",
+      "textPreview": "OVERRIDES",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OVERRIDES"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OVERRIDES",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OVERRIDES",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y90je9cv",
+      "id": "11",
+      "name": "s9-q2",
+      "bbox": [
+        996,
+        400,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "What operator overrides recur often enough\nto become product logic?",
+      "textPreview": "What operator overrides recur often enough | to become product logic?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What operator overrides recur often enough"
+          },
+          {
+            "index": 2,
+            "text": "to become product logic?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What operator overrides recur often enough",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What operator overrides recur often enough",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "to become product logic?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "to become product logic?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wjudg7a",
+      "id": "12",
+      "name": "s9-panel3",
+      "bbox": [
+        78,
+        504.27,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gbq1oryt",
+      "id": "13",
+      "name": "s9-k3",
+      "bbox": [
+        100,
+        524,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "EVIDENCE",
+      "textPreview": "EVIDENCE",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "EVIDENCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "EVIDENCE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "EVIDENCE",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/n29gr2p8",
+      "id": "14",
+      "name": "s9-q3",
+      "bbox": [
+        100,
+        592,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "How fresh must AIS / GPS evidence be\nbefore dispatch trusts it?",
+      "textPreview": "How fresh must AIS / GPS evidence be | before dispatch trusts it?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "How fresh must AIS / GPS evidence be"
+          },
+          {
+            "index": 2,
+            "text": "before dispatch trusts it?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "How fresh must AIS / GPS evidence be",
+          "runs": [
+            {
+              "index": 1,
+              "text": "How fresh must AIS / GPS evidence be",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "before dispatch trusts it?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "before dispatch trusts it?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yhgn29gr",
+      "id": "15",
+      "name": "s9-panel4",
+      "bbox": [
+        974,
+        504.27,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/58z25kb6",
+      "id": "16",
+      "name": "s9-k4",
+      "bbox": [
+        996,
+        524,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "SIGNALS",
+      "textPreview": "SIGNALS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SIGNALS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SIGNALS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "SIGNALS",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gn29gr2p",
+      "id": "17",
+      "name": "s9-q4",
+      "bbox": [
+        996,
+        592,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "Which environmental or safety signals\nchange the plan, not just the ETA?",
+      "textPreview": "Which environmental or safety signals | change the plan, not just the ETA?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Which environmental or safety signals"
+          },
+          {
+            "index": 2,
+            "text": "change the plan, not just the ETA?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Which environmental or safety signals",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Which environmental or safety signals",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "change the plan, not just the ETA?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "change the plan, not just the ETA?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/neloj2t8",
+      "id": "18",
+      "name": "s9-panel5",
+      "bbox": [
+        78,
+        696.93,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ytsvu9kn",
+      "id": "19",
+      "name": "s9-k5",
+      "bbox": [
+        100,
+        716,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "GOVERNANCE",
+      "textPreview": "GOVERNANCE",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "GOVERNANCE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "GOVERNANCE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "GOVERNANCE",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2x4nap4r",
+      "id": "20",
+      "name": "s9-q5",
+      "bbox": [
+        100,
+        784,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "Where must human approval remain explicit,\neven if the system recommends a move?",
+      "textPreview": "Where must human approval remain explicit, | even if the system recommends a move?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Where must human approval remain explicit,"
+          },
+          {
+            "index": 2,
+            "text": "even if the system recommends a move?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Where must human approval remain explicit,",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Where must human approval remain explicit,",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "even if the system recommends a move?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "even if the system recommends a move?",
+              "fontSize": 28,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vixczed8",
+      "id": "21",
+      "name": "s9-panel6",
+      "bbox": [
+        974,
+        696.93,
+        868,
+        174.67
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k3q5o7qp",
+      "id": "22",
+      "name": "s9-k6",
+      "bbox": [
+        996,
+        716,
+        824,
+        22
+      ],
+      "geometry": "rect",
+      "text": "TRUST",
+      "textPreview": "TRUST",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "TRUST"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "TRUST",
+          "runs": [
+            {
+              "index": 1,
+              "text": "TRUST",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/donyd0z6",
+      "id": "23",
+      "name": "s9-q6",
+      "bbox": [
+        996,
+        784,
+        824,
+        68
+      ],
+      "geometry": "rect",
+      "text": "What would make this feel indispensable\non a difficult day—not just elegant on a normal one?",
+      "textPreview": "What would make this feel indispensable | on a difficult day—not just elegant on a normal one?",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What would make this feel indispensable"
+          },
+          {
+            "index": 2,
+            "text": "on a difficult day—not just elegant on a normal one?"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What would make this feel indispensable",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What would make this feel indispensable",
+              "fontSize": 28,
+              "color": "#0E6B83"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "on a difficult day—not just elegant on a normal one?",
+          "runs": [
+            {
+              "index": 1,
+              "text": "on a difficult day—not just elegant on a normal one?",
+              "fontSize": 28,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6psfil0r",
+      "id": "24",
+      "name": "spacer-9",
+      "bbox": [
+        80,
+        896,
+        1768,
+        80
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/val87ed8",
+      "id": "25",
+      "name": "source-9",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Source: project assumptions and current build scope.",
+      "textPreview": "Source: project assumptions and current build scope.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project assumptions and current build scope."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project assumptions and current build scope.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project assumptions and current build scope.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kre1w7mp",
+      "id": "26",
+      "name": "page-9",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "09",
+      "textPreview": "09",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "09",
+          "runs": [
+            {
+              "index": 1,
+              "text": "09",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

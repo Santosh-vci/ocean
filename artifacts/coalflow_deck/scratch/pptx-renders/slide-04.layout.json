@@ -1,0 +1,1049 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/val87ed8",
+    "id": "val87ed8",
+    "slide": 5,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1gvy90je",
+      "id": "1",
+      "name": "slide-panel-4",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qtcj6tov",
+      "id": "2",
+      "name": "s4-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "SOLUTION SCOPE",
+      "textPreview": "SOLUTION SCOPE",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SOLUTION SCOPE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SOLUTION SCOPE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "SOLUTION SCOPE",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/je9cvixc",
+      "id": "3",
+      "name": "s4-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Not a map. Not digital Excel. A planning engine.",
+      "textPreview": "Not a map. Not digital Excel. A planning engine.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Not a map. Not digital Excel. A planning engine."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Not a map. Not digital Excel. A planning engine.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Not a map. Not digital Excel. A planning engine.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87ed8bat",
+      "id": "4",
+      "name": "s4-body",
+      "bbox": [
+        78,
+        196,
+        1194,
+        60
+      ],
+      "geometry": "rect",
+      "text": "The product turns multiple evidence streams into one auditable operating plan, while keeping planned, observed, and recommended states separate.",
+      "textPreview": "The product turns multiple evidence streams into one auditable operating plan, while keeping planned, observed, and recommended states se...",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The product turns multiple evidence streams into one auditable operating plan, while keeping planned, observed,"
+          },
+          {
+            "index": 2,
+            "text": "and recommended states separate."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The product turns multiple evidence streams into one auditable operating plan, while keeping planned, observed, and recommended states separate.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The product turns multiple evidence streams into one auditable operating plan, while keeping planned, observed, and recommended states separate.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xs72x4na",
+      "id": "5",
+      "name": "s4-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q1orytsv",
+      "id": "6",
+      "name": "s4-input-panel",
+      "bbox": [
+        78,
+        311.6,
+        560,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fmlkjm1c",
+      "id": "7",
+      "name": "s4-in-eyebrow",
+      "bbox": [
+        102,
+        336,
+        512,
+        20
+      ],
+      "geometry": "rect",
+      "text": "INPUTS",
+      "textPreview": "INPUTS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "INPUTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "INPUTS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "INPUTS",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8jqh0fep",
+      "id": "8",
+      "name": "s4-inputs-body",
+      "bbox": [
+        102,
+        372,
+        512,
+        168
+      ],
+      "geometry": "rect",
+      "text": "OGV demand\nGrade + stockpile readiness\nFleet + jetty status\nTide / bridge / weather\nAIS + later GPS evidence",
+      "textPreview": "OGV demand | Grade + stockpile readiness | Fleet + jetty status | Tide / bridge / weather | AIS + later GPS evidence",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV demand"
+          },
+          {
+            "index": 2,
+            "text": "Grade + stockpile readiness"
+          },
+          {
+            "index": 3,
+            "text": "Fleet + jetty status"
+          },
+          {
+            "index": 4,
+            "text": "Tide / bridge / weather"
+          },
+          {
+            "index": 5,
+            "text": "AIS + later GPS evidence"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV demand",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV demand",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Grade + stockpile readiness",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Grade + stockpile readiness",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Fleet + jetty status",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fleet + jetty status",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "Tide / bridge / weather",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tide / bridge / weather",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "AIS + later GPS evidence",
+          "runs": [
+            {
+              "index": 1,
+              "text": "AIS + later GPS evidence",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x4nap4r6",
+      "id": "9",
+      "name": "s4-inputs-note",
+      "bbox": [
+        102,
+        708,
+        512,
+        30
+      ],
+      "geometry": "rect",
+      "text": "What the planner knows",
+      "textPreview": "What the planner knows",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What the planner knows"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What the planner knows",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What the planner knows",
+              "fontSize": 24,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1w7mp0bi",
+      "id": "10",
+      "name": "s4-engine-panel",
+      "bbox": [
+        666,
+        311.6,
+        588,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8bat47y1",
+      "id": "11",
+      "name": "s4-engine-eyebrow",
+      "bbox": [
+        694,
+        468,
+        532,
+        20
+      ],
+      "geometry": "rect",
+      "text": "CORE",
+      "textPreview": "CORE",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CORE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CORE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CORE",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jqh0fepk",
+      "id": "12",
+      "name": "s4-engine-title",
+      "bbox": [
+        694,
+        506,
+        532,
+        52
+      ],
+      "geometry": "rect",
+      "text": "Constraint-aware planning",
+      "textPreview": "Constraint-aware planning",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Constraint-aware planning"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Constraint-aware planning",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Constraint-aware planning",
+              "fontSize": 42,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/q5o7qpg3",
+      "id": "13",
+      "name": "s4-engine-body",
+      "bbox": [
+        694,
+        574,
+        532,
+        32
+      ],
+      "geometry": "rect",
+      "text": "Assign → validate → simulate → govern",
+      "textPreview": "Assign → validate → simulate → govern",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Assign → validate → simulate → govern"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Assign → validate → simulate → govern",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Assign → validate → simulate → govern",
+              "fontSize": 26,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/18jqh0fe",
+      "id": "14",
+      "name": "s4-output-panel",
+      "bbox": [
+        1282,
+        311.6,
+        560,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8nqxs72x",
+      "id": "15",
+      "name": "s4-out-eyebrow",
+      "bbox": [
+        1306,
+        336,
+        512,
+        20
+      ],
+      "geometry": "rect",
+      "text": "OUTPUTS",
+      "textPreview": "OUTPUTS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OUTPUTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OUTPUTS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OUTPUTS",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j2t83itg",
+      "id": "16",
+      "name": "s4-outputs-body",
+      "bbox": [
+        1306,
+        372,
+        512,
+        168
+      ],
+      "geometry": "rect",
+      "text": "Feasible schedule\nConflict list\nScenario comparison\nApproval chain\nPublished live plan",
+      "textPreview": "Feasible schedule | Conflict list | Scenario comparison | Approval chain | Published live plan",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 5,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Feasible schedule"
+          },
+          {
+            "index": 2,
+            "text": "Conflict list"
+          },
+          {
+            "index": 3,
+            "text": "Scenario comparison"
+          },
+          {
+            "index": 4,
+            "text": "Approval chain"
+          },
+          {
+            "index": 5,
+            "text": "Published live plan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Feasible schedule",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Feasible schedule",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Conflict list",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Conflict list",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Scenario comparison",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Scenario comparison",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "Approval chain",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Approval chain",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "Published live plan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Published live plan",
+              "fontSize": 28,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qh0fepkz",
+      "id": "17",
+      "name": "s4-outputs-note",
+      "bbox": [
+        1306,
+        708,
+        512,
+        30
+      ],
+      "geometry": "rect",
+      "text": "What the planner changes",
+      "textPreview": "What the planner changes",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What the planner changes"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What the planner changes",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What the planner changes",
+              "fontSize": 24,
+              "color": "#C8852C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cfa9w3m",
+      "id": "18",
+      "name": "s4-state-row",
+      "bbox": [
+        78,
+        788,
+        1764,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Planned  •  Observed  •  Confirmed  •  Derived  •  Recommended",
+      "textPreview": "Planned  •  Observed  •  Confirmed  •  Derived  •  Recommended",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Planned  •  Observed  •  Confirmed  •  Derived  •  Recommended"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Planned  •  Observed  •  Confirmed  •  Derived  •  Recommended",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Planned  •  Observed  •  Confirmed  •  Derived  •  Recommended",
+              "fontSize": 24,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/crmhk3q5",
+      "id": "19",
+      "name": "s4-bottom-panel",
+      "bbox": [
+        78,
+        842.4,
+        1764,
+        59.6
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfil0rqd",
+      "id": "20",
+      "name": "s4-bottom-note",
+      "bbox": [
+        100,
+        858,
+        1720,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Product surfaces: demand board  •  assignment board  •  tide / bridge windows  •  simulation  •  approvals  •  published plan",
+      "textPreview": "Product surfaces: demand board  •  assignment board  •  tide / bridge windows  •  simulation  •  approvals  •  published plan",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Product surfaces: demand board  •  assignment board  •  tide / bridge windows  •  simulation  •  approvals  •  published plan"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Product surfaces: demand board  •  assignment board  •  tide / bridge windows  •  simulation  •  approvals  •  published plan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Product surfaces: demand board  •  assignment board  •  tide / bridge windows  •  simulation  •  approvals  •  published plan",
+              "fontSize": 23,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/h0fepkzu",
+      "id": "21",
+      "name": "spacer-4",
+      "bbox": [
+        80,
+        928,
+        1768,
+        48
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/a9w3m94f",
+      "id": "22",
+      "name": "source-4",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Source: project planning scope and data architecture docs.",
+      "textPreview": "Source: project planning scope and data architecture docs.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project planning scope and data architecture docs."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project planning scope and data architecture docs.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project planning scope and data architecture docs.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zupwb2hw",
+      "id": "23",
+      "name": "page-4",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "04",
+      "textPreview": "04",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "04"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "04",
+          "runs": [
+            {
+              "index": 1,
+              "text": "04",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

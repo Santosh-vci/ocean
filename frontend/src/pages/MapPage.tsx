@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
+import { formatGridDateLabel } from "../lib/gridDate";
 import type { DashboardReadModel, SchedulingOverview } from "../types";
 
 type LiveResourceMapPageProps = {
@@ -138,7 +139,7 @@ export function LiveResourceMapPage({
           <div className="map-movement-log">
             <strong>Movement log</strong>
             <span>Manual state derived from current schedule assignments; no AIS/GPS dependency in Phase 1.</span>
-            <em>{dashboard?.generatedAt ? new Date(dashboard.generatedAt).toLocaleString() : "Waiting for read model"}</em>
+            <em>{dashboard?.generatedAt ? formatGridDateLabel(dashboard.generatedAt) : "Waiting for read model"}</em>
           </div>
         </section>
 

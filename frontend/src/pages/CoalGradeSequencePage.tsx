@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import type { CargoLayerStepRecord, PlanningOverview } from "../types";
 
@@ -18,13 +19,7 @@ function mt(value: number) {
 }
 
 function time(value: string | null) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
+  return <GridDate value={value} />;
 }
 
 function severity(step: CargoLayerStepRecord) {
@@ -149,7 +144,13 @@ export function CoalGradeSequencePage({
                     <td>{step.planned_jetty?.code ?? "-"}</td>
                     <td>{step.planned_cts?.code ?? "-"}</td>
                     <td>{step.chain_status || step.status.toUpperCase()}</td>
-                    <td>{time(step.planned_start)} → {time(step.planned_end)}</td>
+                    <td>
+                      <span className="grid-date-pair">
+                        {time(step.planned_start)}
+                        <span className="grid-date-separator">→</span>
+                        {time(step.planned_end)}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,6 @@
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import { formatGridDateLabel } from "../lib/gridDate";
 import type { AuditEvent, CurrentUser, DashboardKpi, DashboardReadModel } from "../types";
 
 type DashboardPageProps = {
@@ -26,12 +28,7 @@ function short(value: string | undefined | null) {
 }
 
 function timeLabel(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
+  return formatGridDateLabel(value);
 }
 
 export function DashboardPage({
@@ -242,7 +239,7 @@ export function DashboardPage({
             <h2>Recent audit</h2>
             {recentAudit.map((event) => (
               <p key={event.id}>
-                <span>{new Date(event.created_at).toLocaleTimeString()}</span>
+                <GridDate value={event.created_at} />
                 <strong>{event.action}</strong>
               </p>
             ))}

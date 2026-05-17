@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { GridDate } from "../components/GridDate";
 import type { AuditEvent } from "../types";
 
 type AuditPageProps = {
@@ -69,7 +70,7 @@ export function AuditPage({ events }: AuditPageProps) {
                   key={event.id}
                   onClick={() => setSelectedEventId(event.id)}
                 >
-                  <td>{new Date(event.created_at).toLocaleTimeString()}</td>
+                  <td><GridDate value={event.created_at} /></td>
                   <td>{event.actor?.email ?? "system"}</td>
                   <td>{event.action}</td>
                   <td>{event.object_repr || `${event.object_type}:${event.object_id}`}</td>
@@ -103,7 +104,7 @@ export function AuditPage({ events }: AuditPageProps) {
               <h2>Governance traceability</h2>
               <ol className="trace-list">
                 <li>
-                  <span>{new Date(selectedEvent.created_at).toLocaleTimeString()}</span>
+                  <GridDate value={selectedEvent.created_at} />
                   <strong>{selectedEvent.action}</strong>
                 </li>
                 <li>
@@ -128,4 +129,3 @@ export function AuditPage({ events }: AuditPageProps) {
     </section>
   );
 }
-

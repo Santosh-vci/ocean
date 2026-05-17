@@ -1,6 +1,8 @@
 import { Fragment, useState } from "react";
 
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import { formatGridDateLabel } from "../lib/gridDate";
 import type {
   ApprovalRequestRecord,
   ConflictRecord,
@@ -87,13 +89,7 @@ function short(value: string | null | undefined) {
 }
 
 function dt(value: string | null | undefined) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
+  return formatGridDateLabel(value, "-");
 }
 
 function num(value: unknown, fallback = 0) {
@@ -141,8 +137,28 @@ function projectionChanged(projection?: ScenarioTripProjectionRecord) {
       projection.delay_minutes
       || projection.projected_start !== projection.baseline_start
       || projection.projected_end !== projection.baseline_end
+      || projection.assignment_delta.resourceChanged
     ),
   );
+}
+
+function assignmentChain(
+  projection: ScenarioTripProjectionRecord | undefined,
+  trip: TripRecord,
+  variant: "baseline" | "projected",
+) {
+  const resources = projection?.assignment_delta[
+    variant === "baseline" ? "baselineResources" : "projectedResources"
+  ];
+  if (resources && typeof resources === "object") {
+    const values = resources as Record<string, string>;
+    return [values.tug, values.barge, values.cts].filter(Boolean).join(" / ");
+  }
+  return [
+    trip.assignment?.tug?.code ?? "NONE",
+    trip.assignment?.barge?.code ?? "NONE",
+    trip.assignment?.cts?.code ?? "NONE",
+  ].join(" / ");
 }
 
 function sourceAssumptionText(item?: ScenarioConstraintEvaluationRecord) {
@@ -371,7 +387,7 @@ export function ExceptionCenterPage({
                     onClick={() => setSelectedQueueItem({ id: conflict.id, kind: "conflict" })}
                   >
                     <td><span className={`status-chip ${statusTone(conflict.severity, conflict.is_blocking)}`}>{short(conflict.severity)}</span></td>
-                    <td>{dt(conflict.created_at)}</td>
+                    <td><GridDate value={conflict.created_at} /></td>
                     <td>EX-{String(conflict.id).padStart(4, "0")}</td>
                     <td>{conflict.code}</td>
                     <td>{conflict.vessel_name ?? "Network"}</td>
@@ -388,7 +404,7 @@ export function ExceptionCenterPage({
                     onClick={() => setSelectedQueueItem({ id: override.id, kind: "override" })}
                   >
                     <td><span className="status-chip pending">OVERRIDE</span></td>
-                    <td>{dt(override.created_at)}</td>
+                    <td><GridDate value={override.created_at} /></td>
                     <td>OR-{String(override.id).padStart(4, "0")}</td>
                     <td>{short(override.reason_code)}</td>
                     <td>{override.vessel_name ?? "Network"}</td>
@@ -442,10 +458,10 @@ export function ExceptionCenterPage({
               <dl>
                 <div><dt>Actor</dt><dd>{selectedOverride.applied_by_email ?? selectedOverride.requested_by_email ?? "system"}</dd></div>
                 <div><dt>Trip</dt><dd>{selectedOverride.trip_ref ?? selectedOverride.vessel_name ?? "Network"}</dd></div>
-                <div><dt>Applied</dt><dd>{dt(selectedOverride.applied_at ?? selectedOverride.created_at)}</dd></div>
+                <div><dt>Applied</dt><dd><GridDate value={selectedOverride.applied_at ?? selectedOverride.created_at} /></dd></div>
                 <div><dt>Risk</dt><dd>{short(selectedImpactAssessment?.status ?? "not_calculated")}</dd></div>
                 <div><dt>Delay</dt><dd>{selectedImpactAssessment ? `+${selectedImpactAssessment.delay_minutes}m` : "Impact not calculated"}</dd></div>
-                <div><dt>Eff. start</dt><dd>{dt(String(selectedImpactAssessment?.metadata.actualStartAt ?? ""))}</dd></div>
+                <div><dt>Eff. start</dt><dd><GridDate value={String(selectedImpactAssessment?.metadata.actualStartAt ?? "")} /></dd></div>
                 <div><dt>Before</dt><dd>{selectedOverrideDelta.before}</dd></div>
                 <div><dt>After</dt><dd>{selectedOverrideDelta.after}</dd></div>
               </dl>
@@ -934,15 +950,23 @@ export function SimulationWorkspacePage({
                     <td><strong>{trip.voyage.vessel_name}</strong><br />{trip.cargo_layer_step?.coal_grade.code ?? "-"}</td>
                     <td>
                       {trip.origin_jetty?.code ?? "UNASSIGNED"}<br />
-                      {trip.assignment?.tug?.code ?? "NONE"} / {trip.assignment?.barge?.code ?? "NONE"} / {trip.assignment?.cts?.code ?? "NONE"}
+                      {assignmentChain(projection, trip, "baseline")}
+                      {projection?.assignment_delta.resourceChanged ? (
+                        <>
+                          <br />
+                          <span className="warning-text">
+                            {"-> "}{assignmentChain(projection, trip, "projected")}
+                          </span>
+                        </>
+                      ) : null}
                     </td>
-                    <td>{dt(trip.planned_start)}</td>
+                    <td><GridDate value={trip.planned_start} /></td>
                     <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
-                      {dt(projection?.projected_start ?? trip.planned_start)}
+                      <GridDate value={projection?.projected_start ?? trip.planned_start} />
                     </td>
-                    <td>{dt(trip.planned_end)}</td>
+                    <td><GridDate value={trip.planned_end} /></td>
                     <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
-                      {dt(projection?.projected_end ?? trip.planned_end)}
+                      <GridDate value={projection?.projected_end ?? trip.planned_end} />
                     </td>
                     <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
                       {signedMinutes(projection?.delay_minutes ?? 0)}
@@ -1231,7 +1255,7 @@ export function ApprovalsPublishingPage({
                   return (
                     <tr className={request?.id === item.id ? "selected-row" : ""} key={item.id}>
                       <td><span className={`status-chip ${statusTone(item.status)}`}>{short(item.status)}</span></td>
-                      <td>{dt(item.created_at)}</td>
+                      <td><GridDate value={item.created_at} /></td>
                       <td>{item.request_id}</td>
                       <td>{item.plan_version_ref}</td>
                       <td>{item.reason}</td>

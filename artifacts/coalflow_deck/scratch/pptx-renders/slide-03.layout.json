@@ -1,0 +1,1431 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/s72x4nap",
+    "id": "s72x4nap",
+    "slide": 4,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vmtwra5g",
+      "id": "1",
+      "name": "slide-panel-3",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o7qpg3ex",
+      "id": "2",
+      "name": "s3-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "OPERATING MODEL",
+      "textPreview": "OPERATING MODEL",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OPERATING MODEL"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OPERATING MODEL",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OPERATING MODEL",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dsji5sne",
+      "id": "3",
+      "name": "s3-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "The network has two clocks.",
+      "textPreview": "The network has two clocks.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The network has two clocks."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The network has two clocks.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The network has two clocks.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "4",
+      "name": "s3-body",
+      "bbox": [
+        78,
+        196,
+        1066,
+        60
+      ],
+      "geometry": "rect",
+      "text": "Demand wants certainty. Fleet operations live inside constraints. The tool exists to make those two clocks agree.",
+      "textPreview": "Demand wants certainty. Fleet operations live inside constraints. The tool exists to make those two clocks agree.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Demand wants certainty. Fleet operations live inside constraints. The tool exists to make those two clocks"
+          },
+          {
+            "index": 2,
+            "text": "agree."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Demand wants certainty. Fleet operations live inside constraints. The tool exists to make those two clocks agree.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Demand wants certainty. Fleet operations live inside constraints. The tool exists to make those two clocks agree.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vy90je9c",
+      "id": "5",
+      "name": "s3-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oj2t83it",
+      "id": "6",
+      "name": "s3-demand-panel",
+      "bbox": [
+        78,
+        311.6,
+        790.83,
+        500
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d4vmtwra",
+      "id": "7",
+      "name": "chip-s3a",
+      "bbox": [
+        106,
+        335.6,
+        129.65,
+        63.2
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#0E6B83"
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcrmhk3",
+      "id": "8",
+      "name": "chip-label-s3a",
+      "bbox": [
+        122,
+        346,
+        98,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Demand side",
+      "textPreview": "Demand side",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Demand side"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Demand side",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Demand side",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z25kb6xk",
+      "id": "9",
+      "name": "s3-demand-title",
+      "bbox": [
+        106,
+        414,
+        734,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Berau commercial + scheduling",
+      "textPreview": "Berau commercial + scheduling",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Berau commercial + scheduling"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Berau commercial + scheduling",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Berau commercial + scheduling",
+              "fontSize": 32,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vy90je9c",
+      "id": "10",
+      "name": "metric-value-s3d1",
+      "bbox": [
+        106,
+        470,
+        356,
+        66
+      ],
+      "geometry": "rect",
+      "text": "35.9 Mt",
+      "textPreview": "35.9 Mt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "35.9 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "35.9 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "35.9 Mt",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6dcbulwv",
+      "id": "11",
+      "name": "metric-label-s3d1",
+      "bbox": [
+        106,
+        544,
+        356,
+        22
+      ],
+      "geometry": "rect",
+      "text": "2024 output",
+      "textPreview": "2024 output",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2024 output"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2024 output",
+          "runs": [
+            {
+              "index": 1,
+              "text": "2024 output",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d4vmtwra",
+      "id": "12",
+      "name": "metric-value-s3d2",
+      "bbox": [
+        486,
+        470,
+        356,
+        66
+      ],
+      "geometry": "rect",
+      "text": "≈3.0 Mt",
+      "textPreview": "≈3.0 Mt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈3.0 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈3.0 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈3.0 Mt",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oj2t83it",
+      "id": "13",
+      "name": "metric-label-s3d2",
+      "bbox": [
+        486,
+        544,
+        356,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Monthly flow",
+      "textPreview": "Monthly flow",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Monthly flow"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Monthly flow",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Monthly flow",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vmtwra5g",
+      "id": "14",
+      "name": "s3-demand-body",
+      "bbox": [
+        106,
+        582,
+        734,
+        116
+      ],
+      "geometry": "rect",
+      "text": "OGV voyages and laycan\nCoal grade + layer sequence\nCustomer commitments\nStockpile / jetty readiness",
+      "textPreview": "OGV voyages and laycan | Coal grade + layer sequence | Customer commitments | Stockpile / jetty readiness",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV voyages and laycan"
+          },
+          {
+            "index": 2,
+            "text": "Coal grade + layer sequence"
+          },
+          {
+            "index": 3,
+            "text": "Customer commitments"
+          },
+          {
+            "index": 4,
+            "text": "Stockpile / jetty readiness"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV voyages and laycan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV voyages and laycan",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Coal grade + layer sequence",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Coal grade + layer sequence",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Customer commitments",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Customer commitments",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "Stockpile / jetty readiness",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Stockpile / jetty readiness",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/61032lsz",
+      "id": "15",
+      "name": "s3-arrow",
+      "bbox": [
+        912,
+        458,
+        96,
+        88
+      ],
+      "geometry": "rect",
+      "text": "↔",
+      "textPreview": "↔",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "↔"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "↔",
+          "runs": [
+            {
+              "index": 1,
+              "text": "↔",
+              "fontSize": 72,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dsji5sne",
+      "id": "16",
+      "name": "s3-middle-label",
+      "bbox": [
+        888,
+        560,
+        144,
+        106
+      ],
+      "geometry": "rect",
+      "text": "Shared constraints\nshape every decision",
+      "textPreview": "Shared constraints | shape every decision",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Shared"
+          },
+          {
+            "index": 2,
+            "text": "constraints"
+          },
+          {
+            "index": 3,
+            "text": "shape every"
+          },
+          {
+            "index": 4,
+            "text": "decision"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Shared constraints",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Shared constraints",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "shape every decision",
+          "runs": [
+            {
+              "index": 1,
+              "text": "shape every decision",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o7qpg3ex",
+      "id": "17",
+      "name": "s3-fleet-panel",
+      "bbox": [
+        1051.17,
+        311.6,
+        790.83,
+        500
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vahoza1g",
+      "id": "18",
+      "name": "chip-s3b",
+      "bbox": [
+        1079.17,
+        335.6,
+        103.31,
+        41.6
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#2F8C73"
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6tovahoz",
+      "id": "19",
+      "name": "chip-label-s3b",
+      "bbox": [
+        1096,
+        346,
+        72,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Fleet side",
+      "textPreview": "Fleet side",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Fleet side"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Fleet side",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Fleet side",
+              "fontSize": 18,
+              "color": "#FFFFFF",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/epkzupwb",
+      "id": "20",
+      "name": "s3-fleet-title",
+      "bbox": [
+        1080,
+        394,
+        734,
+        40
+      ],
+      "geometry": "rect",
+      "text": "ABL dispatch + operations",
+      "textPreview": "ABL dispatch + operations",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ABL dispatch + operations"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ABL dispatch + operations",
+          "runs": [
+            {
+              "index": 1,
+              "text": "ABL dispatch + operations",
+              "fontSize": 32,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7adsji5s",
+      "id": "21",
+      "name": "metric-value-s3f1",
+      "bbox": [
+        1080,
+        448,
+        232,
+        66
+      ],
+      "geometry": "rect",
+      "text": "15",
+      "textPreview": "15",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "15"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "15",
+          "runs": [
+            {
+              "index": 1,
+              "text": "15",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wval87ed",
+      "id": "22",
+      "name": "metric-label-s3f1",
+      "bbox": [
+        1080,
+        522,
+        232,
+        22
+      ],
+      "geometry": "rect",
+      "text": "CTS",
+      "textPreview": "CTS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CTS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CTS",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CTS",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pg3ex0nu",
+      "id": "23",
+      "name": "metric-value-s3f2",
+      "bbox": [
+        1330,
+        448,
+        232,
+        66
+      ],
+      "geometry": "rect",
+      "text": "61",
+      "textPreview": "61",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "61"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "61",
+          "runs": [
+            {
+              "index": 1,
+              "text": "61",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e1w7mp0b",
+      "id": "24",
+      "name": "metric-label-s3f2",
+      "bbox": [
+        1330,
+        522,
+        232,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Tug + barge",
+      "textPreview": "Tug + barge",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tug + barge"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tug + barge",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tug + barge",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mp0bi9s",
+      "id": "25",
+      "name": "metric-value-s3f3",
+      "bbox": [
+        1582,
+        448,
+        232,
+        66
+      ],
+      "geometry": "rect",
+      "text": "11",
+      "textPreview": "11",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "11"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "11",
+          "runs": [
+            {
+              "index": 1,
+              "text": "11",
+              "fontSize": 54,
+              "color": "#B9654A",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7mp0bi9",
+      "id": "26",
+      "name": "metric-label-s3f3",
+      "bbox": [
+        1582,
+        522,
+        232,
+        22
+      ],
+      "geometry": "rect",
+      "text": "OGV",
+      "textPreview": "OGV",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "27",
+      "name": "s3-fleet-body",
+      "bbox": [
+        1080,
+        560,
+        734,
+        116
+      ],
+      "geometry": "rect",
+      "text": "Asset availability\nCTS / floating-crane capacity\nJetty queue + loading rate\nRiver movement + return cycle",
+      "textPreview": "Asset availability | CTS / floating-crane capacity | Jetty queue + loading rate | River movement + return cycle",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Asset availability"
+          },
+          {
+            "index": 2,
+            "text": "CTS / floating-crane capacity"
+          },
+          {
+            "index": 3,
+            "text": "Jetty queue + loading rate"
+          },
+          {
+            "index": 4,
+            "text": "River movement + return cycle"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Asset availability",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Asset availability",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "CTS / floating-crane capacity",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CTS / floating-crane capacity",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Jetty queue + loading rate",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Jetty queue + loading rate",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "River movement + return cycle",
+          "runs": [
+            {
+              "index": 1,
+              "text": "River movement + return cycle",
+              "fontSize": 24,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ed8bat47",
+      "id": "28",
+      "name": "s3-bottom-panel",
+      "bbox": [
+        78,
+        837.6,
+        1764,
+        60.8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7u54zido",
+      "id": "29",
+      "name": "s3-bottom",
+      "bbox": [
+        98,
+        854,
+        1724,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Shared constraints: tide  •  bridge  •  weather  •  compatibility  •  safety  •  demurrage",
+      "textPreview": "Shared constraints: tide  •  bridge  •  weather  •  compatibility  •  safety  •  demurrage",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Shared constraints: tide  •  bridge  •  weather  •  compatibility  •  safety  •  demurrage"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Shared constraints: tide  •  bridge  •  weather  •  compatibility  •  safety  •  demurrage",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Shared constraints: tide  •  bridge  •  weather  •  compatibility  •  safety  •  demurrage",
+              "fontSize": 24,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/twra5gbq",
+      "id": "30",
+      "name": "spacer-3",
+      "bbox": [
+        80,
+        928,
+        1768,
+        48
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4byhgn29",
+      "id": "31",
+      "name": "source-3",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Sources: project docs; ABL official site.",
+      "textPreview": "Sources: project docs; ABL official site.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sources: project docs; ABL official site."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sources: project docs; ABL official site.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sources: project docs; ABL official site.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bq1oryts",
+      "id": "32",
+      "name": "page-3",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

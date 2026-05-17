@@ -1494,8 +1494,20 @@ tbody tr:hover,
   background:
     linear-gradient(180deg, rgba(19, 27, 46, 0.98), rgba(11, 19, 38, 0.96)),
     var(--surface-low);
-  padding: 0.45rem 1rem 0.55rem;
+  padding: 0.32rem 1rem 0.38rem;
   backdrop-filter: blur(14px);
+}
+
+.workspace-page > .page-heading p {
+  margin: 0;
+  line-height: 0.78rem;
+}
+
+.workspace-page > .page-heading h1 {
+  margin: 0.08rem 0 0;
+  font-size: 1.08rem;
+  line-height: 1.22rem;
+  letter-spacing: -0.01em;
 }
 
 .grid-header {
@@ -1662,6 +1674,28 @@ tbody tr:hover,
   white-space: nowrap;
 }
 
+/* Core frontend rule: table headers wrap to the available column width. */
+.master-table thead th,
+.planning-table thead th,
+.master-grid-scroll thead th,
+.grid-scroll thead th {
+  height: auto;
+  min-width: 5.4rem;
+  min-height: 1.8rem;
+  overflow-wrap: break-word;
+  vertical-align: middle;
+  white-space: normal;
+  word-break: normal;
+  line-height: 1.12;
+}
+
+.master-table thead th:first-child,
+.planning-table thead th:first-child,
+.master-grid-scroll thead th:first-child,
+.grid-scroll thead th:first-child {
+  min-width: 2.25rem;
+}
+
 .planning-table td {
   color: var(--on-surface-variant);
   font-family: "JetBrains Mono", Consolas, monospace;
@@ -1671,6 +1705,45 @@ tbody tr:hover,
 .planning-table td strong {
   color: var(--on-surface);
   font-size: 0.68rem;
+}
+
+.grid-date {
+  display: inline-grid;
+  grid-template-rows: auto auto;
+  gap: 0.02rem;
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 850;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.grid-date em {
+  color: var(--on-surface-variant);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.grid-date.is-empty {
+  color: var(--on-surface-variant);
+}
+
+.grid-date-pair,
+.grid-date-stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.grid-date-stack {
+  align-items: flex-start;
+}
+
+.grid-date-separator {
+  color: var(--border-strong);
+  font-weight: 900;
 }
 
 .demand-table td:nth-child(12),

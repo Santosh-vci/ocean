@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import ValidationError
 
-from apps.masters.models import AssetCompatibilityRule, Jetty, Location, Tug
+from apps.masters.models import AssetCompatibilityRule, Barge, Jetty, Location, Tug
 from apps.planning.models import (
     AssetAvailabilityWindow,
     BridgeWindow,
@@ -33,7 +33,6 @@ from .models import (
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
-    ScheduleEvent,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -41,6 +40,7 @@ from .models import (
     ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
+    ScheduleEvent,
     SimulationScenario,
     Trip,
 )
@@ -239,7 +239,9 @@ def calculate_override_impact_chain(
     actual_start_at,
 ) -> ImpactChainAssessment:
     if override.trip is None or override.assignment is None:
-        raise ValidationError("Impact chain assessment requires an override with a trip assignment.")
+        raise ValidationError(
+            "Impact chain assessment requires an override with a trip assignment."
+        )
 
     trip = override.trip
     assignment = override.assignment
@@ -444,7 +446,10 @@ def _evaluate_window_set(*, kind: str, projected_at, windows) -> dict:
                 if margin_minutes < 30 or restricted or tight
                 else ImpactChainAssessment.Status.OK
             )
-            label = f"{kind.upper()} WINDOW {'TIGHT' if status == ImpactChainAssessment.Status.WARNING else 'OK'}"
+            label = (
+                f"{kind.upper()} WINDOW "
+                f"{'TIGHT' if status == ImpactChainAssessment.Status.WARNING else 'OK'}"
+            )
             return {
                 "kind": kind,
                 "label": label,
@@ -604,7 +609,11 @@ def submit_approval_request(
         if not created:
             approval_request.plan_version = plan_version
             approval_request.required_authorities = REQUIRED_APPROVAL_AUTHORITIES
-            approval_request.reason = reason or approval_request.reason or "Plan lifecycle approval requested."
+            approval_request.reason = (
+                reason
+                or approval_request.reason
+                or "Plan lifecycle approval requested."
+            )
             approval_request.requested_by = actor
 
             if approval_request.status not in {
@@ -874,6 +883,13 @@ def create_scenario_assumption(
     _assert_scenario_inputs_mutable(scenario)
     normalized_payload = payload or {}
     _validate_scenario_assumption_payload(kind=kind, payload=normalized_payload)
+    _validate_scenario_assumption_scope(
+        scenario=scenario,
+        kind=kind,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        payload=normalized_payload,
+    )
 
     assumption_sequence = scenario.assumptions.count() + 1
     assumption = ScenarioAssumption.objects.create(
@@ -968,6 +984,7 @@ def calculate_scenario_run_projections(*, run: ScenarioRun) -> dict:
         states=states,
         assumptions=assumptions,
     )
+    _rebuild_projected_resource_edges(states=states, edges=edges)
     _propagate_projection_graph(states=states, edges=edges)
 
     ScenarioTripProjection.objects.filter(run=run).delete()
@@ -1086,9 +1103,66 @@ def _validate_scenario_assumption_payload(*, kind: str, payload: dict) -> None:
             )
     if kind == ScenarioAssumption.Kind.RATE_CHANGE:
         rate_tph = payload.get("rate_tph")
-        if not isinstance(rate_tph, (int, float)) or rate_tph <= 0:
+        if not isinstance(rate_tph, int | float) or rate_tph <= 0:
             raise ValidationError(
                 {"payload": {"rate_tph": "Rate TPH must be a positive number."}}
+            )
+    if kind == ScenarioAssumption.Kind.OGV_ETA_CHANGE:
+        eta = payload.get("eta")
+        if not isinstance(eta, str) or parse_datetime(eta) is None:
+            raise ValidationError({"payload": {"eta": "ETA must be a valid datetime string."}})
+    if kind == ScenarioAssumption.Kind.MANUAL_REASSIGNMENT:
+        tug_code = str(payload.get("tug_code", "")).strip()
+        barge_code = str(payload.get("barge_code", "")).strip()
+        if not tug_code and not barge_code:
+            raise ValidationError(
+                {"payload": "Manual reassignment requires a tug_code or barge_code."}
+            )
+        if tug_code and not Tug.objects.filter(code=tug_code).exists():
+            raise ValidationError({"payload": {"tug_code": "Unknown tug code."}})
+        if barge_code and not Barge.objects.filter(code=barge_code).exists():
+            raise ValidationError({"payload": {"barge_code": "Unknown barge code."}})
+
+
+def _validate_scenario_assumption_scope(
+    *,
+    scenario: SimulationScenario,
+    kind: str,
+    scope_type: str,
+    scope_id: int | None,
+    payload: dict,
+) -> None:
+    baseline = scenario.baseline_version
+    if kind == ScenarioAssumption.Kind.TRIP_DELAY:
+        if (
+            scope_type != ScenarioAssumption.ScopeType.TRIP
+            or scope_id is None
+            or not baseline.trips.filter(id=scope_id).exists()
+        ):
+            raise ValidationError({"scope_id": "Trip must belong to the scenario baseline."})
+        return
+
+    if kind == ScenarioAssumption.Kind.OGV_ETA_CHANGE:
+        if (
+            scope_type != ScenarioAssumption.ScopeType.OGV
+            or scope_id is None
+            or not baseline.trips.filter(voyage_id=scope_id).exists()
+        ):
+            raise ValidationError({"scope_id": "OGV must belong to the scenario baseline."})
+        return
+
+    if kind == ScenarioAssumption.Kind.MANUAL_REASSIGNMENT:
+        assignment_id = payload.get("assignment_id")
+        if (
+            scope_type != ScenarioAssumption.ScopeType.ASSIGNMENT
+            or scope_id != assignment_id
+            or not Assignment.objects.filter(
+                id=assignment_id,
+                trip__plan_version=baseline,
+            ).exists()
+        ):
+            raise ValidationError(
+                {"scope_id": "Assignment must belong to the scenario baseline."}
             )
 
 
@@ -1137,6 +1211,8 @@ def _build_baseline_schedule_graph(plan_version: PlanVersion):
         states[trip.id] = {
             "trip": trip,
             "assignment": assignment,
+            "baseline_resource_codes": _assignment_resource_code_map(assignment),
+            "projected_resource_codes": _assignment_resource_code_map(assignment),
             "baseline_start": trip.planned_start,
             "baseline_end": trip.planned_end,
             "projected_start": trip.planned_start,
@@ -1187,6 +1263,14 @@ def _assignment_resource_codes(assignment: Assignment | None) -> list[tuple[str,
     return [(kind, code) for kind, code in resources if code]
 
 
+def _assignment_resource_code_map(assignment: Assignment | None) -> dict[str, str]:
+    return dict(_assignment_resource_codes(assignment))
+
+
+def _resource_code_items(resource_codes: dict[str, str]) -> list[tuple[str, str]]:
+    return [(kind, code) for kind, code in resource_codes.items() if code]
+
+
 def _apply_scenario_assumptions(*, states: dict, assumptions: list[ScenarioAssumption]) -> dict:
     window_overrides = {}
     for assumption in assumptions:
@@ -1226,7 +1310,123 @@ def _apply_scenario_assumptions(*, states: dict, assumptions: list[ScenarioAssum
                 "window_end": assumption.effective_to,
                 "assumption_id": assumption.assumption_id,
             }
+            continue
+
+        if assumption.kind == ScenarioAssumption.Kind.OGV_ETA_CHANGE:
+            _apply_ogv_eta_change_assumption(
+                states=states,
+                assumption=assumption,
+            )
+            continue
+
+        if assumption.kind == ScenarioAssumption.Kind.MANUAL_REASSIGNMENT:
+            _apply_manual_reassignment_assumption(
+                states=states,
+                assumption=assumption,
+            )
     return window_overrides
+
+
+def _apply_ogv_eta_change_assumption(*, states: dict, assumption: ScenarioAssumption) -> None:
+    projected_eta = parse_datetime(str(assumption.payload["eta"]))
+    if projected_eta is None or assumption.scope_id is None:
+        return
+    if timezone.is_naive(projected_eta):
+        projected_eta = timezone.make_aware(projected_eta)
+
+    voyage_states = [
+        state for state in states.values() if state["trip"].voyage_id == assumption.scope_id
+    ]
+    if not voyage_states:
+        return
+
+    first_state = min(
+        voyage_states,
+        key=lambda state: (state["trip"].sequence, state["trip"].trip_id),
+    )
+    eta_delay_minutes = max(
+        0,
+        _ceil_minutes(projected_eta - first_state["trip"].voyage.eta),
+    )
+    first_state["direct_shift_minutes"] = max(
+        first_state["direct_shift_minutes"],
+        eta_delay_minutes,
+    )
+    _record_assumption_effect(
+        state=first_state,
+        assumption=assumption,
+        effect={
+            "baselineEta": first_state["trip"].voyage.eta.isoformat(),
+            "projectedEta": projected_eta.isoformat(),
+            "delayMinutes": eta_delay_minutes,
+        },
+    )
+
+
+def _apply_manual_reassignment_assumption(
+    *,
+    states: dict,
+    assumption: ScenarioAssumption,
+) -> None:
+    assignment_id = assumption.payload["assignment_id"]
+    state = next(
+        (
+            candidate
+            for candidate in states.values()
+            if candidate["assignment"] and candidate["assignment"].id == assignment_id
+        ),
+        None,
+    )
+    if state is None:
+        return
+
+    projected_resources = dict(state["projected_resource_codes"])
+    replacement_resources = {}
+    tug_code = str(assumption.payload.get("tug_code", "")).strip()
+    barge_code = str(assumption.payload.get("barge_code", "")).strip()
+    if tug_code:
+        projected_resources["tug"] = tug_code
+        replacement_resources["tug"] = tug_code
+    if barge_code:
+        projected_resources["barge"] = barge_code
+        replacement_resources["barge"] = barge_code
+
+    state["projected_resource_codes"] = projected_resources
+    _record_assumption_effect(
+        state=state,
+        assumption=assumption,
+        effect={
+            "baselineResources": state["baseline_resource_codes"],
+            "projectedResources": projected_resources,
+            "replacementResources": replacement_resources,
+        },
+    )
+
+
+def _rebuild_projected_resource_edges(*, states: dict, edges: dict) -> None:
+    for trip_id, trip_edges in edges.items():
+        edges[trip_id] = [
+            edge for edge in trip_edges if edge["kind"] == "cargo_layer"
+        ]
+
+    last_resource_trip = {}
+    ordered_states = sorted(
+        states.values(),
+        key=lambda state: (state["trip"].sequence, state["trip"].trip_id),
+    )
+    for state in ordered_states:
+        for resource_kind, resource_code in _resource_code_items(
+            state["projected_resource_codes"]
+        ):
+            predecessor_id = last_resource_trip.get((resource_kind, resource_code))
+            if predecessor_id:
+                edges[state["trip"].id].append(
+                    {
+                        "from": predecessor_id,
+                        "kind": resource_kind,
+                    }
+                )
+            last_resource_trip[(resource_kind, resource_code)] = state["trip"].id
 
 
 def _apply_asset_outage_assumption(*, states: dict, assumption: ScenarioAssumption) -> None:
@@ -1454,6 +1654,11 @@ def _persist_projection_state(*, run: ScenarioRun, state: dict):
             "projectedArrival": (
                 arrival.projected_at.isoformat() if arrival else None
             ),
+            "baselineResources": state["baseline_resource_codes"],
+            "projectedResources": state["projected_resource_codes"],
+            "resourceChanged": (
+                state["baseline_resource_codes"] != state["projected_resource_codes"]
+            ),
         }
 
     trip_projection = ScenarioTripProjection.objects.create(
@@ -1472,6 +1677,8 @@ def _persist_projection_state(*, run: ScenarioRun, state: dict):
             "assumptionEffects": state["assumption_effects"],
             "loadDurationDeltaMinutes": state["load_duration_delta_minutes"],
             "dischargeDurationDeltaMinutes": state["discharge_duration_delta_minutes"],
+            "baselineResourceCodes": state["baseline_resource_codes"],
+            "projectedResourceCodes": state["projected_resource_codes"],
         },
     )
     return trip_projection, event_projections
@@ -1632,7 +1839,19 @@ def _materialize_scenario_kpis(
         )
     )
     constraint_evaluations.extend(
+        _persist_asset_outage_constraint_evaluations(
+            run=run,
+            trip_projections=trip_projections,
+        )
+    )
+    constraint_evaluations.extend(
         _persist_resource_overlap_constraints(
+            run=run,
+            trip_projections=trip_projections,
+        )
+    )
+    constraint_evaluations.extend(
+        _persist_projected_assignment_constraint_evaluations(
             run=run,
             trip_projections=trip_projections,
         )
@@ -1820,13 +2039,16 @@ def _persist_resource_utilizations(
 ) -> list[ScenarioResourceUtilization]:
     horizon_minutes = max(
         1,
-        _ceil_minutes(run.baseline_version.plan.horizon_end - run.baseline_version.plan.horizon_start),
+        _ceil_minutes(
+            run.baseline_version.plan.horizon_end
+            - run.baseline_version.plan.horizon_start
+        ),
     )
     buckets: dict[tuple[str, str], dict] = {}
     for projection in trip_projections:
-        for resource_type, resource_code in _assignment_resource_codes(
-            getattr(projection.trip, "assignment", None)
-        ):
+        baseline_resources = projection.metadata.get("baselineResourceCodes", {})
+        projected_resources = projection.metadata.get("projectedResourceCodes", {})
+        for resource_type, resource_code in _resource_code_items(baseline_resources):
             bucket = buckets.setdefault(
                 (resource_type, resource_code),
                 {
@@ -1840,12 +2062,25 @@ def _persist_resource_utilizations(
                 0,
                 _ceil_minutes(projection.baseline_end - projection.baseline_start),
             )
+            bucket["trips"].append(projection.trip.trip_id)
+
+        for resource_type, resource_code in _resource_code_items(projected_resources):
+            bucket = buckets.setdefault(
+                (resource_type, resource_code),
+                {
+                    "baseline": 0,
+                    "projected": 0,
+                    "waiting": 0,
+                    "trips": [],
+                },
+            )
             bucket["projected"] += max(
                 0,
                 _ceil_minutes(projection.projected_end - projection.projected_start),
             )
             bucket["waiting"] += max(0, projection.delay_minutes)
-            bucket["trips"].append(projection.trip.trip_id)
+            if projection.trip.trip_id not in bucket["trips"]:
+                bucket["trips"].append(projection.trip.trip_id)
 
     rows = []
     for (resource_type, resource_code), bucket in buckets.items():
@@ -1945,8 +2180,8 @@ def _persist_resource_overlap_constraints(
 ) -> list[ScenarioConstraintEvaluation]:
     intervals: dict[tuple[str, str], list[tuple]] = {}
     for projection in trip_projections:
-        for resource_type, resource_code in _assignment_resource_codes(
-            getattr(projection.trip, "assignment", None)
+        for resource_type, resource_code in _resource_code_items(
+            projection.metadata.get("projectedResourceCodes", {})
         ):
             intervals.setdefault((resource_type, resource_code), []).append(
                 (projection.projected_start, projection.projected_end, projection)
@@ -1998,6 +2233,86 @@ def _persist_resource_overlap_constraints(
     return evaluations
 
 
+def _persist_asset_outage_constraint_evaluations(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+) -> list[ScenarioConstraintEvaluation]:
+    evaluations = []
+    outage_index = 1
+    for projection in trip_projections:
+        for effect in projection.metadata.get("assumptionEffects", []):
+            if effect.get("kind") != ScenarioAssumption.Kind.ASSET_OUTAGE:
+                continue
+            evaluations.append(
+                ScenarioConstraintEvaluation.objects.create(
+                    run=run,
+                    evaluation_id=f"SCE-{run.run_id}-OUTAGE-{outage_index:03d}",
+                    trip=projection.trip,
+                    code="ASSET_OUTAGE_OVERLAP",
+                    severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+                    affected_object_type="asset",
+                    affected_object_id=effect.get("assetCode", ""),
+                    baseline_value={
+                        "effectiveFrom": effect.get("effectiveFrom"),
+                        "effectiveTo": effect.get("effectiveTo"),
+                    },
+                    projected_value={
+                        "delayMinutes": effect.get("delayMinutes", 0),
+                    },
+                    margin_minutes=-effect.get("delayMinutes", 0),
+                    source_assumption_ids=[effect.get("assumptionId", "")],
+                    message=(
+                        f"{effect.get('assetCode', 'Asset')} is unavailable inside "
+                        f"{projection.trip.trip_id}."
+                    ),
+                    metadata={"tripProjectionId": projection.id},
+                )
+            )
+            outage_index += 1
+    return evaluations
+
+
+def _persist_projected_assignment_constraint_evaluations(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+) -> list[ScenarioConstraintEvaluation]:
+    evaluations = []
+    for index, projection in enumerate(trip_projections, start=1):
+        projected_resources = projection.metadata.get("projectedResourceCodes", {})
+        tug_code = projected_resources.get("tug", "")
+        barge_code = projected_resources.get("barge", "")
+        if not tug_code or not barge_code:
+            continue
+        incompatible = AssetCompatibilityRule.objects.filter(
+            rule_type="tug_barge",
+            left_code=tug_code,
+            right_code=barge_code,
+            is_compatible=False,
+        ).exists()
+        if not incompatible:
+            continue
+        evaluations.append(
+            ScenarioConstraintEvaluation.objects.create(
+                run=run,
+                evaluation_id=f"SCE-{run.run_id}-ASSIGNMENT-{index:03d}",
+                trip=projection.trip,
+                code="TUG_BARGE_INCOMPATIBLE",
+                severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+                affected_object_type="assignment",
+                affected_object_id=projection.trip.trip_id,
+                baseline_value=projection.metadata.get("baselineResourceCodes", {}),
+                projected_value=projected_resources,
+                margin_minutes=None,
+                source_assumption_ids=projection.metadata.get("sourceAssumptionIds", []),
+                message=f"{tug_code} is incompatible with {barge_code}.",
+                metadata={"tripProjectionId": projection.id},
+            )
+        )
+    return evaluations
+
+
 def _scenario_projection_summary(
     *,
     run: ScenarioRun,
@@ -2022,7 +2337,11 @@ def _scenario_projection_summary(
         if override and override.trip
         else ""
     )
-    changed_trips = [projection for projection in trip_projections if projection.delay_minutes]
+    changed_trips = [
+        projection
+        for projection in trip_projections
+        if projection.delay_minutes or projection.assignment_delta.get("resourceChanged")
+    ]
     critical_count = kpis["constraintSummary"]["critical"]
     warning_count = kpis["constraintSummary"]["warning"]
     max_delay = max((projection.delay_minutes for projection in trip_projections), default=0)

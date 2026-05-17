@@ -1,0 +1,1349 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/2x4nap4r",
+    "id": "2x4nap4r",
+    "slide": 2,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nap4r65w",
+      "id": "1",
+      "name": "slide-panel-1",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cvixczed",
+      "id": "2",
+      "name": "s1-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "BUSINESS CONTEXT",
+      "textPreview": "BUSINESS CONTEXT",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BUSINESS CONTEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BUSINESS CONTEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BUSINESS CONTEXT",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5gbq1ory",
+      "id": "3",
+      "name": "s1-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        70
+      ],
+      "geometry": "rect",
+      "text": "Berau output meets ABL fleet scale.",
+      "textPreview": "Berau output meets ABL fleet scale.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Berau output meets ABL fleet scale."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Berau output meets ABL fleet scale.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Berau output meets ABL fleet scale.",
+              "fontSize": 58,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/udg7adsj",
+      "id": "4",
+      "name": "s1-body",
+      "bbox": [
+        78,
+        202,
+        1248,
+        60
+      ],
+      "geometry": "rect",
+      "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+      "textPreview": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset"
+          },
+          {
+            "index": 2,
+            "text": "network."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The planning challenge is not abstract: it sits between a very large monthly cargo flow and a highly distributed marine asset network.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nyd0z610",
+      "id": "5",
+      "name": "s1-rule",
+      "bbox": [
+        78,
+        288,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cj6tovah",
+      "id": "6",
+      "name": "s1-left-panel",
+      "bbox": [
+        78,
+        318.8,
+        823.65,
+        620
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/54zidony",
+      "id": "7",
+      "name": "s1-left-eyebrow",
+      "bbox": [
+        108,
+        346,
+        764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "BERAU COAL",
+      "textPreview": "BERAU COAL",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "BERAU COAL"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "BERAU COAL",
+          "runs": [
+            {
+              "index": 1,
+              "text": "BERAU COAL",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u9knih4b",
+      "id": "8",
+      "name": "s1-berau-hero",
+      "bbox": [
+        108,
+        384,
+        764,
+        100
+      ],
+      "geometry": "rect",
+      "text": "35.9 Mt",
+      "textPreview": "35.9 Mt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "35.9 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "35.9 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "35.9 Mt",
+              "fontSize": 82,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/judg7ads",
+      "id": "9",
+      "name": "s1-berau-label",
+      "bbox": [
+        108,
+        500,
+        764,
+        28
+      ],
+      "geometry": "rect",
+      "text": "Coal production in 2024",
+      "textPreview": "Coal production in 2024",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Coal production in 2024"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Coal production in 2024",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Coal production in 2024",
+              "fontSize": 22,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nyd0z610",
+      "id": "10",
+      "name": "s1-left-rule",
+      "bbox": [
+        108,
+        544,
+        764,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/udg7adsj",
+      "id": "11",
+      "name": "metric-value-s1a",
+      "bbox": [
+        108,
+        564,
+        368,
+        66
+      ],
+      "geometry": "rect",
+      "text": "≈3.0 Mt",
+      "textPreview": "≈3.0 Mt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈3.0 Mt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈3.0 Mt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈3.0 Mt",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/54zidony",
+      "id": "12",
+      "name": "metric-label-s1a",
+      "bbox": [
+        108,
+        640,
+        368,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Average / month",
+      "textPreview": "Average / month",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Average / month"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Average / month",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Average / month",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cj6tovah",
+      "id": "13",
+      "name": "metric-value-s1b",
+      "bbox": [
+        502,
+        564,
+        368,
+        66
+      ],
+      "geometry": "rect",
+      "text": "≈98 kt",
+      "textPreview": "≈98 kt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈98 kt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈98 kt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈98 kt",
+              "fontSize": 54,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nap4r65w",
+      "id": "14",
+      "name": "metric-label-s1b",
+      "bbox": [
+        502,
+        640,
+        368,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Average / day",
+      "textPreview": "Average / day",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Average / day"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Average / day",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Average / day",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/upwb2hwf",
+      "id": "15",
+      "name": "s1-left-note",
+      "bbox": [
+        108,
+        680,
+        764,
+        54
+      ],
+      "geometry": "rect",
+      "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+      "textPreview": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS"
+          },
+          {
+            "index": 2,
+            "text": "move is assigned."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "This is the demand rhythm the plan must absorb before one tug, barge, jetty, or CTS move is assigned.",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5gbq1ory",
+      "id": "16",
+      "name": "s1-right-panel",
+      "bbox": [
+        931.65,
+        318.8,
+        910.35,
+        620
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cvixczed",
+      "id": "17",
+      "name": "s1-right-eyebrow",
+      "bbox": [
+        962,
+        346,
+        850,
+        20
+      ],
+      "geometry": "rect",
+      "text": "ABL OCEAN-FLEET PARTNER",
+      "textPreview": "ABL OCEAN-FLEET PARTNER",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ABL OCEAN-FLEET PARTNER"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ABL OCEAN-FLEET PARTNER",
+          "runs": [
+            {
+              "index": 1,
+              "text": "ABL OCEAN-FLEET PARTNER",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jm1cfa9w",
+      "id": "18",
+      "name": "metric-value-s1c",
+      "bbox": [
+        962,
+        384,
+        412,
+        66
+      ],
+      "geometry": "rect",
+      "text": "100M+",
+      "textPreview": "100M+",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "100M+"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "100M+",
+          "runs": [
+            {
+              "index": 1,
+              "text": "100M+",
+              "fontSize": 54,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u18jqh0f",
+      "id": "19",
+      "name": "metric-label-s1c",
+      "bbox": [
+        962,
+        458,
+        412,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Tonnes transshipped / year",
+      "textPreview": "Tonnes transshipped / year",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tonnes transshipped / year"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tonnes transshipped / year",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tonnes transshipped / year",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/25kb6xkf",
+      "id": "20",
+      "name": "metric-value-s1d",
+      "bbox": [
+        1400,
+        384,
+        412,
+        66
+      ],
+      "geometry": "rect",
+      "text": "20–55 kt",
+      "textPreview": "20–55 kt",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "20–55 kt"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "20–55 kt",
+          "runs": [
+            {
+              "index": 1,
+              "text": "20–55 kt",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rqd4vmtw",
+      "id": "21",
+      "name": "metric-label-s1d",
+      "bbox": [
+        1400,
+        458,
+        412,
+        22
+      ],
+      "geometry": "rect",
+      "text": "CTS throughput / day",
+      "textPreview": "CTS throughput / day",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CTS throughput / day"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CTS throughput / day",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CTS throughput / day",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kb6xkf6d",
+      "id": "22",
+      "name": "s1-right-rule",
+      "bbox": [
+        962,
+        498,
+        850,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9w3m94fu",
+      "id": "23",
+      "name": "metric-value-s1e",
+      "bbox": [
+        962,
+        518,
+        272,
+        66
+      ],
+      "geometry": "rect",
+      "text": "15",
+      "textPreview": "15",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "15"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "15",
+          "runs": [
+            {
+              "index": 1,
+              "text": "15",
+              "fontSize": 54,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2t83itgf",
+      "id": "24",
+      "name": "metric-label-s1e",
+      "bbox": [
+        962,
+        594,
+        272,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Cargo Transfer Ships",
+      "textPreview": "Cargo Transfer Ships",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cargo Transfer Ships"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cargo Transfer Ships",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cargo Transfer Ships",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/re1w7mp0",
+      "id": "25",
+      "name": "metric-value-s1f",
+      "bbox": [
+        1252,
+        518,
+        272,
+        66
+      ],
+      "geometry": "rect",
+      "text": "61",
+      "textPreview": "61",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "61"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "61",
+          "runs": [
+            {
+              "index": 1,
+              "text": "61",
+              "fontSize": 54,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kzupwb2h",
+      "id": "26",
+      "name": "metric-label-s1f",
+      "bbox": [
+        1252,
+        594,
+        272,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Tug + barge sets",
+      "textPreview": "Tug + barge sets",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tug + barge sets"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tug + barge sets",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tug + barge sets",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9knih4by",
+      "id": "27",
+      "name": "metric-value-s1g",
+      "bbox": [
+        1540,
+        518,
+        272,
+        66
+      ],
+      "geometry": "rect",
+      "text": "11",
+      "textPreview": "11",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "11"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "11",
+          "runs": [
+            {
+              "index": 1,
+              "text": "11",
+              "fontSize": 54,
+              "color": "#B9654A",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2p8nqxs7",
+      "id": "28",
+      "name": "metric-label-s1g",
+      "bbox": [
+        1540,
+        594,
+        272,
+        22
+      ],
+      "geometry": "rect",
+      "text": "Ocean-going vessels",
+      "textPreview": "Ocean-going vessels",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ocean-going vessels"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ocean-going vessels",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ocean-going vessels",
+              "fontSize": 18,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ra5gbq1o",
+      "id": "29",
+      "name": "s1-right-note",
+      "bbox": [
+        962,
+        716,
+        850,
+        28
+      ],
+      "geometry": "rect",
+      "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+      "textPreview": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The software has to turn this capacity into a coordinated sequence, not merely display it."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The software has to turn this capacity into a coordinated sequence, not merely display it.",
+              "fontSize": 22,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xs72x4na",
+      "id": "30",
+      "name": "spacer-1",
+      "bbox": [
+        80,
+        968,
+        1768,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87ed8bat",
+      "id": "31",
+      "name": "source-1",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+      "textPreview": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sources: Berau Coal Energy Annual Report 2024; ABL official site.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fmlkjm1c",
+      "id": "32",
+      "name": "page-1",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

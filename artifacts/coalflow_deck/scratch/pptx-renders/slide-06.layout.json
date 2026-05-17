@@ -1,0 +1,1545 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/58z25kb6",
+    "id": "58z25kb6",
+    "slide": 7,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cvixcze",
+      "id": "1",
+      "name": "slide-panel-6",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ylc7u54z",
+      "id": "2",
+      "name": "s6-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "SOLUTION APPROACH",
+      "textPreview": "SOLUTION APPROACH",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "SOLUTION APPROACH"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "SOLUTION APPROACH",
+          "runs": [
+            {
+              "index": 1,
+              "text": "SOLUTION APPROACH",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r65wjudg",
+      "id": "3",
+      "name": "s6-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Manage the asset chain, not just the asset list.",
+      "textPreview": "Manage the asset chain, not just the asset list.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manage the asset chain, not just the asset list."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manage the asset chain, not just the asset list.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manage the asset chain, not just the asset list.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g3ex0nux",
+      "id": "4",
+      "name": "s6-body",
+      "bbox": [
+        78,
+        196,
+        1106,
+        60
+      ],
+      "geometry": "rect",
+      "text": "A plan is only feasible when every resource handoff survives both operational and environmental constraints.",
+      "textPreview": "A plan is only feasible when every resource handoff survives both operational and environmental constraints.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A plan is only feasible when every resource handoff survives both operational and environmental constraints."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A plan is only feasible when every resource handoff survives both operational and environmental constraints.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "A plan is only feasible when every resource handoff survives both operational and environmental constraints.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5o7qpg3e",
+      "id": "5",
+      "name": "s6-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yxobm58z",
+      "id": "6",
+      "name": "s6-panel1",
+      "bbox": [
+        78,
+        311.6,
+        340,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nih4byhg",
+      "id": "7",
+      "name": "s6a",
+      "bbox": [
+        98,
+        332,
+        300,
+        20
+      ],
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g7adsji5",
+      "id": "8",
+      "name": "s6-title1",
+      "bbox": [
+        98,
+        366,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "Tug + barge",
+      "textPreview": "Tug + barge",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tug + barge"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tug + barge",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tug + barge",
+              "fontSize": 30,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9s36hcrm",
+      "id": "9",
+      "name": "s6-body1",
+      "bbox": [
+        98,
+        652,
+        300,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Availability\nCompatibility\nLoaded / empty speed",
+      "textPreview": "Availability | Compatibility | Loaded / empty speed",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Availability"
+          },
+          {
+            "index": 2,
+            "text": "Compatibility"
+          },
+          {
+            "index": 3,
+            "text": "Loaded / empty speed"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Availability",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Availability",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Compatibility",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Compatibility",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Loaded / empty speed",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Loaded / empty speed",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d8v6psfi",
+      "id": "10",
+      "name": "s6-panel2",
+      "bbox": [
+        434,
+        311.6,
+        340,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onyd0z61",
+      "id": "11",
+      "name": "s6b",
+      "bbox": [
+        454,
+        332,
+        300,
+        20
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z25kb6xk",
+      "id": "12",
+      "name": "s6-title2",
+      "bbox": [
+        454,
+        366,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "Jetty",
+      "textPreview": "Jetty",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Jetty"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Jetty",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Jetty",
+              "fontSize": 30,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcrmhk3",
+      "id": "13",
+      "name": "s6-body2",
+      "bbox": [
+        454,
+        608,
+        300,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Queue\nLoading rate\nGrade readiness",
+      "textPreview": "Queue | Loading rate | Grade readiness",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Queue"
+          },
+          {
+            "index": 2,
+            "text": "Loading rate"
+          },
+          {
+            "index": 3,
+            "text": "Grade readiness"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Queue",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Queue",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Loading rate",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Loading rate",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Grade readiness",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Grade readiness",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg7adsji",
+      "id": "14",
+      "name": "s6-stat2",
+      "bbox": [
+        454,
+        712,
+        300,
+        30
+      ],
+      "geometry": "rect",
+      "text": "1.5–3.5k MT/h",
+      "textPreview": "1.5–3.5k MT/h",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1.5–3.5k MT/h"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1.5–3.5k MT/h",
+          "runs": [
+            {
+              "index": 1,
+              "text": "1.5–3.5k MT/h",
+              "fontSize": 25,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovahoza1",
+      "id": "15",
+      "name": "s6-panel3",
+      "bbox": [
+        790,
+        311.6,
+        340,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vahoza1g",
+      "id": "16",
+      "name": "s6c",
+      "bbox": [
+        810,
+        332,
+        300,
+        20
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6tovahoz",
+      "id": "17",
+      "name": "s6-title3",
+      "bbox": [
+        810,
+        366,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "River route",
+      "textPreview": "River route",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "River route"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "River route",
+          "runs": [
+            {
+              "index": 1,
+              "text": "River route",
+              "fontSize": 30,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dsji5sne",
+      "id": "18",
+      "name": "s6-body3",
+      "bbox": [
+        810,
+        652,
+        300,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Tide\nBridge window\nDraft / weather",
+      "textPreview": "Tide | Bridge window | Draft / weather",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tide"
+          },
+          {
+            "index": 2,
+            "text": "Bridge window"
+          },
+          {
+            "index": 3,
+            "text": "Draft / weather"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tide",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tide",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Bridge window",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Bridge window",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Draft / weather",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Draft / weather",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/o7qpg3ex",
+      "id": "19",
+      "name": "s6-panel4",
+      "bbox": [
+        1146,
+        311.6,
+        340,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kjm1cfa9",
+      "id": "20",
+      "name": "s6d",
+      "bbox": [
+        1166,
+        332,
+        300,
+        20
+      ],
+      "geometry": "rect",
+      "text": "04",
+      "textPreview": "04",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "04"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "04",
+          "runs": [
+            {
+              "index": 1,
+              "text": "04",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/94fu18jq",
+      "id": "21",
+      "name": "s6-title4",
+      "bbox": [
+        1166,
+        366,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "CTS / FC",
+      "textPreview": "CTS / FC",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CTS / FC"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CTS / FC",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CTS / FC",
+              "fontSize": 30,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hwfyxob",
+      "id": "22",
+      "name": "s6-body4",
+      "bbox": [
+        1166,
+        608,
+        300,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Rate\nQueue\nDowntime",
+      "textPreview": "Rate | Queue | Downtime",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Rate"
+          },
+          {
+            "index": 2,
+            "text": "Queue"
+          },
+          {
+            "index": 3,
+            "text": "Downtime"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Rate",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Rate",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Queue",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Queue",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Downtime",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Downtime",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r2p8nqxs",
+      "id": "23",
+      "name": "s6-stat4",
+      "bbox": [
+        1166,
+        712,
+        300,
+        30
+      ],
+      "geometry": "rect",
+      "text": "20–55 kt/day",
+      "textPreview": "20–55 kt/day",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "20–55 kt/day"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "20–55 kt/day",
+          "runs": [
+            {
+              "index": 1,
+              "text": "20–55 kt/day",
+              "fontSize": 25,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gvy90je9",
+      "id": "24",
+      "name": "s6-panel5",
+      "bbox": [
+        1502,
+        311.6,
+        340,
+        450
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9gr2p8nq",
+      "id": "25",
+      "name": "s6e",
+      "bbox": [
+        1522,
+        332,
+        300,
+        20
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2p8nqxs7",
+      "id": "26",
+      "name": "s6-title5",
+      "bbox": [
+        1522,
+        366,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "OGV",
+      "textPreview": "OGV",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "OGV"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "OGV",
+          "runs": [
+            {
+              "index": 1,
+              "text": "OGV",
+              "fontSize": 30,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ra5gbq1o",
+      "id": "27",
+      "name": "s6-body5",
+      "bbox": [
+        1522,
+        608,
+        300,
+        90
+      ],
+      "geometry": "rect",
+      "text": "Laycan\nLayer sequence\nDemurrage risk",
+      "textPreview": "Laycan | Layer sequence | Demurrage risk",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Laycan"
+          },
+          {
+            "index": 2,
+            "text": "Layer sequence"
+          },
+          {
+            "index": 3,
+            "text": "Demurrage risk"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Laycan",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Laycan",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Layer sequence",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Layer sequence",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "Demurrage risk",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Demurrage risk",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kzupwb2h",
+      "id": "28",
+      "name": "s6-stat5",
+      "bbox": [
+        1522,
+        712,
+        300,
+        30
+      ],
+      "geometry": "rect",
+      "text": "≈76k DWT class",
+      "textPreview": "≈76k DWT class",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "≈76k DWT class"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "≈76k DWT class",
+          "runs": [
+            {
+              "index": 1,
+              "text": "≈76k DWT class",
+              "fontSize": 25,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9knih4by",
+      "id": "29",
+      "name": "s6-quant-band",
+      "bbox": [
+        78,
+        787.6,
+        1764,
+        60.8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fa9w3m94",
+      "id": "30",
+      "name": "s6-quant-note",
+      "bbox": [
+        100,
+        804,
+        1720,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Capacity is distributed across the chain. A fast CTS cannot recover a missed tide; a ready tug cannot compensate for a wrong grade sequence.",
+      "textPreview": "Capacity is distributed across the chain. A fast CTS cannot recover a missed tide; a ready tug cannot compensate for a wrong grade sequence.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Capacity is distributed across the chain. A fast CTS cannot recover a missed tide; a ready tug cannot compensate for a wrong grade sequence."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Capacity is distributed across the chain. A fast CTS cannot recover a missed tide; a ready tug cannot compensate for a wrong grade sequence.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Capacity is distributed across the chain. A fast CTS cannot recover a missed tide; a ready tug cannot compensate for a wrong grade sequence.",
+              "fontSize": 24,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpg3ex0n",
+      "id": "31",
+      "name": "s6-bottom-panel",
+      "bbox": [
+        78,
+        874.4,
+        1764,
+        67.2
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 32,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xczed8v6",
+      "id": "32",
+      "name": "s6-bottom-note",
+      "bbox": [
+        102,
+        892,
+        1716,
+        32
+      ],
+      "geometry": "rect",
+      "text": "The planner’s job is not “where is the vessel?” but “which next move keeps the whole chain feasible?”",
+      "textPreview": "The planner’s job is not “where is the vessel?” but “which next move keeps the whole chain feasible?”",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The planner’s job is not “where is the vessel?” but “which next move keeps the whole chain feasible?”"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The planner’s job is not “where is the vessel?” but “which next move keeps the whole chain feasible?”",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The planner’s job is not “where is the vessel?” but “which next move keeps the whole chain feasible?”",
+              "fontSize": 26,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 33,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8v6psfil",
+      "id": "33",
+      "name": "spacer-6",
+      "bbox": [
+        80,
+        968,
+        1768,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 34,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fyxobm58",
+      "id": "34",
+      "name": "source-6",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Source: project operating-model and planning-scope docs.",
+      "textPreview": "Source: project operating-model and planning-scope docs.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Source: project operating-model and planning-scope docs."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Source: project operating-model and planning-scope docs.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Source: project operating-model and planning-scope docs.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 35,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qd4vmtwr",
+      "id": "35",
+      "name": "page-6",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import type {
   BridgeWindowRecord,
@@ -22,12 +23,7 @@ const EMPTY_BRIDGE_WINDOWS: BridgeWindowRecord[] = [];
 type WindowRecord = TideWindowRecord | BridgeWindowRecord;
 
 function dt(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
+  return <GridDate value={value} />;
 }
 
 function dayLabel(value: string) {

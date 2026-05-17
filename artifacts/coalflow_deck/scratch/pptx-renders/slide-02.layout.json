@@ -1,0 +1,1282 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/pg3ex0nu",
+    "id": "pg3ex0nu",
+    "slide": 3,
+    "layoutId": "/ppt/slideLayouts/slideLayout2.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout2.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yxobm58z",
+      "id": "1",
+      "name": "slide-panel-2",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5o7qpg3e",
+      "id": "2",
+      "name": "s2-eyebrow",
+      "bbox": [
+        78,
+        62,
+        1764,
+        20
+      ],
+      "geometry": "rect",
+      "text": "CURRENT REALITY",
+      "textPreview": "CURRENT REALITY",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CURRENT REALITY"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CURRENT REALITY",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CURRENT REALITY",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g3ex0nux",
+      "id": "3",
+      "name": "s2-title",
+      "bbox": [
+        78,
+        108,
+        1764,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Data exists. Orchestration is still manual.",
+      "textPreview": "Data exists. Orchestration is still manual.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Data exists. Orchestration is still manual."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Data exists. Orchestration is still manual.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Data exists. Orchestration is still manual.",
+              "fontSize": 52,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/r65wjudg",
+      "id": "4",
+      "name": "s2-body",
+      "bbox": [
+        78,
+        196,
+        1126,
+        60
+      ],
+      "geometry": "rect",
+      "text": "Today’s operation already produces useful signals; the friction is that the plan is still assembled, reconciled, and updated by hand.",
+      "textPreview": "Today’s operation already produces useful signals; the friction is that the plan is still assembled, reconciled, and updated by hand.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Today’s operation already produces useful signals; the friction is that the plan is still assembled, reconciled, and"
+          },
+          {
+            "index": 2,
+            "text": "updated by hand."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Today’s operation already produces useful signals; the friction is that the plan is still assembled, reconciled, and updated by hand.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Today’s operation already produces useful signals; the friction is that the plan is still assembled, reconciled, and updated by hand.",
+              "fontSize": 25,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ylc7u54z",
+      "id": "5",
+      "name": "s2-rule",
+      "bbox": [
+        78,
+        282,
+        240,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#0E6B83",
+      "lineColor": "#0E6B83",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9cvixcze",
+      "id": "6",
+      "name": "s2-panel1",
+      "bbox": [
+        78,
+        311.6,
+        569.33,
+        520
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gr2p8nqx",
+      "id": "7",
+      "name": "s2-c1-num",
+      "bbox": [
+        102,
+        334,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "01",
+      "textPreview": "01",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "01"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "01",
+          "runs": [
+            {
+              "index": 1,
+              "text": "01",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/rytsvu9k",
+      "id": "8",
+      "name": "s2-c1-title",
+      "bbox": [
+        102,
+        370,
+        522,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Excel schedule",
+      "textPreview": "Excel schedule",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Excel schedule"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Excel schedule",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Excel schedule",
+              "fontSize": 40,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yd0z6103",
+      "id": "9",
+      "name": "s2-c1-body",
+      "bbox": [
+        102,
+        436,
+        522,
+        98
+      ],
+      "geometry": "rect",
+      "text": "A usable planning workspace—but one that depends on manual collation, edits, and reconciliation.",
+      "textPreview": "A usable planning workspace—but one that depends on manual collation, edits, and reconciliation.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A usable planning workspace—but one that"
+          },
+          {
+            "index": 2,
+            "text": "depends on manual collation, edits, and"
+          },
+          {
+            "index": 3,
+            "text": "reconciliation."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A usable planning workspace—but one that depends on manual collation, edits, and reconciliation.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "A usable planning workspace—but one that depends on manual collation, edits, and reconciliation.",
+              "fontSize": 27,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wb2hwfyx",
+      "id": "10",
+      "name": "s2-c1-rule",
+      "bbox": [
+        102,
+        694,
+        522,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lwval87e",
+      "id": "11",
+      "name": "s2-c1-kicker",
+      "bbox": [
+        102,
+        710,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "CURRENT STATE",
+      "textPreview": "CURRENT STATE",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CURRENT STATE"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CURRENT STATE",
+          "runs": [
+            {
+              "index": 1,
+              "text": "CURRENT STATE",
+              "fontSize": 17,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e9cvixcz",
+      "id": "12",
+      "name": "s2-c1-note",
+      "bbox": [
+        102,
+        744,
+        522,
+        66
+      ],
+      "geometry": "rect",
+      "text": "The data is present.\nThe workflow is brittle.",
+      "textPreview": "The data is present. | The workflow is brittle.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The data is present."
+          },
+          {
+            "index": 2,
+            "text": "The workflow is brittle."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The data is present.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The data is present.",
+              "fontSize": 27,
+              "color": "#0E6B83"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "The workflow is brittle.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The workflow is brittle.",
+              "fontSize": 27,
+              "color": "#0E6B83"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3q5o7qpg",
+      "id": "13",
+      "name": "s2-panel2",
+      "bbox": [
+        675.33,
+        311.6,
+        569.33,
+        520
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w3m94fu1",
+      "id": "14",
+      "name": "s2-c2-num",
+      "bbox": [
+        700,
+        334,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/loj2t83i",
+      "id": "15",
+      "name": "s2-c2-title",
+      "bbox": [
+        700,
+        370,
+        522,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Spinergie layer",
+      "textPreview": "Spinergie layer",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Spinergie layer"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Spinergie layer",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Spinergie layer",
+              "fontSize": 40,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ex0nuxc3",
+      "id": "16",
+      "name": "s2-c2-body",
+      "bbox": [
+        700,
+        436,
+        522,
+        98
+      ],
+      "geometry": "rect",
+      "text": "Digital daily reports, cycle KPIs, real-time AIS visibility, GPS evidence, and environmental reporting already exist around the operation.",
+      "textPreview": "Digital daily reports, cycle KPIs, real-time AIS visibility, GPS evidence, and environmental reporting already exist around the operation.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Digital daily reports, cycle KPIs, real-time AIS"
+          },
+          {
+            "index": 2,
+            "text": "visibility, GPS evidence, and environmental"
+          },
+          {
+            "index": 3,
+            "text": "reporting already exist around the operation."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Digital daily reports, cycle KPIs, real-time AIS visibility, GPS evidence, and environmental reporting already exist around the operation.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Digital daily reports, cycle KPIs, real-time AIS visibility, GPS evidence, and environmental reporting already exist around the operation.",
+              "fontSize": 27,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3itgfmlk",
+      "id": "17",
+      "name": "s2-c2-rule",
+      "bbox": [
+        700,
+        694,
+        522,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#DCE5E7",
+      "lineColor": "#DCE5E7",
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/szqtcj6t",
+      "id": "18",
+      "name": "s2-c2-kicker",
+      "bbox": [
+        700,
+        710,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "EVIDENCE LAYER",
+      "textPreview": "EVIDENCE LAYER",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "EVIDENCE LAYER"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "EVIDENCE LAYER",
+          "runs": [
+            {
+              "index": 1,
+              "text": "EVIDENCE LAYER",
+              "fontSize": 17,
+              "color": "#2F8C73",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lkjm1cfa",
+      "id": "19",
+      "name": "s2-c2-note",
+      "bbox": [
+        700,
+        744,
+        522,
+        66
+      ],
+      "geometry": "rect",
+      "text": "Useful signals.\nNot yet the planning brain.",
+      "textPreview": "Useful signals. | Not yet the planning brain.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Useful signals."
+          },
+          {
+            "index": 2,
+            "text": "Not yet the planning brain."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Useful signals.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Useful signals.",
+              "fontSize": 27,
+              "color": "#2F8C73"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "Not yet the planning brain.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Not yet the planning brain.",
+              "fontSize": 27,
+              "color": "#2F8C73"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lc7u54zi",
+      "id": "20",
+      "name": "s2-panel3",
+      "bbox": [
+        1272.67,
+        311.6,
+        569.33,
+        520
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EADFCF"
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wra5gbq1",
+      "id": "21",
+      "name": "s2-c3-num",
+      "bbox": [
+        1296,
+        334,
+        522,
+        20
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 16,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/36hcrmhk",
+      "id": "22",
+      "name": "s2-c3-title",
+      "bbox": [
+        1296,
+        370,
+        522,
+        48
+      ],
+      "geometry": "rect",
+      "text": "The gap",
+      "textPreview": "The gap",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The gap"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The gap",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The gap",
+              "fontSize": 40,
+              "color": "#10212B",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/eloj2t83",
+      "id": "23",
+      "name": "s2-c3-body",
+      "bbox": [
+        1296,
+        436,
+        522,
+        98
+      ],
+      "geometry": "rect",
+      "text": "What is missing is a governed model that turns demand, assets, constraints, and live evidence into one executable plan.",
+      "textPreview": "What is missing is a governed model that turns demand, assets, constraints, and live evidence into one executable plan.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "What is missing is a governed model that turns"
+          },
+          {
+            "index": 2,
+            "text": "demand, assets, constraints, and live evidence"
+          },
+          {
+            "index": 3,
+            "text": "into one executable plan."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "What is missing is a governed model that turns demand, assets, constraints, and live evidence into one executable plan.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "What is missing is a governed model that turns demand, assets, constraints, and live evidence into one executable plan.",
+              "fontSize": 27,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l0rqd4vm",
+      "id": "24",
+      "name": "s2-c3-rule",
+      "bbox": [
+        1296,
+        694,
+        522,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#D7C7AF",
+      "lineColor": "#D7C7AF",
+      "lineWidth": 0
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wfyxobm5",
+      "id": "25",
+      "name": "s2-c3-kicker",
+      "bbox": [
+        1296,
+        710,
+        522,
+        22
+      ],
+      "geometry": "rect",
+      "text": "NEEDED NEXT",
+      "textPreview": "NEEDED NEXT",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "NEEDED NEXT"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "NEEDED NEXT",
+          "runs": [
+            {
+              "index": 1,
+              "text": "NEEDED NEXT",
+              "fontSize": 17,
+              "color": "#C8852C",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7u54zido",
+      "id": "26",
+      "name": "s2-c3-note",
+      "bbox": [
+        1296,
+        744,
+        522,
+        66
+      ],
+      "geometry": "rect",
+      "text": "From data presence\n→ planning confidence.",
+      "textPreview": "From data presence | → planning confidence.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "From data presence"
+          },
+          {
+            "index": 2,
+            "text": "→ planning confidence."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "From data presence",
+          "runs": [
+            {
+              "index": 1,
+              "text": "From data presence",
+              "fontSize": 27,
+              "color": "#C8852C"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "→ planning confidence.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "→ planning confidence.",
+              "fontSize": 27,
+              "color": "#C8852C"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ed8bat47",
+      "id": "27",
+      "name": "s2-bottom-panel",
+      "bbox": [
+        78,
+        857.6,
+        1764,
+        64.8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#EAF0F1"
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/psfil0rq",
+      "id": "28",
+      "name": "s2-bottom-note",
+      "bbox": [
+        102,
+        876,
+        1716,
+        30
+      ],
+      "geometry": "rect",
+      "text": "The gap is not lack of data. It is lack of a single governed workspace that converts data into a plan operators can execute and revise together.",
+      "textPreview": "The gap is not lack of data. It is lack of a single governed workspace that converts data into a plan operators can execute and revise to...",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "The gap is not lack of data. It is lack of a single governed workspace that converts data into a plan operators can execute and revise together."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "The gap is not lack of data. It is lack of a single governed workspace that converts data into a plan operators can execute and revise together.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "The gap is not lack of data. It is lack of a single governed workspace that converts data into a plan operators can execute and revise together.",
+              "fontSize": 24,
+              "color": "#10212B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/w7mp0bi9",
+      "id": "29",
+      "name": "spacer-2",
+      "bbox": [
+        80,
+        952,
+        1768,
+        24
+      ],
+      "geometry": "rect",
+      "fillColor": "#F7F4EE"
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/65wjudg7",
+      "id": "30",
+      "name": "source-2",
+      "bbox": [
+        78,
+        1002,
+        1702,
+        16
+      ],
+      "geometry": "rect",
+      "text": "Sources: project BRD; Spinergie press release, June 2024.",
+      "textPreview": "Sources: project BRD; Spinergie press release, June 2024.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sources: project BRD; Spinergie press release, June 2024."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sources: project BRD; Spinergie press release, June 2024.",
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sources: project BRD; Spinergie press release, June 2024.",
+              "fontSize": 14,
+              "color": "#53656D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zqtcj6to",
+      "id": "31",
+      "name": "page-2",
+      "bbox": [
+        1800,
+        1002,
+        42,
+        16
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "alignment": "left"
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 14,
+              "color": "#0E6B83",
+              "bold": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

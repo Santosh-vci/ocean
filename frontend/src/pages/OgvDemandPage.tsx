@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import type { CargoLayerStepRecord, OGVVoyageRecord, PlanningOverview } from "../types";
 
@@ -14,16 +15,6 @@ type OgvDemandPageProps = {
 
 function mt(value: number) {
   return `${Math.round(value).toLocaleString()} MT`;
-}
-
-function dateTime(value: string | null) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString(undefined, {
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-  });
 }
 
 function riskTone(voyage: OGVVoyageRecord) {
@@ -152,9 +143,17 @@ export function OgvDemandPage({
                   >
                     <td><strong>{voyage.vessel_name}</strong></td>
                     <td>{voyage.customer_name}</td>
-                    <td>{dateTime(voyage.laycan_start)}</td>
-                    <td>{dateTime(voyage.laycan_end)}</td>
-                    <td>{dateTime(voyage.eta)} / {dateTime(voyage.etb)} / {dateTime(voyage.etc_target)}</td>
+                    <td><GridDate value={voyage.laycan_start} /></td>
+                    <td><GridDate value={voyage.laycan_end} /></td>
+                    <td>
+                      <span className="grid-date-stack">
+                        <GridDate value={voyage.eta} />
+                        <span className="grid-date-separator">/</span>
+                        <GridDate value={voyage.etb} />
+                        <span className="grid-date-separator">/</span>
+                        <GridDate value={voyage.etc_target} />
+                      </span>
+                    </td>
                     <td>{mt(voyage.required_mt)}</td>
                     <td>{mt(voyage.loaded_mt)}</td>
                     <td>{mt(voyage.in_transit_mt)}</td>
