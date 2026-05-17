@@ -622,6 +622,92 @@ def test_transition_scenario_contract_preserves_current_create_simulate_promote_
     assert promoted.scenario_version.source_version_id == baseline.id
     assert promoted.scenario_version.plan_id == baseline.plan_id
     assert promoted.scenario_version.status == PlanVersion.Status.PROPOSED
+    assert promoted.scenario_version.summary["scenarioLineage"]["selectedRunRef"]
+    assert "scenarioDiff" in promoted.scenario_version.summary
+
+
+@pytest.mark.django_db
+def test_selected_run_promotion_materializes_candidate_and_preserves_baseline():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-run-promoter")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    baseline_trip = baseline.trips.order_by("sequence").first()
+    baseline_start = baseline_trip.planned_start
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=baseline_trip.id,
+        payload={"delay_minutes": 90},
+    )
+    simulate_scenario(scenario=scenario, actor=user)
+    selected_run = scenario.runs.order_by("-created_at", "-id").first()
+
+    promoted = promote_scenario_to_proposed(
+        scenario=scenario,
+        actor=user,
+        run=selected_run,
+    )
+    candidate_trip = promoted.scenario_version.trips.order_by("sequence").first()
+    candidate_event = candidate_trip.events.get(event_type=ScheduleEvent.EventType.LOAD_START)
+
+    baseline_trip.refresh_from_db()
+    assert baseline_trip.planned_start == baseline_start
+    assert candidate_trip.planned_start == baseline_start + timedelta(minutes=90)
+    assert candidate_event.planned_at == baseline_start + timedelta(minutes=90)
+    assert promoted.scenario_version.summary["scenarioLineage"] == {
+        "baselineVersionId": baseline.id,
+        "baselineVersionRef": str(baseline),
+        "scenarioId": scenario.scenario_id,
+        "scenarioPk": scenario.id,
+        "selectedRunId": selected_run.id,
+        "selectedRunRef": selected_run.run_id,
+        "assumptionIds": list(scenario.assumptions.values_list("assumption_id", flat=True)),
+        "algorithmVersion": selected_run.algorithm_version,
+        "promotedAt": promoted.scenario_version.summary["scenarioLineage"]["promotedAt"],
+        "promotedBy": user.username,
+    }
+    assert promoted.scenario_version.summary["scenarioDiff"]["summary"]["changedTripCount"] > 0
+
+
+@pytest.mark.django_db
+def test_promoted_candidate_materializes_projected_constraints_for_governance():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-governance")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    scenario = SimulationScenario.objects.get(scenario_id__contains="TUG-OUTAGE")
+    run = scenario.runs.order_by("-created_at", "-id").first()
+
+    promoted = promote_scenario_to_proposed(scenario=scenario, actor=user, run=run)
+    candidate = promoted.scenario_version
+
+    assert candidate.validation_status == PlanVersion.ValidationStatus.BLOCKED
+    assert candidate.conflicts.filter(code="ASSET_OUTAGE_OVERLAP", is_blocking=True).exists()
+    approval = submit_approval_request(
+        plan_version=candidate,
+        actor=user,
+        reason="Scenario candidate review.",
+    )
+    client = APIClient()
+    client.force_authenticate(user)
+    overview = client.get("/api/scheduling/overview/")
+
+    assert approval.status == ApprovalRequest.Status.PENDING
+    assert candidate.status == PlanVersion.Status.PROPOSED
+    assert overview.status_code == 200
+    assert (
+        overview.data["approvalRequests"][0]["scenario_lineage"]["scenarioId"]
+        == scenario.scenario_id
+    )
 
 
 @pytest.mark.django_db
@@ -643,8 +729,11 @@ def test_transition_scenario_api_contract_preserves_current_response_shape():
     simulate_response = client.post(
         f"/api/scheduling/scenarios/{create_response.data['id']}/simulate/"
     )
+    selected_run_id = simulate_response.data["runs"][0]["id"]
     promote_response = client.post(
-        f"/api/scheduling/scenarios/{create_response.data['id']}/promote/"
+        f"/api/scheduling/scenarios/{create_response.data['id']}/promote/",
+        {"run_id": selected_run_id},
+        format="json",
     )
 
     assert create_response.status_code == 201

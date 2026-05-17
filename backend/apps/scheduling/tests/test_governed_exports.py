@@ -7,7 +7,15 @@ from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
 from apps.core.object_storage import read_export_object
-from apps.scheduling.models import ExportJob, PlanVersion
+from apps.organizations.models import Organization
+from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
+from apps.scheduling.models import ExportJob, PlanVersion, ScenarioAssumption
+from apps.scheduling.services import (
+    create_scenario_assumption,
+    create_scenario_from_conflict,
+    promote_scenario_to_proposed,
+    simulate_scenario,
+)
 
 User = get_user_model()
 
@@ -23,6 +31,33 @@ def seeded_plan_version() -> PlanVersion:
     return PlanVersion.objects.get(
         plan__name="Berau-ABL Feasible Schedule Horizon",
         version_no=1,
+    )
+
+
+def assign(user, organization, permission_codes):
+    permissions = []
+    for code in permission_codes:
+        permission, _ = AccessPermission.objects.get_or_create(
+            code=code,
+            defaults={
+                "module": code.split(".")[0],
+                "action": code.split(".")[1],
+                "description": code,
+            },
+        )
+        permissions.append(permission)
+    role = Role.objects.create(name=f"role-{user.username}", code=f"role-{user.username}")
+    role.permissions.set(permissions)
+    scope = DataScope.objects.create(
+        name=f"scope-{user.username}",
+        code=f"scope-{user.username}",
+        scope_type=DataScope.ScopeType.ALL_NETWORK,
+    )
+    UserRoleAssignment.objects.create(
+        user=user,
+        role=role,
+        organization=organization,
+        data_scope=scope,
     )
 
 
@@ -109,3 +144,48 @@ def test_generated_export_can_be_downloaded(monkeypatch, tmp_path):
     assert download_response.status_code == 200
     assert download_response["X-Content-SHA256"] == generate_response.data["checksum_sha256"]
     assert b'"exportType": "conflict"' in download_response.content
+
+
+@pytest.mark.django_db
+def test_promoted_scenario_diff_can_be_exported_with_lineage(monkeypatch, tmp_path):
+    monkeypatch.setenv("EXPORT_STORAGE_ROOT", str(tmp_path))
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    actor = User.objects.create_user("scenario-exporter")
+    assign(actor, organization, ["schedule.view", "schedule.edit", "export.generate"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=actor,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=actor,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=trip.id,
+        payload={"delay_minutes": 45},
+    )
+    simulate_scenario(scenario=scenario, actor=actor)
+    run = scenario.runs.order_by("-created_at", "-id").first()
+    promoted = promote_scenario_to_proposed(scenario=scenario, actor=actor, run=run)
+
+    client = APIClient()
+    client.force_authenticate(actor)
+    response = client.post(
+        "/api/exports/generate/",
+        {
+            "export_type": ExportJob.ExportType.SCENARIO_DIFF,
+            "export_format": ExportJob.ExportFormat.JSON,
+            "plan_version": promoted.scenario_version_id,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    payload = response.data["payload"]
+    assert payload["scenarioLineage"]["scenarioId"] == scenario.scenario_id
+    assert payload["scenarioLineage"]["selectedRunRef"] == run.run_id
+    assert payload["summary"]["changedTripCount"] > 0

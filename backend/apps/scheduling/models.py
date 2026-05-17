@@ -571,6 +571,7 @@ class ExportJob(models.Model):
     class ExportType(models.TextChoices):
         PLAN = "plan", "Plan"
         CONFLICT = "conflict", "Conflict"
+        SCENARIO_DIFF = "scenario_diff", "Scenario diff"
         AUDIT = "audit", "Audit"
 
     class ExportFormat(models.TextChoices):

@@ -763,19 +763,11 @@ def compute_plan_diff(*, source_version: PlanVersion, target_version: PlanVersio
             row_quantity = target_trip.planned_quantity_mt - source_trip.planned_quantity_mt
             source_assignment = getattr(source_trip, "assignment", None)
             target_assignment = getattr(target_trip, "assignment", None)
-            source_tug = (
-                source_assignment.tug.code
-                if source_assignment and source_assignment.tug
-                else ""
-            )
-            target_tug = (
-                target_assignment.tug.code
-                if target_assignment and target_assignment.tug
-                else ""
-            )
+            source_resources = _plan_diff_assignment_resources(source_assignment)
+            target_resources = _plan_diff_assignment_resources(target_assignment)
             state = (
                 "changed"
-                if row_delay or row_quantity or source_tug != target_tug
+                if row_delay or row_quantity or source_resources != target_resources
                 else "unchanged"
             )
             changed += 1 if state == "changed" else 0
@@ -791,8 +783,8 @@ def compute_plan_diff(*, source_version: PlanVersion, target_version: PlanVersio
                     "targetVessel": target_trip.voyage.vessel_name,
                     "delayDeltaMinutes": row_delay,
                     "quantityDeltaMt": row_quantity,
-                    "sourceTug": source_tug,
-                    "targetTug": target_tug,
+                    "sourceResources": source_resources,
+                    "targetResources": target_resources,
                 }
             )
         elif target_trip:
@@ -829,6 +821,15 @@ def compute_plan_diff(*, source_version: PlanVersion, target_version: PlanVersio
             "quantityDeltaMt": quantity_delta,
         },
         "rows": rows,
+    }
+
+
+def _plan_diff_assignment_resources(assignment: Assignment | None) -> dict[str, str]:
+    return {
+        "tug": assignment.tug.code if assignment and assignment.tug else "",
+        "barge": assignment.barge.code if assignment and assignment.barge else "",
+        "jetty": assignment.jetty.code if assignment and assignment.jetty else "",
+        "cts": assignment.cts.code if assignment and assignment.cts else "",
     }
 
 
@@ -1027,11 +1028,17 @@ def calculate_scenario_run_projections(*, run: ScenarioRun) -> dict:
     )
 
 
-def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> SimulationScenario:
+def promote_scenario_to_proposed(
+    *,
+    scenario: SimulationScenario,
+    actor,
+    run: ScenarioRun | None = None,
+) -> SimulationScenario:
     if scenario.status != SimulationScenario.Status.SIMULATED:
         raise ValidationError("Only simulated scenarios can be promoted.")
 
     with transaction.atomic():
+        selected_run = _selected_scenario_run(scenario=scenario, run=run)
         if scenario.scenario_version is None:
             scenario.scenario_version = clone_plan_version(
                 source_version=scenario.baseline_version,
@@ -1042,11 +1049,309 @@ def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> Simu
         elif scenario.scenario_version.source_version_id != scenario.baseline_version_id:
             raise ValidationError("Scenario output version must derive from the baseline version.")
 
+        _materialize_scenario_run_to_version(
+            run=selected_run,
+            target_version=scenario.scenario_version,
+        )
+        scenario_diff = compute_plan_diff(
+            source_version=scenario.baseline_version,
+            target_version=scenario.scenario_version,
+        )
+        scenario.scenario_version.summary = {
+            **scenario.scenario_version.summary,
+            **_promoted_version_summary(
+                scenario=scenario,
+                run=selected_run,
+                scenario_diff=scenario_diff,
+                actor=actor,
+            ),
+        }
         scenario.status = SimulationScenario.Status.PROPOSED
         scenario.scenario_version.status = PlanVersion.Status.PROPOSED
-        scenario.scenario_version.save(update_fields=["status", "updated_at"])
+        scenario.scenario_version.save(update_fields=["status", "summary", "updated_at"])
         scenario.save(update_fields=["scenario_version", "status", "updated_at"])
     return scenario
+
+
+def _selected_scenario_run(
+    *,
+    scenario: SimulationScenario,
+    run: ScenarioRun | None,
+) -> ScenarioRun:
+    selected_run = run or scenario.runs.filter(
+        status=ScenarioRun.Status.SUCCEEDED,
+    ).order_by("-created_at", "-id").first()
+    if selected_run is None:
+        raise ValidationError("A successful scenario run is required before promotion.")
+    if selected_run.scenario_id != scenario.id:
+        raise ValidationError("Selected run must belong to the scenario being promoted.")
+    if selected_run.baseline_version_id != scenario.baseline_version_id:
+        raise ValidationError("Selected run must use the scenario baseline version.")
+    if selected_run.status != ScenarioRun.Status.SUCCEEDED:
+        raise ValidationError("Only successful scenario runs can be promoted.")
+    return selected_run
+
+
+def _materialize_scenario_run_to_version(
+    *,
+    run: ScenarioRun,
+    target_version: PlanVersion,
+) -> None:
+    baseline_trips = list(
+        run.baseline_version.trips.select_related("assignment").order_by("sequence", "trip_id")
+    )
+    target_trips = list(
+        target_version.trips.select_related("assignment").order_by("sequence", "trip_id")
+    )
+    if len(baseline_trips) != len(target_trips):
+        raise ValidationError("Scenario output version no longer matches its baseline shape.")
+
+    target_trip_by_source_id = {
+        baseline_trip.id: target_trip
+        for baseline_trip, target_trip in zip(baseline_trips, target_trips, strict=True)
+    }
+    projection_by_trip_id = {
+        projection.trip_id: projection
+        for projection in run.trip_projections.select_related("trip").all()
+    }
+    event_projection_index = {
+        (projection.trip_id, projection.event_type): projection
+        for projection in run.event_projections.select_related("trip", "event").all()
+    }
+
+    for baseline_trip in baseline_trips:
+        target_trip = target_trip_by_source_id[baseline_trip.id]
+        trip_projection = projection_by_trip_id.get(baseline_trip.id)
+        if trip_projection is None:
+            continue
+        target_trip.planned_start = trip_projection.projected_start
+        target_trip.planned_end = trip_projection.projected_end
+        target_trip.status = trip_projection.projected_status
+        target_trip.selection_reason = {
+            **target_trip.selection_reason,
+            "scenario_projection": {
+                "runId": run.run_id,
+                "sourceTrip": baseline_trip.trip_id,
+                "delayMinutes": trip_projection.delay_minutes,
+            },
+        }
+        target_trip.save(
+            update_fields=[
+                "planned_start",
+                "planned_end",
+                "status",
+                "selection_reason",
+                "updated_at",
+            ]
+        )
+        _materialize_projected_assignment(
+            target_trip=target_trip,
+            trip_projection=trip_projection,
+            event_projection_index=event_projection_index,
+        )
+        _materialize_projected_events(
+            baseline_trip=baseline_trip,
+            target_trip=target_trip,
+            event_projection_index=event_projection_index,
+        )
+
+    _replace_version_conflicts_from_run(
+        run=run,
+        target_version=target_version,
+        target_trip_by_source_id=target_trip_by_source_id,
+    )
+
+
+def _materialize_projected_assignment(
+    *,
+    target_trip: Trip,
+    trip_projection: ScenarioTripProjection,
+    event_projection_index: dict,
+) -> None:
+    assignment = getattr(target_trip, "assignment", None)
+    if assignment is None:
+        return
+
+    projected_resources = trip_projection.assignment_delta.get("projectedResources", {})
+    tug_code = projected_resources.get("tug")
+    barge_code = projected_resources.get("barge")
+    tug = Tug.objects.filter(code=tug_code).first() if tug_code else assignment.tug
+    barge = Barge.objects.filter(code=barge_code).first() if barge_code else assignment.barge
+    depart_projection = event_projection_index.get(
+        (trip_projection.trip_id, ScheduleEvent.EventType.DEPART_JETTY)
+    )
+    arrive_projection = event_projection_index.get(
+        (trip_projection.trip_id, ScheduleEvent.EventType.ARRIVE_CTS)
+    )
+    assignment.tug = tug
+    assignment.barge = barge
+    assignment.owner_organization = tug.organization if tug else assignment.owner_organization
+    assignment.tug_status = _asset_status_label(tug)
+    assignment.barge_status = _asset_status_label(barge)
+    assignment.planned_departure = (
+        depart_projection.projected_at if depart_projection else assignment.planned_departure
+    )
+    assignment.planned_arrival = (
+        arrive_projection.projected_at if arrive_projection else assignment.planned_arrival
+    )
+    assignment.save(
+        update_fields=[
+            "tug",
+            "barge",
+            "owner_organization",
+            "planned_departure",
+            "planned_arrival",
+            "tug_status",
+            "barge_status",
+            "updated_at",
+        ]
+    )
+
+
+def _materialize_projected_events(
+    *,
+    baseline_trip: Trip,
+    target_trip: Trip,
+    event_projection_index: dict,
+) -> None:
+    assignment = getattr(target_trip, "assignment", None)
+    baseline_events = {
+        event.event_type: event
+        for event in baseline_trip.events.order_by("sequence")
+    }
+    for target_event in target_trip.events.order_by("sequence"):
+        baseline_event = baseline_events.get(target_event.event_type)
+        projection = event_projection_index.get(
+            (baseline_trip.id, target_event.event_type)
+        )
+        if baseline_event is None or projection is None:
+            continue
+        resource_code = _event_resource_code(
+            event_type=target_event.event_type,
+            trip=target_trip,
+            assignment=assignment,
+            fallback=target_event.resource_code,
+        )
+        target_event.planned_at = projection.projected_at
+        target_event.status = projection.projected_status
+        target_event.location_label = resource_code
+        target_event.resource_code = resource_code
+        target_event.metadata = {
+            **target_event.metadata,
+            "scenarioProjection": {
+                "sourceEvent": baseline_event.id,
+                "delayMinutes": projection.delay_minutes,
+            },
+        }
+        target_event.save(
+            update_fields=[
+                "planned_at",
+                "status",
+                "location_label",
+                "resource_code",
+                "metadata",
+            ]
+        )
+
+
+def _event_resource_code(
+    *,
+    event_type: str,
+    trip: Trip,
+    assignment: Assignment | None,
+    fallback: str,
+) -> str:
+    if assignment is None:
+        return fallback
+    if event_type == ScheduleEvent.EventType.LOAD_START:
+        return assignment.jetty.code if assignment.jetty else fallback
+    if event_type == ScheduleEvent.EventType.LOAD_COMPLETE:
+        return assignment.barge.code if assignment.barge else fallback
+    if event_type == ScheduleEvent.EventType.DEPART_JETTY:
+        return assignment.tug.code if assignment.tug else fallback
+    if event_type == ScheduleEvent.EventType.ARRIVE_CTS:
+        return assignment.cts.code if assignment.cts else fallback
+    if event_type == ScheduleEvent.EventType.DISCHARGE_COMPLETE:
+        return trip.voyage.vessel_name
+    return fallback
+
+
+def _replace_version_conflicts_from_run(
+    *,
+    run: ScenarioRun,
+    target_version: PlanVersion,
+    target_trip_by_source_id: dict[int, Trip],
+) -> None:
+    Conflict.objects.filter(plan_version=target_version).delete()
+    for evaluation in run.constraint_evaluations.select_related("trip").all():
+        if evaluation.severity == ScenarioConstraintEvaluation.Severity.INFO:
+            continue
+        Conflict.objects.create(
+            plan_version=target_version,
+            trip=target_trip_by_source_id.get(evaluation.trip_id),
+            code=evaluation.code,
+            severity=evaluation.severity,
+            object_type=evaluation.affected_object_type,
+            object_id=evaluation.affected_object_id,
+            message=evaluation.message,
+            is_blocking=evaluation.severity == ScenarioConstraintEvaluation.Severity.CRITICAL,
+        )
+    _refresh_plan_version_validation(target_version)
+
+
+def _refresh_plan_version_validation(plan_version: PlanVersion) -> None:
+    conflicts = plan_version.conflicts.all()
+    blocking_count = conflicts.filter(is_blocking=True, resolved_at__isnull=True).count()
+    warning_count = conflicts.filter(severity=Conflict.Severity.WARNING).count()
+    if blocking_count:
+        plan_version.validation_status = PlanVersion.ValidationStatus.BLOCKED
+    elif warning_count:
+        plan_version.validation_status = PlanVersion.ValidationStatus.WARNING
+    else:
+        plan_version.validation_status = PlanVersion.ValidationStatus.FEASIBLE
+    plan_version.summary = {
+        **plan_version.summary,
+        "tripCount": plan_version.trips.count(),
+        "conflictCount": conflicts.count(),
+        "blockingConflictCount": blocking_count,
+        "warningConflictCount": warning_count,
+        "firstBlockingConstraint": (
+            conflicts.filter(is_blocking=True)
+            .order_by("created_at")
+            .values_list("code", flat=True)
+            .first()
+        ),
+    }
+    plan_version.save(update_fields=["validation_status", "summary", "updated_at"])
+
+
+def _promoted_version_summary(
+    *,
+    scenario: SimulationScenario,
+    run: ScenarioRun,
+    scenario_diff: dict,
+    actor,
+) -> dict:
+    return {
+        "scenarioLineage": {
+            "baselineVersionId": scenario.baseline_version_id,
+            "baselineVersionRef": str(scenario.baseline_version),
+            "scenarioId": scenario.scenario_id,
+            "scenarioPk": scenario.id,
+            "selectedRunId": run.id,
+            "selectedRunRef": run.run_id,
+            "assumptionIds": list(
+                scenario.assumptions.order_by("created_at", "id").values_list(
+                    "assumption_id",
+                    flat=True,
+                )
+            ),
+            "algorithmVersion": run.algorithm_version,
+            "promotedAt": timezone.now().isoformat(),
+            "promotedBy": getattr(actor, "email", "") or getattr(actor, "username", ""),
+        },
+        "scenarioDiff": scenario_diff,
+    }
 
 
 def _assert_scenario_inputs_mutable(scenario: SimulationScenario) -> None:

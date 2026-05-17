@@ -27,14 +27,8 @@ from .models import (
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
-    ScheduleEvent,
-    ScenarioAssumption,
-    ScenarioConstraintEvaluation,
-    ScenarioEventProjection,
-    ScenarioOgvProjection,
-    ScenarioResourceUtilization,
     ScenarioRun,
-    ScenarioTripProjection,
+    ScheduleEvent,
     SimulationScenario,
     Trip,
 )
@@ -49,7 +43,6 @@ from .serializers import (
     PlanSerializer,
     PlanVersionSerializer,
     PublishedPlanSnapshotSerializer,
-    ScheduleEventSerializer,
     ScenarioAssumptionSerializer,
     ScenarioConstraintEvaluationSerializer,
     ScenarioEventProjectionSerializer,
@@ -57,6 +50,7 @@ from .serializers import (
     ScenarioResourceUtilizationSerializer,
     ScenarioRunSerializer,
     ScenarioTripProjectionSerializer,
+    ScheduleEventSerializer,
     SimulationScenarioSerializer,
     TripSerializer,
 )
@@ -563,7 +557,21 @@ class SimulationScenarioViewSet(SchedulingViewSet):
 
     @action(detail=True, methods=["post"], url_path="promote")
     def promote(self, request, pk=None):
-        scenario = promote_scenario_to_proposed(scenario=self.get_object(), actor=request.user)
+        scenario = self.get_object()
+        selected_run = None
+        run_id = request.data.get("run_id")
+        if run_id:
+            selected_run = get_object_or_404(
+                ScenarioRun,
+                pk=run_id,
+                scenario=scenario,
+            )
+        scenario = promote_scenario_to_proposed(
+            scenario=scenario,
+            actor=request.user,
+            run=selected_run,
+        )
+        lineage = scenario.scenario_version.summary.get("scenarioLineage", {})
         record_audit_event(
             actor=request.user,
             organization=scenario.baseline_version.plan.organization,
@@ -571,7 +579,11 @@ class SimulationScenarioViewSet(SchedulingViewSet):
             object_type="simulation_scenario",
             object_id=str(scenario.pk),
             object_repr=scenario.scenario_id,
-            metadata={"scenario_version": scenario.scenario_version_id},
+            metadata={
+                "scenario_version": scenario.scenario_version_id,
+                "selected_run_id": lineage.get("selectedRunId"),
+                "selected_run_ref": lineage.get("selectedRunRef"),
+            },
             request=request,
         )
         return Response(SimulationScenarioSerializer(scenario).data)

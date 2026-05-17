@@ -40,6 +40,12 @@ const COMMANDS: Array<ExportCommand & { title: string; detail: string }> = [
     detail: "Open blocker register with plan version and trip context.",
   },
   {
+    exportType: "scenario_diff",
+    exportFormat: "json",
+    title: "Scenario diff",
+    detail: "Promoted scenario lineage, selected run, and baseline-to-candidate deltas.",
+  },
+  {
     exportType: "audit",
     exportFormat: "json",
     title: "Audit evidence",
@@ -50,6 +56,7 @@ const COMMANDS: Array<ExportCommand & { title: string; detail: string }> = [
 function formatType(type: ExportType) {
   if (type === "plan") return "Plan";
   if (type === "conflict") return "Conflict";
+  if (type === "scenario_diff") return "Scenario diff";
   return "Audit";
 }
 
@@ -111,8 +118,8 @@ export function ExportHandoffPage({
           <strong>{overview?.summary.conflict ?? 0}</strong>
         </div>
         <div>
-          <span>Access scope</span>
-          <strong>{overview?.scope.label ?? "Loading"}</strong>
+          <span>Scenario diffs</span>
+          <strong>{overview?.summary.scenario_diff ?? 0}</strong>
         </div>
       </div>
 

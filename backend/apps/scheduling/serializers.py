@@ -62,6 +62,8 @@ class PlanVersionSerializer(serializers.ModelSerializer):
     plan_code = serializers.CharField(source="plan.code", read_only=True)
     plan_name = serializers.CharField(source="plan.name", read_only=True)
     created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+    scenario_lineage = serializers.SerializerMethodField()
+    scenario_diff_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = PlanVersion
@@ -79,6 +81,8 @@ class PlanVersionSerializer(serializers.ModelSerializer):
             "created_by",
             "created_by_email",
             "summary",
+            "scenario_lineage",
+            "scenario_diff_summary",
             "created_at",
             "updated_at",
         )
@@ -90,9 +94,17 @@ class PlanVersionSerializer(serializers.ModelSerializer):
             "created_by",
             "created_by_email",
             "summary",
+            "scenario_lineage",
+            "scenario_diff_summary",
             "created_at",
             "updated_at",
         )
+
+    def get_scenario_lineage(self, obj):
+        return obj.summary.get("scenarioLineage")
+
+    def get_scenario_diff_summary(self, obj):
+        return obj.summary.get("scenarioDiff", {}).get("summary")
 
 
 class ScheduleEventSerializer(serializers.ModelSerializer):
@@ -327,6 +339,8 @@ class ApprovalRequestSerializer(serializers.ModelSerializer):
     plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
     requested_by_email = serializers.EmailField(source="requested_by.email", read_only=True)
     decisions = ApprovalDecisionSerializer(many=True, read_only=True)
+    scenario_lineage = serializers.SerializerMethodField()
+    scenario_diff_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = ApprovalRequest
@@ -344,6 +358,8 @@ class ApprovalRequestSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "decisions",
+            "scenario_lineage",
+            "scenario_diff_summary",
         )
         read_only_fields = (
             "id",
@@ -356,13 +372,23 @@ class ApprovalRequestSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "decisions",
+            "scenario_lineage",
+            "scenario_diff_summary",
         )
+
+    def get_scenario_lineage(self, obj):
+        return obj.plan_version.summary.get("scenarioLineage")
+
+    def get_scenario_diff_summary(self, obj):
+        return obj.plan_version.summary.get("scenarioDiff", {}).get("summary")
 
 
 class PublishedPlanSnapshotSerializer(serializers.ModelSerializer):
     plan_code = serializers.CharField(source="plan.code", read_only=True)
     plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
     published_by_email = serializers.EmailField(source="published_by.email", read_only=True)
+    scenario_lineage = serializers.SerializerMethodField()
+    scenario_diff_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = PublishedPlanSnapshot
@@ -379,8 +405,16 @@ class PublishedPlanSnapshotSerializer(serializers.ModelSerializer):
             "published_by",
             "published_by_email",
             "published_at",
+            "scenario_lineage",
+            "scenario_diff_summary",
         )
         read_only_fields = fields
+
+    def get_scenario_lineage(self, obj):
+        return obj.plan_version.summary.get("scenarioLineage")
+
+    def get_scenario_diff_summary(self, obj):
+        return obj.plan_version.summary.get("scenarioDiff", {}).get("summary")
 
 
 class ExportJobSerializer(serializers.ModelSerializer):

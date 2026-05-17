@@ -44,6 +44,7 @@ class ExportScope:
 EXPORT_TYPE_LABELS = {
     ExportJob.ExportType.PLAN: "Published plan and schedule handoff",
     ExportJob.ExportType.CONFLICT: "Open conflict register",
+    ExportJob.ExportType.SCENARIO_DIFF: "Scenario diff evidence pack",
     ExportJob.ExportType.AUDIT: "Audit evidence pack",
 }
 
@@ -139,6 +140,7 @@ def export_overview_for_user(user) -> dict:
         total=Count("id"),
         plan=Count("id", filter=Q(export_type=ExportJob.ExportType.PLAN)),
         conflict=Count("id", filter=Q(export_type=ExportJob.ExportType.CONFLICT)),
+        scenario_diff=Count("id", filter=Q(export_type=ExportJob.ExportType.SCENARIO_DIFF)),
         audit=Count("id", filter=Q(export_type=ExportJob.ExportType.AUDIT)),
     )
     scope = export_scope_for_user(user)
@@ -147,6 +149,7 @@ def export_overview_for_user(user) -> dict:
             "total": counts["total"] or 0,
             "plan": counts["plan"] or 0,
             "conflict": counts["conflict"] or 0,
+            "scenario_diff": counts["scenario_diff"] or 0,
             "audit": counts["audit"] or 0,
         },
         "scope": scope.as_payload(),
@@ -156,6 +159,7 @@ def export_overview_for_user(user) -> dict:
             for value in (
                 ExportJob.ExportType.PLAN,
                 ExportJob.ExportType.CONFLICT,
+                ExportJob.ExportType.SCENARIO_DIFF,
                 ExportJob.ExportType.AUDIT,
             )
         ],
@@ -279,6 +283,12 @@ def _build_payload(
     if export_type == ExportJob.ExportType.CONFLICT:
         assert plan_version is not None
         return _conflict_payload(base_payload=base_payload, plan_version=plan_version, scope=scope)
+    if export_type == ExportJob.ExportType.SCENARIO_DIFF:
+        assert plan_version is not None
+        return _scenario_diff_payload(
+            base_payload=base_payload,
+            plan_version=plan_version,
+        )
     return _audit_payload(base_payload=base_payload, scope=scope)
 
 
@@ -334,6 +344,8 @@ def _plan_payload(
             "plannedMt": sum(trip.planned_quantity_mt for trip in trips),
             "loadedMt": sum(trip.loaded_quantity_mt for trip in trips),
         },
+        "scenarioLineage": plan_version.summary.get("scenarioLineage"),
+        "scenarioDiff": plan_version.summary.get("scenarioDiff"),
         "trips": [_trip_row(trip) for trip in trips],
     }
     return payload, len(trips)
@@ -372,6 +384,32 @@ def _conflict_payload(
     return payload, len(rows)
 
 
+def _scenario_diff_payload(
+    *,
+    base_payload: dict,
+    plan_version: PlanVersion,
+) -> tuple[dict, int]:
+    scenario_lineage = plan_version.summary.get("scenarioLineage")
+    scenario_diff = plan_version.summary.get("scenarioDiff")
+    if not scenario_lineage or not scenario_diff:
+        raise ValidationError(
+            {"plan_version": "Selected plan version does not carry promoted scenario lineage."}
+        )
+    rows = scenario_diff.get("rows", [])
+    payload = {
+        **base_payload,
+        "plan": {
+            "code": plan_version.plan.code,
+            "versionNo": plan_version.version_no,
+            "status": plan_version.status,
+        },
+        "scenarioLineage": scenario_lineage,
+        "summary": scenario_diff.get("summary", {}),
+        "rows": rows,
+    }
+    return payload, len(rows)
+
+
 def _audit_payload(*, base_payload: dict, scope: ExportScope) -> tuple[dict, int]:
     events = AuditEvent.objects.select_related("actor", "organization").order_by("-created_at")
     if not scope.is_all_network:
@@ -403,6 +441,7 @@ def _render_csv(export_type: str, payload: dict) -> str:
     rows_key = {
         ExportJob.ExportType.PLAN: "trips",
         ExportJob.ExportType.CONFLICT: "conflicts",
+        ExportJob.ExportType.SCENARIO_DIFF: "rows",
         ExportJob.ExportType.AUDIT: "events",
     }[export_type]
     rows = payload.get(rows_key, [])
@@ -431,6 +470,16 @@ def _render_csv(export_type: str, payload: dict) -> str:
             "message",
             "isBlocking",
             "resolvedAt",
+        ],
+        ExportJob.ExportType.SCENARIO_DIFF: [
+            "key",
+            "state",
+            "sourceTrip",
+            "targetTrip",
+            "sourceVessel",
+            "targetVessel",
+            "delayDeltaMinutes",
+            "quantityDeltaMt",
         ],
         ExportJob.ExportType.AUDIT: [
             "createdAt",
@@ -473,6 +522,27 @@ def _render_printable(export_type: str, payload: dict) -> str:
                 f"{trip['coalGrade']} | {trip['plannedQuantityMt']} MT | "
                 f"{trip['plannedStart']} -> {trip['plannedEnd']} | "
                 f"{trip['tug']}/{trip['barge']} | {trip['status']}"
+            )
+        return "\n".join(lines) + "\n"
+
+    if export_type == ExportJob.ExportType.SCENARIO_DIFF:
+        plan = payload["plan"]
+        lineage = payload["scenarioLineage"]
+        summary = payload["summary"]
+        lines += [
+            f"Plan: {plan['code']} V{plan['versionNo']} ({plan['status']})",
+            f"Scenario: {lineage['scenarioId']} | Run: {lineage['selectedRunRef']}",
+            (
+                f"Changed trips: {summary.get('changedTripCount', 0)} | "
+                f"Delay delta: {summary.get('delayDeltaMinutes', 0)} minutes"
+            ),
+            "-" * 96,
+        ]
+        for row in payload["rows"]:
+            lines.append(
+                f"{row['state']} {row.get('sourceTrip', '-')} -> {row.get('targetTrip', '-')} | "
+                f"delay {row.get('delayDeltaMinutes', 0)}m | "
+                f"qty {row.get('quantityDeltaMt', 0)} MT"
             )
         return "\n".join(lines) + "\n"
 

@@ -627,7 +627,7 @@ function App() {
     });
   }
 
-  async function handlePromoteScenario(scenarioId?: number) {
+  async function handlePromoteScenario(scenarioId?: number, runId?: number) {
     await runWorkspaceAction("Promote scenario", async () => {
       const scenario = currentScenario(scenarioId);
       if (!scenario) {
@@ -641,6 +641,7 @@ function App() {
           headers: {
             "X-CSRFToken": csrfToken,
           },
+          body: JSON.stringify(runId ? { run_id: runId } : {}),
         },
       );
       return `Scenario promoted: ${promoted.scenario_version_ref ?? promoted.scenario_id}`;

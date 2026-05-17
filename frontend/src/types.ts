@@ -564,6 +564,8 @@ export type PlanVersionRecord = {
   created_by: number | null;
   created_by_email: string | null;
   summary: Record<string, unknown>;
+  scenario_lineage: ScenarioLineageRecord | null;
+  scenario_diff_summary: ScenarioDiffSummaryRecord | null;
   created_at: string;
   updated_at: string;
 };
@@ -731,6 +733,8 @@ export type ApprovalRequestRecord = {
   created_at: string;
   updated_at: string;
   decisions: ApprovalDecisionRecord[];
+  scenario_lineage: ScenarioLineageRecord | null;
+  scenario_diff_summary: ScenarioDiffSummaryRecord | null;
 };
 
 export type PublishedPlanSnapshotRecord = {
@@ -746,9 +750,30 @@ export type PublishedPlanSnapshotRecord = {
   published_by: number | null;
   published_by_email: string | null;
   published_at: string;
+  scenario_lineage: ScenarioLineageRecord | null;
+  scenario_diff_summary: ScenarioDiffSummaryRecord | null;
 };
 
-export type ExportType = "plan" | "conflict" | "audit";
+export type ScenarioLineageRecord = {
+  baselineVersionId: number;
+  baselineVersionRef: string;
+  scenarioId: string;
+  scenarioPk: number;
+  selectedRunId: number;
+  selectedRunRef: string;
+  assumptionIds: string[];
+  algorithmVersion: string;
+  promotedAt: string;
+  promotedBy: string;
+};
+
+export type ScenarioDiffSummaryRecord = {
+  changedTripCount: number;
+  delayDeltaMinutes: number;
+  quantityDeltaMt: number;
+};
+
+export type ExportType = "plan" | "conflict" | "scenario_diff" | "audit";
 export type ExportFormat = "json" | "csv" | "print";
 
 export type ExportJobRecord = {
@@ -789,6 +814,7 @@ export type ExportOverview = {
     total: number;
     plan: number;
     conflict: number;
+    scenario_diff: number;
     audit: number;
   };
   scope: {

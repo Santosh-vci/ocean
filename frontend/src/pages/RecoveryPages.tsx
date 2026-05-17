@@ -43,7 +43,7 @@ type RecoveryPageProps = {
   onReject?: () => void;
   onRunSimulation?: (scenarioId?: number) => void;
   onSubmitApproval?: () => void;
-  onPromoteScenario?: (scenarioId?: number) => void;
+  onPromoteScenario?: (scenarioId?: number, runId?: number) => void;
   onPublishTriage?: () => void;
   canPublish?: boolean;
 };
@@ -545,16 +545,27 @@ export function SimulationWorkspacePage({
   const projectedTrips = new Map(
     (latestRun?.trip_projections ?? []).map((projection) => [projection.trip, projection]),
   );
+  const projectedTripsByRef = new Map(
+    (latestRun?.trip_projections ?? []).map((projection) => [projection.trip_ref, projection]),
+  );
   const comparisonRows = trips.map((trip) => ({
     trip,
-    projection: projectedTrips.get(trip.id),
+    projection: projectedTrips.get(trip.id) ?? projectedTripsByRef.get(
+      typeof trip.selection_reason.scenario_projection === "object"
+        && trip.selection_reason.scenario_projection
+        && "sourceTrip" in trip.selection_reason.scenario_projection
+        ? String(trip.selection_reason.scenario_projection.sourceTrip)
+        : typeof trip.selection_reason.cloned_from === "string"
+          ? trip.selection_reason.cloned_from
+          : trip.trip_id,
+    ),
   }));
   const changedRows = comparisonRows.filter((row) => projectionChanged(row.projection));
   const visibleComparisonRows = changedRows.length ? changedRows : comparisonRows.slice(0, 6);
   const timelineRows = visibleComparisonRows.slice(0, 8);
   const timelineTimes = timelineRows.flatMap((row) => [
-    new Date(row.trip.planned_start).getTime(),
-    new Date(row.trip.planned_end).getTime(),
+    new Date(row.projection?.baseline_start ?? row.trip.planned_start).getTime(),
+    new Date(row.projection?.baseline_end ?? row.trip.planned_end).getTime(),
     new Date(row.projection?.projected_start ?? row.trip.planned_start).getTime(),
     new Date(row.projection?.projected_end ?? row.trip.planned_end).getTime(),
   ]).filter((value) => Number.isFinite(value));
@@ -596,6 +607,7 @@ export function SimulationWorkspacePage({
     : scenario?.source_kind === "override"
       ? short(scenario.source_override_reason_code)
       : "Manual";
+  const scenarioLocked = scenario?.status === "proposed" || scenario?.status === "canceled";
 
   function createAssumption() {
     if (!scenario || !onCreateAssumption) return;
@@ -679,7 +691,7 @@ export function SimulationWorkspacePage({
         <div className="planning-actions">
           <span className="phase-chip">Scenario delta</span>
           <button
-            disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
+            disabled={!canEdit || !scenario || scenarioLocked || !onRunSimulation || isActionRunning}
             onClick={() => onRunSimulation?.(scenario?.id)}
             title={!canEdit ? "Your role cannot run simulations." : undefined}
             type="button"
@@ -687,8 +699,16 @@ export function SimulationWorkspacePage({
             Run simulation
           </button>
           <button
-            disabled={!canEdit || !scenario || !onPromoteScenario || isActionRunning}
-            onClick={() => onPromoteScenario?.(scenario?.id)}
+            disabled={
+              !canEdit
+              || !scenario
+              || scenarioLocked
+              || !latestRun
+              || latestRun.status !== "succeeded"
+              || !onPromoteScenario
+              || isActionRunning
+            }
+            onClick={() => onPromoteScenario?.(scenario?.id, latestRun?.id)}
             title={!canEdit ? "Your role cannot promote scenarios." : undefined}
             type="button"
           >
@@ -904,7 +924,13 @@ export function SimulationWorkspacePage({
             ) : null}
 
             <button
-              disabled={!canEdit || !scenario || !onCreateAssumption || isActionRunning}
+              disabled={
+                !canEdit
+                || !scenario
+                || scenarioLocked
+                || !onCreateAssumption
+                || isActionRunning
+              }
               onClick={createAssumption}
               type="button"
             >
@@ -960,11 +986,11 @@ export function SimulationWorkspacePage({
                         </>
                       ) : null}
                     </td>
-                    <td><GridDate value={trip.planned_start} /></td>
+                    <td><GridDate value={projection?.baseline_start ?? trip.planned_start} /></td>
                     <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
                       <GridDate value={projection?.projected_start ?? trip.planned_start} />
                     </td>
-                    <td><GridDate value={trip.planned_end} /></td>
+                    <td><GridDate value={projection?.baseline_end ?? trip.planned_end} /></td>
                     <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
                       <GridDate value={projection?.projected_end ?? trip.planned_end} />
                     </td>
@@ -988,7 +1014,10 @@ export function SimulationWorkspacePage({
                 <div className="scenario-lanes">
                   <span
                     className="scenario-bar baseline"
-                    style={timelineStyle(trip.planned_start, trip.planned_end)}
+                    style={timelineStyle(
+                      projection?.baseline_start ?? trip.planned_start,
+                      projection?.baseline_end ?? trip.planned_end,
+                    )}
                   >
                     BASE
                   </span>
@@ -1225,7 +1254,7 @@ export function ApprovalsPublishingPage({
         </div>
       </header>
 
-      <div className="metric-strip seven-up recovery-kpis">
+        <div className="metric-strip seven-up recovery-kpis">
         <div><span>Pending approvals</span><strong>{requests.filter((item) => item.status === "pending").length}</strong></div>
         <div><span>Critical</span><strong className="critical-text">{overview?.validation.criticalConflictCount ?? 0}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overview?.validation.overrideCount ?? 0}</strong></div>
@@ -1257,7 +1286,7 @@ export function ApprovalsPublishingPage({
                       <td><span className={`status-chip ${statusTone(item.status)}`}>{short(item.status)}</span></td>
                       <td><GridDate value={item.created_at} /></td>
                       <td>{item.request_id}</td>
-                      <td>{item.plan_version_ref}</td>
+                      <td>{item.scenario_lineage?.scenarioId ?? item.plan_version_ref}</td>
                       <td>{item.reason}</td>
                       <td>{overview?.validation.blockingConflictCount ? "Blocking conflicts remain" : "Validation clear"}</td>
                       <td>{itemCoverage.approved}/{itemCoverage.required}</td>
@@ -1279,6 +1308,19 @@ export function ApprovalsPublishingPage({
               <span className={`status-chip ${statusTone(request.status)}`}>{short(request.status)}</span>
               <h2>{request.request_id}</h2>
               <p>{request.reason}</p>
+              {request.scenario_lineage ? (
+                <section className="recovery-box scenario-lineage-box">
+                  <strong>Scenario source</strong>
+                  <dl>
+                    <div><dt>Scenario</dt><dd>{request.scenario_lineage.scenarioId}</dd></div>
+                    <div><dt>Run</dt><dd>{request.scenario_lineage.selectedRunRef}</dd></div>
+                    <div><dt>Baseline</dt><dd>{request.scenario_lineage.baselineVersionRef}</dd></div>
+                    <div><dt>Assumptions</dt><dd>{request.scenario_lineage.assumptionIds.length}</dd></div>
+                    <div><dt>Changed trips</dt><dd>{request.scenario_diff_summary?.changedTripCount ?? 0}</dd></div>
+                    <div><dt>Aggregate delay</dt><dd>{signedMinutes(request.scenario_diff_summary?.delayDeltaMinutes ?? 0)}</dd></div>
+                  </dl>
+                </section>
+              ) : null}
               <section className="recovery-box">
                 <strong>Constraint checklist</strong>
                 <ul className="validation-list">

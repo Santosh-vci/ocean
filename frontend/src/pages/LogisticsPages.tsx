@@ -492,6 +492,8 @@ export function PublishedPlanPage({
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const activeVersion = overview?.activePlanVersion;
+  const lineage = activeVersion?.scenario_lineage;
+  const scenarioDiff = activeVersion?.scenario_diff_summary;
   const selectedTrip = trips.find((trip) => conflictForTrip(conflicts, trip.id)?.is_blocking) ?? trips[0];
   const selectedConflict = conflictForTrip(conflicts, selectedTrip?.id);
 
@@ -583,6 +585,18 @@ export function PublishedPlanPage({
                 <div><dt>Barge</dt><dd>{selectedTrip.assignment?.barge?.code ?? "Unassigned"}</dd></div>
                 <div><dt>CTS</dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
               </dl>
+              {lineage ? (
+                <section className="recovery-box">
+                  <strong>Promoted scenario ancestry</strong>
+                  <dl>
+                    <div><dt>Scenario</dt><dd>{lineage.scenarioId}</dd></div>
+                    <div><dt>Run</dt><dd>{lineage.selectedRunRef}</dd></div>
+                    <div><dt>Baseline</dt><dd>{lineage.baselineVersionRef}</dd></div>
+                    <div><dt>Changed trips</dt><dd>{scenarioDiff?.changedTripCount ?? 0}</dd></div>
+                    <div><dt>Aggregate delay</dt><dd>{scenarioDiff ? `${scenarioDiff.delayDeltaMinutes > 0 ? "+" : ""}${scenarioDiff.delayDeltaMinutes}m` : "0m"}</dd></div>
+                  </dl>
+                </section>
+              ) : null}
               <section className="recovery-box">
                 <strong>Conflict center MVP</strong>
                 <p>{selectedConflict?.message ?? "No active conflict on this trip."}</p>
