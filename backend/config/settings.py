@@ -131,6 +131,12 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BEAT_SCHEDULE = {
+    "refresh-telemetry-signal-health": {
+        "task": "telemetry.refresh_signal_health",
+        "schedule": 60.0,
+    },
+}
 
 LOGGING = {
     "version": 1,

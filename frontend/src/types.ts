@@ -993,3 +993,30 @@ export type SchedulingOverview = {
     loadedMt: number;
   };
 };
+
+export type LatestAssetStateRecord = {
+  id: number;
+  asset_type: string;
+  asset_code: string;
+  source: number;
+  source_id: string;
+  source_type: string;
+  asset_identity: number;
+  external_id: string;
+  external_id_type: string;
+  last_ping: number | null;
+  last_ping_ref: string | null;
+  derived_status: string;
+  latitude: string | null;
+  longitude: string | null;
+  speed_knots: string | null;
+  heading_degrees: string | null;
+  last_seen_at: string | null;
+  age_seconds: number | null;
+  freshness_status: "fresh" | "aging" | "stale" | "missing" | string;
+  confidence_score: string;
+  paired_asset_code: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};

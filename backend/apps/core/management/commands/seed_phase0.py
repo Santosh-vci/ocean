@@ -59,7 +59,8 @@ from apps.scheduling.services import (
     generate_plan_version,
     simulate_scenario,
 )
-from apps.telemetry.models import AssetIdentity, PositionPing, TelemetrySource
+from apps.telemetry.models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from apps.telemetry.services import ensure_missing_latest_state
 
 
 class Command(BaseCommand):
@@ -369,6 +370,7 @@ class Command(BaseCommand):
         )
 
     def _reset_operational_data(self):
+        LatestAssetState.objects.all().delete()
         PositionPing.objects.all().delete()
 
         ExportJob.objects.all().delete()
@@ -425,7 +427,7 @@ class Command(BaseCommand):
         )
 
         for tug in Tug.objects.order_by("code"):
-            AssetIdentity.objects.update_or_create(
+            identity, _ = AssetIdentity.objects.update_or_create(
                 source=gps_source,
                 external_id=tug.gps_device_id or f"SYN-{tug.code}",
                 defaults={
@@ -437,6 +439,7 @@ class Command(BaseCommand):
                     "metadata": {"seeded": True},
                 },
             )
+            ensure_missing_latest_state(asset_identity=identity)
             if tug.ais_mmsi:
                 AssetIdentity.objects.update_or_create(
                     source=ais_source,
@@ -451,7 +454,7 @@ class Command(BaseCommand):
                     },
                 )
         for barge in Barge.objects.order_by("code"):
-            AssetIdentity.objects.update_or_create(
+            identity, _ = AssetIdentity.objects.update_or_create(
                 source=gps_source,
                 external_id=f"SYN-{barge.code}",
                 defaults={
@@ -463,8 +466,9 @@ class Command(BaseCommand):
                     "metadata": {"seeded": True},
                 },
             )
+            ensure_missing_latest_state(asset_identity=identity)
         for cts in CTSAsset.objects.order_by("code"):
-            AssetIdentity.objects.update_or_create(
+            identity, _ = AssetIdentity.objects.update_or_create(
                 source=gps_source,
                 external_id=f"SYN-{cts.code}",
                 defaults={
@@ -476,6 +480,7 @@ class Command(BaseCommand):
                     "metadata": {"seeded": True},
                 },
             )
+            ensure_missing_latest_state(asset_identity=identity)
 
     def _seed_start_date(self):
         return timezone.localdate() + timedelta(days=1)

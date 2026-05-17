@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AssetIdentity, PositionPing, TelemetrySource
+from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
 
 SYNTHETIC_SOURCE_TYPES = {
     TelemetrySource.SourceType.SYNTHETIC_GPS,
@@ -38,12 +38,54 @@ def ingest_position_ping(*, payload: dict) -> dict:
             raw_payload_ref=normalized.get("raw_payload_ref", ""),
             is_synthetic=source.source_type in SYNTHETIC_SOURCE_TYPES,
         )
+        latest_state_updated = _update_latest_asset_state(ping=ping)
     return {
         "ping": ping,
-        "latest_state_updated": False,
+        "latest_state_updated": latest_state_updated,
         "geofence_events": [],
         "alerts": [],
     }
+
+
+def ensure_missing_latest_state(*, asset_identity: AssetIdentity) -> LatestAssetState:
+    state, _ = LatestAssetState.objects.get_or_create(
+        asset_type=asset_identity.asset_type,
+        asset_code=asset_identity.asset_code,
+        defaults={
+            "source": asset_identity.source,
+            "asset_identity": asset_identity,
+            "freshness_status": LatestAssetState.FreshnessStatus.MISSING,
+            "derived_status": LatestAssetState.DerivedStatus.UNKNOWN,
+            "confidence_score": Decimal("0"),
+            "metadata": {"createdFromIdentitySeed": True},
+        },
+    )
+    return state
+
+
+def refresh_signal_health(*, now=None) -> int:
+    now = now or timezone.now()
+    updated = 0
+    for state in LatestAssetState.objects.select_related("source").all():
+        freshness_status = _freshness_status(
+            source=state.source,
+            last_seen_at=state.last_seen_at,
+            now=now,
+            signal_quality=state.last_ping.signal_quality if state.last_ping else None,
+        )
+        confidence_score = _confidence_score(
+            freshness_status=freshness_status,
+            signal_quality=state.last_ping.signal_quality if state.last_ping else None,
+        )
+        if (
+            state.freshness_status != freshness_status
+            or state.confidence_score != confidence_score
+        ):
+            state.freshness_status = freshness_status
+            state.confidence_score = confidence_score
+            state.save(update_fields=["freshness_status", "confidence_score", "updated_at"])
+            updated += 1
+    return updated
 
 
 def _normalize_payload(payload: dict) -> dict:
@@ -171,6 +213,97 @@ def _resolve_asset_identity(*, source: TelemetrySource, payload: dict) -> AssetI
         changed_fields.append("updated_at")
         identity.save(update_fields=changed_fields)
     return identity
+
+
+def _update_latest_asset_state(*, ping: PositionPing) -> bool:
+    state = LatestAssetState.objects.filter(
+        asset_type=ping.asset_type,
+        asset_code=ping.asset_code,
+    ).first()
+    if state and state.last_seen_at and ping.device_timestamp < state.last_seen_at:
+        return False
+
+    freshness_status = _freshness_status(
+        source=ping.source,
+        last_seen_at=ping.device_timestamp,
+        now=timezone.now(),
+        signal_quality=ping.signal_quality,
+    )
+    derived_status = _derived_status(
+        freshness_status=freshness_status,
+        speed_knots=ping.speed_knots,
+    )
+    confidence_score = _confidence_score(
+        freshness_status=freshness_status,
+        signal_quality=ping.signal_quality,
+    )
+    LatestAssetState.objects.update_or_create(
+        asset_type=ping.asset_type,
+        asset_code=ping.asset_code,
+        defaults={
+            "source": ping.source,
+            "asset_identity": ping.asset_identity,
+            "last_ping": ping,
+            "derived_status": derived_status,
+            "latitude": ping.latitude,
+            "longitude": ping.longitude,
+            "speed_knots": ping.speed_knots,
+            "heading_degrees": ping.heading_degrees,
+            "last_seen_at": ping.device_timestamp,
+            "freshness_status": freshness_status,
+            "confidence_score": confidence_score,
+            "metadata": {
+                "lastPingId": ping.ping_id,
+                "sourceType": ping.source.source_type,
+                "signalQuality": ping.signal_quality,
+                "isSynthetic": ping.is_synthetic,
+            },
+        },
+    )
+    return True
+
+
+def _freshness_status(
+    *,
+    source: TelemetrySource,
+    last_seen_at,
+    now,
+    signal_quality: str | None,
+) -> str:
+    if last_seen_at is None:
+        return LatestAssetState.FreshnessStatus.MISSING
+    if signal_quality in {PositionPing.SignalQuality.INVALID, PositionPing.SignalQuality.STALE}:
+        return LatestAssetState.FreshnessStatus.STALE
+    age_seconds = max(0, int((now - last_seen_at).total_seconds()))
+    threshold = source.freshness_threshold_seconds
+    if age_seconds <= threshold:
+        return LatestAssetState.FreshnessStatus.FRESH
+    if age_seconds <= threshold * 2:
+        return LatestAssetState.FreshnessStatus.AGING
+    return LatestAssetState.FreshnessStatus.STALE
+
+
+def _derived_status(*, freshness_status: str, speed_knots) -> str:
+    if freshness_status in {
+        LatestAssetState.FreshnessStatus.MISSING,
+        LatestAssetState.FreshnessStatus.STALE,
+    }:
+        return LatestAssetState.DerivedStatus.UNKNOWN
+    if speed_knots is not None and Decimal(speed_knots) >= Decimal("1.00"):
+        return LatestAssetState.DerivedStatus.UNDERWAY
+    return LatestAssetState.DerivedStatus.STOPPED
+
+
+def _confidence_score(*, freshness_status: str, signal_quality: str | None) -> Decimal:
+    if freshness_status == LatestAssetState.FreshnessStatus.MISSING:
+        return Decimal("0")
+    if freshness_status == LatestAssetState.FreshnessStatus.STALE:
+        return Decimal("25")
+    if signal_quality == PositionPing.SignalQuality.WEAK:
+        return Decimal("65")
+    if freshness_status == LatestAssetState.FreshnessStatus.AGING:
+        return Decimal("70")
+    return Decimal("96")
 
 
 def _decimal_in_range(value, field: str, minimum: Decimal, maximum: Decimal) -> Decimal:

@@ -5,15 +5,16 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from apps.rbac.permissions import RequiresAccessPermission
 
-from .models import AssetIdentity, PositionPing, TelemetrySource
+from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
 from .serializers import (
     AssetIdentitySerializer,
+    LatestAssetStateSerializer,
     PositionPingIngestResponseSerializer,
     PositionPingIngestSerializer,
     PositionPingSerializer,
     TelemetrySourceSerializer,
 )
-from .services import ingest_position_ping
+from .services import ingest_position_ping, refresh_signal_health
 
 
 class TelemetryViewSet(ModelViewSet):
@@ -56,3 +57,29 @@ class PositionPingViewSet(ReadOnlyModelViewSet):
         result = ingest_position_ping(payload=serializer.validated_data)
         response = PositionPingIngestResponseSerializer(result)
         return Response(response.data, status=status.HTTP_201_CREATED)
+
+
+class LatestAssetStateViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+        "refresh_signal_health": "telemetry.ingest",
+    }
+    queryset = LatestAssetState.objects.select_related(
+        "source",
+        "asset_identity",
+        "last_ping",
+    ).all()
+    serializer_class = LatestAssetStateSerializer
+
+    @action(detail=False, methods=["post"], url_path="refresh-signal-health")
+    def refresh_signal_health(self, request):
+        updated = refresh_signal_health()
+        states = self.get_queryset()
+        return Response(
+            {
+                "updated": updated,
+                "states": LatestAssetStateSerializer(states, many=True).data,
+            }
+        )

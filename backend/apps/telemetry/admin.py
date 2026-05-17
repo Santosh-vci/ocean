@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AssetIdentity, PositionPing, TelemetrySource
+from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
 
 
 @admin.register(TelemetrySource)
@@ -31,3 +31,18 @@ class PositionPingAdmin(admin.ModelAdmin):
     search_fields = ("ping_id", "asset_code", "source__source_id")
     list_filter = ("asset_type", "signal_quality", "is_synthetic")
     readonly_fields = ("created_at",)
+
+
+@admin.register(LatestAssetState)
+class LatestAssetStateAdmin(admin.ModelAdmin):
+    list_display = (
+        "asset_code",
+        "asset_type",
+        "freshness_status",
+        "derived_status",
+        "source",
+        "last_seen_at",
+        "confidence_score",
+    )
+    search_fields = ("asset_code", "source__source_id", "asset_identity__external_id")
+    list_filter = ("asset_type", "freshness_status", "derived_status")

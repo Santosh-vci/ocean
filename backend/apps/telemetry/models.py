@@ -133,3 +133,72 @@ class PositionPing(models.Model):
 
     def __str__(self) -> str:
         return self.ping_id
+
+
+class LatestAssetState(models.Model):
+    class DerivedStatus(models.TextChoices):
+        UNDERWAY = "underway", "Underway"
+        STOPPED = "stopped", "Stopped"
+        UNKNOWN = "unknown", "Unknown"
+
+    class FreshnessStatus(models.TextChoices):
+        FRESH = "fresh", "Fresh"
+        AGING = "aging", "Aging"
+        STALE = "stale", "Stale"
+        MISSING = "missing", "Missing"
+
+    asset_type = models.CharField(max_length=32, choices=AssetIdentity.AssetType.choices)
+    asset_code = models.CharField(max_length=80)
+    source = models.ForeignKey(
+        TelemetrySource,
+        on_delete=models.PROTECT,
+        related_name="latest_asset_states",
+    )
+    asset_identity = models.ForeignKey(
+        AssetIdentity,
+        on_delete=models.PROTECT,
+        related_name="latest_states",
+    )
+    last_ping = models.ForeignKey(
+        PositionPing,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="latest_state_refs",
+    )
+    derived_status = models.CharField(
+        max_length=32,
+        choices=DerivedStatus.choices,
+        default=DerivedStatus.UNKNOWN,
+    )
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    speed_knots = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    heading_degrees = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    freshness_status = models.CharField(
+        max_length=32,
+        choices=FreshnessStatus.choices,
+        default=FreshnessStatus.MISSING,
+    )
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    paired_asset_code = models.CharField(max_length=80, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["asset_type", "asset_code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("asset_type", "asset_code"),
+                name="unique_latest_asset_state",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("freshness_status", "last_seen_at")),
+            models.Index(fields=("asset_type", "asset_code")),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_code} {self.freshness_status}"

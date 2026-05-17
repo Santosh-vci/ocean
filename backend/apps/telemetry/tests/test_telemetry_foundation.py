@@ -7,8 +7,8 @@ from rest_framework.test import APIClient
 
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
-from apps.telemetry.models import AssetIdentity, PositionPing, TelemetrySource
-from apps.telemetry.services import ingest_position_ping
+from apps.telemetry.models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from apps.telemetry.services import ingest_position_ping, refresh_signal_health
 
 
 def assign(user, organization, permission_codes):
@@ -70,9 +70,46 @@ def test_ingest_synthetic_ping_creates_source_identity_and_position_ping():
     assert ping.asset_type == AssetIdentity.AssetType.TUG
     assert ping.asset_code == "BER-TUG-08"
     assert ping.is_synthetic is True
-    assert result["latest_state_updated"] is False
+    assert result["latest_state_updated"] is True
+    latest_state = LatestAssetState.objects.get(asset_code="BER-TUG-08")
+    assert latest_state.last_ping == ping
+    assert latest_state.freshness_status == LatestAssetState.FreshnessStatus.FRESH
+    assert latest_state.derived_status == LatestAssetState.DerivedStatus.UNDERWAY
+    assert latest_state.confidence_score == 96
     assert result["geofence_events"] == []
     assert result["alerts"] == []
+
+
+@pytest.mark.django_db
+def test_older_ping_does_not_replace_latest_state():
+    first_timestamp = timezone.now()
+    first = ingest_position_ping(
+        payload=telemetry_payload(device_timestamp=first_timestamp)
+    )["ping"]
+    older = ingest_position_ping(
+        payload=telemetry_payload(
+            device_timestamp=first_timestamp - timezone.timedelta(minutes=15),
+            latitude="-1.0000000",
+        )
+    )
+
+    latest_state = LatestAssetState.objects.get(asset_code="BER-TUG-08")
+    assert older["latest_state_updated"] is False
+    assert latest_state.last_ping == first
+    assert latest_state.latitude == first.latitude
+
+
+@pytest.mark.django_db
+def test_refresh_signal_health_marks_old_state_stale():
+    timestamp = timezone.now() - timezone.timedelta(minutes=10)
+    ingest_position_ping(payload=telemetry_payload(device_timestamp=timestamp))
+
+    updated = refresh_signal_health(now=timestamp + timezone.timedelta(minutes=40))
+
+    latest_state = LatestAssetState.objects.get(asset_code="BER-TUG-08")
+    assert updated == 1
+    assert latest_state.freshness_status == LatestAssetState.FreshnessStatus.STALE
+    assert latest_state.confidence_score == 25
 
 
 @pytest.mark.django_db
@@ -117,8 +154,38 @@ def test_position_ping_ingest_api_enforces_permission_and_returns_normalized_pin
     assert response.data["ping"]["ping_id"].startswith("PNG-SYN-GPS-PHASE3-")
     assert response.data["ping"]["asset_code"] == "BER-TUG-08"
     assert response.data["ping"]["is_synthetic"] is True
+    assert response.data["latest_state_updated"] is True
     assert list_response.status_code == 200
     assert len(list_response.data) == 1
+
+
+@pytest.mark.django_db
+def test_latest_state_api_lists_freshness_for_viewers_and_refreshes_for_ingesters():
+    organization = Organization.objects.create(
+        name="Coalflow Platform",
+        slug="coalflow-platform-latest-test",
+        kind=Organization.Kind.PLATFORM,
+    )
+    viewer = User.objects.create_user(username="latest-viewer", password="secret")
+    dispatcher = User.objects.create_user(username="latest-dispatcher", password="secret")
+    assign(viewer, organization, ["telemetry.view"])
+    assign(dispatcher, organization, ["telemetry.view", "telemetry.ingest"])
+    ingest_position_ping(payload=telemetry_payload(device_timestamp=timezone.now()))
+
+    client = APIClient()
+    client.force_authenticate(viewer)
+    list_response = client.get("/api/telemetry/latest-asset-states/")
+    denied_refresh = client.post("/api/telemetry/latest-asset-states/refresh-signal-health/")
+
+    client.force_authenticate(dispatcher)
+    refresh_response = client.post("/api/telemetry/latest-asset-states/refresh-signal-health/")
+
+    assert list_response.status_code == 200
+    assert list_response.data[0]["asset_code"] == "BER-TUG-08"
+    assert list_response.data[0]["freshness_status"] == "fresh"
+    assert denied_refresh.status_code == 403
+    assert refresh_response.status_code == 200
+    assert "updated" in refresh_response.data
 
 
 @pytest.mark.django_db
@@ -130,3 +197,7 @@ def test_seed_phase0_creates_phase3_synthetic_sources_and_asset_identities():
     assert AssetIdentity.objects.filter(asset_code="BER-TUG-08", external_id="GPS-768").exists()
     assert AssetIdentity.objects.filter(asset_code="BRG-VAL-08").exists()
     assert AssetIdentity.objects.filter(asset_code="CTS-BORNEO").exists()
+    assert LatestAssetState.objects.filter(
+        asset_code="BER-TUG-08",
+        freshness_status=LatestAssetState.FreshnessStatus.MISSING,
+    ).exists()

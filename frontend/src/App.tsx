@@ -37,6 +37,7 @@ import type {
   ExportOverview,
   ExportType,
   ImportJobRecord,
+  LatestAssetStateRecord,
   MasterDataCatalogs,
   MasterDataRecord,
   MasterDataOverview,
@@ -113,6 +114,7 @@ function App() {
   const [masterDataOverview, setMasterDataOverview] = useState<MasterDataOverview | null>(null);
   const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
   const [schedulingOverview, setSchedulingOverview] = useState<SchedulingOverview | null>(null);
+  const [latestAssetStates, setLatestAssetStates] = useState<LatestAssetStateRecord[]>([]);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -156,6 +158,9 @@ function App() {
     ? canAccess(currentUser.permissions, "export.generate")
     : false;
   const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
+  const canViewTelemetry = currentUser
+    ? canAccess(currentUser.permissions, "telemetry.view")
+    : false;
   const canViewAdmin = currentUser ? canAccess(currentUser.permissions, "admin.view") : false;
   const canViewMasterData = currentUser
     ? canAccess(currentUser.permissions, "masterdata.view")
@@ -230,6 +235,14 @@ function App() {
         .catch(() => setSchedulingOverview(null)));
     }
 
+    if (canViewTelemetry) {
+      refreshes.push(apiFetch<LatestAssetStateRecord[]>("/telemetry/latest-asset-states/")
+        .then(setLatestAssetStates)
+        .catch(() => setLatestAssetStates([])));
+    } else {
+      setLatestAssetStates([]);
+    }
+
     await Promise.all(refreshes);
   }, [
     canViewAdmin,
@@ -238,6 +251,7 @@ function App() {
     canViewExports,
     canViewMasterData,
     canViewSchedule,
+    canViewTelemetry,
     currentUser,
   ]);
 
@@ -277,6 +291,7 @@ function App() {
     setMasterDataOverview(null);
     setPlanningOverview(null);
     setSchedulingOverview(null);
+    setLatestAssetStates([]);
     setDashboardReadModel(null);
     setExportOverview(null);
     setAuditEvents([]);
@@ -933,7 +948,7 @@ function App() {
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
             canRunSimulation={canRunSimulation}
-            dashboard={dashboardReadModel}
+            latestAssetStates={latestAssetStates}
             onNavigate={handleNavigate}
             overview={schedulingOverview}
           />

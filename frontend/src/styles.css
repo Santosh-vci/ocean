@@ -3571,7 +3571,7 @@ tbody tr:hover,
 }
 
 
-/* Manual Live Resource Map MVP */
+/* Live Resource Map */
 .live-map-board {
   display: grid;
   grid-auto-rows: max-content;
@@ -3634,6 +3634,48 @@ tbody tr:hover,
   color: var(--primary);
   font-size: 0.66rem;
   text-transform: uppercase;
+}
+
+.map-filter-rail span strong,
+.signal-health-list em {
+  color: inherit;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.signal-health-list button {
+  min-width: 0;
+}
+
+.signal-health-list button.ok {
+  border-color: rgba(16, 185, 129, 0.42);
+  color: var(--status-success);
+}
+
+.signal-health-list button.pending {
+  border-color: rgba(245, 158, 11, 0.48);
+  color: var(--status-warning);
+}
+
+.signal-health-list button.critical {
+  border-color: rgba(239, 68, 68, 0.52);
+  color: var(--status-critical);
+}
+
+.signal-health-list button span {
+  display: inline;
+  overflow: hidden;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.signal-health-list button em {
+  font-size: 0.58rem;
 }
 
 .map-radar-panel {
@@ -3719,7 +3761,7 @@ tbody tr:hover,
   position: absolute;
   z-index: 2;
   display: grid;
-  grid-template-columns: 1rem max-content;
+  grid-template-columns: 1rem max-content max-content;
   gap: 0.25rem;
   align-items: center;
   border: 1px solid var(--primary);
@@ -3730,6 +3772,12 @@ tbody tr:hover,
   font-size: 0.62rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.asset-marker em {
+  color: currentColor;
+  font-style: normal;
+  opacity: 0.78;
 }
 
 .asset-marker.critical {

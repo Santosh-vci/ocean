@@ -1,8 +1,9 @@
 from decimal import Decimal
 
+from django.utils import timezone
 from rest_framework import serializers
 
-from .models import AssetIdentity, PositionPing, TelemetrySource
+from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
 
 
 class TelemetrySourceSerializer(serializers.ModelSerializer):
@@ -77,6 +78,53 @@ class PositionPingSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+
+class LatestAssetStateSerializer(serializers.ModelSerializer):
+    source_id = serializers.CharField(source="source.source_id", read_only=True)
+    source_type = serializers.CharField(source="source.source_type", read_only=True)
+    external_id = serializers.CharField(source="asset_identity.external_id", read_only=True)
+    external_id_type = serializers.CharField(
+        source="asset_identity.external_id_type",
+        read_only=True,
+    )
+    last_ping_ref = serializers.CharField(source="last_ping.ping_id", read_only=True)
+    age_seconds = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LatestAssetState
+        fields = [
+            "id",
+            "asset_type",
+            "asset_code",
+            "source",
+            "source_id",
+            "source_type",
+            "asset_identity",
+            "external_id",
+            "external_id_type",
+            "last_ping",
+            "last_ping_ref",
+            "derived_status",
+            "latitude",
+            "longitude",
+            "speed_knots",
+            "heading_degrees",
+            "last_seen_at",
+            "age_seconds",
+            "freshness_status",
+            "confidence_score",
+            "paired_asset_code",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_age_seconds(self, obj) -> int | None:
+        if obj.last_seen_at is None:
+            return None
+        return max(0, int((timezone.now() - obj.last_seen_at).total_seconds()))
 
 
 class PositionPingIngestSerializer(serializers.Serializer):
