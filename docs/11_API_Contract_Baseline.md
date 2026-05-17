@@ -53,8 +53,16 @@ the source of truth remains Django serializers and tests, but this table gives o
 | `/api/scheduling/approval-requests/{id}/decide/` | POST | `schedule.approve` | Berau/ABL authority decision |
 | `/api/scheduling/plan-versions/{id}/publish/` | POST | `schedule.publish` | immutable live snapshot |
 | `/api/scheduling/assignments/{id}/apply-override/` | POST | `schedule.edit` | governed operational override |
-| `/api/scheduling/scenarios/{id}/simulate/` | POST | `schedule.edit` | recovery simulation |
-| `/api/scheduling/scenarios/{id}/promote/` | POST | `schedule.edit` | promote scenario output |
+| `/api/scheduling/scenarios/{id}/simulate/` | POST | `schedule.edit` | Phase 2 transition scenario calculation alias |
+| `/api/scheduling/scenarios/{id}/promote/` | POST | `schedule.edit` | promote simulated scenario output into a proposed successor version |
+
+Transition scenario rules:
+
+- a scenario baseline is immutable once created;
+- a source conflict must belong to the scenario baseline version;
+- only `simulated` scenarios may be promoted;
+- promoted scenario output versions must derive from the scenario baseline version;
+- `/simulate/` and `/promote/` remain the compatibility contract until run-based Phase 2 APIs replace them.
 
 ## Control tower and exports
 

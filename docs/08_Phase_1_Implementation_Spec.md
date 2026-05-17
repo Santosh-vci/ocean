@@ -474,7 +474,7 @@ Initial mapping:
 |---|---|
 | Live Resource Map | optional static placeholder or manual-state view only |
 | Exception Center | lightweight conflict center backed by validator output |
-| Simulation Workspace | version comparison shell only; rich what-if engine later |
+| Simulation Workspace | transition scenario shell only; product Phase 2 replaces it with calculated scenario runs |
 
 ### 9.3 Shared UI components that must be built first
 

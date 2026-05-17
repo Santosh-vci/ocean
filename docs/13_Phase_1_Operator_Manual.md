@@ -161,7 +161,7 @@ Acceptance evidence: the adjustment is not a silent table edit; it is captured a
 
 ### Stage 7A — Optional Simulation Workspace check
 
-Use this check before Phase 1 closure if the operator wants to exercise the MVP-lite simulation surface. Phase 1 does not include a rich optimizer, but it does include a governed scenario shell that can run a deterministic recovery delta and promote the scenario output to a proposed plan.
+Use this check before Phase 1 closure if the operator wants to exercise the transition scenario surface that product Phase 2 will expand. Phase 1 does not include a rich optimizer, but it does include a governed scenario shell that can run a deterministic recovery delta and promote the scenario output to a proposed plan.
 
 1. Open **Recovery Loop → Exception Center**.
 2. If active conflicts exist, select the conflict to test and click **Convert to scenario**.
@@ -243,7 +243,7 @@ Use these checks after any frontend or backend wiring change:
 - **Operations → Tug/Barge Assignment**: **Regenerate plan** creates/generates the first plan when none exists.
 - **Operations → Jetty Loading**: **Force start jetty** creates a governed override after assignments exist.
 - **Recovery Loop → Exception Center**: **Convert to scenario** creates a recovery scenario from the selected conflict, or a manual scenario when no conflict is selected.
-- **Recovery Loop → Simulation Workspace**: **Run simulation** calculates the MVP-lite scenario delta; **Promote to proposed** creates or marks a successor proposed plan version.
+- **Recovery Loop → Simulation Workspace**: **Run simulation** calculates the transition scenario delta; **Promote to proposed** creates or marks a successor proposed plan version.
 - **Schedule → Published Plan & Schedule**: **Create draft** creates the first draft when no plan exists, or clones a published/superseded version.
 - **Schedule → Published Plan & Schedule**: **Submit approval** creates an approval request for an editable plan.
 - **Schedule → Plan Approvals & Publishing**: **Approve** records the user’s remaining approval authority.

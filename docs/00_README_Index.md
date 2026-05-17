@@ -47,6 +47,9 @@ The pack is based on:
 13. `13_Phase_1_Operator_Manual.md`
     Stage-by-stage operator instructions for conducting end-to-end Phase 1 planning.
 
+14. `14_Phase_2_Implementation_Spec.md`
+    Product Phase 2 implementation specification for simulation and scenario planning: assumption model, run architecture, projection engine, UI/API expansion, delivery chunks, and later-phase compatibility.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

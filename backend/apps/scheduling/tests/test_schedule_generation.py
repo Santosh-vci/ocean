@@ -5,6 +5,7 @@ import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
@@ -24,8 +25,16 @@ from apps.scheduling.models import (
     SimulationScenario,
     Trip,
 )
-from apps.scheduling.services import clone_plan_version, compute_plan_diff, generate_plan_version
-from apps.scheduling.services import record_approval_decision, submit_approval_request
+from apps.scheduling.services import (
+    clone_plan_version,
+    compute_plan_diff,
+    create_scenario_from_conflict,
+    generate_plan_version,
+    promote_scenario_to_proposed,
+    record_approval_decision,
+    simulate_scenario,
+    submit_approval_request,
+)
 
 
 def assign(user, organization, permission_codes):
@@ -344,6 +353,22 @@ def test_jetty_override_with_actual_start_creates_calculated_impact_chain():
         "BRIDGE WINDOW OK",
         "TIDE WINDOW OK",
     }
+    assert [node["id"] for node in assessment.nodes] == [
+        "source",
+        "logistics",
+        "bridge",
+        "tide",
+        "target",
+    ]
+    assert {node["type"] for node in assessment.nodes} == {
+        "source_event",
+        "logistics_delay",
+        "bridge_window",
+        "tide_window",
+        "final_risk_target",
+    }
+    for node in assessment.nodes:
+        assert {"id", "type", "label", "value", "status", "detail"}.issubset(node)
 
 
 @pytest.mark.django_db
@@ -551,6 +576,130 @@ def test_scheduling_overview_keeps_approved_version_active_until_publish():
     assert response.status_code == 200
     assert response.data["activePlanVersion"]["id"] == approved_version.id
     assert response.data["activePlanVersion"]["status"] == PlanVersion.Status.APPROVED
+
+
+@pytest.mark.django_db
+def test_transition_scenario_contract_preserves_current_create_simulate_promote_flow():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-editor")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=baseline.conflicts.order_by("id").first(),
+        actor=user,
+    )
+    assert scenario.status == SimulationScenario.Status.DRAFT
+    assert scenario.name == "Recovery scenario"
+    assert scenario.baseline_version_id == baseline.id
+    assert scenario.scenario_version_id is None
+
+    simulated = simulate_scenario(scenario=scenario)
+    simulated.refresh_from_db()
+    assert simulated.status == SimulationScenario.Status.SIMULATED
+    assert simulated.impact_summary["sourceConflict"]
+    assert {
+        "delayDeltaMinutes",
+        "demurrageDeltaUsd",
+        "fleetUtilizationPct",
+        "remainingViolations",
+    }.issubset(simulated.delta_summary)
+
+    promoted = promote_scenario_to_proposed(scenario=simulated, actor=user)
+    promoted.refresh_from_db()
+    assert promoted.status == SimulationScenario.Status.PROPOSED
+    assert promoted.scenario_version_id is not None
+    assert promoted.scenario_version.source_version_id == baseline.id
+    assert promoted.scenario_version.plan_id == baseline.plan_id
+    assert promoted.scenario_version.status == PlanVersion.Status.PROPOSED
+
+
+@pytest.mark.django_db
+def test_transition_scenario_api_contract_preserves_current_response_shape():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-api")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    conflict = baseline.conflicts.order_by("id").first()
+
+    client = APIClient()
+    client.force_authenticate(user)
+    create_response = client.post(
+        f"/api/scheduling/plan-versions/{baseline.id}/create-scenario/",
+        {"conflict": conflict.id if conflict else None, "name": "Transition recovery scenario"},
+        format="json",
+    )
+    simulate_response = client.post(
+        f"/api/scheduling/scenarios/{create_response.data['id']}/simulate/"
+    )
+    promote_response = client.post(
+        f"/api/scheduling/scenarios/{create_response.data['id']}/promote/"
+    )
+
+    assert create_response.status_code == 201
+    assert create_response.data["baseline_version"] == baseline.id
+    assert create_response.data["scenario_version"] is None
+    assert create_response.data["status"] == SimulationScenario.Status.DRAFT
+    assert {
+        "baseline_version_ref",
+        "scenario_version_ref",
+        "source_conflict_code",
+        "impact_summary",
+        "delta_summary",
+    }.issubset(create_response.data)
+    assert simulate_response.status_code == 200
+    assert simulate_response.data["status"] == SimulationScenario.Status.SIMULATED
+    assert promote_response.status_code == 200
+    assert promote_response.data["status"] == SimulationScenario.Status.PROPOSED
+    assert promote_response.data["scenario_version"] is not None
+
+
+@pytest.mark.django_db
+def test_transition_scenario_lifecycle_blocks_invalid_backward_moves():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-guard")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+
+    with pytest.raises(ValidationError):
+        promote_scenario_to_proposed(scenario=scenario, actor=user)
+
+    simulate_scenario(scenario=scenario)
+    promote_scenario_to_proposed(scenario=scenario, actor=user)
+    scenario.refresh_from_db()
+
+    with pytest.raises(ValidationError):
+        simulate_scenario(scenario=scenario)
+
+
+@pytest.mark.django_db
+def test_transition_scenario_rejects_cross_baseline_lineage():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-lineage")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    other_version = clone_plan_version(source_version=baseline)
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    simulate_scenario(scenario=scenario)
+    scenario.scenario_version = clone_plan_version(source_version=other_version)
+    scenario.save(update_fields=["scenario_version", "updated_at"])
+
+    with pytest.raises(ValidationError):
+        promote_scenario_to_proposed(scenario=scenario, actor=user)
 
 
 @pytest.mark.django_db

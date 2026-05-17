@@ -811,11 +811,14 @@ def create_scenario_from_conflict(
     actor,
     name: str = "",
 ) -> SimulationScenario:
+    if source_conflict and source_conflict.plan_version_id != baseline_version.id:
+        raise ValidationError("Scenario source conflict must belong to the baseline version.")
+
     scenario_id = f"SIM-{baseline_version.plan.code}-V{baseline_version.version_no}"
     scenario, _ = SimulationScenario.objects.get_or_create(
         scenario_id=scenario_id,
         defaults={
-            "name": name or "Recovery scenario A",
+            "name": name or "Recovery scenario",
             "scenario_type": "conflict_recovery",
             "baseline_version": baseline_version,
             "source_conflict": source_conflict,
@@ -827,6 +830,12 @@ def create_scenario_from_conflict(
 
 
 def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
+    if scenario.status in {
+        SimulationScenario.Status.PROPOSED,
+        SimulationScenario.Status.CANCELED,
+    }:
+        raise ValidationError("Only draft or simulated scenarios can be simulated.")
+
     conflict = scenario.source_conflict
     actions = [
         "Reassign available tug against earliest feasible tide window.",
@@ -859,12 +868,20 @@ def simulate_scenario(*, scenario: SimulationScenario) -> SimulationScenario:
 
 
 def promote_scenario_to_proposed(*, scenario: SimulationScenario, actor) -> SimulationScenario:
+    if scenario.status != SimulationScenario.Status.SIMULATED:
+        raise ValidationError("Only simulated scenarios can be promoted.")
+
     with transaction.atomic():
         if scenario.scenario_version is None:
             scenario.scenario_version = clone_plan_version(
                 source_version=scenario.baseline_version,
                 created_by=actor,
             )
+        elif scenario.scenario_version.plan_id != scenario.baseline_version.plan_id:
+            raise ValidationError("Scenario output version must stay on the baseline plan.")
+        elif scenario.scenario_version.source_version_id != scenario.baseline_version_id:
+            raise ValidationError("Scenario output version must derive from the baseline version.")
+
         scenario.status = SimulationScenario.Status.PROPOSED
         scenario.scenario_version.status = PlanVersion.Status.PROPOSED
         scenario.scenario_version.save(update_fields=["status", "updated_at"])
