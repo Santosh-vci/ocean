@@ -868,6 +868,7 @@ export type ScenarioRunRecord = {
   constraint_evaluations: ScenarioConstraintEvaluationRecord[];
   ogv_projections: ScenarioOgvProjectionRecord[];
   resource_utilizations: ScenarioResourceUtilizationRecord[];
+  impact_assessments: ImpactChainAssessmentRecord[];
   created_at: string;
   updated_at: string;
 };

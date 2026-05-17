@@ -4,7 +4,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
 import { JettyLoadingPage } from "./pages/LogisticsPages";
-import { ExceptionCenterPage } from "./pages/RecoveryPages";
+import { ExceptionCenterPage, SimulationWorkspacePage } from "./pages/RecoveryPages";
 import type { SchedulingOverview } from "./types";
 
 beforeEach(() => {
@@ -211,4 +211,176 @@ test("exception center renders calculated impact chain nodes", () => {
   expect(screen.getAllByText("+120m").length).toBeGreaterThan(0);
   expect(screen.getByText("TIDE WINDOW MISSED")).toBeInTheDocument();
   expect(screen.queryByText("Barge delay (+2h)")).not.toBeInTheDocument();
+});
+
+test("simulation workspace renders computed run results and impact nodes", () => {
+  const overview = stageSevenOverview();
+  overview.simulationScenarios = [{
+    id: 301,
+    scenario_id: "SCN-PLAN-UI-0001",
+    name: "Jetty recovery scenario",
+    scenario_type: "recovery",
+    baseline_version: 1,
+    baseline_version_ref: "PLAN-UI V1",
+    scenario_version: null,
+    scenario_version_ref: null,
+    source_conflict: null,
+    source_conflict_code: null,
+    source_conflict_message: null,
+    source_override: 50,
+    source_override_reason_code: "jetty_delay",
+    source_override_description: "Force-started JTY-SUARAN from operator cockpit.",
+    source_kind: "override",
+    status: "draft",
+    recovery_actions: ["Hold tug chain until bridge slot is confirmed."],
+    impact_summary: {},
+    delta_summary: {
+      delayDeltaMinutes: 120,
+      demurrageDeltaUsd: "2500.00",
+      fleetUtilizationPct: "4.5",
+      remainingViolations: 0,
+    },
+    created_by: 1,
+    created_by_email: "berau.scheduler@coalflow.local",
+    assumptions: [{
+      id: 401,
+      scenario: 301,
+      scenario_ref: "SCN-PLAN-UI-0001",
+      assumption_id: "ASSUMP-001",
+      kind: "trip_delay",
+      scope_type: "trip",
+      scope_id: 201,
+      payload: { delay_minutes: 120 },
+      effective_from: null,
+      effective_to: null,
+      created_by: 1,
+      created_by_email: "berau.scheduler@coalflow.local",
+      created_at: "2026-05-16T08:29:00.000Z",
+      updated_at: "2026-05-16T08:29:00.000Z",
+    }],
+    runs: [{
+      id: 501,
+      scenario: 301,
+      scenario_ref: "SCN-PLAN-UI-0001",
+      run_id: "RUN-PLAN-UI-0001",
+      baseline_version: 1,
+      baseline_version_ref: "PLAN-UI V1",
+      status: "completed",
+      algorithm_version: "sim-impact-v1",
+      input_hash: "abcdef1234567890",
+      started_at: "2026-05-16T08:30:00.000Z",
+      completed_at: "2026-05-16T08:30:30.000Z",
+      summary: {
+        constraintSummary: { critical: 0, warning: 1 },
+        projectionSummary: { changedTripCount: 1, maxDelayMinutes: 120 },
+        ogvSummary: { demurrageDeltaUsd: 2500 },
+        utilizationSummary: { averageUtilizationDeltaPct: 4.5 },
+      },
+      created_by: 1,
+      created_by_email: "berau.scheduler@coalflow.local",
+      trip_projections: [{
+        id: 601,
+        run: 501,
+        trip: 201,
+        trip_ref: "PI-PLAN-UI-0001",
+        baseline_start: "2026-05-17T01:30:00.000Z",
+        baseline_end: "2026-05-17T11:30:00.000Z",
+        projected_start: "2026-05-17T03:30:00.000Z",
+        projected_end: "2026-05-17T13:30:00.000Z",
+        projected_status: "planned",
+        delay_minutes: 120,
+        assignment_delta: {},
+        metadata: {},
+        created_at: "2026-05-16T08:30:30.000Z",
+      }],
+      constraint_evaluations: [{
+        id: 701,
+        run: 501,
+        evaluation_id: "EVAL-001",
+        trip: 201,
+        trip_ref: "PI-PLAN-UI-0001",
+        code: "TIDE_WINDOW_MISSED",
+        severity: "warning",
+        affected_object_type: "tide_window",
+        affected_object_id: "TIDE-OPERATING-01",
+        baseline_value: {},
+        projected_value: {},
+        margin_minutes: -15,
+        source_assumption_ids: ["ASSUMP-001"],
+        message: "Projected tide gate is 15 minutes outside the active operating window.",
+        metadata: {},
+        created_at: "2026-05-16T08:30:30.000Z",
+      }],
+      ogv_projections: [{
+        id: 801,
+        run: 501,
+        voyage: 901,
+        voyage_ref: "VOY-001",
+        vessel_name: "MV Operator UI Import",
+        baseline_completion_at: "2026-05-17T11:30:00.000Z",
+        projected_completion_at: "2026-05-17T13:30:00.000Z",
+        completion_delta_minutes: 120,
+        laycan_end: "2026-05-18T00:00:00.000Z",
+        baseline_demurrage_minutes: 0,
+        projected_demurrage_minutes: 0,
+        demurrage_delta_usd: "2500.00",
+        risk_status: "warning",
+        metadata: {},
+        created_at: "2026-05-16T08:30:30.000Z",
+      }],
+      resource_utilizations: [{
+        id: 901,
+        run: 501,
+        resource_type: "barge",
+        resource_code: "BRG-VAL-08",
+        baseline_occupied_minutes: 600,
+        projected_occupied_minutes: 720,
+        baseline_idle_minutes: 120,
+        projected_idle_minutes: 60,
+        waiting_minutes: 60,
+        utilization_delta_pct: "4.50",
+        metadata: {},
+        created_at: "2026-05-16T08:30:30.000Z",
+      }],
+      impact_assessments: [{
+        id: 1001,
+        assessment_id: "ICA-RUN-PLAN-UI-0001-201",
+        plan_version: 1,
+        plan_version_ref: "PLAN-UI V1",
+        trip: 201,
+        trip_ref: "PI-PLAN-UI-0001",
+        assignment: 101,
+        assignment_ref: "PI-PLAN-UI-0001 assignment",
+        override_request: null,
+        override_request_ref: null,
+        source_kind: "simulation",
+        status: "warning",
+        delay_minutes: 120,
+        metadata: {},
+        nodes: [
+          { id: "source", type: "source_event", label: "JETTY DELAY", value: "+120m", status: "warning", detail: "Scenario effective start against baseline." },
+          { id: "barge", type: "logistics_delay", label: "BARGE DELAY", value: "+120m", status: "warning", detail: "Trip schedule shifted by simulation." },
+          { id: "target", type: "final_target", label: "MV Operator UI Import", value: "WARNING", status: "warning", detail: "Projected completion risk." },
+        ],
+        created_at: "2026-05-16T08:30:30.000Z",
+        updated_at: "2026-05-16T08:30:30.000Z",
+      }],
+      created_at: "2026-05-16T08:30:00.000Z",
+      updated_at: "2026-05-16T08:30:30.000Z",
+    }],
+    created_at: "2026-05-16T08:29:00.000Z",
+    updated_at: "2026-05-16T08:30:30.000Z",
+  }];
+
+  render(<SimulationWorkspacePage canEdit overview={overview} />);
+
+  expect(screen.getByText("Selected run projection")).toBeInTheDocument();
+  expect(screen.getAllByText("Constraint evaluations").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("TIDE_WINDOW_MISSED").length).toBeGreaterThan(0);
+  expect(screen.getByText("OGV completion & demurrage")).toBeInTheDocument();
+  expect(screen.getByText("Asset utilization")).toBeInTheDocument();
+  expect(screen.getByText("BARGE DELAY")).toBeInTheDocument();
+  expect(screen.getByText(/BRG-VAL-08/)).toBeInTheDocument();
+  expect(screen.queryByText("OUT OF SERVICE")).not.toBeInTheDocument();
+  expect(screen.queryByText("RECOVERY WINDOW")).not.toBeInTheDocument();
 });

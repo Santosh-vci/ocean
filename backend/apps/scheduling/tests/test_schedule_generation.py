@@ -21,7 +21,6 @@ from apps.scheduling.models import (
     OverrideRequest,
     PlanVersion,
     PublishedPlanSnapshot,
-    ScheduleEvent,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -29,6 +28,7 @@ from apps.scheduling.models import (
     ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
+    ScheduleEvent,
     SimulationScenario,
     Trip,
 )
@@ -983,6 +983,9 @@ def test_scenario_run_projection_endpoint_returns_trip_and_event_rows():
 
     assert response.status_code == 200
     assert response.data["run"]["run_id"] == run.run_id
+    assert response.data["run"]["impact_assessments"][0]["source_kind"] == (
+        ImpactChainAssessment.SourceKind.SIMULATION
+    )
     assert len(response.data["trip_projections"]) == baseline.trips.count()
     assert len(response.data["event_projections"]) == ScheduleEvent.objects.filter(
         trip__plan_version=baseline,
@@ -1034,12 +1037,16 @@ def test_scenario_run_materializes_constraint_ogv_demurrage_and_utilization_kpis
         code="LAYCAN_BREACH",
         severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
     ).exists()
-    assert scenario.delta_summary["remainingViolations"] == ScenarioConstraintEvaluation.objects.filter(
+    critical_count = ScenarioConstraintEvaluation.objects.filter(
         run=run,
         severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
     ).count()
+    assert scenario.delta_summary["remainingViolations"] == critical_count
     assert scenario.delta_summary["demurrageDeltaUsd"] > 0
-    assert run.summary["ogvSummary"]["demurrageDeltaUsd"] == scenario.delta_summary["demurrageDeltaUsd"]
+    assert (
+        run.summary["ogvSummary"]["demurrageDeltaUsd"]
+        == scenario.delta_summary["demurrageDeltaUsd"]
+    )
 
 
 @pytest.mark.django_db

@@ -7,6 +7,9 @@ import type {
   ImpactChainNodeRecord,
   OverrideRequestRecord,
   ScenarioAssumptionRecord,
+  ScenarioConstraintEvaluationRecord,
+  ScenarioRunRecord,
+  ScenarioTripProjectionRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TripRecord,
@@ -95,6 +98,57 @@ function dt(value: string | null | undefined) {
 
 function num(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
+}
+
+function valueNum(value: unknown, fallback = 0) {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function money(value: unknown) {
+  return valueNum(value, 0).toLocaleString(undefined, {
+    maximumFractionDigits: 0,
+    style: "currency",
+    currency: "USD",
+  });
+}
+
+function signedMinutes(value: unknown) {
+  const minutes = valueNum(value, 0);
+  return `${minutes > 0 ? "+" : ""}${minutes}m`;
+}
+
+function runSummaryNum(run: ScenarioRunRecord | undefined, group: string, key: string) {
+  const groupValue = run?.summary[group];
+  if (!groupValue || typeof groupValue !== "object") return 0;
+  return valueNum((groupValue as Record<string, unknown>)[key], 0);
+}
+
+function constraintTone(severity?: string) {
+  if (severity === "critical") return "critical";
+  if (severity === "warning") return "pending";
+  return "ok";
+}
+
+function projectionChanged(projection?: ScenarioTripProjectionRecord) {
+  return Boolean(
+    projection
+    && (
+      projection.delay_minutes
+      || projection.projected_start !== projection.baseline_start
+      || projection.projected_end !== projection.baseline_end
+    ),
+  );
+}
+
+function sourceAssumptionText(item?: ScenarioConstraintEvaluationRecord) {
+  return item?.source_assumption_ids.length
+    ? item.source_assumption_ids.join(", ")
+    : "Derived from projected schedule";
 }
 
 function stateValue(state: Record<string, unknown>, key: string) {
@@ -458,12 +512,39 @@ export function SimulationWorkspacePage({
   const [assignmentId, setAssignmentId] = useState("");
   const [replacementTug, setReplacementTug] = useState("");
   const [replacementBarge, setReplacementBarge] = useState("");
+  const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
+  const [selectedConstraintId, setSelectedConstraintId] = useState<number | null>(null);
   const scenario = scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0];
   const assumptions = scenario?.assumptions ?? EMPTY_ASSUMPTIONS;
-  const latestRun = scenario?.runs[0];
+  const latestRun = scenario?.runs.find((item) => item.id === selectedRunId) ?? scenario?.runs[0];
+  const constraints = latestRun?.constraint_evaluations ?? [];
+  const ogvProjections = latestRun?.ogv_projections ?? [];
+  const utilizationRows = latestRun?.resource_utilizations ?? [];
+  const selectedConstraint = constraints.find((item) => item.id === selectedConstraintId)
+    ?? constraints[0];
+  const selectedAssessment = (latestRun?.impact_assessments ?? []).find(
+    (item) => item.trip === selectedConstraint?.trip,
+  ) ?? (latestRun?.impact_assessments ?? [])[0];
+  const selectedImpactNodes = selectedAssessment?.nodes ?? [];
   const projectedTrips = new Map(
     (latestRun?.trip_projections ?? []).map((projection) => [projection.trip, projection]),
   );
+  const comparisonRows = trips.map((trip) => ({
+    trip,
+    projection: projectedTrips.get(trip.id),
+  }));
+  const changedRows = comparisonRows.filter((row) => projectionChanged(row.projection));
+  const visibleComparisonRows = changedRows.length ? changedRows : comparisonRows.slice(0, 6);
+  const timelineRows = visibleComparisonRows.slice(0, 8);
+  const timelineTimes = timelineRows.flatMap((row) => [
+    new Date(row.trip.planned_start).getTime(),
+    new Date(row.trip.planned_end).getTime(),
+    new Date(row.projection?.projected_start ?? row.trip.planned_start).getTime(),
+    new Date(row.projection?.projected_end ?? row.trip.planned_end).getTime(),
+  ]).filter((value) => Number.isFinite(value));
+  const timelineStart = timelineTimes.length ? Math.min(...timelineTimes) : Date.now();
+  const timelineEnd = timelineTimes.length ? Math.max(...timelineTimes) : timelineStart + 1;
+  const timelineSpan = Math.max(timelineEnd - timelineStart, 1);
   const selectedAssumptionOption = ASSUMPTION_OPTIONS.find(
     (option) => option.value === assumptionKind,
   ) ?? ASSUMPTION_OPTIONS[0];
@@ -476,6 +557,24 @@ export function SimulationWorkspacePage({
     (trip) => trip.assignment?.id === Number(selectedAssignmentId),
   );
   const remainingRisk = num(scenario?.delta_summary.remainingViolations, 0);
+  const warningRisk = runSummaryNum(latestRun, "constraintSummary", "warning");
+  const changedTripCount = runSummaryNum(latestRun, "projectionSummary", "changedTripCount");
+  const maxDelay = runSummaryNum(latestRun, "projectionSummary", "maxDelayMinutes")
+    || num(scenario?.delta_summary.delayDeltaMinutes, 0);
+  const demurrageDelta = runSummaryNum(latestRun, "ogvSummary", "demurrageDeltaUsd")
+    || valueNum(scenario?.delta_summary.demurrageDeltaUsd, 0);
+  const utilizationDelta = runSummaryNum(
+    latestRun,
+    "utilizationSummary",
+    "averageUtilizationDeltaPct",
+  ) || valueNum(scenario?.delta_summary.fleetUtilizationPct, 0);
+  const timelineStyle = (startValue: string, endValue: string) => {
+    const start = new Date(startValue).getTime();
+    const end = new Date(endValue).getTime();
+    const left = Math.max(0, ((start - timelineStart) / timelineSpan) * 100);
+    const width = Math.max(3, ((end - start) / timelineSpan) * 100);
+    return { marginLeft: `${left}%`, width: `${Math.min(width, 100 - left)}%` };
+  };
   const sourceLabel = scenario?.source_kind === "conflict"
     ? scenario.source_conflict_code ?? "Conflict"
     : scenario?.source_kind === "override"
@@ -584,10 +683,10 @@ export function SimulationWorkspacePage({
 
       <div className="metric-strip five-up recovery-kpis">
         <div><span>Active scenario</span><strong>{scenario?.scenario_id ?? "NONE"}</strong></div>
-        <div><span>Feasibility</span><strong className="success-text">{num(scenario?.impact_summary.feasibilityPct, 0)}%</strong></div>
-        <div><span>OGV delay</span><strong className="success-text">{num(scenario?.delta_summary.delayDeltaMinutes, 0)}m</strong></div>
-        <div><span>Demurrage risk</span><strong>{num(scenario?.delta_summary.demurrageDeltaUsd, 0).toLocaleString()}</strong></div>
-        <div><span>Violations</span><strong className={remainingRisk ? "warning-text" : "success-text"}>{remainingRisk}</strong></div>
+        <div><span>Selected run</span><strong>{latestRun?.run_id ?? "NO RUN"}</strong></div>
+        <div><span>Changed trips</span><strong className={changedTripCount ? "warning-text" : "success-text"}>{changedTripCount}</strong></div>
+        <div><span>Max delay</span><strong className={maxDelay ? "warning-text" : "success-text"}>{signedMinutes(maxDelay)}</strong></div>
+        <div><span>Risk flags</span><strong className={remainingRisk ? "critical-text" : warningRisk ? "warning-text" : "success-text"}>{remainingRisk}/{warningRisk}</strong></div>
       </div>
 
       <div className="simulation-layout">
@@ -622,7 +721,11 @@ export function SimulationWorkspacePage({
               <button
                 className={scenario?.id === item.id ? "active" : ""}
                 key={item.id}
-                onClick={() => setSelectedScenarioId(item.id)}
+                onClick={() => {
+                  setSelectedScenarioId(item.id);
+                  setSelectedRunId(null);
+                  setSelectedConstraintId(null);
+                }}
                 type="button"
               >
                 <strong>{item.scenario_id}</strong>
@@ -807,83 +910,240 @@ export function SimulationWorkspacePage({
         <section className="board-surface simulation-main">
           <div className="grid-header">
             <div><SvgIcon name="schedule" /><strong>Baseline vs scenario output</strong></div>
-            <span>Scenario output remains recommended state until approval promotion</span>
+            <span>{latestRun ? "Selected run projection" : "Run a scenario to calculate projections"}</span>
           </div>
-          <div className="grid-scroll">
+          <section className="scenario-summary-strip">
+            <span><strong>{money(demurrageDelta)}</strong><em>Demurrage delta</em></span>
+            <span><strong>{signedMinutes(maxDelay)}</strong><em>Max trip delta</em></span>
+            <span><strong>{utilizationDelta.toFixed(2)}%</strong><em>Avg utilization delta</em></span>
+            <span><strong>{constraints.length}</strong><em>Constraint evaluations</em></span>
+          </section>
+          <div className="grid-scroll scenario-comparison-grid">
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
-                  <th>#</th><th>OGV / Grade-Hatch</th><th>Jetty</th><th>Tug / Barge</th>
-                  <th>CTS</th><th>Baseline Start</th><th>Sim Start</th><th>Baseline Completion</th><th>Sim Completion</th>
+                  <th>#</th><th>OGV / Grade-Hatch</th><th>Chain</th>
+                  <th>Baseline Start</th><th>Sim Start</th><th>Baseline Completion</th>
+                  <th>Sim Completion</th><th>Delta</th>
                 </tr>
               </thead>
               <tbody>
-                {trips.slice(0, 6).map((trip) => {
-                  const projection = projectedTrips.get(trip.id);
-                  return (
-                    <tr key={trip.id}>
-                      <td>{String(trip.sequence).padStart(2, "0")}</td>
-                      <td><strong>{trip.voyage.vessel_name}</strong><br />{trip.cargo_layer_step?.coal_grade.code ?? "-"}</td>
-                      <td>{trip.origin_jetty?.code ?? "UNASSIGNED"}</td>
-                      <td>{trip.assignment?.tug?.code ?? "NONE"} / {trip.assignment?.barge?.code ?? "NONE"}</td>
-                      <td>{trip.assignment?.cts?.code ?? "NONE"}</td>
-                      <td>{dt(trip.planned_start)}</td>
-                      <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
-                        {dt(projection?.projected_start ?? trip.planned_start)}
-                      </td>
-                      <td>{dt(trip.planned_end)}</td>
-                      <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
-                        {dt(projection?.projected_end ?? trip.planned_end)}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {visibleComparisonRows.map(({ trip, projection }) => (
+                  <tr key={trip.id}>
+                    <td>{String(trip.sequence).padStart(2, "0")}</td>
+                    <td><strong>{trip.voyage.vessel_name}</strong><br />{trip.cargo_layer_step?.coal_grade.code ?? "-"}</td>
+                    <td>
+                      {trip.origin_jetty?.code ?? "UNASSIGNED"}<br />
+                      {trip.assignment?.tug?.code ?? "NONE"} / {trip.assignment?.barge?.code ?? "NONE"} / {trip.assignment?.cts?.code ?? "NONE"}
+                    </td>
+                    <td>{dt(trip.planned_start)}</td>
+                    <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
+                      {dt(projection?.projected_start ?? trip.planned_start)}
+                    </td>
+                    <td>{dt(trip.planned_end)}</td>
+                    <td className={projectionChanged(projection) ? "warning-text" : "success-text"}>
+                      {dt(projection?.projected_end ?? trip.planned_end)}
+                    </td>
+                    <td className={projection?.delay_minutes ? "warning-text" : "success-text"}>
+                      {signedMinutes(projection?.delay_minutes ?? 0)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
 
-          <section className="scenario-timeline">
+          <section className="scenario-timeline computed">
             <div className="grid-header">
-              <div><SvgIcon name="account-tree" /><strong>Scenario impact timeline</strong></div>
-              <span>Baseline, outage, reassignment, queue, CTS feed</span>
+              <div><SvgIcon name="account-tree" /><strong>Projected event timeline</strong></div>
+              <span>Baseline lane above scenario lane</span>
             </div>
-            {["OGV", "TUG", "BARGE", "CTS", "TIDE WINDOW"].map((label, index) => (
-              <div className="scenario-row" key={label}>
-                <strong>{label}</strong>
-                <span
-                  className={`scenario-bar ${index === 1 ? "critical" : index === 4 ? "pending" : "ok"}`}
-                  style={{ marginLeft: `${10 + index * 5}%`, width: `${34 + index * 5}%` }}
-                >
-                  {index === 1 ? "OUT OF SERVICE — UNAVAILABLE" : "RECOVERY WINDOW"}
-                </span>
+            {timelineRows.length ? timelineRows.map(({ trip, projection }) => (
+              <div className="scenario-row computed" key={trip.id}>
+                <strong>{trip.trip_id}</strong>
+                <div className="scenario-lanes">
+                  <span
+                    className="scenario-bar baseline"
+                    style={timelineStyle(trip.planned_start, trip.planned_end)}
+                  >
+                    BASE
+                  </span>
+                  <span
+                    className={`scenario-bar ${projectionChanged(projection) ? "pending" : "ok"}`}
+                    style={timelineStyle(
+                      projection?.projected_start ?? trip.planned_start,
+                      projection?.projected_end ?? trip.planned_end,
+                    )}
+                  >
+                    {projectionChanged(projection) ? signedMinutes(projection?.delay_minutes ?? 0) : "NO DELTA"}
+                  </span>
+                </div>
               </div>
-            ))}
+            )) : (
+              <div className="scenario-empty">No projected timeline yet</div>
+            )}
+          </section>
+
+          <section className="scenario-result-grid">
+            <div className="scenario-result-panel">
+              <div className="grid-header">
+                <div><SvgIcon name="rule" /><strong>Constraint evaluations</strong></div>
+                <span>Cause, target, margin</span>
+              </div>
+              <div className="grid-scroll compact">
+                <table className="planning-table logistics-table">
+                  <thead>
+                    <tr><th>Severity</th><th>Code</th><th>Target</th><th>Margin</th></tr>
+                  </thead>
+                  <tbody>
+                    {constraints.slice(0, 8).map((item) => (
+                      <tr
+                        className={selectedConstraint?.id === item.id ? "selected-row" : ""}
+                        key={item.id}
+                        onClick={() => setSelectedConstraintId(item.id)}
+                      >
+                        <td><span className={`status-chip ${constraintTone(item.severity)}`}>{short(item.severity)}</span></td>
+                        <td>{item.code}</td>
+                        <td>{item.affected_object_id || item.trip_ref || item.affected_object_type}</td>
+                        <td>{item.margin_minutes === null ? "-" : signedMinutes(item.margin_minutes)}</td>
+                      </tr>
+                    ))}
+                    {!constraints.length ? (
+                      <tr><td colSpan={4}>No constraint evaluations yet</td></tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="scenario-result-panel">
+              <div className="grid-header">
+                <div><SvgIcon name="schedule" /><strong>OGV completion & demurrage</strong></div>
+                <span>Completion risk by voyage</span>
+              </div>
+              <div className="scenario-mini-list">
+                {ogvProjections.slice(0, 5).map((item) => (
+                  <span key={item.id}>
+                    <strong>{item.vessel_name}</strong>
+                    <em>{signedMinutes(item.completion_delta_minutes)} / {money(item.demurrage_delta_usd)}</em>
+                    <small className={`${constraintTone(item.risk_status)}-text`}>{short(item.risk_status)}</small>
+                  </span>
+                ))}
+                {!ogvProjections.length ? <span>No OGV projections yet</span> : null}
+              </div>
+            </div>
+
+            <div className="scenario-result-panel">
+              <div className="grid-header">
+                <div><SvgIcon name="settings" /><strong>Asset utilization</strong></div>
+                <span>Occupied, waiting, idle delta</span>
+              </div>
+              <div className="scenario-mini-list">
+                {utilizationRows.slice(0, 6).map((item) => (
+                  <span key={item.id}>
+                    <strong>{short(item.resource_type)} / {item.resource_code}</strong>
+                    <em>{valueNum(item.utilization_delta_pct).toFixed(2)}% util delta</em>
+                    <small>{item.waiting_minutes}m waiting</small>
+                  </span>
+                ))}
+                {!utilizationRows.length ? <span>No utilization results yet</span> : null}
+              </div>
+            </div>
           </section>
         </section>
 
         <aside className="board-surface logistics-inspector">
           <div className="grid-header">
-            <div><SvgIcon name="audit" /><strong>Approval workflow</strong></div>
+            <div><SvgIcon name="audit" /><strong>Run drill-down</strong></div>
           </div>
           <div className="inspector-body">
-            <span className="status-chip pending">{short(scenario?.status)}</span>
-            <h2>Recovery actions</h2>
-            <ul className="validation-list">
-              {(scenario?.recovery_actions ?? []).map((action) => <li key={action}>✓ {action}</li>)}
-            </ul>
-            <section className="recovery-box">
-              <strong>Next step</strong>
-              <p>Promote to proposed plan, then request dual-party approval.</p>
-            </section>
             <section className="scenario-run-list">
               <strong>Run queue</strong>
               {scenario?.runs.length ? scenario.runs.slice(0, 4).map((run) => (
-                <span key={run.id}>
+                <button
+                  className={latestRun?.id === run.id ? "active" : ""}
+                  key={run.id}
+                  onClick={() => {
+                    setSelectedRunId(run.id);
+                    setSelectedConstraintId(null);
+                  }}
+                  type="button"
+                >
                   <em className={`status-chip ${statusTone(run.status)}`}>{short(run.status)}</em>
                   <b>{run.run_id}</b>
                   <small>{run.completed_at ? dt(run.completed_at) : dt(run.created_at)}</small>
-                </span>
+                </button>
               )) : <p>No scenario runs yet.</p>}
+            </section>
+            <section className="scenario-detail-block">
+              <strong>Selected constraint</strong>
+              {selectedConstraint ? (
+                <>
+                  <span className={`status-chip ${constraintTone(selectedConstraint.severity)}`}>
+                    {short(selectedConstraint.severity)}
+                  </span>
+                  <h2>{selectedConstraint.code}</h2>
+                  <p>{selectedConstraint.message}</p>
+                  <dl>
+                    <div>
+                      <dt>Target</dt>
+                      <dd>
+                        {selectedConstraint.affected_object_id
+                          || selectedConstraint.trip_ref
+                          || selectedConstraint.affected_object_type}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Margin</dt>
+                      <dd>
+                        {selectedConstraint.margin_minutes === null
+                          ? "No margin"
+                          : signedMinutes(selectedConstraint.margin_minutes)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Source</dt>
+                      <dd>{sourceAssumptionText(selectedConstraint)}</dd>
+                    </div>
+                  </dl>
+                </>
+              ) : (
+                <p>No constraint selected.</p>
+              )}
+            </section>
+            <section className="scenario-detail-block">
+              <strong>Calculated impact chain</strong>
+              {selectedImpactNodes.length ? (
+                <div className="impact-chain-track compact">
+                  {selectedImpactNodes.map((node, index) => (
+                    <Fragment key={node.id}>
+                      <span className={`chain-node ${constraintTone(node.status)}`}>
+                        <strong>{node.label}</strong>
+                        <em>{node.value}</em>
+                        <small>{node.detail}</small>
+                      </span>
+                      {index < selectedImpactNodes.length - 1 ? <i className="chain-line" /> : null}
+                    </Fragment>
+                  ))}
+                </div>
+              ) : (
+                <p>Impact not calculated for this run.</p>
+              )}
+            </section>
+            <section className="scenario-detail-block">
+              <strong>Recovery actions</strong>
+              <ul className="validation-list">
+                {(scenario?.recovery_actions ?? []).map((action) => <li key={action}>{action}</li>)}
+                {!scenario?.recovery_actions.length ? <li>No recovery actions proposed.</li> : null}
+              </ul>
+            </section>
+            <section className="recovery-box">
+              <strong>Next step</strong>
+              <p>
+                {remainingRisk
+                  ? "Resolve projected critical constraints before promotion."
+                  : "Promote to proposed plan, then request dual-party approval."}
+              </p>
             </section>
             <button
               disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}

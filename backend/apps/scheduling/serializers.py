@@ -24,7 +24,6 @@ from .models import (
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
-    ScheduleEvent,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -32,6 +31,7 @@ from .models import (
     ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
+    ScheduleEvent,
     SimulationScenario,
     Trip,
 )
@@ -588,6 +588,7 @@ class ScenarioRunSerializer(serializers.ModelSerializer):
     constraint_evaluations = ScenarioConstraintEvaluationSerializer(many=True, read_only=True)
     ogv_projections = ScenarioOgvProjectionSerializer(many=True, read_only=True)
     resource_utilizations = ScenarioResourceUtilizationSerializer(many=True, read_only=True)
+    impact_assessments = serializers.SerializerMethodField()
 
     class Meta:
         model = ScenarioRun
@@ -610,10 +611,18 @@ class ScenarioRunSerializer(serializers.ModelSerializer):
             "constraint_evaluations",
             "ogv_projections",
             "resource_utilizations",
+            "impact_assessments",
             "created_at",
             "updated_at",
         )
         read_only_fields = fields
+
+    def get_impact_assessments(self, obj):
+        assessments = ImpactChainAssessment.objects.filter(
+            assessment_id__startswith=f"ICA-{obj.run_id}-",
+            source_kind=ImpactChainAssessment.SourceKind.SIMULATION,
+        ).select_related("plan_version", "trip", "assignment", "override_request")
+        return ImpactChainAssessmentSerializer(assessments, many=True).data
 
 
 class SimulationScenarioSerializer(serializers.ModelSerializer):

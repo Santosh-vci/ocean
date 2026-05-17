@@ -2720,11 +2720,22 @@ tbody tr:hover,
   text-transform: uppercase;
 }
 
-.scenario-run-list span {
+.scenario-run-list button {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.18rem 0.45rem;
   align-items: center;
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--on-surface);
+  padding: 0.28rem;
+  text-align: left;
+}
+
+.scenario-run-list button.active {
+  border-color: rgba(137, 206, 255, 0.52);
+  background: rgba(14, 165, 233, 0.1);
 }
 
 .scenario-run-list em {
@@ -2757,14 +2768,141 @@ tbody tr:hover,
   overflow-wrap: anywhere;
 }
 
+.scenario-detail-block {
+  display: grid;
+  gap: 0.45rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.75rem;
+}
+
+.scenario-detail-block > strong {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scenario-detail-block h2,
+.scenario-detail-block p {
+  margin: 0;
+}
+
+.scenario-detail-block h2 {
+  color: var(--on-surface);
+  font-size: 0.92rem;
+}
+
+.scenario-detail-block p,
+.scenario-detail-block li {
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+
+.scenario-detail-block dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.scenario-detail-block dl div {
+  display: grid;
+  gap: 0.12rem;
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 0.45rem;
+}
+
+.scenario-detail-block dt {
+  color: var(--on-surface-variant);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scenario-detail-block dd {
+  margin: 0;
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+  overflow-wrap: anywhere;
+}
+
+.impact-chain-track.compact {
+  min-height: 0;
+  align-items: stretch;
+  padding: 0;
+  background: transparent;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.impact-chain-track.compact .chain-node {
+  flex-basis: auto;
+  min-height: 3.25rem;
+}
+
+.impact-chain-track.compact .chain-line {
+  width: 1px;
+  min-height: 0.75rem;
+  height: 0.75rem;
+  align-self: center;
+}
+
 .simulation-main {
   gap: 0.65rem;
+}
+
+.scenario-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.scenario-summary-strip span {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  border-right: 1px solid var(--border-subtle);
+  padding: 0.55rem 0.65rem;
+}
+
+.scenario-summary-strip span:last-child {
+  border-right: 0;
+}
+
+.scenario-summary-strip strong {
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-summary-strip em {
+  color: var(--on-surface-variant);
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scenario-comparison-grid {
+  min-height: 13rem;
 }
 
 .scenario-timeline {
   min-height: 19rem;
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-lowest);
+}
+
+.scenario-timeline.computed {
+  min-height: 12rem;
 }
 
 .scenario-row {
@@ -2784,6 +2922,35 @@ tbody tr:hover,
   text-transform: uppercase;
 }
 
+.scenario-row.computed {
+  grid-template-columns: 10rem minmax(25rem, 1fr);
+}
+
+.scenario-lanes {
+  display: grid;
+  grid-template-rows: repeat(2, 1.35rem);
+  gap: 0.24rem;
+  align-content: center;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(20% - 1px),
+    rgba(148, 163, 184, 0.12) 20%,
+    transparent calc(20% + 1px),
+    transparent calc(40% - 1px),
+    rgba(148, 163, 184, 0.12) 40%,
+    transparent calc(40% + 1px),
+    transparent calc(60% - 1px),
+    rgba(148, 163, 184, 0.12) 60%,
+    transparent calc(60% + 1px),
+    transparent calc(80% - 1px),
+    rgba(148, 163, 184, 0.12) 80%,
+    transparent calc(80% + 1px)
+  );
+}
+
 .scenario-bar {
   align-self: center;
   display: inline-flex;
@@ -2797,6 +2964,12 @@ tbody tr:hover,
   font-size: 0.64rem;
   font-weight: 900;
   letter-spacing: 0.04em;
+}
+
+.scenario-bar.baseline {
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--on-surface-variant);
 }
 
 .scenario-bar.ok {
@@ -2815,6 +2988,86 @@ tbody tr:hover,
   border-color: rgba(239, 68, 68, 0.65);
   background: rgba(239, 68, 68, 0.16);
   color: var(--status-critical);
+}
+
+.scenario-empty {
+  display: grid;
+  min-height: 6rem;
+  place-items: center;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+}
+
+.scenario-result-grid {
+  display: grid;
+  grid-template-columns: minmax(24rem, 1.2fr) repeat(2, minmax(14rem, 0.85fr));
+  gap: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.65rem;
+}
+
+.scenario-result-panel {
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.34);
+  overflow: hidden;
+}
+
+.scenario-result-panel .grid-header {
+  min-height: 2.45rem;
+}
+
+.scenario-result-panel .grid-scroll.compact {
+  min-height: 9rem;
+  max-height: 13rem;
+}
+
+.selected-row {
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.scenario-mini-list {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.55rem;
+}
+
+.scenario-mini-list span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.12rem 0.45rem;
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  background: rgba(2, 6, 23, 0.24);
+  padding: 0.45rem 0.5rem;
+}
+
+.scenario-mini-list strong,
+.scenario-mini-list em,
+.scenario-mini-list small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-mini-list strong {
+  color: var(--on-surface);
+  font-size: 0.68rem;
+}
+
+.scenario-mini-list em {
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.62rem;
+  font-style: normal;
+}
+
+.scenario-mini-list small {
+  color: var(--on-surface-variant);
+  font-size: 0.6rem;
+  justify-self: end;
+  text-transform: uppercase;
 }
 
 .approval-chain {
@@ -2886,6 +3139,20 @@ tbody tr:hover,
 @media (max-width: 1180px) {
   .simulation-layout {
     grid-template-columns: 1fr;
+  }
+
+  .scenario-result-grid,
+  .scenario-summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .scenario-summary-strip span {
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .scenario-summary-strip span:last-child {
+    border-bottom: 0;
   }
 }
 
