@@ -29,7 +29,10 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
     ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
     SimulationScenario,
@@ -48,7 +51,10 @@ from .serializers import (
     PublishedPlanSnapshotSerializer,
     ScheduleEventSerializer,
     ScenarioAssumptionSerializer,
+    ScenarioConstraintEvaluationSerializer,
     ScenarioEventProjectionSerializer,
+    ScenarioOgvProjectionSerializer,
+    ScenarioResourceUtilizationSerializer,
     ScenarioRunSerializer,
     ScenarioTripProjectionSerializer,
     SimulationScenarioSerializer,
@@ -529,6 +535,9 @@ class SimulationScenarioViewSet(SchedulingViewSet):
     ).prefetch_related(
         "assumptions",
         "runs__trip_projections__trip",
+        "runs__constraint_evaluations__trip",
+        "runs__ogv_projections__voyage",
+        "runs__resource_utilizations",
     ).all()
     serializer_class = SimulationScenarioSerializer
 
@@ -641,6 +650,9 @@ class ScenarioRunViewSet(ReadOnlyModelViewSet):
         "list": "schedule.view",
         "retrieve": "schedule.view",
         "projections": "schedule.view",
+        "constraints": "schedule.view",
+        "utilization": "schedule.view",
+        "ogv_projections": "schedule.view",
     }
     queryset = ScenarioRun.objects.select_related(
         "scenario",
@@ -650,6 +662,9 @@ class ScenarioRunViewSet(ReadOnlyModelViewSet):
         "trip_projections__trip",
         "event_projections__trip",
         "event_projections__event",
+        "constraint_evaluations__trip",
+        "ogv_projections__voyage",
+        "resource_utilizations",
     )
     serializer_class = ScenarioRunSerializer
 
@@ -668,6 +683,36 @@ class ScenarioRunViewSet(ReadOnlyModelViewSet):
                     many=True,
                 ).data,
             }
+        )
+
+    @action(detail=True, methods=["get"], url_path="constraints")
+    def constraints(self, request, pk=None):
+        run = self.get_object()
+        return Response(
+            ScenarioConstraintEvaluationSerializer(
+                run.constraint_evaluations.select_related("trip"),
+                many=True,
+            ).data
+        )
+
+    @action(detail=True, methods=["get"], url_path="utilization")
+    def utilization(self, request, pk=None):
+        run = self.get_object()
+        return Response(
+            ScenarioResourceUtilizationSerializer(
+                run.resource_utilizations.all(),
+                many=True,
+            ).data
+        )
+
+    @action(detail=True, methods=["get"], url_path="ogv-projections")
+    def ogv_projections(self, request, pk=None):
+        run = self.get_object()
+        return Response(
+            ScenarioOgvProjectionSerializer(
+                run.ogv_projections.select_related("voyage"),
+                many=True,
+            ).data
         )
 
 
@@ -758,7 +803,13 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "source_override__trip",
                 "source_override__trip__voyage",
                 "created_by",
-            ).prefetch_related("assumptions", "runs")
+            ).prefetch_related(
+                "assumptions",
+                "runs__trip_projections__trip",
+                "runs__constraint_evaluations__trip",
+                "runs__ogv_projections__voyage",
+                "runs__resource_utilizations",
+            )
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),

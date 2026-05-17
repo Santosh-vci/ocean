@@ -3,6 +3,7 @@ import json
 import math
 from dataclasses import dataclass
 from datetime import timedelta
+from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Q
@@ -34,7 +35,10 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
     ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
     SimulationScenario,
@@ -968,6 +972,10 @@ def calculate_scenario_run_projections(*, run: ScenarioRun) -> dict:
 
     ScenarioTripProjection.objects.filter(run=run).delete()
     ScenarioEventProjection.objects.filter(run=run).delete()
+    ScenarioConstraintEvaluation.objects.filter(run=run).delete()
+    ScenarioOgvProjection.objects.filter(run=run).delete()
+    ScenarioResourceUtilization.objects.filter(run=run).delete()
+    ImpactChainAssessment.objects.filter(assessment_id__startswith=f"ICA-{run.run_id}-").delete()
     trip_projections = []
     event_projection_index = {}
     for state in states.values():
@@ -987,11 +995,18 @@ def calculate_scenario_run_projections(*, run: ScenarioRun) -> dict:
         event_projection_index=event_projection_index,
         window_overrides=window_overrides,
     )
+    kpis = _materialize_scenario_kpis(
+        run=run,
+        trip_projections=trip_projections,
+        event_projection_index=event_projection_index,
+        assessments=assessments,
+    )
     return _scenario_projection_summary(
         run=run,
         assumptions=assumptions,
         trip_projections=trip_projections,
         assessments=assessments,
+        kpis=kpis,
     )
 
 
@@ -1332,6 +1347,15 @@ def _record_assumption_effect(
     )
 
 
+def _state_source_assumption_ids(state: dict) -> list[str]:
+    assumption_ids = list(state["direct_assumption_ids"])
+    for dependency in state.get("dependency_sources", []):
+        for assumption_id in dependency.get("sourceAssumptionIds", []):
+            if assumption_id not in assumption_ids:
+                assumption_ids.append(assumption_id)
+    return assumption_ids
+
+
 def _propagate_projection_graph(*, states: dict, edges: dict) -> None:
     ordered_states = sorted(
         states.values(),
@@ -1359,6 +1383,7 @@ def _propagate_projection_graph(*, states: dict, edges: dict) -> None:
                         "tripId": predecessor["trip"].trip_id,
                         "kind": edge["kind"],
                         "delayMinutes": required_shift_minutes,
+                        "sourceAssumptionIds": _state_source_assumption_ids(predecessor),
                     }
                 )
 
@@ -1382,6 +1407,7 @@ def _propagate_projection_graph(*, states: dict, edges: dict) -> None:
 def _persist_projection_state(*, run: ScenarioRun, state: dict):
     trip = state["trip"]
     assignment = state["assignment"]
+    source_assumption_ids = _state_source_assumption_ids(state)
     event_projections = []
     for event in trip.events.order_by("sequence"):
         event_delta_minutes = state["start_shift_minutes"]
@@ -1405,7 +1431,7 @@ def _persist_projection_state(*, run: ScenarioRun, state: dict):
                 ),
                 delay_minutes=event_delta_minutes,
                 metadata={
-                    "sourceAssumptionIds": state["direct_assumption_ids"],
+                    "sourceAssumptionIds": source_assumption_ids,
                     "dependencySources": state["dependency_sources"],
                 },
             )
@@ -1441,7 +1467,7 @@ def _persist_projection_state(*, run: ScenarioRun, state: dict):
         delay_minutes=_ceil_minutes(state["projected_end"] - state["baseline_end"]),
         assignment_delta=assignment_delta,
         metadata={
-            "sourceAssumptionIds": state["direct_assumption_ids"],
+            "sourceAssumptionIds": source_assumption_ids,
             "dependencySources": state["dependency_sources"],
             "assumptionEffects": state["assumption_effects"],
             "loadDurationDeltaMinutes": state["load_duration_delta_minutes"],
@@ -1481,6 +1507,10 @@ def _create_simulation_impact_assessments(
             evaluations=[bridge_eval, tide_eval],
             window_overrides=window_overrides,
         )
+        source_assumption_ids = [
+            *_state_source_assumption_ids(state),
+            *window_assumption_ids,
+        ]
         delay_minutes = _ceil_minutes(state["projected_start"] - state["baseline_start"])
         if (
             not state["direct_assumption_ids"]
@@ -1496,10 +1526,7 @@ def _create_simulation_impact_assessments(
             delay_minutes=delay_minutes,
             bridge_eval=bridge_eval,
             tide_eval=tide_eval,
-            source_assumption_ids=[
-                *state["direct_assumption_ids"],
-                *window_assumption_ids,
-            ],
+            source_assumption_ids=source_assumption_ids,
         )
         assessment = ImpactChainAssessment.objects.create(
             assessment_id=f"ICA-{run.run_id}-T{trip.id:04d}",
@@ -1515,10 +1542,7 @@ def _create_simulation_impact_assessments(
                 "calculatedAt": timezone.now().isoformat(),
                 "scenarioId": run.scenario.scenario_id,
                 "scenarioRunId": run.run_id,
-                "sourceAssumptionIds": [
-                    *state["direct_assumption_ids"],
-                    *window_assumption_ids,
-                ],
+                "sourceAssumptionIds": source_assumption_ids,
                 "dependencySources": state["dependency_sources"],
                 "bridgeWindowId": bridge_eval.get("window_id"),
                 "tideWindowId": tide_eval.get("window_id"),
@@ -1581,12 +1605,406 @@ def _simulation_impact_nodes(
     ]
 
 
+def _materialize_scenario_kpis(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+    event_projection_index: dict,
+    assessments: list[ImpactChainAssessment],
+) -> dict:
+    constraint_evaluations = _persist_window_constraint_evaluations(
+        run=run,
+        assessments=assessments,
+    )
+    ogv_projections = _persist_ogv_projections(
+        run=run,
+        trip_projections=trip_projections,
+        event_projection_index=event_projection_index,
+    )
+    resource_utilizations = _persist_resource_utilizations(
+        run=run,
+        trip_projections=trip_projections,
+    )
+    constraint_evaluations.extend(
+        _persist_ogv_constraint_evaluations(
+            run=run,
+            ogv_projections=ogv_projections,
+        )
+    )
+    constraint_evaluations.extend(
+        _persist_resource_overlap_constraints(
+            run=run,
+            trip_projections=trip_projections,
+        )
+    )
+
+    critical_count = sum(
+        evaluation.severity == ScenarioConstraintEvaluation.Severity.CRITICAL
+        for evaluation in constraint_evaluations
+    )
+    warning_count = sum(
+        evaluation.severity == ScenarioConstraintEvaluation.Severity.WARNING
+        for evaluation in constraint_evaluations
+    )
+    demurrage_delta = sum(
+        (projection.demurrage_delta_usd for projection in ogv_projections),
+        Decimal("0.00"),
+    )
+    avg_utilization_delta = (
+        sum(
+            (utilization.utilization_delta_pct for utilization in resource_utilizations),
+            Decimal("0.00"),
+        )
+        / Decimal(len(resource_utilizations))
+        if resource_utilizations
+        else Decimal("0.00")
+    )
+    max_completion_delta = max(
+        (projection.completion_delta_minutes for projection in ogv_projections),
+        default=0,
+    )
+    return {
+        "constraintEvaluations": constraint_evaluations,
+        "ogvProjections": ogv_projections,
+        "resourceUtilizations": resource_utilizations,
+        "constraintSummary": {
+            "total": len(constraint_evaluations),
+            "critical": critical_count,
+            "warning": warning_count,
+        },
+        "ogvSummary": {
+            "count": len(ogv_projections),
+            "completionRiskCount": sum(
+                projection.risk_status != ScenarioOgvProjection.RiskStatus.OK
+                for projection in ogv_projections
+            ),
+            "maxCompletionDeltaMinutes": max_completion_delta,
+            "demurrageDeltaUsd": float(demurrage_delta),
+        },
+        "utilizationSummary": {
+            "count": len(resource_utilizations),
+            "averageUtilizationDeltaPct": float(
+                avg_utilization_delta.quantize(Decimal("0.01"))
+            ),
+            "totalWaitingMinutes": sum(
+                utilization.waiting_minutes for utilization in resource_utilizations
+            ),
+        },
+    }
+
+
+def _persist_window_constraint_evaluations(
+    *,
+    run: ScenarioRun,
+    assessments: list[ImpactChainAssessment],
+) -> list[ScenarioConstraintEvaluation]:
+    evaluations = []
+    for assessment in assessments:
+        source_assumption_ids = assessment.metadata.get("sourceAssumptionIds", [])
+        for node in assessment.nodes:
+            if not str(node.get("type", "")).endswith("_window"):
+                continue
+            severity = _constraint_severity_from_status(node.get("status"))
+            if severity == ScenarioConstraintEvaluation.Severity.INFO:
+                continue
+            evaluations.append(
+                ScenarioConstraintEvaluation.objects.create(
+                    run=run,
+                    evaluation_id=(
+                        f"SCE-{run.run_id}-{assessment.trip_id or 0:04d}-"
+                        f"{node['id'].upper()}"
+                    ),
+                    trip=assessment.trip,
+                    code=_constraint_code_from_node(node),
+                    severity=severity,
+                    affected_object_type=node["type"],
+                    affected_object_id=str(node.get("windowStart") or node.get("label") or ""),
+                    baseline_value={
+                        "windowStart": node.get("windowStart"),
+                        "windowEnd": node.get("windowEnd"),
+                    },
+                    projected_value={
+                        "projectedAt": node.get("projectedAt"),
+                        "value": node.get("value"),
+                    },
+                    margin_minutes=node.get("marginMinutes"),
+                    source_assumption_ids=source_assumption_ids,
+                    message=node.get("detail", ""),
+                    metadata={
+                        "impactAssessmentId": assessment.assessment_id,
+                        "nodeId": node["id"],
+                    },
+                )
+            )
+    return evaluations
+
+
+def _persist_ogv_projections(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+    event_projection_index: dict,
+) -> list[ScenarioOgvProjection]:
+    by_voyage: dict[int, list[ScenarioTripProjection]] = {}
+    for projection in trip_projections:
+        by_voyage.setdefault(projection.trip.voyage_id, []).append(projection)
+
+    ogv_projections = []
+    for voyage_id, projections in by_voyage.items():
+        voyage = projections[0].trip.voyage
+        source_assumption_ids = _projection_source_assumption_ids(projections)
+        baseline_completion = max(
+            (
+                _completion_event_for_projection(
+                    projection=projection,
+                    event_projection_index=event_projection_index,
+                )[0]
+                for projection in projections
+            ),
+        )
+        projected_completion = max(
+            (
+                _completion_event_for_projection(
+                    projection=projection,
+                    event_projection_index=event_projection_index,
+                )[1]
+                for projection in projections
+            ),
+        )
+        completion_delta_minutes = _ceil_minutes(projected_completion - baseline_completion)
+        baseline_demurrage_minutes = max(
+            0,
+            _ceil_minutes(baseline_completion - voyage.laycan_end),
+        )
+        projected_demurrage_minutes = max(
+            0,
+            _ceil_minutes(projected_completion - voyage.laycan_end),
+        )
+        demurrage_delta_usd = _demurrage_delta_usd(
+            voyage=voyage,
+            baseline_minutes=baseline_demurrage_minutes,
+            projected_minutes=projected_demurrage_minutes,
+        )
+        risk_status = _ogv_risk_status(
+            projected_completion=projected_completion,
+            laycan_end=voyage.laycan_end,
+            completion_delta_minutes=completion_delta_minutes,
+        )
+        ogv_projections.append(
+            ScenarioOgvProjection.objects.create(
+                run=run,
+                voyage=voyage,
+                baseline_completion_at=baseline_completion,
+                projected_completion_at=projected_completion,
+                completion_delta_minutes=completion_delta_minutes,
+                laycan_end=voyage.laycan_end,
+                baseline_demurrage_minutes=baseline_demurrage_minutes,
+                projected_demurrage_minutes=projected_demurrage_minutes,
+                demurrage_delta_usd=demurrage_delta_usd,
+                risk_status=risk_status,
+                metadata={
+                    "tripProjectionIds": [projection.id for projection in projections],
+                    "vesselName": voyage.vessel_name,
+                    "demurrageRateUsdPerDay": str(voyage.demurrage_rate_usd_per_day),
+                    "sourceAssumptionIds": source_assumption_ids,
+                },
+            )
+        )
+    return ogv_projections
+
+
+def _persist_resource_utilizations(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+) -> list[ScenarioResourceUtilization]:
+    horizon_minutes = max(
+        1,
+        _ceil_minutes(run.baseline_version.plan.horizon_end - run.baseline_version.plan.horizon_start),
+    )
+    buckets: dict[tuple[str, str], dict] = {}
+    for projection in trip_projections:
+        for resource_type, resource_code in _assignment_resource_codes(
+            getattr(projection.trip, "assignment", None)
+        ):
+            bucket = buckets.setdefault(
+                (resource_type, resource_code),
+                {
+                    "baseline": 0,
+                    "projected": 0,
+                    "waiting": 0,
+                    "trips": [],
+                },
+            )
+            bucket["baseline"] += max(
+                0,
+                _ceil_minutes(projection.baseline_end - projection.baseline_start),
+            )
+            bucket["projected"] += max(
+                0,
+                _ceil_minutes(projection.projected_end - projection.projected_start),
+            )
+            bucket["waiting"] += max(0, projection.delay_minutes)
+            bucket["trips"].append(projection.trip.trip_id)
+
+    rows = []
+    for (resource_type, resource_code), bucket in buckets.items():
+        baseline_idle = max(0, horizon_minutes - bucket["baseline"])
+        projected_idle = max(0, horizon_minutes - bucket["projected"])
+        utilization_delta_pct = (
+            (
+                Decimal(bucket["projected"] - bucket["baseline"])
+                / Decimal(horizon_minutes)
+            )
+            * Decimal("100")
+        ).quantize(Decimal("0.01"))
+        rows.append(
+            ScenarioResourceUtilization.objects.create(
+                run=run,
+                resource_type=resource_type,
+                resource_code=resource_code,
+                baseline_occupied_minutes=bucket["baseline"],
+                projected_occupied_minutes=bucket["projected"],
+                baseline_idle_minutes=baseline_idle,
+                projected_idle_minutes=projected_idle,
+                waiting_minutes=bucket["waiting"],
+                utilization_delta_pct=utilization_delta_pct,
+                metadata={
+                    "horizonMinutes": horizon_minutes,
+                    "tripIds": bucket["trips"],
+                },
+            )
+        )
+    return rows
+
+
+def _persist_ogv_constraint_evaluations(
+    *,
+    run: ScenarioRun,
+    ogv_projections: list[ScenarioOgvProjection],
+) -> list[ScenarioConstraintEvaluation]:
+    evaluations = []
+    for index, projection in enumerate(ogv_projections, start=1):
+        if projection.projected_completion_at > projection.laycan_end:
+            evaluations.append(
+                ScenarioConstraintEvaluation.objects.create(
+                    run=run,
+                    evaluation_id=f"SCE-{run.run_id}-OGV-{index:02d}-LAYCAN",
+                    trip=None,
+                    code="LAYCAN_BREACH",
+                    severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+                    affected_object_type="ogv",
+                    affected_object_id=projection.voyage.voyage_id,
+                    baseline_value={
+                        "completionAt": projection.baseline_completion_at.isoformat(),
+                        "laycanEnd": projection.laycan_end.isoformat(),
+                    },
+                    projected_value={
+                        "completionAt": projection.projected_completion_at.isoformat(),
+                    },
+                    margin_minutes=-projection.projected_demurrage_minutes,
+                    source_assumption_ids=projection.metadata.get("sourceAssumptionIds", []),
+                    message=(
+                        f"{projection.voyage.vessel_name} projected completion breaches laycan."
+                    ),
+                    metadata={"ogvProjectionId": projection.id},
+                )
+            )
+        if projection.demurrage_delta_usd > 0:
+            evaluations.append(
+                ScenarioConstraintEvaluation.objects.create(
+                    run=run,
+                    evaluation_id=f"SCE-{run.run_id}-OGV-{index:02d}-DEMURRAGE",
+                    trip=None,
+                    code="DEMURRAGE_RISK",
+                    severity=ScenarioConstraintEvaluation.Severity.WARNING,
+                    affected_object_type="ogv",
+                    affected_object_id=projection.voyage.voyage_id,
+                    baseline_value={
+                        "demurrageMinutes": projection.baseline_demurrage_minutes,
+                    },
+                    projected_value={
+                        "demurrageMinutes": projection.projected_demurrage_minutes,
+                        "demurrageDeltaUsd": float(projection.demurrage_delta_usd),
+                    },
+                    margin_minutes=-projection.projected_demurrage_minutes,
+                    source_assumption_ids=projection.metadata.get("sourceAssumptionIds", []),
+                    message=(
+                        f"{projection.voyage.vessel_name} has projected demurrage exposure."
+                    ),
+                    metadata={"ogvProjectionId": projection.id},
+                )
+            )
+    return evaluations
+
+
+def _persist_resource_overlap_constraints(
+    *,
+    run: ScenarioRun,
+    trip_projections: list[ScenarioTripProjection],
+) -> list[ScenarioConstraintEvaluation]:
+    intervals: dict[tuple[str, str], list[tuple]] = {}
+    for projection in trip_projections:
+        for resource_type, resource_code in _assignment_resource_codes(
+            getattr(projection.trip, "assignment", None)
+        ):
+            intervals.setdefault((resource_type, resource_code), []).append(
+                (projection.projected_start, projection.projected_end, projection)
+            )
+
+    evaluations = []
+    overlap_index = 1
+    for (resource_type, resource_code), resource_intervals in intervals.items():
+        ordered = sorted(resource_intervals, key=lambda row: row[0])
+        for previous, current in zip(ordered, ordered[1:]):
+            if previous[1] <= current[0]:
+                continue
+            code = _resource_overlap_code(resource_type)
+            severity = (
+                ScenarioConstraintEvaluation.Severity.WARNING
+                if resource_type in {"jetty", "cts"}
+                else ScenarioConstraintEvaluation.Severity.CRITICAL
+            )
+            overlap_minutes = _ceil_minutes(previous[1] - current[0])
+            evaluations.append(
+                ScenarioConstraintEvaluation.objects.create(
+                    run=run,
+                    evaluation_id=f"SCE-{run.run_id}-RESOURCE-{overlap_index:03d}",
+                    trip=current[2].trip,
+                    code=code,
+                    severity=severity,
+                    affected_object_type=resource_type,
+                    affected_object_id=resource_code,
+                    baseline_value={
+                        "previousTrip": previous[2].trip.trip_id,
+                        "currentTrip": current[2].trip.trip_id,
+                    },
+                    projected_value={
+                        "previousEnd": previous[1].isoformat(),
+                        "currentStart": current[0].isoformat(),
+                    },
+                    margin_minutes=-overlap_minutes,
+                    source_assumption_ids=current[2].metadata.get("sourceAssumptionIds", []),
+                    message=(
+                        f"{resource_code} is double-booked for {overlap_minutes} projected minutes."
+                    ),
+                    metadata={
+                        "previousTripProjectionId": previous[2].id,
+                        "currentTripProjectionId": current[2].id,
+                    },
+                )
+            )
+            overlap_index += 1
+    return evaluations
+
+
 def _scenario_projection_summary(
     *,
     run: ScenarioRun,
     assumptions: list[ScenarioAssumption],
     trip_projections: list[ScenarioTripProjection],
     assessments: list[ImpactChainAssessment],
+    kpis: dict,
 ) -> dict:
     conflict = run.scenario.source_conflict
     override = run.scenario.source_override
@@ -1605,14 +2023,8 @@ def _scenario_projection_summary(
         else ""
     )
     changed_trips = [projection for projection in trip_projections if projection.delay_minutes]
-    critical_count = sum(
-        assessment.status == ImpactChainAssessment.Status.CRITICAL
-        for assessment in assessments
-    )
-    warning_count = sum(
-        assessment.status == ImpactChainAssessment.Status.WARNING
-        for assessment in assessments
-    )
+    critical_count = kpis["constraintSummary"]["critical"]
+    warning_count = kpis["constraintSummary"]["warning"]
     max_delay = max((projection.delay_minutes for projection in trip_projections), default=0)
     feasibility_pct = max(0, 100 - (critical_count * 20) - (warning_count * 5))
     return {
@@ -1626,17 +2038,25 @@ def _scenario_projection_summary(
         },
         "deltaSummary": {
             "delayDeltaMinutes": max_delay,
-            "demurrageDeltaUsd": 0,
-            "fleetUtilizationPct": 0,
+            "demurrageDeltaUsd": kpis["ogvSummary"]["demurrageDeltaUsd"],
+            "fleetUtilizationPct": kpis["utilizationSummary"]["averageUtilizationDeltaPct"],
             "remainingViolations": critical_count,
             "warningWindowCount": warning_count,
+            "completionRiskCount": kpis["ogvSummary"]["completionRiskCount"],
+            "resourceWaitingMinutes": kpis["utilizationSummary"]["totalWaitingMinutes"],
         },
         "projectionSummary": {
             "tripProjectionCount": len(trip_projections),
             "changedTripCount": len(changed_trips),
             "impactAssessmentCount": len(assessments),
+            "constraintEvaluationCount": kpis["constraintSummary"]["total"],
+            "ogvProjectionCount": kpis["ogvSummary"]["count"],
+            "resourceUtilizationCount": kpis["utilizationSummary"]["count"],
             "maxDelayMinutes": max_delay,
         },
+        "constraintSummary": kpis["constraintSummary"],
+        "ogvSummary": kpis["ogvSummary"],
+        "utilizationSummary": kpis["utilizationSummary"],
     }
 
 
@@ -1675,6 +2095,68 @@ def _window_assumption_ids(*, evaluations: list[dict], window_overrides: dict) -
         if override and override["assumption_id"] not in assumption_ids:
             assumption_ids.append(override["assumption_id"])
     return assumption_ids
+
+
+def _constraint_severity_from_status(status: str) -> str:
+    if status == ImpactChainAssessment.Status.CRITICAL:
+        return ScenarioConstraintEvaluation.Severity.CRITICAL
+    if status == ImpactChainAssessment.Status.WARNING:
+        return ScenarioConstraintEvaluation.Severity.WARNING
+    return ScenarioConstraintEvaluation.Severity.INFO
+
+
+def _constraint_code_from_node(node: dict) -> str:
+    label = str(node.get("label") or node.get("type") or "PROJECTED_CONSTRAINT")
+    return label.upper().replace(" ", "_").replace("/", "_")
+
+
+def _completion_event_for_projection(
+    *,
+    projection: ScenarioTripProjection,
+    event_projection_index: dict,
+) -> tuple:
+    discharge_projection = event_projection_index.get(projection.trip_id, {}).get(
+        ScheduleEvent.EventType.DISCHARGE_COMPLETE,
+    )
+    if discharge_projection is None:
+        return projection.baseline_end, projection.projected_end
+    return discharge_projection.baseline_at, discharge_projection.projected_at
+
+
+def _projection_source_assumption_ids(projections: list[ScenarioTripProjection]) -> list[str]:
+    assumption_ids = []
+    for projection in projections:
+        for assumption_id in projection.metadata.get("sourceAssumptionIds", []):
+            if assumption_id not in assumption_ids:
+                assumption_ids.append(assumption_id)
+    return assumption_ids
+
+
+def _demurrage_delta_usd(*, voyage: OGVVoyage, baseline_minutes: int, projected_minutes: int):
+    minute_delta = projected_minutes - baseline_minutes
+    if minute_delta == 0:
+        return Decimal("0.00")
+    return (
+        Decimal(minute_delta)
+        / Decimal(1440)
+        * voyage.demurrage_rate_usd_per_day
+    ).quantize(Decimal("0.01"))
+
+
+def _ogv_risk_status(*, projected_completion, laycan_end, completion_delta_minutes: int) -> str:
+    if projected_completion > laycan_end:
+        return ScenarioOgvProjection.RiskStatus.CRITICAL
+    if completion_delta_minutes > 0:
+        return ScenarioOgvProjection.RiskStatus.WARNING
+    return ScenarioOgvProjection.RiskStatus.OK
+
+
+def _resource_overlap_code(resource_type: str) -> str:
+    if resource_type == "jetty":
+        return "JETTY_OVERLAP"
+    if resource_type == "cts":
+        return "CTS_CAPACITY_CONFLICT"
+    return "ASSET_DOUBLE_BOOKED"
 
 
 def _events_by_type(trip: Trip) -> dict[str, ScheduleEvent]:

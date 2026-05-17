@@ -887,3 +887,141 @@ class ScenarioEventProjection(models.Model):
 
     def __str__(self) -> str:
         return f"{self.run.run_id} {self.event}"
+
+
+class ScenarioConstraintEvaluation(models.Model):
+    class Severity(models.TextChoices):
+        INFO = "info", "Info"
+        WARNING = "warning", "Warning"
+        CRITICAL = "critical", "Critical"
+
+    run = models.ForeignKey(
+        ScenarioRun,
+        on_delete=models.CASCADE,
+        related_name="constraint_evaluations",
+    )
+    evaluation_id = models.CharField(max_length=120, unique=True)
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="scenario_constraint_evaluations",
+    )
+    code = models.CharField(max_length=80)
+    severity = models.CharField(max_length=32, choices=Severity.choices)
+    affected_object_type = models.CharField(max_length=48)
+    affected_object_id = models.CharField(max_length=120, blank=True)
+    baseline_value = models.JSONField(default=dict, blank=True)
+    projected_value = models.JSONField(default=dict, blank=True)
+    margin_minutes = models.IntegerField(null=True, blank=True)
+    source_assumption_ids = models.JSONField(default=list, blank=True)
+    message = models.CharField(max_length=255)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-severity", "code", "trip__sequence", "id"]
+        indexes = [
+            models.Index(fields=("run", "severity", "code")),
+            models.Index(fields=("trip", "severity")),
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return self.evaluation_id
+
+
+class ScenarioOgvProjection(models.Model):
+    class RiskStatus(models.TextChoices):
+        OK = "ok", "OK"
+        WARNING = "warning", "Warning"
+        CRITICAL = "critical", "Critical"
+
+    run = models.ForeignKey(
+        ScenarioRun,
+        on_delete=models.CASCADE,
+        related_name="ogv_projections",
+    )
+    voyage = models.ForeignKey(
+        OGVVoyage,
+        on_delete=models.CASCADE,
+        related_name="scenario_ogv_projections",
+    )
+    baseline_completion_at = models.DateTimeField()
+    projected_completion_at = models.DateTimeField()
+    completion_delta_minutes = models.IntegerField(default=0)
+    laycan_end = models.DateTimeField()
+    baseline_demurrage_minutes = models.IntegerField(default=0)
+    projected_demurrage_minutes = models.IntegerField(default=0)
+    demurrage_delta_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    risk_status = models.CharField(max_length=32, choices=RiskStatus.choices, default=RiskStatus.OK)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["voyage__laycan_start", "voyage__voyage_id"]
+        indexes = [
+            models.Index(fields=("run", "risk_status")),
+            models.Index(fields=("voyage", "run")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "voyage"),
+                name="unique_scenario_run_ogv_projection",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return f"{self.run.run_id} {self.voyage.voyage_id}"
+
+
+class ScenarioResourceUtilization(models.Model):
+    class ResourceType(models.TextChoices):
+        TUG = "tug", "Tug"
+        BARGE = "barge", "Barge"
+        JETTY = "jetty", "Jetty"
+        CTS = "cts", "CTS"
+
+    run = models.ForeignKey(
+        ScenarioRun,
+        on_delete=models.CASCADE,
+        related_name="resource_utilizations",
+    )
+    resource_type = models.CharField(max_length=32, choices=ResourceType.choices)
+    resource_code = models.CharField(max_length=80)
+    baseline_occupied_minutes = models.IntegerField(default=0)
+    projected_occupied_minutes = models.IntegerField(default=0)
+    baseline_idle_minutes = models.IntegerField(default=0)
+    projected_idle_minutes = models.IntegerField(default=0)
+    waiting_minutes = models.IntegerField(default=0)
+    utilization_delta_pct = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["resource_type", "resource_code"]
+        indexes = [
+            models.Index(fields=("run", "resource_type")),
+            models.Index(fields=("resource_type", "resource_code")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "resource_type", "resource_code"),
+                name="unique_scenario_run_resource_utilization",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return f"{self.run.run_id} {self.resource_type}:{self.resource_code}"

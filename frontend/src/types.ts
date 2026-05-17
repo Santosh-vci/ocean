@@ -865,6 +865,9 @@ export type ScenarioRunRecord = {
   created_by: number | null;
   created_by_email: string | null;
   trip_projections: ScenarioTripProjectionRecord[];
+  constraint_evaluations: ScenarioConstraintEvaluationRecord[];
+  ogv_projections: ScenarioOgvProjectionRecord[];
+  resource_utilizations: ScenarioResourceUtilizationRecord[];
   created_at: string;
   updated_at: string;
 };
@@ -881,6 +884,58 @@ export type ScenarioTripProjectionRecord = {
   projected_status: string;
   delay_minutes: number;
   assignment_delta: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type ScenarioConstraintEvaluationRecord = {
+  id: number;
+  run: number;
+  evaluation_id: string;
+  trip: number | null;
+  trip_ref: string | null;
+  code: string;
+  severity: string;
+  affected_object_type: string;
+  affected_object_id: string;
+  baseline_value: Record<string, unknown>;
+  projected_value: Record<string, unknown>;
+  margin_minutes: number | null;
+  source_assumption_ids: string[];
+  message: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type ScenarioOgvProjectionRecord = {
+  id: number;
+  run: number;
+  voyage: number;
+  voyage_ref: string;
+  vessel_name: string;
+  baseline_completion_at: string;
+  projected_completion_at: string;
+  completion_delta_minutes: number;
+  laycan_end: string;
+  baseline_demurrage_minutes: number;
+  projected_demurrage_minutes: number;
+  demurrage_delta_usd: string;
+  risk_status: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type ScenarioResourceUtilizationRecord = {
+  id: number;
+  run: number;
+  resource_type: string;
+  resource_code: string;
+  baseline_occupied_minutes: number;
+  projected_occupied_minutes: number;
+  baseline_idle_minutes: number;
+  projected_idle_minutes: number;
+  waiting_minutes: number;
+  utilization_delta_pct: string;
   metadata: Record<string, unknown>;
   created_at: string;
 };

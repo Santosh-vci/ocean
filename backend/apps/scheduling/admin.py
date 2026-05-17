@@ -13,7 +13,10 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
     ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
     SimulationScenario,
@@ -167,4 +170,28 @@ class ScenarioEventProjectionAdmin(admin.ModelAdmin):
     list_display = ("run", "trip", "event_type", "projected_at", "delay_minutes")
     list_filter = ("event_type", "projected_status")
     search_fields = ("run__run_id", "trip__trip_id", "event__resource_code")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ScenarioConstraintEvaluation)
+class ScenarioConstraintEvaluationAdmin(admin.ModelAdmin):
+    list_display = ("evaluation_id", "run", "code", "severity", "affected_object_type")
+    list_filter = ("severity", "code", "affected_object_type")
+    search_fields = ("evaluation_id", "run__run_id", "trip__trip_id", "affected_object_id")
+    readonly_fields = ("evaluation_id", "created_at")
+
+
+@admin.register(ScenarioOgvProjection)
+class ScenarioOgvProjectionAdmin(admin.ModelAdmin):
+    list_display = ("run", "voyage", "risk_status", "completion_delta_minutes", "demurrage_delta_usd")
+    list_filter = ("risk_status",)
+    search_fields = ("run__run_id", "voyage__voyage_id", "voyage__vessel_name")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ScenarioResourceUtilization)
+class ScenarioResourceUtilizationAdmin(admin.ModelAdmin):
+    list_display = ("run", "resource_type", "resource_code", "utilization_delta_pct", "waiting_minutes")
+    list_filter = ("resource_type",)
+    search_fields = ("run__run_id", "resource_code")
     readonly_fields = ("created_at",)

@@ -23,7 +23,10 @@ from apps.scheduling.models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
     ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
     SimulationScenario,
@@ -984,6 +987,133 @@ def test_scenario_run_projection_endpoint_returns_trip_and_event_rows():
     assert len(response.data["event_projections"]) == ScheduleEvent.objects.filter(
         trip__plan_version=baseline,
     ).count()
+
+
+@pytest.mark.django_db
+def test_scenario_run_materializes_constraint_ogv_demurrage_and_utilization_kpis():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-kpi-runner")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    trip.voyage.demurrage_rate_usd_per_day = Decimal("24000.00")
+    trip.voyage.save(update_fields=["demurrage_rate_usd_per_day", "updated_at"])
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=trip.id,
+        payload={"delay_minutes": 4320},
+    )
+
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    scenario.refresh_from_db()
+    first_voyage_projection = ScenarioOgvProjection.objects.get(
+        run=run,
+        voyage=trip.voyage,
+    )
+
+    assert ScenarioConstraintEvaluation.objects.filter(run=run).exists()
+    assert ScenarioOgvProjection.objects.filter(run=run).count() == baseline.trips.values(
+        "voyage",
+    ).distinct().count()
+    assert ScenarioResourceUtilization.objects.filter(run=run).exists()
+    assert first_voyage_projection.completion_delta_minutes >= 4320
+    assert first_voyage_projection.risk_status == ScenarioOgvProjection.RiskStatus.CRITICAL
+    assert first_voyage_projection.demurrage_delta_usd > 0
+    assert ScenarioConstraintEvaluation.objects.filter(
+        run=run,
+        code="LAYCAN_BREACH",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).exists()
+    assert scenario.delta_summary["remainingViolations"] == ScenarioConstraintEvaluation.objects.filter(
+        run=run,
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).count()
+    assert scenario.delta_summary["demurrageDeltaUsd"] > 0
+    assert run.summary["ogvSummary"]["demurrageDeltaUsd"] == scenario.delta_summary["demurrageDeltaUsd"]
+
+
+@pytest.mark.django_db
+def test_rate_change_scenario_calculates_resource_utilization_delta():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-utilization-runner")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    jetty_code = trip.assignment.jetty.code
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.RATE_CHANGE,
+        scope_type=ScenarioAssumption.ScopeType.ASSET,
+        scope_id=None,
+        payload={"asset_code": jetty_code, "rate_tph": 1000},
+    )
+
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+    utilization = ScenarioResourceUtilization.objects.get(
+        run=run,
+        resource_type=ScenarioResourceUtilization.ResourceType.JETTY,
+        resource_code=jetty_code,
+    )
+
+    assert utilization.projected_occupied_minutes > utilization.baseline_occupied_minutes
+    assert utilization.utilization_delta_pct > 0
+    assert run.summary["utilizationSummary"]["averageUtilizationDeltaPct"] > 0
+
+
+@pytest.mark.django_db
+def test_scenario_run_kpi_endpoints_return_materialized_results():
+    call_command("seed_phase0")
+    organization = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user("scenario-kpi-reader")
+    assign(user, organization, ["schedule.view", "schedule.edit"])
+    baseline = seeded_plan_version()
+    trip = baseline.trips.order_by("sequence").first()
+    scenario = create_scenario_from_conflict(
+        baseline_version=baseline,
+        source_conflict=None,
+        actor=user,
+    )
+    create_scenario_assumption(
+        scenario=scenario,
+        actor=user,
+        kind=ScenarioAssumption.Kind.TRIP_DELAY,
+        scope_type=ScenarioAssumption.ScopeType.TRIP,
+        scope_id=trip.id,
+        payload={"delay_minutes": 120},
+    )
+    simulate_scenario(scenario=scenario, actor=user)
+    run = ScenarioRun.objects.get(scenario=scenario)
+
+    client = APIClient()
+    client.force_authenticate(user)
+    constraints = client.get(f"/api/scheduling/scenario-runs/{run.id}/constraints/")
+    utilization = client.get(f"/api/scheduling/scenario-runs/{run.id}/utilization/")
+    ogv = client.get(f"/api/scheduling/scenario-runs/{run.id}/ogv-projections/")
+
+    assert constraints.status_code == 200
+    assert utilization.status_code == 200
+    assert ogv.status_code == 200
+    assert len(constraints.data) == ScenarioConstraintEvaluation.objects.filter(run=run).count()
+    assert len(utilization.data) == ScenarioResourceUtilization.objects.filter(run=run).count()
+    assert len(ogv.data) == ScenarioOgvProjection.objects.filter(run=run).count()
 
 
 @pytest.mark.django_db

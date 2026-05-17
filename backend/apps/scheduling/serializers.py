@@ -26,7 +26,10 @@ from .models import (
     PublishedPlanSnapshot,
     ScheduleEvent,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
     ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
     ScenarioRun,
     ScenarioTripProjection,
     SimulationScenario,
@@ -505,11 +508,86 @@ class ScenarioEventProjectionSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ScenarioConstraintEvaluationSerializer(serializers.ModelSerializer):
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+
+    class Meta:
+        model = ScenarioConstraintEvaluation
+        fields = (
+            "id",
+            "run",
+            "evaluation_id",
+            "trip",
+            "trip_ref",
+            "code",
+            "severity",
+            "affected_object_type",
+            "affected_object_id",
+            "baseline_value",
+            "projected_value",
+            "margin_minutes",
+            "source_assumption_ids",
+            "message",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class ScenarioOgvProjectionSerializer(serializers.ModelSerializer):
+    voyage_ref = serializers.CharField(source="voyage.voyage_id", read_only=True)
+    vessel_name = serializers.CharField(source="voyage.vessel_name", read_only=True)
+
+    class Meta:
+        model = ScenarioOgvProjection
+        fields = (
+            "id",
+            "run",
+            "voyage",
+            "voyage_ref",
+            "vessel_name",
+            "baseline_completion_at",
+            "projected_completion_at",
+            "completion_delta_minutes",
+            "laycan_end",
+            "baseline_demurrage_minutes",
+            "projected_demurrage_minutes",
+            "demurrage_delta_usd",
+            "risk_status",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class ScenarioResourceUtilizationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScenarioResourceUtilization
+        fields = (
+            "id",
+            "run",
+            "resource_type",
+            "resource_code",
+            "baseline_occupied_minutes",
+            "projected_occupied_minutes",
+            "baseline_idle_minutes",
+            "projected_idle_minutes",
+            "waiting_minutes",
+            "utilization_delta_pct",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
 class ScenarioRunSerializer(serializers.ModelSerializer):
     scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
     baseline_version_ref = serializers.CharField(source="baseline_version", read_only=True)
     created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
     trip_projections = ScenarioTripProjectionSerializer(many=True, read_only=True)
+    constraint_evaluations = ScenarioConstraintEvaluationSerializer(many=True, read_only=True)
+    ogv_projections = ScenarioOgvProjectionSerializer(many=True, read_only=True)
+    resource_utilizations = ScenarioResourceUtilizationSerializer(many=True, read_only=True)
 
     class Meta:
         model = ScenarioRun
@@ -529,6 +607,9 @@ class ScenarioRunSerializer(serializers.ModelSerializer):
             "created_by",
             "created_by_email",
             "trip_projections",
+            "constraint_evaluations",
+            "ogv_projections",
+            "resource_utilizations",
             "created_at",
             "updated_at",
         )
