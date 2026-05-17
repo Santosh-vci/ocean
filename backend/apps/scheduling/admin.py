@@ -6,6 +6,7 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
+    ImpactChainAssessment,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -63,6 +64,14 @@ class OverrideRequestAdmin(admin.ModelAdmin):
     list_display = ("reason_code", "plan_version", "trip", "status", "requested_by")
     list_filter = ("reason_code", "status")
     search_fields = ("description", "trip__trip_id")
+
+
+@admin.register(ImpactChainAssessment)
+class ImpactChainAssessmentAdmin(admin.ModelAdmin):
+    list_display = ("assessment_id", "source_kind", "status", "delay_minutes", "trip")
+    list_filter = ("source_kind", "status")
+    search_fields = ("assessment_id", "trip__trip_id")
+    readonly_fields = ("assessment_id", "nodes", "metadata", "created_at", "updated_at")
 
 
 @admin.register(ApprovalRequest)

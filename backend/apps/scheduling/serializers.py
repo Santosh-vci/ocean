@@ -19,6 +19,7 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
+    ImpactChainAssessment,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -212,12 +213,43 @@ class ConflictSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created_at")
 
 
+class ImpactChainAssessmentSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+    assignment_ref = serializers.CharField(source="assignment", read_only=True)
+    override_request_ref = serializers.CharField(source="override_request", read_only=True)
+
+    class Meta:
+        model = ImpactChainAssessment
+        fields = (
+            "id",
+            "assessment_id",
+            "plan_version",
+            "plan_version_ref",
+            "trip",
+            "trip_ref",
+            "assignment",
+            "assignment_ref",
+            "override_request",
+            "override_request_ref",
+            "source_kind",
+            "status",
+            "delay_minutes",
+            "nodes",
+            "metadata",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
 class OverrideRequestSerializer(serializers.ModelSerializer):
     plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
     trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
     vessel_name = serializers.CharField(source="trip.voyage.vessel_name", read_only=True)
     requested_by_email = serializers.EmailField(source="requested_by.email", read_only=True)
     applied_by_email = serializers.EmailField(source="applied_by.email", read_only=True)
+    impact_assessment = ImpactChainAssessmentSerializer(read_only=True)
 
     class Meta:
         model = OverrideRequest
@@ -240,6 +272,7 @@ class OverrideRequestSerializer(serializers.ModelSerializer):
             "applied_by",
             "applied_by_email",
             "applied_at",
+            "impact_assessment",
             "created_at",
         )
         read_only_fields = (

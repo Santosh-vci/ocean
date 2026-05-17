@@ -61,6 +61,47 @@ from .services import (
 )
 
 
+def _schedule_version_queryset():
+    return PlanVersion.objects.select_related("plan", "created_by", "source_version").annotate(
+        open_blockers=Count(
+            "conflicts",
+            filter=Q(conflicts__is_blocking=True, conflicts__resolved_at__isnull=True),
+        )
+    )
+
+
+def _active_schedule_version():
+    publish_candidate = (
+        _schedule_version_queryset()
+        .filter(status=PlanVersion.Status.APPROVED)
+        .order_by("-created_at")
+        .first()
+    )
+    if publish_candidate:
+        return publish_candidate
+
+    active_candidate = (
+        _schedule_version_queryset()
+        .filter(
+            status__in=[
+                PlanVersion.Status.DRAFT,
+                PlanVersion.Status.VALIDATED,
+                PlanVersion.Status.PROPOSED,
+            ]
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if active_candidate:
+        return active_candidate
+
+    return (
+        _schedule_version_queryset()
+        .order_by(F("generated_at").desc(nulls_last=True), "-created_at")
+        .first()
+    )
+
+
 class DashboardSituationView(APIView):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {"get": "dashboard.view"}
@@ -287,6 +328,7 @@ class AssignmentViewSet(SchedulingViewSet):
             reason_code=request.data.get("reason_code", ""),
             description=request.data.get("description", ""),
             changes=request.data.get("changes", {}),
+            impact_context=request.data.get("impact_context", {}),
         )
         record_audit_event(
             actor=request.user,
@@ -299,6 +341,11 @@ class AssignmentViewSet(SchedulingViewSet):
                 "trip": assignment.trip.trip_id,
                 "reason_code": override.reason_code,
                 "requested_change": override.requested_change,
+                "impact_assessment": (
+                    override.impact_assessment.assessment_id
+                    if hasattr(override, "impact_assessment")
+                    else None
+                ),
             },
             request=request,
         )
@@ -329,6 +376,7 @@ class OverrideRequestViewSet(SchedulingViewSet):
         "assignment",
         "requested_by",
         "applied_by",
+        "impact_assessment",
     ).all()
     serializer_class = OverrideRequestSerializer
 
@@ -493,20 +541,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):
-        active_version = (
-            PlanVersion.objects.select_related("plan", "created_by", "source_version")
-            .annotate(
-                open_blockers=Count(
-                    "conflicts",
-                    filter=Q(
-                        conflicts__is_blocking=True,
-                        conflicts__resolved_at__isnull=True,
-                    ),
-                )
-            )
-            .order_by(F("generated_at").desc(nulls_last=True), "-created_at")
-            .first()
-        )
+        active_version = _active_schedule_version()
         trips = Trip.objects.none()
         assignments = Assignment.objects.none()
         events = ScheduleEvent.objects.none()
@@ -568,6 +603,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "assignment",
                 "requested_by",
                 "applied_by",
+                "impact_assessment",
             )
             approval_requests = (
                 ApprovalRequest.objects.filter(plan_version=active_version)
@@ -575,7 +611,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 .prefetch_related("decisions")
             )
             scenarios = SimulationScenario.objects.filter(
-                baseline_version=active_version
+                Q(baseline_version=active_version) | Q(scenario_version=active_version)
             ).select_related(
                 "baseline_version",
                 "scenario_version",

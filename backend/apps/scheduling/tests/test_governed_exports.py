@@ -19,11 +19,18 @@ def _client_for(username: str) -> APIClient:
     return client
 
 
+def seeded_plan_version() -> PlanVersion:
+    return PlanVersion.objects.get(
+        plan__name="Berau-ABL Feasible Schedule Horizon",
+        version_no=1,
+    )
+
+
 @pytest.mark.django_db
 def test_control_tower_can_generate_plan_export_with_file_and_audit(monkeypatch, tmp_path):
     monkeypatch.setenv("EXPORT_STORAGE_ROOT", str(tmp_path))
     call_command("seed_phase0")
-    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    version = seeded_plan_version()
     client = _client_for("control.tower@coalflow.local")
 
     response = client.post(

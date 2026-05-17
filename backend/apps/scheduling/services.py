@@ -4,15 +4,18 @@ from datetime import timedelta
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import ValidationError
 
 from apps.masters.models import AssetCompatibilityRule, Jetty, Location, Tug
 from apps.planning.models import (
     AssetAvailabilityWindow,
+    BridgeWindow,
     CargoLayerStep,
     JettyAvailabilityWindow,
     NavigationConstraintCheck,
     OGVVoyage,
+    TideWindow,
 )
 from apps.rbac.models import UserRoleAssignment
 
@@ -21,6 +24,7 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    ImpactChainAssessment,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -161,6 +165,7 @@ def apply_assignment_override(
     reason_code: str,
     description: str,
     changes: dict,
+    impact_context: dict | None = None,
 ) -> OverrideRequest:
     if not reason_code:
         raise ValidationError({"reason_code": "A reason code is required for overrides."})
@@ -182,27 +187,378 @@ def apply_assignment_override(
     requested_change = {key: value for key, value in changes.items() if key in allowed_fields}
     if not requested_change:
         raise ValidationError("At least one supported assignment field must change.")
-
-    before_state = _assignment_state(assignment)
-    for field, value in requested_change.items():
-        setattr(assignment, field, value)
-    assignment.save(update_fields=[*requested_change.keys(), "updated_at"])
-    after_state = _assignment_state(assignment)
-
-    return OverrideRequest.objects.create(
-        plan_version=assignment.trip.plan_version,
-        trip=assignment.trip,
-        assignment=assignment,
+    actual_start_at = _impact_actual_start_at(
         reason_code=reason_code,
-        description=description,
-        requested_change=requested_change,
-        before_state=before_state,
-        after_state=after_state,
-        status=OverrideRequest.Status.APPLIED,
-        requested_by=actor,
-        applied_by=actor,
-        applied_at=timezone.now(),
+        impact_context=impact_context,
     )
+
+    with transaction.atomic():
+        before_state = _assignment_state(assignment)
+        for field, value in requested_change.items():
+            setattr(assignment, field, value)
+        assignment.save(update_fields=[*requested_change.keys(), "updated_at"])
+        after_state = _assignment_state(assignment)
+
+        override = OverrideRequest.objects.create(
+            plan_version=assignment.trip.plan_version,
+            trip=assignment.trip,
+            assignment=assignment,
+            reason_code=reason_code,
+            description=description,
+            requested_change=requested_change,
+            before_state=before_state,
+            after_state=after_state,
+            status=OverrideRequest.Status.APPLIED,
+            requested_by=actor,
+            applied_by=actor,
+            applied_at=timezone.now(),
+        )
+        if actual_start_at:
+            calculate_override_impact_chain(
+                override=override,
+                actual_start_at=actual_start_at,
+            )
+
+    return override
+
+
+def calculate_override_impact_chain(
+    *,
+    override: OverrideRequest,
+    actual_start_at,
+) -> ImpactChainAssessment:
+    if override.trip is None or override.assignment is None:
+        raise ValidationError("Impact chain assessment requires an override with a trip assignment.")
+
+    trip = override.trip
+    assignment = override.assignment
+    baseline_event = (
+        trip.events.filter(event_type=ScheduleEvent.EventType.LOAD_START)
+        .order_by("sequence")
+        .first()
+    )
+    baseline_start = baseline_event.planned_at if baseline_event else trip.planned_start
+    delay_minutes = max(0, int((actual_start_at - baseline_start).total_seconds() // 60))
+    delay_delta = timedelta(minutes=delay_minutes)
+    event_projections = _project_trip_events(trip=trip, delay_delta=delay_delta)
+    bridge_projection = event_projections.get(ScheduleEvent.EventType.BRIDGE_CROSS)
+    tide_projection = event_projections.get(ScheduleEvent.EventType.TIDE_GATE)
+    bridge_eval = _evaluate_bridge_window(
+        assignment=assignment,
+        projected_at=bridge_projection["projected_at"] if bridge_projection else None,
+    )
+    tide_eval = _evaluate_tide_window(
+        assignment=assignment,
+        projected_at=tide_projection["projected_at"] if tide_projection else None,
+    )
+    nodes = _impact_nodes(
+        override=override,
+        baseline_start=baseline_start,
+        actual_start_at=actual_start_at,
+        delay_minutes=delay_minutes,
+        bridge_eval=bridge_eval,
+        tide_eval=tide_eval,
+    )
+    status = _worst_status(node["status"] for node in nodes)
+    assessment_id = f"ICA-{override.plan_version.plan.code}-OR{override.id:04d}"
+
+    assessment, _ = ImpactChainAssessment.objects.update_or_create(
+        override_request=override,
+        defaults={
+            "assessment_id": assessment_id,
+            "plan_version": override.plan_version,
+            "trip": trip,
+            "assignment": assignment,
+            "source_kind": ImpactChainAssessment.SourceKind.OVERRIDE,
+            "status": status,
+            "delay_minutes": delay_minutes,
+            "nodes": nodes,
+            "metadata": {
+                "algorithmVersion": "stage-7.1-current-trip-v1",
+                "calculatedAt": timezone.now().isoformat(),
+                "actualStartAt": actual_start_at.isoformat(),
+                "baselineLoadStart": baseline_start.isoformat(),
+                "baselineLoadStartEventId": baseline_event.id if baseline_event else None,
+                "eventProjections": _serializable_event_projections(event_projections),
+                "bridgeWindowId": bridge_eval.get("window_id"),
+                "tideWindowId": tide_eval.get("window_id"),
+            },
+        },
+    )
+    return assessment
+
+
+def _impact_actual_start_at(*, reason_code: str, impact_context: dict | None):
+    raw_value = (impact_context or {}).get("actual_start_at")
+    if not raw_value:
+        if reason_code == OverrideRequest.ReasonCode.JETTY_DELAY:
+            raise ValidationError(
+                {"impact_context": {"actual_start_at": "Effective start time is required."}}
+            )
+        return None
+    parsed = parse_datetime(raw_value) if isinstance(raw_value, str) else raw_value
+    if parsed is None:
+        raise ValidationError(
+            {"impact_context": {"actual_start_at": "Enter a valid ISO datetime."}}
+        )
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
+
+
+def _project_trip_events(*, trip: Trip, delay_delta: timedelta) -> dict:
+    tracked_events = {
+        ScheduleEvent.EventType.LOAD_COMPLETE,
+        ScheduleEvent.EventType.DEPART_JETTY,
+        ScheduleEvent.EventType.BRIDGE_CROSS,
+        ScheduleEvent.EventType.TIDE_GATE,
+        ScheduleEvent.EventType.ARRIVE_CTS,
+        ScheduleEvent.EventType.DISCHARGE_COMPLETE,
+    }
+    projections = {}
+    for event in trip.events.filter(event_type__in=tracked_events).order_by("sequence"):
+        projected_at = event.planned_at + delay_delta
+        projections[event.event_type] = {
+            "eventId": event.id,
+            "plannedAt": event.planned_at.isoformat(),
+            "projectedAt": projected_at.isoformat(),
+            "projected_at": projected_at,
+            "status": event.status,
+        }
+    return projections
+
+
+def _serializable_event_projections(event_projections: dict) -> dict:
+    return {
+        event_type: {
+            key: value
+            for key, value in projection.items()
+            if key != "projected_at"
+        }
+        for event_type, projection in event_projections.items()
+    }
+
+
+def _evaluate_bridge_window(*, assignment: Assignment, projected_at):
+    if projected_at is None:
+        return _missing_window_eval(kind="bridge", label="BRIDGE ETA UNKNOWN")
+    windows = BridgeWindow.objects.filter(is_active=True).exclude(
+        status=BridgeWindow.Status.CLOSED,
+    )
+    return _evaluate_window_set(
+        kind="bridge",
+        projected_at=projected_at,
+        windows=windows,
+    )
+
+
+def _evaluate_tide_window(*, assignment: Assignment, projected_at):
+    if projected_at is None:
+        return _missing_window_eval(kind="tide", label="TIDE ETA UNKNOWN")
+    windows = TideWindow.objects.filter(is_active=True).exclude(
+        risk_level=TideWindow.RiskLevel.CLOSED,
+    )
+    route_segment_ids = _route_segment_ids_for_tide(assignment)
+    if route_segment_ids:
+        windows = windows.filter(
+            Q(applicable_route_segment_id__in=route_segment_ids)
+            | Q(applicable_route_segment__isnull=True)
+        )
+    return _evaluate_window_set(
+        kind="tide",
+        projected_at=projected_at,
+        windows=windows,
+    )
+
+
+def _route_segment_ids_for_tide(assignment: Assignment) -> list[int]:
+    if not assignment.route_segment_id:
+        return []
+    route = assignment.route_segment.route
+    route_segment_ids = set(
+        route.segments.filter(requires_tide_window=True).values_list("id", flat=True)
+    )
+    route_segment_ids.add(assignment.route_segment_id)
+    return list(route_segment_ids)
+
+
+def _missing_window_eval(*, kind: str, label: str) -> dict:
+    return {
+        "kind": kind,
+        "label": label,
+        "status": ImpactChainAssessment.Status.CRITICAL,
+        "value": "no ETA",
+        "detail": "No projected gate time is available for this trip.",
+        "window_id": None,
+        "window_start": None,
+        "window_end": None,
+        "projected_at": None,
+        "margin_minutes": None,
+        "miss_minutes": None,
+    }
+
+
+def _evaluate_window_set(*, kind: str, projected_at, windows) -> dict:
+    window_rows = sorted(windows, key=lambda window: window.window_start)
+    if not window_rows:
+        return {
+            "kind": kind,
+            "label": f"{kind.upper()} WINDOW UNKNOWN",
+            "status": ImpactChainAssessment.Status.CRITICAL,
+            "value": "no active window",
+            "detail": "No active governed window is available for this gate.",
+            "window_id": None,
+            "window_start": None,
+            "window_end": None,
+            "projected_at": projected_at,
+            "margin_minutes": None,
+            "miss_minutes": None,
+        }
+
+    for window in window_rows:
+        if window.window_start <= projected_at <= window.window_end:
+            margin_minutes = int((window.window_end - projected_at).total_seconds() // 60)
+            restricted = getattr(window, "status", "") == BridgeWindow.Status.RESTRICTED
+            tight = getattr(window, "risk_level", "") == TideWindow.RiskLevel.TIGHT
+            status = (
+                ImpactChainAssessment.Status.WARNING
+                if margin_minutes < 30 or restricted or tight
+                else ImpactChainAssessment.Status.OK
+            )
+            label = f"{kind.upper()} WINDOW {'TIGHT' if status == ImpactChainAssessment.Status.WARNING else 'OK'}"
+            return {
+                "kind": kind,
+                "label": label,
+                "status": status,
+                "value": f"{margin_minutes}m margin",
+                "detail": f"Projected gate remains inside {window.code}.",
+                "window_id": window.id,
+                "window_code": window.code,
+                "window_start": window.window_start.isoformat(),
+                "window_end": window.window_end.isoformat(),
+                "projected_at": projected_at,
+                "margin_minutes": margin_minutes,
+                "miss_minutes": None,
+            }
+
+    previous_windows = [window for window in window_rows if window.window_end < projected_at]
+    next_windows = [window for window in window_rows if window.window_start > projected_at]
+    previous_window = previous_windows[-1] if previous_windows else None
+    next_window = next_windows[0] if next_windows else None
+
+    if previous_window and (
+        next_window is None
+        or projected_at - previous_window.window_end <= next_window.window_start - projected_at
+    ):
+        miss_minutes = int((projected_at - previous_window.window_end).total_seconds() // 60)
+        return {
+            "kind": kind,
+            "label": f"{kind.upper()} WINDOW MISSED",
+            "status": ImpactChainAssessment.Status.CRITICAL,
+            "value": f"by {miss_minutes}m",
+            "detail": f"Projected gate misses {previous_window.code}.",
+            "window_id": previous_window.id,
+            "window_code": previous_window.code,
+            "window_start": previous_window.window_start.isoformat(),
+            "window_end": previous_window.window_end.isoformat(),
+            "projected_at": projected_at,
+            "margin_minutes": -miss_minutes,
+            "miss_minutes": miss_minutes,
+        }
+
+    wait_minutes = int((next_window.window_start - projected_at).total_seconds() // 60)
+    return {
+        "kind": kind,
+        "label": f"{kind.upper()} WINDOW WAIT",
+        "status": ImpactChainAssessment.Status.WARNING,
+        "value": f"{wait_minutes}m wait",
+        "detail": f"Projected gate must wait for {next_window.code}.",
+        "window_id": next_window.id,
+        "window_code": next_window.code,
+        "window_start": next_window.window_start.isoformat(),
+        "window_end": next_window.window_end.isoformat(),
+        "projected_at": projected_at,
+        "margin_minutes": -wait_minutes,
+        "miss_minutes": None,
+    }
+
+
+def _impact_nodes(
+    *,
+    override: OverrideRequest,
+    baseline_start,
+    actual_start_at,
+    delay_minutes: int,
+    bridge_eval: dict,
+    tide_eval: dict,
+) -> list[dict]:
+    delay_status = (
+        ImpactChainAssessment.Status.WARNING if delay_minutes else ImpactChainAssessment.Status.OK
+    )
+    navigation_status = _worst_status([bridge_eval["status"], tide_eval["status"]])
+    return [
+        {
+            "id": "source",
+            "type": "source_event",
+            "label": override.reason_code.replace("_", " ").upper(),
+            "value": actual_start_at.isoformat(),
+            "status": delay_status,
+            "detail": "Effective start against planned load start.",
+            "plannedAt": baseline_start.isoformat(),
+            "projectedAt": actual_start_at.isoformat(),
+        },
+        {
+            "id": "logistics",
+            "type": "logistics_delay",
+            "label": "BARGE DELAY",
+            "value": f"+{delay_minutes}m",
+            "status": delay_status,
+            "detail": "Current-trip event times shifted by operator-entered start.",
+        },
+        _window_node(node_id="bridge", evaluation=bridge_eval),
+        _window_node(node_id="tide", evaluation=tide_eval),
+        {
+            "id": "target",
+            "type": "final_risk_target",
+            "label": "FINAL RISK TARGET",
+            "value": override.trip.voyage.vessel_name if override.trip else "Network",
+            "status": navigation_status,
+            "detail": override.trip.trip_id if override.trip else "Network",
+        },
+    ]
+
+
+def _window_node(*, node_id: str, evaluation: dict) -> dict:
+    projected_at = evaluation.get("projected_at")
+    return {
+        "id": node_id,
+        "type": f"{evaluation['kind']}_window",
+        "label": evaluation["label"],
+        "value": evaluation["value"],
+        "status": evaluation["status"],
+        "detail": evaluation["detail"],
+        "projectedAt": projected_at.isoformat() if projected_at else None,
+        "windowStart": evaluation.get("window_start"),
+        "windowEnd": evaluation.get("window_end"),
+        "marginMinutes": evaluation.get("margin_minutes"),
+        "missMinutes": evaluation.get("miss_minutes"),
+    }
+
+
+def _worst_status(statuses) -> str:
+    rank = {
+        ImpactChainAssessment.Status.OK: 0,
+        ImpactChainAssessment.Status.WARNING: 1,
+        ImpactChainAssessment.Status.CRITICAL: 2,
+    }
+    status_list = list(statuses)
+    if not status_list:
+        return ImpactChainAssessment.Status.OK
+    return max(status_list, key=lambda status: rank.get(status, 0))
+
+
+def _display_time(value) -> str:
+    return timezone.localtime(value).strftime("%b %d, %H:%M")
 
 
 def submit_approval_request(
@@ -216,7 +572,7 @@ def submit_approval_request(
 
     request_id = f"APR-{plan_version.plan.code}-V{plan_version.version_no}"
     with transaction.atomic():
-        approval_request, _ = ApprovalRequest.objects.update_or_create(
+        approval_request, created = ApprovalRequest.objects.get_or_create(
             request_id=request_id,
             defaults={
                 "plan_version": plan_version,
@@ -226,11 +582,43 @@ def submit_approval_request(
                 "requested_by": actor,
             },
         )
+        if not created:
+            approval_request.plan_version = plan_version
+            approval_request.required_authorities = REQUIRED_APPROVAL_AUTHORITIES
+            approval_request.reason = reason or approval_request.reason or "Plan lifecycle approval requested."
+            approval_request.requested_by = actor
+
+            if approval_request.status not in {
+                ApprovalRequest.Status.PUBLISHED,
+                ApprovalRequest.Status.CANCELED,
+                ApprovalRequest.Status.REJECTED,
+            }:
+                if _required_approvals_complete(approval_request):
+                    approval_request.status = ApprovalRequest.Status.APPROVED
+                    approval_request.decided_at = approval_request.decided_at or timezone.now()
+                    if not _open_blocking_conflicts(plan_version).exists():
+                        plan_version.status = PlanVersion.Status.APPROVED
+                else:
+                    approval_request.status = ApprovalRequest.Status.PENDING
+
+            approval_request.save(
+                update_fields=[
+                    "plan_version",
+                    "required_authorities",
+                    "reason",
+                    "requested_by",
+                    "status",
+                    "decided_at",
+                    "updated_at",
+                ]
+            )
         if plan_version.status not in {
             PlanVersion.Status.PROPOSED,
             PlanVersion.Status.APPROVED,
         }:
             plan_version.status = PlanVersion.Status.PROPOSED
+            plan_version.save(update_fields=["status", "updated_at"])
+        elif plan_version.status == PlanVersion.Status.APPROVED:
             plan_version.save(update_fields=["status", "updated_at"])
 
     return approval_request
@@ -533,7 +921,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 loaded_quantity_mt=max(step.required_mt - step.remaining_mt, 0),
                 status=_trip_status(step),
                 selection_reason={
-                    "source": "deterministic_chunk4_generator",
+                    "source": "deterministic_schedule_generator",
                     "layer_step": step.id,
                     "voyage_priority": step.voyage.priority,
                     "reason_code": "EARLIEST_LAYER_WITH_DECLARED_CHAIN",

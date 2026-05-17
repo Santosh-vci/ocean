@@ -148,11 +148,46 @@ Acceptance evidence: the operator can trace the chain from OGV demand to barge/t
 
 1. Open **Operations → Jetty Loading**.
 2. Click **Force start jetty**.
-3. Wait for the success banner confirming a governed jetty override.
-4. Open **Recovery Loop → Exception Center** and **Admin Console → Audit & Logs**.
-5. Confirm the override appears with reason code, actor, before/after state, and timestamp.
+3. In the governed override panel, review the selected assignment and planned load start.
+4. Confirm or edit **Effective start time**. The UI defaults this to planned load start plus 120 minutes so the Phase 1 trial has a visible calculated impact, but the operator-entered timestamp is the source of truth.
+5. Click **Apply governed override**.
+6. Wait for the success banner confirming a governed jetty override and calculated impact.
+7. Open **Recovery Loop → Exception Center** and select the override row.
+8. Confirm the right detail panel shows reason code, actor, before/after state, timestamp, effective start, delay, and risk status.
+9. Confirm **Impact chain propagation** renders calculated nodes such as `JETTY DELAY`, `BARGE DELAY`, bridge-window result, tide-window result, and final risk target.
+10. Open **Admin Console → Audit & Logs** and confirm the override event is recorded.
 
-Acceptance evidence: the adjustment is not a silent table edit; it is captured as a governed override and audit event.
+Acceptance evidence: the adjustment is not a silent table edit; it is captured as a governed override, audit event, and calculated current-trip impact assessment.
+
+### Stage 7A — Optional Simulation Workspace check
+
+Use this check before Phase 1 closure if the operator wants to exercise the MVP-lite simulation surface. Phase 1 does not include a rich optimizer, but it does include a governed scenario shell that can run a deterministic recovery delta and promote the scenario output to a proposed plan.
+
+1. Open **Recovery Loop → Exception Center**.
+2. If active conflicts exist, select the conflict to test and click **Convert to scenario**.
+3. If no active conflicts exist, click **Convert to scenario** anyway to create a manual scenario against the active plan version.
+4. Open **Recovery Loop → Simulation Workspace**.
+5. Confirm the active scenario ID, source conflict or `Manual`, status, feasibility, OGV delay, demurrage risk, and remaining violations are visible.
+6. Click **Run simulation**.
+7. Confirm the baseline-vs-scenario table and recovery action list update.
+8. Optional: click **Promote to proposed** only if the operator intentionally wants to create a proposed successor version for approval review.
+
+Acceptance evidence: a scenario is visible in Simulation Workspace, simulation deltas are visible, recovery actions are listed, and audit events exist for scenario creation/simulation/promotion when those actions are used.
+
+### Stage 7B — Optional top-up successor plan
+
+Use this check when the first seeded/operator plan has been published and a second demand intake needs to be planned on top of it.
+
+1. Open **Planning → OGV Demand & Laycan**.
+2. Click **Import demand** again to create an additional `MV Operator UI Import` demand and two cargo-layer rows.
+3. Open **Schedule → Published Plan & Schedule**.
+4. Click **Create draft**. If a successor draft already exists, the UI should report that the draft is already active rather than creating another duplicate draft.
+5. Open **Operations → Tug/Barge Assignment**.
+6. Click **Regenerate plan**.
+7. Confirm the successor draft now includes the additional demand rows in the trip chain.
+8. Review **Exception Center** before approval. If new blockers appear, handle them through the same recovery loop before publication.
+
+Acceptance evidence: the live published plan remains preserved, a successor draft carries the top-up demand, and the regenerated trip count reflects the additional cargo-layer work.
 
 ### Stage 8 — Submit, approve, and publish the plan
 
@@ -207,6 +242,8 @@ Use these checks after any frontend or backend wiring change:
 - **Constraints → Tide & Bridge Window**: **Enter operating windows** creates visible operating windows and navigation checks.
 - **Operations → Tug/Barge Assignment**: **Regenerate plan** creates/generates the first plan when none exists.
 - **Operations → Jetty Loading**: **Force start jetty** creates a governed override after assignments exist.
+- **Recovery Loop → Exception Center**: **Convert to scenario** creates a recovery scenario from the selected conflict, or a manual scenario when no conflict is selected.
+- **Recovery Loop → Simulation Workspace**: **Run simulation** calculates the MVP-lite scenario delta; **Promote to proposed** creates or marks a successor proposed plan version.
 - **Schedule → Published Plan & Schedule**: **Create draft** creates the first draft when no plan exists, or clones a published/superseded version.
 - **Schedule → Published Plan & Schedule**: **Submit approval** creates an approval request for an editable plan.
 - **Schedule → Plan Approvals & Publishing**: **Approve** records the user’s remaining approval authority.
@@ -228,6 +265,7 @@ Stop the planning run and escalate if any of these occur:
 - approval request lacks either Berau or ABL approval;
 - publish is attempted with unresolved blocking conflicts;
 - export generation is attempted by a role without `export.generate`.
+- simulation promotion is treated as publication; promotion only creates a proposed version and still requires the approval/publish gates.
 
 ## 6. Completion checklist
 
@@ -240,6 +278,8 @@ A Phase 1 planning run is complete only when all are true:
 - schedule has generated trips, assignments, and events;
 - conflicts are understood or resolved;
 - overrides include reason, actor, and before/after state;
+- governed jetty-delay overrides include a calculated impact chain;
+- any optional simulation or top-up run is visible as a scenario or successor draft, with audit trail;
 - dual approval is complete;
 - live published snapshot exists;
 - audit trail is retrievable;

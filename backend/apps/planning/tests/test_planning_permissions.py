@@ -1,3 +1,5 @@
+from datetime import datetime, time
+
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -45,6 +47,23 @@ def assign(user, organization, permission_codes):
         organization=organization,
         data_scope=scope,
     )
+
+
+def operator_iso(days_from_today: int, hour: int, minute: int = 0) -> str:
+    target_date = timezone.localdate() + timezone.timedelta(days=days_from_today)
+    return timezone.make_aware(datetime.combine(target_date, time(hour, minute))).isoformat()
+
+
+def operator_demand_row(voyage_id: str) -> dict:
+    return {
+        "voyage_id": voyage_id,
+        "vessel_name": "MV Operator UI Import",
+        "customer_name": "Pilot Customer",
+        "laycan_start": operator_iso(1, 0),
+        "laycan_end": operator_iso(4, 0),
+        "eta": operator_iso(1, 6),
+        "required_mt": 64000,
+    }
 
 
 def make_org():
@@ -246,17 +265,7 @@ def test_operator_ui_can_start_from_master_only_seed_with_intake_and_windows():
             "commit": True,
             "filename": "operator-ui-demand.xlsx",
             "source": "operator-ui-action",
-            "rows": [
-                {
-                    "voyage_id": "VOY-UI-TEST-001",
-                    "vessel_name": "MV Operator UI Import",
-                    "customer_name": "Pilot Customer",
-                    "laycan_start": "2026-11-05T00:00:00Z",
-                    "laycan_end": "2026-11-08T00:00:00Z",
-                    "eta": "2026-11-05T06:00:00Z",
-                    "required_mt": 64000,
-                }
-            ],
+            "rows": [operator_demand_row("VOY-UI-TEST-001")],
         },
         format="json",
     )
@@ -270,7 +279,57 @@ def test_operator_ui_can_start_from_master_only_seed_with_intake_and_windows():
     assert CargoLayerStep.objects.count() == 2
     assert windows_response.status_code == 201
     assert windows_response.data["constraintChecks"] == 4
+    assert windows_response.data["tideWindows"] == [
+        "TIDE-UI-OPERATING-01",
+        "TIDE-UI-OPERATING-02",
+    ]
+    assert windows_response.data["bridgeWindows"] == [
+        "BRDG-UI-OPERATING-01",
+        "BRDG-UI-OPERATING-02",
+    ]
     assert overview_response.status_code == 200
     assert overview_response.data["voyages"][0]["vessel_name"] == "MV Operator UI Import"
+    assert len(overview_response.data["tideWindows"]) == 2
+    assert len(overview_response.data["bridgeWindows"]) == 2
     assert overview_response.data["tideWindows"][0]["code"] == "TIDE-UI-OPERATING-01"
     assert overview_response.data["bridgeWindows"][0]["code"] == "BRDG-UI-OPERATING-01"
+    assert all(
+        timezone.localtime(window.window_end).date()
+        == timezone.localtime(window.window_start).date()
+        for window in [*TideWindow.objects.all(), *BridgeWindow.objects.all()]
+    )
+    assert all(
+        window.window_end - window.window_start <= timezone.timedelta(hours=3)
+        for window in [*TideWindow.objects.all(), *BridgeWindow.objects.all()]
+    )
+
+
+@pytest.mark.django_db
+def test_operator_windows_anchor_to_fresh_ui_import_when_demo_voyages_exist():
+    call_command("seed_phase0")
+    user = User.objects.get(username="berau.scheduler@coalflow.local")
+
+    client = APIClient()
+    client.force_authenticate(user)
+    client.post(
+        "/api/planning/import-jobs/validate-ogv-demand/",
+        {
+            "commit": True,
+            "filename": "operator-ui-demand.xlsx",
+            "source": "operator-ui-action",
+            "rows": [operator_demand_row("VOY-UI-MIXED-001")],
+        },
+        format="json",
+    )
+    windows_response = client.post("/api/planning/overview/enter-operating-windows/")
+    ui_voyage = OGVVoyage.objects.get(voyage_id="VOY-UI-MIXED-001")
+
+    assert windows_response.status_code == 201
+    assert windows_response.data["constraintChecks"] == 4
+    assert timezone.localtime(
+        TideWindow.objects.get(code="TIDE-UI-OPERATING-01").window_start,
+    ).date() == timezone.localtime(ui_voyage.eta).date()
+    assert timezone.localtime(
+        BridgeWindow.objects.get(code="BRDG-UI-OPERATING-01").window_start,
+    ).date() == timezone.localtime(ui_voyage.eta).date()
+    assert NavigationConstraintCheck.objects.filter(voyage=ui_voyage).count() == 4

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
@@ -397,6 +397,11 @@ def _parsed_datetime(value):
     return parsed
 
 
+def _next_operating_anchor():
+    next_day = timezone.localdate() + timedelta(days=1)
+    return timezone.make_aware(datetime.combine(next_day, time(6, 0)))
+
+
 class PlanningOverviewViewSet(PlanningViewSet):
     queryset = OGVVoyage.objects.none()
     serializer_class = OGVVoyageSerializer
@@ -406,20 +411,77 @@ class PlanningOverviewViewSet(PlanningViewSet):
         voyages = list(
             OGVVoyage.objects.prefetch_related("layer_steps", "layer_steps__planned_barge").all()
         )
-        earliest_eta = min((voyage.eta for voyage in voyages), default=None)
-        window_start = earliest_eta - timedelta(hours=6) if earliest_eta else _parsed_datetime(
-            "2026-11-05T00:00:00Z"
-        )
-        window_end = window_start + timedelta(days=5)
+        operator_voyages = [
+            voyage
+            for voyage in voyages
+            if voyage.voyage_id.startswith("VOY-UI-")
+            or voyage.vessel_name == "MV Operator UI Import"
+        ]
+        target_voyages = operator_voyages or voyages
+        earliest_eta = min((voyage.eta for voyage in target_voyages), default=None)
+        operating_anchor = earliest_eta or _next_operating_anchor()
         tide_location = _object_by_code(Location, "LOC-RANTAU-DELTA") or Location.objects.first()
         bridge_location = _object_by_code(Location, "LOC-BRIDGE-GATE-B") or tide_location
-        route_segment = (
+        tide_route_segment = (
             RouteSegment.objects.filter(requires_tide_window=True).first()
+            or RouteSegment.objects.filter(requires_bridge_window=True).first()
+            or RouteSegment.objects.first()
+        )
+        bridge_route_segment = (
+            RouteSegment.objects.filter(requires_bridge_window=True).first()
+            or tide_route_segment
+        )
+        route_segment = (
+            tide_route_segment
             or RouteSegment.objects.filter(requires_bridge_window=True).first()
             or RouteSegment.objects.first()
         )
         if tide_location is None or bridge_location is None:
             raise serializers.ValidationError("Location master data is required.")
+
+        tide_specs = [
+            (
+                "TIDE-UI-OPERATING-01",
+                operating_anchor - timedelta(hours=2),
+                operating_anchor + timedelta(hours=1),
+                Decimal("2.40"),
+            ),
+            (
+                "TIDE-UI-OPERATING-02",
+                operating_anchor + timedelta(hours=8),
+                operating_anchor + timedelta(hours=11),
+                Decimal("2.55"),
+            ),
+        ]
+        bridge_specs = [
+            (
+                "BRDG-UI-OPERATING-01",
+                operating_anchor - timedelta(hours=1),
+                operating_anchor + timedelta(hours=2),
+                Decimal("13.20"),
+            ),
+            (
+                "BRDG-UI-OPERATING-02",
+                operating_anchor + timedelta(hours=7),
+                operating_anchor + timedelta(hours=10),
+                Decimal("13.00"),
+            ),
+        ]
+        operating_start = min(start for _, start, _, _ in [*tide_specs, *bridge_specs])
+        operating_end = max(end for _, _, end, _ in [*tide_specs, *bridge_specs])
+
+        AssetAvailabilityWindow.objects.filter(
+            reason="Entered from operator UI planning run.",
+        ).delete()
+        JettyAvailabilityWindow.objects.filter(
+            reason="Entered from operator UI planning run.",
+        ).delete()
+        TideWindow.objects.filter(source="operator-ui").exclude(
+            code__in=[code for code, _, _, _ in tide_specs],
+        ).delete()
+        BridgeWindow.objects.filter(code__startswith="BRDG-UI-OPERATING-").exclude(
+            code__in=[code for code, _, _, _ in bridge_specs],
+        ).delete()
 
         asset_windows = 0
         for asset_type, asset_code in (
@@ -433,9 +495,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
             AssetAvailabilityWindow.objects.update_or_create(
                 asset_type=asset_type,
                 asset_code=asset_code,
-                window_start=window_start,
+                window_start=operating_start,
                 defaults={
-                    "window_end": window_end,
+                    "window_end": operating_end,
                     "status": AssetAvailabilityWindow.Status.AVAILABLE,
                     "reason": "Entered from operator UI planning run.",
                 },
@@ -449,9 +511,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 continue
             JettyAvailabilityWindow.objects.update_or_create(
                 jetty=jetty,
-                window_start=window_start,
+                window_start=operating_start,
                 defaults={
-                    "window_end": window_end,
+                    "window_end": operating_end,
                     "status": JettyAvailabilityWindow.Status.WORKING,
                     "loading_rate_override_tph": jetty.loading_rate_tph,
                     "reason": "Entered from operator UI planning run.",
@@ -459,36 +521,50 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             jetty_windows += 1
 
-        tide_window, _ = TideWindow.objects.update_or_create(
-            code="TIDE-UI-OPERATING-01",
-            defaults={
-                "location": tide_location,
-                "window_start": window_start,
-                "window_end": window_end,
-                "min_water_level_m": Decimal("2.40"),
-                "max_loaded_draft_m": Decimal("4.80"),
-                "applicable_route_segment": route_segment,
-                "risk_level": TideWindow.RiskLevel.NORMAL,
-                "source": "operator-ui",
-                "is_active": True,
-            },
-        )
-        bridge_window, _ = BridgeWindow.objects.update_or_create(
-            code="BRDG-UI-OPERATING-01",
-            defaults={
-                "location": bridge_location,
-                "window_start": window_start,
-                "window_end": window_end,
-                "clearance_m": Decimal("13.20"),
-                "allowed_asset_class": "300ft/330ft barge convoy",
-                "status": BridgeWindow.Status.OPEN,
-                "notes": "Entered from operator UI planning run.",
-                "is_active": True,
-            },
-        )
+        tide_windows = []
+        for code, start, end, min_water_level in tide_specs:
+            tide_window, _ = TideWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": tide_location,
+                    "window_start": start,
+                    "window_end": end,
+                    "min_water_level_m": min_water_level,
+                    "max_loaded_draft_m": Decimal("4.80"),
+                    "applicable_route_segment": tide_route_segment,
+                    "risk_level": TideWindow.RiskLevel.NORMAL,
+                    "source": "operator-ui",
+                    "is_active": True,
+                },
+            )
+            tide_windows.append(tide_window)
+
+        bridge_windows = []
+        for code, start, end, clearance in bridge_specs:
+            bridge_window, _ = BridgeWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": bridge_location,
+                    "window_start": start,
+                    "window_end": end,
+                    "clearance_m": clearance,
+                    "allowed_asset_class": "300ft/330ft barge convoy",
+                    "status": BridgeWindow.Status.OPEN,
+                    "notes": "Entered from operator UI planning run.",
+                    "is_active": True,
+                },
+            )
+            bridge_windows.append(bridge_window)
+
+        NavigationConstraintCheck.objects.filter(
+            recovery_hint__in=[
+                "Open operator-entered tide window.",
+                "Open operator-entered bridge window.",
+            ],
+        ).delete()
 
         checks_created = 0
-        for voyage in voyages:
+        for voyage in target_voyages:
             layer_steps = sorted(
                 voyage.layer_steps.all(),
                 key=lambda step: step.required_sequence_no,
@@ -499,7 +575,10 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 if step.planned_barge is not None
             ] or ["BRG-VAL-08"]
             for index, asset_code in enumerate(dict.fromkeys(asset_codes), start=1):
-                eta_gate = voyage.eta + timedelta(hours=index * 2)
+                tide_window = tide_windows[(index - 1) % len(tide_windows)]
+                bridge_window = bridge_windows[(index - 1) % len(bridge_windows)]
+                tide_eta_gate = tide_window.window_start + timedelta(hours=1)
+                bridge_eta_gate = bridge_window.window_start + timedelta(hours=1)
                 NavigationConstraintCheck.objects.filter(
                     voyage=voyage,
                     asset_code=asset_code,
@@ -511,9 +590,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 NavigationConstraintCheck.objects.create(
                     voyage=voyage,
                     asset_code=asset_code,
-                    route_segment=route_segment,
+                    route_segment=tide_route_segment,
                     constraint_type=NavigationConstraintCheck.ConstraintType.TIDE,
-                    eta_gate=eta_gate,
+                    eta_gate=tide_eta_gate,
                     window_start=tide_window.window_start,
                     window_end=tide_window.window_end,
                     draft_m=Decimal("4.20"),
@@ -524,9 +603,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 NavigationConstraintCheck.objects.create(
                     voyage=voyage,
                     asset_code=asset_code,
-                    route_segment=route_segment,
+                    route_segment=bridge_route_segment,
                     constraint_type=NavigationConstraintCheck.ConstraintType.BRIDGE,
-                    eta_gate=eta_gate + timedelta(hours=1),
+                    eta_gate=bridge_eta_gate,
                     window_start=bridge_window.window_start,
                     window_end=bridge_window.window_end,
                     draft_m=Decimal("4.20"),
@@ -546,8 +625,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
             metadata={
                 "asset_windows": asset_windows,
                 "jetty_windows": jetty_windows,
-                "tide_window": tide_window.code,
-                "bridge_window": bridge_window.code,
+                "tide_windows": [window.code for window in tide_windows],
+                "bridge_windows": [window.code for window in bridge_windows],
                 "constraint_checks": checks_created,
             },
             request=request,
@@ -556,8 +635,10 @@ class PlanningOverviewViewSet(PlanningViewSet):
             {
                 "assetWindows": asset_windows,
                 "jettyWindows": jetty_windows,
-                "tideWindow": tide_window.code,
-                "bridgeWindow": bridge_window.code,
+                "tideWindow": tide_windows[0].code,
+                "bridgeWindow": bridge_windows[0].code,
+                "tideWindows": [window.code for window in tide_windows],
+                "bridgeWindows": [window.code for window in bridge_windows],
                 "constraintChecks": checks_created,
             },
             status=status.HTTP_201_CREATED,

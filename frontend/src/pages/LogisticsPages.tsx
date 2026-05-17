@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
 import type {
@@ -16,7 +16,7 @@ type LogisticsPageProps = {
   isActionRunning?: boolean;
   onCreateDraft?: () => void;
   onExport?: () => void;
-  onForceStartJetty?: () => void;
+  onForceStartJetty?: (assignmentId: number, actualStartAt: string) => void | Promise<void>;
   onRegenerate?: () => void;
   onSubmitApproval?: () => void;
 };
@@ -37,6 +37,21 @@ function dt(value: string | null | undefined) {
     minute: "2-digit",
     month: "short",
   });
+}
+
+function datetimeLocalValue(value: string | null | undefined, offsetMinutes = 0) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setMinutes(date.getMinutes() + offsetMinutes);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function toIsoFromLocal(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString();
 }
 
 function statusTone(status: string | undefined, blocking = false) {
@@ -104,7 +119,7 @@ export function TugBargeAssignmentPage({
           <h1>Tug/Barge Assignment</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 4 · Fleet feasibility</span>
+          <span className="phase-chip">Fleet feasibility</span>
           <button
             disabled={!canEdit || !onRegenerate || isActionRunning}
             onClick={onRegenerate}
@@ -234,6 +249,11 @@ export function JettyLoadingPage({
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(
+    assignments.find((assignment) => assignment.jetty)?.id ?? assignments[0]?.id ?? null,
+  );
+  const [isOverridePanelOpen, setIsOverridePanelOpen] = useState(false);
+  const [effectiveStart, setEffectiveStart] = useState("");
   const byJetty = useMemo(() => {
     const groups = new Map<string, AssignmentRecord[]>();
     assignments.forEach((assignment) => {
@@ -242,6 +262,32 @@ export function JettyLoadingPage({
     });
     return [...groups.entries()];
   }, [assignments]);
+  const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId)
+    ?? assignments.find((assignment) => assignment.jetty)
+    ?? assignments[0];
+  const selectedTrip = trips.find((trip) => trip.id === selectedAssignment?.trip);
+  const plannedLoadStart = selectedTrip?.events.find((event) => event.event_type === "load_start")?.planned_at
+    ?? selectedTrip?.planned_start
+    ?? "";
+
+  useEffect(() => {
+    if (!selectedAssignmentId && assignments.length) {
+      setSelectedAssignmentId(assignments.find((assignment) => assignment.jetty)?.id ?? assignments[0].id);
+    }
+  }, [assignments, selectedAssignmentId]);
+
+  function openOverridePanel() {
+    setEffectiveStart(datetimeLocalValue(plannedLoadStart, 120));
+    setIsOverridePanelOpen(true);
+  }
+
+  function submitOverride(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const actualStartAt = toIsoFromLocal(effectiveStart);
+    if (!selectedAssignment || !actualStartAt) return;
+    void onForceStartJetty?.(selectedAssignment.id, actualStartAt);
+    setIsOverridePanelOpen(false);
+  }
 
   return (
     <section className="workspace-page logistics-board">
@@ -251,10 +297,10 @@ export function JettyLoadingPage({
           <h1>Jetty Loading</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 4 · Source-side queue</span>
+          <span className="phase-chip">Source-side queue</span>
           <button
-            disabled={!canEdit || !onForceStartJetty || isActionRunning}
-            onClick={onForceStartJetty}
+            disabled={!canEdit || !onForceStartJetty || !selectedAssignment || isActionRunning}
+            onClick={openOverridePanel}
             title={!canEdit ? "Your role cannot force-start jetty queues." : undefined}
             type="button"
           >
@@ -288,7 +334,11 @@ export function JettyLoadingPage({
                   const trip = trips.find((item) => item.id === assignment.trip);
                   const conflict = conflictForTrip(conflicts, assignment.trip);
                   return (
-                    <div className="jetty-row" key={assignment.id}>
+                    <div
+                      className={selectedAssignment?.id === assignment.id ? "jetty-row selected-row" : "jetty-row"}
+                      key={assignment.id}
+                      onClick={() => setSelectedAssignmentId(assignment.id)}
+                    >
                       <strong>{assignment.vessel_name}</strong>
                       <span>{trip?.cargo_layer_step?.coal_grade.code ?? "-"}</span>
                       <span>H{trip?.cargo_layer_step?.hatch_no ?? "-"}-L{trip?.cargo_layer_step?.layer_no ?? "-"}</span>
@@ -308,16 +358,45 @@ export function JettyLoadingPage({
         <aside className="board-surface logistics-inspector">
           <div className="grid-header">
             <div><SvgIcon name="rule" /><strong>Manual override panel</strong></div>
-            <span>Reason capture lands in Chunk 5</span>
+            <span>Reason and impact capture</span>
           </div>
           <div className="inspector-body">
             <span className="status-chip pending">Operator controlled</span>
-            <h2>Jetty readiness</h2>
-            <p>Loading queues are generated from trip assignments and current jetty availability windows.</p>
-            <section className="recovery-box">
-              <strong>Audit trail</strong>
-              <p>Generated plan preserves source chain and conflict evidence for downstream approval.</p>
-            </section>
+            <h2>{selectedAssignment?.jetty?.code ?? "Jetty readiness"}</h2>
+            <p>{selectedAssignment
+              ? `${selectedAssignment.vessel_name} / ${selectedAssignment.trip_ref}`
+              : "Select an assignment before applying a governed override."}</p>
+            <dl>
+              <div><dt>Planned load</dt><dd>{dt(plannedLoadStart)}</dd></div>
+              <div><dt>Barge</dt><dd>{selectedAssignment?.barge?.code ?? "Unassigned"}</dd></div>
+              <div><dt>Status</dt><dd>{selectedAssignment ? shortStatus(selectedAssignment.status) : "-"}</dd></div>
+            </dl>
+            {isOverridePanelOpen ? (
+              <form className="governed-override-form" onSubmit={submitOverride}>
+                <label>
+                  Effective start time
+                  <input
+                    onChange={(event) => setEffectiveStart(event.target.value)}
+                    required
+                    type="datetime-local"
+                    value={effectiveStart}
+                  />
+                </label>
+                <div className="override-form-actions">
+                  <button disabled={!effectiveStart || isActionRunning} type="submit">
+                    Apply governed override
+                  </button>
+                  <button onClick={() => setIsOverridePanelOpen(false)} type="button">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <section className="recovery-box">
+                <strong>Calculated impact</strong>
+                <p>Force start captures the effective start time and calculates current-trip tide and bridge risk.</p>
+              </section>
+            )}
           </div>
         </aside>
       </div>
@@ -346,7 +425,7 @@ export function CtsOperationsPage({
           <h1>CTS / Floating Crane</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 4 · Transshipment capacity</span>
+          <span className="phase-chip">Transshipment capacity</span>
           <button
             disabled={!canExport || !onExport || isActionRunning}
             onClick={onExport}

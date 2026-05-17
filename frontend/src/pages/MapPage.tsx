@@ -57,7 +57,7 @@ export function LiveResourceMapPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip secure">
-            Chunk 6 ? {mapMode === "manual" ? "Manual state view" : mapMode === "tide" ? "Tide / bridge view" : "Exception view"}
+            {mapMode === "manual" ? "Manual state view" : mapMode === "tide" ? "Tide / bridge view" : "Exception view"}
           </span>
           <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">
             Open assignment board

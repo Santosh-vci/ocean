@@ -63,7 +63,7 @@ export function CoalGradeSequencePage({
           <h1>Coal Grade Sequence</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 3 · Layering</span>
+          <span className="phase-chip">Grade layering</span>
           <button
             disabled
             title={canEdit

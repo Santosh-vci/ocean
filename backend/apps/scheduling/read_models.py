@@ -38,7 +38,7 @@ class DashboardRoleShape:
 
 
 def build_dashboard_read_model(user) -> dict:
-    """Build the Chunk 6 read-optimized situation board contract.
+    """Build the read-optimized situation board contract.
 
     The dashboard is intentionally shaped by the user's operating role. It does not
     mutate planning data and it keeps derived control-tower numbers reconciled to

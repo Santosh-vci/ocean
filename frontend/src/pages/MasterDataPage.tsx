@@ -7,6 +7,7 @@ import type {
   MasterDataOverview,
   MasterDataRecord,
   Organization,
+  RouteSegmentRecord,
 } from "../types";
 
 type CatalogKey = keyof MasterDataCatalogs;
@@ -203,6 +204,11 @@ function fieldRows(record: MasterDataRecord) {
   ];
 }
 
+function routeSegments(record: MasterDataRecord): RouteSegmentRecord[] {
+  const segments = (record as { segments?: unknown }).segments;
+  return Array.isArray(segments) ? segments as RouteSegmentRecord[] : [];
+}
+
 type MasterDataPageProps = {
   overview: MasterDataOverview;
   canManage: boolean;
@@ -236,6 +242,7 @@ export function MasterDataPage({
   );
   const selectedRecord =
     filteredRecords.find((record) => record.id === selectedRecordId) ?? filteredRecords[0] ?? null;
+  const selectedRouteSegments = selectedRecord ? routeSegments(selectedRecord) : [];
   const totalRecords = Object.values(overview.catalogs).reduce((sum, catalog) => sum + catalog.length, 0);
   const activeRecords = Object.values(overview.catalogs).reduce(
     (sum, catalog) => sum + catalog.filter((record) => record.is_active).length,
@@ -429,6 +436,31 @@ export function MasterDataPage({
               </ul>
             </section>
 
+            {activeCatalog.key === "routes" ? (
+              <section className="route-segment-review">
+                <h2>Tide & Bridge Segments</h2>
+                <div>
+                  {selectedRouteSegments.length ? selectedRouteSegments.map((segment) => (
+                    <article key={segment.id}>
+                      <span>{String(segment.sequence).padStart(2, "0")}</span>
+                      <strong>{segment.from_location} {"->"} {segment.to_location}</strong>
+                      <p>
+                        {segment.distance_nm} NM / loaded {segment.loaded_duration_minutes}m / empty {segment.empty_duration_minutes}m
+                      </p>
+                      <em className={segment.requires_tide_window ? "active" : ""}>
+                        Tide
+                      </em>
+                      <em className={segment.requires_bridge_window ? "active" : ""}>
+                        Bridge
+                      </em>
+                    </article>
+                  )) : (
+                    <p>No route segments configured for this route.</p>
+                  )}
+                </div>
+              </section>
+            ) : null}
+
             <section>
               <h2>Dependency Tree</h2>
               <div className="dependency-grid">
@@ -445,7 +477,7 @@ export function MasterDataPage({
                 <strong>Change impact preview</strong>
                 <p>
                   Publishing this configuration may change schedule feasibility once OGV demand and
-                  availability boards arrive in later chunks.
+                  availability boards are active.
                 </p>
               </div>
             </section>

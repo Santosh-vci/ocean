@@ -55,7 +55,7 @@ export function DashboardPage({
         </div>
         <div className="planning-actions">
           <span className={`phase-chip ${toneClass(planRisk?.tone)}`}>
-            Chunk 6 ? {planRisk?.liveLabel ?? "No active read model"}
+            Live read model - {planRisk?.liveLabel ?? "No active read model"}
           </span>
           <button onClick={() => onNavigate("/schedule/published-plan")} type="button">
             Open plan

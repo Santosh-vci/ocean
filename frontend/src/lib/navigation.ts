@@ -26,7 +26,6 @@ export type NavItem = {
   module: string;
   requiredPermission: string;
   icon: IconName;
-  phase?: string;
   disabled?: boolean;
 };
 
@@ -66,7 +65,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Planning",
         requiredPermission: "schedule.view",
         icon: "schedule",
-        phase: "Chunk 3",
       },
       {
         path: "/schedule/coal-grade-sequence",
@@ -74,7 +72,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Planning",
         requiredPermission: "schedule.view",
         icon: "coal",
-        phase: "Chunk 3",
       },
     ],
   },
@@ -90,14 +87,13 @@ export const NAV_MODULES: NavModule[] = [
         module: "Constraints",
         requiredPermission: "schedule.view",
         icon: "rule",
-        phase: "Chunk 3",
       },
     ],
   },
   {
     id: "operations",
     label: "Operations",
-    eyebrow: "Chunk 4 boards",
+    eyebrow: "Execution boards",
     icon: "operations",
     items: [
       {
@@ -106,7 +102,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Operations",
         requiredPermission: "schedule.view",
         icon: "fleet",
-        phase: "Chunk 4",
       },
       {
         path: "/operations/jetty-loading",
@@ -114,7 +109,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Operations",
         requiredPermission: "schedule.view",
         icon: "locations",
-        phase: "Chunk 4",
       },
       {
         path: "/operations/cts-floating-crane",
@@ -122,7 +116,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Operations",
         requiredPermission: "schedule.view",
         icon: "operations",
-        phase: "Chunk 4",
       },
       {
         path: "/schedule/published-plan",
@@ -130,14 +123,13 @@ export const NAV_MODULES: NavModule[] = [
         module: "Operations",
         requiredPermission: "schedule.view",
         icon: "account-tree",
-        phase: "Chunk 4",
       },
     ],
   },
   {
     id: "exceptions",
     label: "Recovery Loop",
-    eyebrow: "Chunk 5 governance",
+    eyebrow: "Governance loop",
     icon: "rule",
     items: [
       {
@@ -146,7 +138,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Recovery Loop",
         requiredPermission: "schedule.view",
         icon: "rule",
-        phase: "Chunk 5",
       },
       {
         path: "/simulation/workspace",
@@ -154,7 +145,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Recovery Loop",
         requiredPermission: "schedule.edit",
         icon: "account-tree",
-        phase: "Chunk 5",
       },
       {
         path: "/approvals/publishing",
@@ -162,7 +152,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Recovery Loop",
         requiredPermission: "schedule.approve",
         icon: "audit",
-        phase: "Chunk 5",
       },
     ],
   },
@@ -178,7 +167,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Map & Signals",
         requiredPermission: "fleet.view",
         icon: "map",
-        phase: "Chunk 6",
       },
     ],
   },
@@ -215,7 +203,6 @@ export const NAV_MODULES: NavModule[] = [
         module: "Admin Console",
         requiredPermission: "export.view",
         icon: "account-tree",
-        phase: "Chunk 7",
       },
     ],
   },

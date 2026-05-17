@@ -376,6 +376,68 @@ class OverrideRequest(models.Model):
         return f"{self.reason_code} override on {self.plan_version}"
 
 
+class ImpactChainAssessment(models.Model):
+    class SourceKind(models.TextChoices):
+        OVERRIDE = "override", "Override"
+        CONFLICT = "conflict", "Conflict"
+        PLANNING_FORECAST = "planning_forecast", "Planning forecast"
+        SIMULATION = "simulation", "Simulation"
+
+    class Status(models.TextChoices):
+        OK = "ok", "OK"
+        WARNING = "warning", "Warning"
+        CRITICAL = "critical", "Critical"
+
+    assessment_id = models.CharField(max_length=96, unique=True)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="impact_chain_assessments",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="impact_chain_assessments",
+    )
+    assignment = models.ForeignKey(
+        Assignment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="impact_chain_assessments",
+    )
+    override_request = models.OneToOneField(
+        OverrideRequest,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="impact_assessment",
+    )
+    source_kind = models.CharField(
+        max_length=40,
+        choices=SourceKind.choices,
+        default=SourceKind.OVERRIDE,
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.OK)
+    delay_minutes = models.IntegerField(default=0)
+    nodes = models.JSONField(default=list, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=("plan_version", "source_kind", "status")),
+            models.Index(fields=("trip", "source_kind", "status")),
+        ]
+
+    def __str__(self) -> str:
+        return self.assessment_id
+
+
 class ApprovalRequest(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

@@ -563,7 +563,7 @@ tbody tr:hover,
 }
 
 
-/* Chunk 2 shell hardening: resource-adapted industrial cockpit */
+/* Resource-adapted industrial cockpit */
 .svg-icon {
   width: 1rem;
   height: 1rem;
@@ -801,7 +801,6 @@ tbody tr:hover,
 }
 
 .module-copy em,
-.nav-item em,
 .catalog-button em {
   color: var(--on-surface-variant);
   font-size: 0.58rem;
@@ -826,7 +825,7 @@ tbody tr:hover,
   width: 100%;
   min-height: 1.8rem;
   display: grid;
-  grid-template-columns: 0.9rem minmax(0, 1fr) auto;
+  grid-template-columns: 0.9rem minmax(0, 1fr);
   align-items: center;
   gap: 0.4rem;
   border-left: 1px solid rgba(51, 65, 85, 0.8);
@@ -1201,6 +1200,74 @@ tbody tr:hover,
   letter-spacing: 0.05em;
 }
 
+.route-segment-review > div {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.route-segment-review article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: var(--surface-charcoal);
+  padding: 0.5rem;
+}
+
+.route-segment-review article > span {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(137, 206, 255, 0.32);
+  border-radius: 0.25rem;
+  color: var(--primary);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.68rem;
+}
+
+.route-segment-review strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-segment-review p {
+  grid-column: 2 / -1;
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+}
+
+.route-segment-review em {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  color: var(--on-surface-variant);
+  padding: 0.15rem 0.35rem;
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.route-segment-review em.active {
+  border-color: rgba(16, 185, 129, 0.42);
+  color: var(--status-success);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.route-segment-review > div > p {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+}
+
 .dot {
   width: 0.5rem;
   height: 0.5rem;
@@ -1568,7 +1635,7 @@ tbody tr:hover,
 }
 
 .tide-bridge-layout {
-  grid-template-columns: minmax(42rem, 1fr) 23rem;
+  grid-template-columns: minmax(34rem, 1fr) minmax(17rem, 21rem);
 }
 
 .planning-grid-panel,
@@ -1833,6 +1900,63 @@ tbody tr:hover,
   text-transform: uppercase;
 }
 
+.governed-override-form {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid rgba(137, 206, 255, 0.28);
+  background: rgba(6, 14, 32, 0.62);
+  padding: 0.65rem;
+}
+
+.governed-override-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.governed-override-form input {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.2rem;
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.48rem 0.55rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.override-form-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.override-form-actions button {
+  min-height: 1.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--on-surface);
+  padding: 0 0.65rem;
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.override-form-actions button:first-child {
+  border-color: rgba(137, 206, 255, 0.45);
+  color: var(--primary);
+}
+
+.override-form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .focus-sequence {
   overflow: hidden;
 }
@@ -1878,31 +2002,84 @@ tbody tr:hover,
   padding: 0.65rem;
 }
 
-.timeline-row {
+.timeline-axis {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  align-items: end;
+  gap: 0.6rem;
+  min-height: 1.4rem;
+}
+
+.timeline-axis > span {
+  color: var(--on-surface-variant);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.timeline-axis > div {
+  position: relative;
+  min-width: 0;
+  height: 1.15rem;
+  border-bottom: 1px solid rgba(137, 206, 255, 0.2);
+}
+
+.timeline-axis i {
+  position: absolute;
+  bottom: 0.1rem;
+  color: var(--on-surface-variant);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.56rem;
+  font-style: normal;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.timeline-axis i::after {
+  position: absolute;
+  left: 50%;
+  bottom: -0.42rem;
+  width: 1px;
+  height: 0.38rem;
+  background: rgba(137, 206, 255, 0.35);
+  content: "";
+}
+
+.timeline-axis i:first-child {
+  transform: translateX(0);
+}
+
+.timeline-axis i:last-child {
+  transform: translateX(-100%);
+}
+
+.window-timeline-row {
   display: grid;
   grid-template-columns: 10rem minmax(0, 1fr);
   align-items: center;
   gap: 0.6rem;
 }
 
-.timeline-row > div:first-child {
+.window-timeline-row > div:first-child {
   display: grid;
   gap: 0.08rem;
 }
 
-.timeline-row strong {
+.window-timeline-row strong {
   color: var(--on-surface);
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 0.68rem;
 }
 
-.timeline-row span {
+.window-timeline-row span {
   color: var(--on-surface-variant);
   font-size: 0.62rem;
 }
 
 .timeline-track {
   position: relative;
+  min-width: 0;
   min-height: 1.85rem;
   border: 1px solid rgba(51, 65, 85, 0.72);
   background:
@@ -1916,12 +2093,14 @@ tbody tr:hover,
   bottom: 0.28rem;
   display: grid;
   align-items: center;
+  overflow: hidden;
   border: 1px solid rgba(16, 185, 129, 0.55);
   background: rgba(16, 185, 129, 0.18);
   color: var(--on-surface);
   padding: 0 0.42rem;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 0.58rem;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -2270,7 +2449,7 @@ tbody tr:hover,
   }
 }
 
-/* Chunk 5 recovery, simulation, and approval loop */
+/* Recovery, simulation, and approval loop */
 .recovery-board {
   display: grid;
   grid-auto-rows: max-content;
@@ -2356,17 +2535,18 @@ tbody tr:hover,
   overflow: hidden;
 }
 
-.impact-chain > div:last-child {
+.impact-chain-track {
   min-height: 8rem;
-  display: grid;
-  grid-template-columns: 11rem 1fr 11rem 1fr 11rem 1fr 11rem;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.8rem;
   background: var(--surface-lowest);
+  overflow-x: auto;
 }
 
 .chain-node {
+  flex: 0 0 11rem;
   min-height: 3rem;
   display: grid;
   align-content: center;
@@ -2381,6 +2561,26 @@ tbody tr:hover,
   text-transform: uppercase;
 }
 
+.chain-node strong,
+.chain-node em,
+.chain-node small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chain-node em {
+  color: var(--on-surface);
+  font-style: normal;
+}
+
+.chain-node small {
+  color: var(--on-surface-variant);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
 .chain-node.critical {
   border-color: rgba(239, 68, 68, 0.65);
   color: var(--status-critical);
@@ -2392,6 +2592,7 @@ tbody tr:hover,
 }
 
 .chain-line {
+  flex: 1 0 3rem;
   height: 1px;
   background: linear-gradient(90deg, var(--border-subtle), var(--primary));
 }
@@ -2515,19 +2716,20 @@ tbody tr:hover,
     grid-template-columns: 1fr;
   }
 
-  .impact-chain > div:last-child {
-    grid-template-columns: 1fr;
+  .impact-chain-track {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .chain-line {
     min-height: 1.25rem;
     width: 1px;
-    justify-self: center;
+    align-self: center;
   }
 }
 
 
-/* Chunk 6 dashboard and operational read model cockpit */
+/* Dashboard and operational read model cockpit */
 .ok-text {
   color: var(--status-success);
 }
@@ -2868,7 +3070,7 @@ tbody tr:hover,
 }
 
 
-/* Chunk 6 manual Live Resource Map MVP */
+/* Manual Live Resource Map MVP */
 .live-map-board {
   display: grid;
   grid-auto-rows: max-content;
@@ -3122,7 +3324,7 @@ tbody tr:hover,
 }
 
 
-/* Chunk 7 governed export handoff */
+/* Governed export handoff */
 .export-handoff-board {
   display: grid;
   grid-auto-rows: max-content;

@@ -91,7 +91,7 @@ export function ExportHandoffPage({
           <h1>Exports & Operational Handoff</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip secure">Chunk 7 · Governed exports</span>
+          <span className="phase-chip secure">Governed exports</span>
           <button disabled={!canGenerate || isGenerating} onClick={() => onGenerate({
             exportType: "plan",
             exportFormat: "print",

@@ -72,7 +72,7 @@ export function OgvDemandPage({
           <h1>OGV Demand & Laycan</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 3 · Intake</span>
+          <span className="phase-chip">Demand intake</span>
           <button disabled={!canEdit || isActionRunning} onClick={onImportDemand} type="button">
             Import demand
           </button>
@@ -180,7 +180,7 @@ export function OgvDemandPage({
               <SvgIcon name="rule" />
               <strong>Real-time risk engine</strong>
             </div>
-            <span>Manual rule checks until optimizer chunks arrive</span>
+            <span>Manual rule checks until optimizer services arrive</span>
           </div>
           <ol className="risk-list">
             {voyages

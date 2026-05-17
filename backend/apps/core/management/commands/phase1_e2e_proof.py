@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from io import StringIO
 
 from django.contrib.auth import get_user_model
@@ -90,6 +90,7 @@ class Phase1ProofRunner:
         self.run_id = f"P1-E2E-{timezone.now():%Y%m%d%H%M%S}"
         self.user_model = get_user_model()
         self.stages: list[dict] = []
+        self.start_date = timezone.localdate() + timedelta(days=14)
 
     def run(self) -> dict:
         self._reset_existing_proof()
@@ -231,7 +232,8 @@ class Phase1ProofRunner:
         }
 
     def _dt(self, day: int, hour: int, minute: int = 0):
-        return timezone.make_aware(datetime(2026, 11, day, hour, minute))
+        target_date = self.start_date + timedelta(days=day - 5)
+        return timezone.make_aware(datetime.combine(target_date, time(hour, minute)))
 
     def _record_stage(
         self,
@@ -456,8 +458,8 @@ class Phase1ProofRunner:
         tide = TideWindow.objects.create(
             code="TIDE-P1-E2E-RANTAU",
             location=masters["rantau_delta"],
-            window_start=self._dt(5, 7),
-            window_end=self._dt(5, 23),
+            window_start=self._dt(5, 10),
+            window_end=self._dt(5, 13),
             min_water_level_m="2.80",
             max_loaded_draft_m="4.80",
             risk_level=TideWindow.RiskLevel.NORMAL,
@@ -466,8 +468,8 @@ class Phase1ProofRunner:
         bridge = BridgeWindow.objects.create(
             code="BRDG-P1-E2E-GATE-B",
             location=masters["bridge_gate"],
-            window_start=self._dt(5, 6),
-            window_end=self._dt(6, 2),
+            window_start=self._dt(5, 20),
+            window_end=self._dt(5, 23),
             clearance_m="13.20",
             allowed_asset_class="300ft barge",
             status=BridgeWindow.Status.OPEN,
@@ -740,7 +742,10 @@ class Phase1ProofRunner:
         return export_job
 
     def _constraint_scenario(self) -> dict:
-        baseline = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+        baseline = PlanVersion.objects.get(
+            plan__name="Berau-ABL Feasible Schedule Horizon",
+            version_no=1,
+        )
         conflicts = list(
             Conflict.objects.filter(plan_version=baseline)
             .select_related("trip", "trip__voyage")

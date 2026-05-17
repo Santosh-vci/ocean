@@ -21,10 +21,17 @@ def _kpi(payload: dict, key: str) -> dict:
     return next(item for item in payload["kpis"] if item["key"] == key)
 
 
+def seeded_plan_version() -> PlanVersion:
+    return PlanVersion.objects.get(
+        plan__name="Berau-ABL Feasible Schedule Horizon",
+        version_no=1,
+    )
+
+
 @pytest.mark.django_db
 def test_dashboard_read_model_reconciles_kpis_to_schedule_fixture():
     call_command("seed_phase0")
-    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
+    version = seeded_plan_version()
     expected_blockers = Conflict.objects.filter(
         plan_version=version,
         is_blocking=True,
@@ -38,7 +45,7 @@ def test_dashboard_read_model_reconciles_kpis_to_schedule_fixture():
     response = _client_for("admin@coalflow.local").get("/api/dashboard/situation/")
 
     assert response.status_code == 200
-    assert response.data["latestVersion"]["planCode"] == "PLAN-2026-10-24"
+    assert response.data["latestVersion"]["planCode"] == version.plan.code
     assert _kpi(response.data, "blockingConflicts")["value"] == expected_blockers
     assert _kpi(response.data, "cargoRemainingMt")["value"] == expected_remaining
     assert response.data["planRisk"]["highestRiskOgv"]["vesselName"]

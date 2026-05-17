@@ -1,3 +1,5 @@
+from datetime import datetime, time
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -5,6 +7,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
+from apps.masters.models import AssetCompatibilityRule, Jetty, Tug
 from apps.planning.models import ImportJob, OGVVoyage
 from apps.scheduling.models import (
     ApprovalDecision,
@@ -25,6 +28,22 @@ def _client_for(username: str) -> APIClient:
     client.force_authenticate(user)
     client.force_login(user)
     return client
+
+
+def seeded_plan_version() -> PlanVersion:
+    return PlanVersion.objects.get(
+        plan__name="Berau-ABL Feasible Schedule Horizon",
+        version_no=1,
+    )
+
+
+def seeded_approval_request(version: PlanVersion) -> ApprovalRequest:
+    return ApprovalRequest.objects.get(plan_version=version)
+
+
+def operator_iso(days_from_today: int, hour: int, minute: int = 0) -> str:
+    target_date = timezone.localdate() + timezone.timedelta(days=days_from_today)
+    return timezone.make_aware(datetime.combine(target_date, time(hour, minute))).isoformat()
 
 
 @pytest.mark.django_db
@@ -56,8 +75,8 @@ def test_full_seeded_workflow_reaches_published_plan_and_governed_export(monkeyp
     monkeypatch.setenv("EXPORT_STORAGE_ROOT", str(tmp_path))
     call_command("seed_phase0")
     client = _client_for("admin@coalflow.local")
-    version = PlanVersion.objects.get(plan__code="PLAN-2026-10-24", version_no=1)
-    approval_request = ApprovalRequest.objects.get(request_id="APR-PLAN-2026-10-24-V1")
+    version = seeded_plan_version()
+    approval_request = seeded_approval_request(version)
 
     demand_response = client.post(
         "/api/planning/import-jobs/validate-ogv-demand/",
@@ -68,9 +87,9 @@ def test_full_seeded_workflow_reaches_published_plan_and_governed_export(monkeyp
                     "voyage_id": "VOY-UAT-001",
                     "vessel_name": "MV UAT PILOT",
                     "customer_name": "Pilot Customer",
-                    "laycan_start": "2026-10-24T00:00:00Z",
-                    "laycan_end": "2026-10-27T00:00:00Z",
-                    "eta": "2026-10-24T06:00:00Z",
+                    "laycan_start": operator_iso(1, 0),
+                    "laycan_end": operator_iso(4, 0),
+                    "eta": operator_iso(1, 6),
                     "required_mt": 64000,
                 }
             ],
@@ -136,3 +155,9 @@ def test_master_data_only_seed_clears_operational_records():
     assert ExportJob.objects.count() == 0
     assert PublishedPlanSnapshot.objects.count() == 0
     assert AuditEvent.objects.count() == 0
+    assert AssetCompatibilityRule.objects.filter(is_compatible=False).count() == 0
+    assert Tug.objects.filter(gps_device_id="").count() == 0
+    assert Jetty.objects.filter(
+        code__in=["JTY-SUARAN", "JTY-LATI", "JTY-GMB"],
+        status=Jetty.Status.AVAILABLE,
+    ).count() == 3

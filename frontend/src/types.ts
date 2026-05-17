@@ -646,6 +646,41 @@ export type ConflictRecord = {
   created_at: string;
 };
 
+export type ImpactChainNodeRecord = {
+  id: string;
+  type: string;
+  label: string;
+  value: string;
+  status: "ok" | "warning" | "critical" | string;
+  detail: string;
+  plannedAt?: string | null;
+  projectedAt?: string | null;
+  windowStart?: string | null;
+  windowEnd?: string | null;
+  marginMinutes?: number | null;
+  missMinutes?: number | null;
+};
+
+export type ImpactChainAssessmentRecord = {
+  id: number;
+  assessment_id: string;
+  plan_version: number;
+  plan_version_ref: string;
+  trip: number | null;
+  trip_ref: string | null;
+  assignment: number | null;
+  assignment_ref: string | null;
+  override_request: number | null;
+  override_request_ref: string | null;
+  source_kind: string;
+  status: "ok" | "warning" | "critical" | string;
+  delay_minutes: number;
+  nodes: ImpactChainNodeRecord[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
 export type OverrideRequestRecord = {
   id: number;
   plan_version: number;
@@ -665,6 +700,7 @@ export type OverrideRequestRecord = {
   applied_by: number | null;
   applied_by_email: string | null;
   applied_at: string | null;
+  impact_assessment: ImpactChainAssessmentRecord | null;
   created_at: string;
 };
 

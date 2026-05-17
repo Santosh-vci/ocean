@@ -115,7 +115,6 @@ export function Sidebar({
                       >
                         <SvgIcon name={item.icon} />
                         <span>{item.label}</span>
-                        {item.phase ? <em>{item.phase}</em> : null}
                       </button>
                     );
                   })}

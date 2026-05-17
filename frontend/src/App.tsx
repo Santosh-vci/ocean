@@ -52,6 +52,29 @@ function currentHashPath() {
   return window.location.hash.replace("#", "") || "/dashboard/situation";
 }
 
+function upcomingLocalIso(daysFromToday: number, hour: number, minute = 0) {
+  const now = new Date();
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + daysFromToday,
+    hour,
+    minute,
+    0,
+    0,
+  ).toISOString();
+}
+
+function operatorPlanningDates() {
+  return {
+    laycanStart: upcomingLocalIso(1, 0),
+    laycanEnd: upcomingLocalIso(4, 0),
+    eta: upcomingLocalIso(1, 6),
+    horizonStart: upcomingLocalIso(1, 0),
+    horizonEnd: upcomingLocalIso(8, 23, 59),
+  };
+}
+
 type MasterDataCatalogKey = keyof MasterDataCatalogs;
 
 const MASTER_DATA_ENDPOINTS: Record<MasterDataCatalogKey, string> = {
@@ -323,6 +346,7 @@ function App() {
     await runWorkspaceAction("Import demand", async () => {
       const csrfToken = await getCsrfToken();
       const stamp = Date.now();
+      const dates = operatorPlanningDates();
       const job = await apiFetch<ImportJobRecord>("/planning/import-jobs/validate-ogv-demand/", {
         method: "POST",
         headers: {
@@ -337,9 +361,9 @@ function App() {
               voyage_id: `VOY-UI-${String(stamp).slice(-6)}`,
               vessel_name: "MV Operator UI Import",
               customer_name: "Pilot Customer",
-              laycan_start: "2026-11-05T00:00:00Z",
-              laycan_end: "2026-11-08T00:00:00Z",
-              eta: "2026-11-05T06:00:00Z",
+              laycan_start: dates.laycanStart,
+              laycan_end: dates.laycanEnd,
+              eta: dates.eta,
               required_mt: 64000,
             },
           ],
@@ -357,6 +381,8 @@ function App() {
         jettyWindows: number;
         tideWindow: string;
         bridgeWindow: string;
+        tideWindows?: string[];
+        bridgeWindows?: string[];
         constraintChecks: number;
       }>("/planning/overview/enter-operating-windows/", {
         method: "POST",
@@ -364,7 +390,9 @@ function App() {
           "X-CSRFToken": csrfToken,
         },
       });
-      return `Operating windows entered: ${result.tideWindow}, ${result.bridgeWindow}, ${result.constraintChecks} checks`;
+      const tideLabels = result.tideWindows?.join(", ") ?? result.tideWindow;
+      const bridgeLabels = result.bridgeWindows?.join(", ") ?? result.bridgeWindow;
+      return `Operating windows entered: ${tideLabels}; ${bridgeLabels}; ${result.constraintChecks} checks`;
     });
   }
 
@@ -417,6 +445,7 @@ function App() {
     const defaultMembership = currentUser?.memberships.find((membership) => membership.is_default)
       ?? currentUser?.memberships[0];
     const stamp = Date.now();
+    const dates = operatorPlanningDates();
     const plan = await apiFetch<PlanRecord>("/scheduling/plans/", {
       method: "POST",
       headers: {
@@ -426,8 +455,8 @@ function App() {
         code: `PLAN-UI-${String(stamp).slice(-8)}`,
         name: "Operator UI Planning Run",
         organization_id: defaultMembership?.organization.id ?? null,
-        horizon_start: "2026-11-05T00:00:00Z",
-        horizon_end: "2026-11-12T23:59:00Z",
+        horizon_start: dates.horizonStart,
+        horizon_end: dates.horizonEnd,
         status: "active",
       }),
     });
@@ -487,12 +516,16 @@ function App() {
     });
   }
 
-  async function handleForceStartJetty() {
+  async function handleForceStartJetty(assignmentId: number, actualStartAt: string) {
     await runWorkspaceAction("Force start jetty", async () => {
-      const assignment = schedulingOverview?.assignments.find((item) => item.jetty)
+      const assignment = schedulingOverview?.assignments.find((item) => item.id === assignmentId)
+        ?? schedulingOverview?.assignments.find((item) => item.jetty)
         ?? schedulingOverview?.assignments[0];
       if (!assignment) {
         throw new Error("No assignment available for jetty override");
+      }
+      if (!actualStartAt) {
+        throw new Error("Effective start time is required for impact calculation");
       }
       const csrfToken = await getCsrfToken();
       const override = await apiFetch<OverrideRequestRecord>(
@@ -509,10 +542,16 @@ function App() {
               status: "loading",
               next_action: "Force-started from operator cockpit; monitor downstream tide/bridge gates.",
             },
+            impact_context: {
+              actual_start_at: actualStartAt,
+            },
           }),
         },
       );
-      return `Governed jetty override applied: ${override.reason_code.replaceAll("_", " ")}`;
+      const delay = override.impact_assessment?.delay_minutes;
+      return `Governed jetty override applied: ${override.reason_code.replaceAll("_", " ")}${
+        typeof delay === "number" ? ` (${delay}m impact)` : ""
+      }`;
     });
   }
 

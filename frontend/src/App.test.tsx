@@ -1,8 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
+import { JettyLoadingPage } from "./pages/LogisticsPages";
+import { ExceptionCenterPage } from "./pages/RecoveryPages";
+import type { SchedulingOverview } from "./types";
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -56,7 +59,7 @@ test("shows implemented admin submodules without exposing future locked routes",
   ]);
 });
 
-test("exposes chunk 5 recovery routes by workflow permission", () => {
+test("exposes recovery routes by workflow permission", () => {
   expect(
     visibleNavItems([
       "dashboard.view",
@@ -75,13 +78,13 @@ test("exposes chunk 5 recovery routes by workflow permission", () => {
   ).toContain("Approvals & Publishing");
 });
 
-test("exposes chunk 6 live map through fleet visibility", () => {
+test("exposes live map through fleet visibility", () => {
   expect(visibleNavItems(["dashboard.view", "fleet.view"]).map((item) => item.label)).toContain(
     "Live Resource Map",
   );
 });
 
-test("exposes chunk 7 governed exports through export visibility", () => {
+test("exposes governed exports through export visibility", () => {
   expect(visibleNavItems(["dashboard.view", "export.view"]).map((item) => item.label)).toContain(
     "Exports & Handoff",
   );
@@ -92,4 +95,120 @@ test("renders the role-aware dashboard shell", async () => {
 
   expect(await screen.findByRole("heading", { name: "Network Situation" })).toBeInTheDocument();
   expect(screen.queryByText("Users & RBAC")).not.toBeInTheDocument();
+});
+
+function stageSevenOverview(): SchedulingOverview {
+  return {
+    activePlanVersion: { plan_code: "PLAN-UI", status: "validated", version_no: 1 },
+    assignments: [{
+      id: 101,
+      trip: 201,
+      trip_ref: "PI-PLAN-UI-0001",
+      vessel_name: "MV Operator UI Import",
+      planned_quantity_mt: 32000,
+      jetty: { code: "JTY-SUARAN", status: "available" },
+      barge: { code: "BRG-VAL-08" },
+      tug: { code: "BER-TUG-08", name: "Tug 08" },
+      cts: null,
+      route_segment: 1,
+      owner_organization: null,
+      planned_departure: "2026-05-17T03:30:00.000Z",
+      planned_arrival: "2026-05-17T09:30:00.000Z",
+      tug_status: "READY",
+      barge_status: "READY",
+      next_constraint: "Ready",
+      next_action: "Dispatch chain on planned window.",
+      status: "assigned",
+      created_at: "2026-05-16T08:00:00.000Z",
+      updated_at: "2026-05-16T08:00:00.000Z",
+    }],
+    trips: [{
+      id: 201,
+      trip_id: "PI-PLAN-UI-0001",
+      voyage: { vessel_name: "MV Operator UI Import" },
+      planned_start: "2026-05-17T01:30:00.000Z",
+      planned_end: "2026-05-17T11:30:00.000Z",
+      planned_quantity_mt: 32000,
+      loaded_quantity_mt: 0,
+      status: "planned",
+      cargo_layer_step: { coal_grade: { code: "EBONY" }, hatch_no: 1, layer_no: 1 },
+      assignment: null,
+      events: [{ event_type: "load_start", planned_at: "2026-05-17T01:30:00.000Z" }],
+    }],
+    conflicts: [],
+    overrideRequests: [],
+    validation: { tripCount: 1, assignmentCount: 1, eventCount: 1 },
+  } as unknown as SchedulingOverview;
+}
+
+test("force-start jetty captures an effective start time", () => {
+  const onForceStartJetty = vi.fn();
+  render(
+    <JettyLoadingPage
+      canEdit
+      onForceStartJetty={onForceStartJetty}
+      overview={stageSevenOverview()}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Force start jetty" }));
+  expect(screen.getByLabelText("Effective start time")).toBeRequired();
+  fireEvent.click(screen.getByRole("button", { name: "Apply governed override" }));
+
+  expect(onForceStartJetty).toHaveBeenCalledWith(101, expect.stringContaining("T"));
+});
+
+test("exception center renders calculated impact chain nodes", () => {
+  const overview = stageSevenOverview();
+  overview.overrideRequests = [{
+    id: 50,
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    vessel_name: "MV Operator UI Import",
+    assignment: 101,
+    reason_code: "jetty_delay",
+    description: "Force-started JTY-SUARAN from operator cockpit.",
+    requested_change: { status: "loading" },
+    before_state: { status: "assigned" },
+    after_state: { status: "loading" },
+    status: "applied",
+    requested_by: 1,
+    requested_by_email: "berau.scheduler@coalflow.local",
+    applied_by: 1,
+    applied_by_email: "berau.scheduler@coalflow.local",
+    applied_at: "2026-05-16T08:29:00.000Z",
+    created_at: "2026-05-16T08:29:00.000Z",
+    impact_assessment: {
+      id: 1,
+      assessment_id: "ICA-PLAN-UI-OR0050",
+      plan_version: 1,
+      plan_version_ref: "PLAN-UI V1",
+      trip: 201,
+      trip_ref: "PI-PLAN-UI-0001",
+      assignment: 101,
+      assignment_ref: "PI-PLAN-UI-0001 assignment",
+      override_request: 50,
+      override_request_ref: "jetty_delay override on PLAN-UI V1",
+      source_kind: "override",
+      status: "critical",
+      delay_minutes: 120,
+      metadata: { actualStartAt: "2026-05-17T03:30:00.000Z" },
+      created_at: "2026-05-16T08:29:00.000Z",
+      updated_at: "2026-05-16T08:29:00.000Z",
+      nodes: [
+        { id: "source", type: "source_event", label: "JETTY DELAY", value: "May 17, 03:30", status: "warning", detail: "Effective start against planned load." },
+        { id: "logistics", type: "logistics_delay", label: "BARGE DELAY", value: "+120m", status: "warning", detail: "Current-trip event times shifted." },
+        { id: "tide", type: "tide_window", label: "TIDE WINDOW MISSED", value: "by 90m", status: "critical", detail: "Projected gate misses TIDE-IMPACT-TEST." },
+      ],
+    },
+  }];
+
+  render(<ExceptionCenterPage overview={overview} />);
+
+  expect(screen.getByText("BARGE DELAY")).toBeInTheDocument();
+  expect(screen.getAllByText("+120m").length).toBeGreaterThan(0);
+  expect(screen.getByText("TIDE WINDOW MISSED")).toBeInTheDocument();
+  expect(screen.queryByText("Barge delay (+2h)")).not.toBeInTheDocument();
 });

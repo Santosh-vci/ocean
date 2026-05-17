@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
 import type {
   ApprovalRequestRecord,
   ConflictRecord,
+  ImpactChainNodeRecord,
+  OverrideRequestRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TripRecord,
@@ -24,10 +26,23 @@ type RecoveryPageProps = {
   canPublish?: boolean;
 };
 
+type QueueSelection = {
+  id: number;
+  kind: "conflict" | "override";
+};
+
 const EMPTY_CONFLICTS: ConflictRecord[] = [];
 const EMPTY_TRIPS: TripRecord[] = [];
 const EMPTY_APPROVALS: ApprovalRequestRecord[] = [];
+const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
+
+const OVERRIDE_STATE_KEYS: Record<string, string> = {
+  next_action: "nextAction",
+  next_constraint: "nextConstraint",
+  planned_arrival: "plannedArrival",
+  planned_departure: "plannedDeparture",
+};
 
 function statusTone(status: string | undefined, blocking = false) {
   if (blocking || status === "critical" || status === "blocked" || status === "rejected") {
@@ -55,6 +70,72 @@ function num(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
 
+function stateValue(state: Record<string, unknown>, key: string) {
+  const value = state[OVERRIDE_STATE_KEYS[key] ?? key];
+  if (value === null || value === undefined || value === "") return "none";
+  return String(value).replaceAll("_", " ");
+}
+
+function overrideDelta(override: OverrideRequestRecord) {
+  const changedKeys = Object.keys(override.requested_change);
+  if (!changedKeys.length) return { before: "none", after: "none" };
+  const before = changedKeys.map((key) => `${key}: ${stateValue(override.before_state, key)}`).join(" | ");
+  const after = changedKeys.map((key) => `${key}: ${stateValue(override.after_state, key)}`).join(" | ");
+  return { before, after };
+}
+
+function impactSummary(override: OverrideRequestRecord) {
+  const assessment = override.impact_assessment;
+  if (!assessment) return "Impact not calculated";
+  const windowNodes = assessment.nodes.filter((node) => node.type.includes("window"));
+  const riskNode = windowNodes.find((node) => node.status === "critical")
+    ?? windowNodes.find((node) => node.status === "warning")
+    ?? windowNodes.find((node) => node.type === "tide_window")
+    ?? windowNodes[0];
+  const riskLabel = riskNode ? ` | ${riskNode.label} ${riskNode.value}` : "";
+  return `+${assessment.delay_minutes}m${riskLabel}`;
+}
+
+function impactNodesFor(
+  selectedConflict: ConflictRecord | undefined,
+  selectedOverride: OverrideRequestRecord | undefined,
+): ImpactChainNodeRecord[] {
+  if (selectedOverride) {
+    return selectedOverride.impact_assessment?.nodes ?? [];
+  }
+  if (!selectedConflict) return [];
+  return [
+    {
+      id: "source",
+      type: "source_event",
+      label: selectedConflict.code,
+      value: selectedConflict.severity.toUpperCase(),
+      status: statusTone(selectedConflict.severity, selectedConflict.is_blocking),
+      detail: selectedConflict.message,
+    },
+    {
+      id: "target",
+      type: "final_risk_target",
+      label: "FINAL RISK TARGET",
+      value: selectedConflict.vessel_name ?? "Network",
+      status: statusTone(selectedConflict.severity, selectedConflict.is_blocking),
+      detail: selectedConflict.trip_ref ?? "Network",
+    },
+  ];
+}
+
+function nodeValue(node: ImpactChainNodeRecord) {
+  if (node.type === "source_event" && node.projectedAt) return dt(node.projectedAt);
+  return node.value;
+}
+
+function nodeDetail(node: ImpactChainNodeRecord) {
+  if (node.type === "source_event" && node.plannedAt) {
+    return `Effective start against planned ${dt(node.plannedAt)}.`;
+  }
+  return node.detail;
+}
+
 function selectedConflictFor(conflicts: ConflictRecord[], selectedId: number | null) {
   return conflicts.find((conflict) => conflict.id === selectedId) ?? conflicts[0];
 }
@@ -76,14 +157,27 @@ export function ExceptionCenterPage({
 }: RecoveryPageProps) {
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const scenarios = overview?.simulationScenarios ?? EMPTY_SCENARIOS;
-  const [selectedId, setSelectedId] = useState<number | null>(conflicts[0]?.id ?? null);
-  const selectedConflict = selectedConflictFor(conflicts, selectedId);
+  const overrides = overview?.overrideRequests ?? EMPTY_OVERRIDES;
+  const [selectedQueueItem, setSelectedQueueItem] = useState<QueueSelection | null>(
+    conflicts[0] ? { id: conflicts[0].id, kind: "conflict" } : null,
+  );
+  const selectedConflict = selectedQueueItem?.kind === "conflict"
+    ? selectedConflictFor(conflicts, selectedQueueItem.id)
+    : selectedQueueItem
+      ? undefined
+      : conflicts[0];
+  const selectedOverride = selectedQueueItem?.kind === "override"
+    ? overrides.find((override) => override.id === selectedQueueItem.id) ?? (!selectedConflict ? overrides[0] : undefined)
+    : !selectedConflict ? overrides[0] : undefined;
+  const selectedOverrideDelta = selectedOverride ? overrideDelta(selectedOverride) : null;
+  const selectedImpactAssessment = selectedOverride?.impact_assessment;
+  const impactNodes = impactNodesFor(selectedConflict, selectedOverride);
   const selectedTrip = trips.find((trip) => trip.id === selectedConflict?.trip);
   const critical = conflicts.filter((conflict) => conflict.severity === "critical").length;
   const warning = conflicts.filter((conflict) => conflict.severity === "warning").length;
   const pending = conflicts.filter((conflict) => conflict.is_blocking).length;
   const resolved = conflicts.filter((conflict) => conflict.resolved_at).length;
+  const activeQueueCount = conflicts.length + overrides.length;
 
   return (
     <section className="workspace-page recovery-board">
@@ -93,7 +187,7 @@ export function ExceptionCenterPage({
           <h1>Exception Center</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 5 · Active triage</span>
+          <span className="phase-chip">Active triage</span>
           <button
             disabled={!canEdit || !onCreateScenario || isActionRunning}
             onClick={() => onCreateScenario?.(selectedConflict?.id ?? null)}
@@ -113,11 +207,11 @@ export function ExceptionCenterPage({
       </header>
 
       <div className="metric-strip six-up recovery-kpis">
-        <div><span>Active</span><strong>{conflicts.length}</strong></div>
+        <div><span>Active</span><strong>{activeQueueCount}</strong></div>
         <div><span>Critical</span><strong className="critical-text">{critical}</strong></div>
         <div><span>Warning</span><strong className="warning-text">{warning}</strong></div>
         <div><span>Pending</span><strong>{pending}</strong></div>
-        <div><span>Sim candidate</span><strong>{scenarios.length}</strong></div>
+        <div><span>Overrides</span><strong className="warning-text">{overrides.length}</strong></div>
         <div><span>Resolved</span><strong className="success-text">{resolved}</strong></div>
       </div>
 
@@ -138,9 +232,10 @@ export function ExceptionCenterPage({
               <button
                 disabled={!conflicts.some((conflict) => conflict.trip === trip.id)}
                 key={trip.id}
-                onClick={() => setSelectedId(
-                  conflicts.find((conflict) => conflict.trip === trip.id)?.id ?? null,
-                )}
+                onClick={() => {
+                  const conflict = conflicts.find((item) => item.trip === trip.id);
+                  if (conflict) setSelectedQueueItem({ id: conflict.id, kind: "conflict" });
+                }}
                 type="button"
               >
                 {trip.voyage.vessel_name}
@@ -167,7 +262,7 @@ export function ExceptionCenterPage({
                   <tr
                     className={selectedConflict?.id === conflict.id ? "selected-row" : ""}
                     key={conflict.id}
-                    onClick={() => setSelectedId(conflict.id)}
+                    onClick={() => setSelectedQueueItem({ id: conflict.id, kind: "conflict" })}
                   >
                     <td><span className={`status-chip ${statusTone(conflict.severity, conflict.is_blocking)}`}>{short(conflict.severity)}</span></td>
                     <td>{dt(conflict.created_at)}</td>
@@ -180,6 +275,28 @@ export function ExceptionCenterPage({
                     <td>{conflict.is_blocking ? "SIM" : "MONITOR"}</td>
                   </tr>
                 ))}
+                {overrides.map((override) => (
+                  <tr
+                    className={selectedOverride?.id === override.id ? "selected-row" : ""}
+                    key={`override-${override.id}`}
+                    onClick={() => setSelectedQueueItem({ id: override.id, kind: "override" })}
+                  >
+                    <td><span className="status-chip pending">OVERRIDE</span></td>
+                    <td>{dt(override.created_at)}</td>
+                    <td>OR-{String(override.id).padStart(4, "0")}</td>
+                    <td>{short(override.reason_code)}</td>
+                    <td>{override.vessel_name ?? "Network"}</td>
+                    <td>{override.trip_ref ?? (override.assignment ? `Assignment ${override.assignment}` : "Assignment")}</td>
+                    <td>{impactSummary(override)}</td>
+                    <td><span className={`status-chip ${statusTone(override.status)}`}>{short(override.status)}</span></td>
+                    <td>GOVERNED</td>
+                  </tr>
+                ))}
+                {!conflicts.length && !overrides.length ? (
+                  <tr>
+                    <td colSpan={9}>No active exceptions or governed overrides for the active plan.</td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -188,7 +305,9 @@ export function ExceptionCenterPage({
         <aside className="board-surface logistics-inspector recovery-inspector">
           <div className="grid-header">
             <div><SvgIcon name="account-tree" /><strong>Exception detail</strong></div>
-            <span>{selectedConflict ? `EX-${selectedConflict.id}` : "No exception"}</span>
+            <span>
+              {selectedConflict ? `EX-${selectedConflict.id}` : selectedOverride ? `OR-${selectedOverride.id}` : "No exception"}
+            </span>
           </div>
           {selectedConflict ? (
             <div className="inspector-body">
@@ -207,6 +326,28 @@ export function ExceptionCenterPage({
                 <p>Run simulation before any plan mutation. Published plan remains untouched.</p>
               </section>
             </div>
+          ) : selectedOverride && selectedOverrideDelta ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedOverride.status)}`}>
+                {short(selectedOverride.status)}
+              </span>
+              <h2>{short(selectedOverride.reason_code)}</h2>
+              <p>{selectedOverride.description}</p>
+              <dl>
+                <div><dt>Actor</dt><dd>{selectedOverride.applied_by_email ?? selectedOverride.requested_by_email ?? "system"}</dd></div>
+                <div><dt>Trip</dt><dd>{selectedOverride.trip_ref ?? selectedOverride.vessel_name ?? "Network"}</dd></div>
+                <div><dt>Applied</dt><dd>{dt(selectedOverride.applied_at ?? selectedOverride.created_at)}</dd></div>
+                <div><dt>Risk</dt><dd>{short(selectedImpactAssessment?.status ?? "not_calculated")}</dd></div>
+                <div><dt>Delay</dt><dd>{selectedImpactAssessment ? `+${selectedImpactAssessment.delay_minutes}m` : "Impact not calculated"}</dd></div>
+                <div><dt>Eff. start</dt><dd>{dt(String(selectedImpactAssessment?.metadata.actualStartAt ?? ""))}</dd></div>
+                <div><dt>Before</dt><dd>{selectedOverrideDelta.before}</dd></div>
+                <div><dt>After</dt><dd>{selectedOverrideDelta.after}</dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Governed adjustment</strong>
+                <p>Captured with reason code, actor, before/after state, and timestamp.</p>
+              </section>
+            </div>
           ) : null}
         </aside>
       </div>
@@ -216,14 +357,23 @@ export function ExceptionCenterPage({
           <div><SvgIcon name="account-tree" /><strong>Impact chain propagation</strong></div>
           <span>Source event → logistics inferred → system projected → final risk target</span>
         </div>
-        <div>
-          <span className="chain-node critical">Source event<br />{selectedConflict?.code ?? "None"}</span>
-          <span className="chain-line" />
-          <span className="chain-node pending">Logistics inferred<br />Barge delay (+2h)</span>
-          <span className="chain-line" />
-          <span className="chain-node pending">System projected<br />Tide window risk</span>
-          <span className="chain-line" />
-          <span className="chain-node">Final risk target<br />{selectedConflict?.vessel_name ?? "Network"}</span>
+        <div className="impact-chain-track">
+          {impactNodes.length ? impactNodes.map((node, index) => (
+            <Fragment key={node.id}>
+              {index ? <span className="chain-line" /> : null}
+              <span className={`chain-node ${node.status === "critical" ? "critical" : node.status === "warning" || node.status === "pending" ? "pending" : ""}`}>
+                <strong>{node.label}</strong>
+                <em>{nodeValue(node)}</em>
+                <small>{nodeDetail(node)}</small>
+              </span>
+            </Fragment>
+          )) : (
+            <span className="chain-node">
+              <strong>Impact not calculated</strong>
+              <em>No assessment</em>
+              <small>Select a governed override with a calculated impact chain.</small>
+            </span>
+          )}
         </div>
       </section>
     </section>
@@ -251,7 +401,7 @@ export function SimulationWorkspacePage({
           <h1>Simulation Workspace</h1>
         </div>
         <div className="planning-actions">
-          <span className="phase-chip">Chunk 5 · Scenario delta</span>
+          <span className="phase-chip">Scenario delta</span>
           <button
             disabled={!canEdit || !scenario || !onRunSimulation || isActionRunning}
             onClick={onRunSimulation}

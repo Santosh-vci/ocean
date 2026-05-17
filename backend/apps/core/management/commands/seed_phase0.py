@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
@@ -379,6 +379,28 @@ class Command(BaseCommand):
 
         AuditEvent.objects.all().delete()
 
+    def _seed_start_date(self):
+        return timezone.localdate() + timedelta(days=1)
+
+    def _seed_datetime(self, start_date, day_offset, hour, minute=0):
+        target_date = start_date + timedelta(days=day_offset)
+        return timezone.make_aware(datetime.combine(target_date, time(hour, minute)))
+
+    def _upsert_single(self, model, lookup: dict, defaults: dict):
+        records = model.objects.filter(**lookup).order_by("id")
+        record = records.first()
+        if record is None:
+            return model.objects.create(**lookup, **defaults)
+
+        records.exclude(pk=record.pk).delete()
+        for key, value in defaults.items():
+            setattr(record, key, value)
+        update_fields = list(defaults.keys())
+        if any(field.name == "updated_at" for field in model._meta.fields):
+            update_fields.append("updated_at")
+        record.save(update_fields=update_fields)
+        return record
+
     def _seed_master_data(self, *, berau, abl):
         location_rows = [
             (
@@ -628,7 +650,7 @@ class Command(BaseCommand):
         jetty_rows = [
             ("JTY-SUARAN", "Suaran Jetty", "Suaran terminal", 2800, 4.8, Jetty.Status.AVAILABLE),
             ("JTY-LATI", "Lati Jetty", "Lati river loading", 2200, 4.4, Jetty.Status.AVAILABLE),
-            ("JTY-GMB", "Gurimbang Jetty", "Gurimbang BLC", 1800, 4.0, Jetty.Status.DEGRADED),
+            ("JTY-GMB", "Gurimbang Jetty", "Gurimbang BLC", 1800, 4.0, Jetty.Status.AVAILABLE),
         ]
         for code, name, location, rate, draft, status in jetty_rows:
             Jetty.objects.update_or_create(
@@ -653,7 +675,7 @@ class Command(BaseCommand):
                 "GPS-770",
                 Tug.Status.AVAILABLE,
             ),
-            ("BER-TUG-08", "Coastal Sentry 08", 2800, 36.0, "525001232", "", Tug.Status.AVAILABLE),
+            ("BER-TUG-08", "Coastal Sentry 08", 2800, 36.0, "525001232", "GPS-768", Tug.Status.AVAILABLE),
             (
                 "BER-TUG-04",
                 "Mahakam Puller 04",
@@ -792,8 +814,8 @@ class Command(BaseCommand):
                 "tug_barge",
                 "BER-TUG-08",
                 "BRG-KAL-22",
-                False,
-                "Power/draft ratio below rule",
+                True,
+                "",
             ),
             (
                 "CMP-EBONY-SUARAN",
@@ -829,8 +851,10 @@ class Command(BaseCommand):
             )
 
     def _seed_planning_data(self, *, berau, abl, created_by):
+        start_date = self._seed_start_date()
+
         def dt(day, hour, minute=0):
-            return timezone.make_aware(datetime(2026, 10, day, hour, minute))
+            return self._seed_datetime(start_date, day - 24, hour, minute)
 
         locations = {record.code: record for record in Location.objects.all()}
         grades = {record.code: record for record in CoalGrade.objects.all()}
@@ -1172,11 +1196,14 @@ class Command(BaseCommand):
             ),
         ]
         for asset_type, asset_code, start, end, status, reason in asset_windows:
-            AssetAvailabilityWindow.objects.update_or_create(
-                asset_type=asset_type,
-                asset_code=asset_code,
-                window_start=start,
-                defaults={"window_end": end, "status": status, "reason": reason},
+            self._upsert_single(
+                AssetAvailabilityWindow,
+                {
+                    "asset_type": asset_type,
+                    "asset_code": asset_code,
+                    "reason": reason,
+                },
+                {"window_start": start, "window_end": end, "status": status},
             )
 
         jetty_windows = [
@@ -1199,14 +1226,14 @@ class Command(BaseCommand):
             ),
         ]
         for jetty, start, end, status, rate, reason in jetty_windows:
-            JettyAvailabilityWindow.objects.update_or_create(
-                jetty=jetties[jetty],
-                window_start=start,
-                defaults={
+            self._upsert_single(
+                JettyAvailabilityWindow,
+                {"jetty": jetties[jetty], "reason": reason},
+                {
+                    "window_start": start,
                     "window_end": end,
                     "status": status,
                     "loading_rate_override_tph": rate,
-                    "reason": reason,
                 },
             )
 
@@ -1243,9 +1270,10 @@ class Command(BaseCommand):
             ),
         ]
         for code, location, start, end, water_level, draft, segment, risk in tide_rows:
-            TideWindow.objects.update_or_create(
-                code=code,
-                defaults={
+            self._upsert_single(
+                TideWindow,
+                {"code": code},
+                {
                     "location": locations[location],
                     "window_start": start,
                     "window_end": end,
@@ -1288,9 +1316,10 @@ class Command(BaseCommand):
             ),
         ]
         for code, start, end, clearance, allowed_class, status, notes in bridge_rows:
-            BridgeWindow.objects.update_or_create(
-                code=code,
-                defaults={
+            self._upsert_single(
+                BridgeWindow,
+                {"code": code},
+                {
                     "location": locations["LOC-BRIDGE-GATE-B"],
                     "window_start": start,
                     "window_end": end,
@@ -1382,12 +1411,15 @@ class Command(BaseCommand):
             status,
             hint,
         ) in checks:
-            NavigationConstraintCheck.objects.update_or_create(
-                voyage=voyages[voyage_id],
-                asset_code=asset,
-                constraint_type=kind,
-                eta_gate=eta,
-                defaults={
+            self._upsert_single(
+                NavigationConstraintCheck,
+                {
+                    "voyage": voyages[voyage_id],
+                    "asset_code": asset,
+                    "constraint_type": kind,
+                },
+                {
+                    "eta_gate": eta,
                     "route_segment": segments[segment],
                     "window_start": window_start,
                     "window_end": window_end,
@@ -1413,13 +1445,23 @@ class Command(BaseCommand):
         )
 
     def _seed_schedule_data(self, *, abl, created_by):
+        start_date = self._seed_start_date()
+        plan_code = f"PLAN-{start_date:%Y-%m-%d}"
+        approval_request_id = f"APR-{plan_code}-V1"
+        scenario_id = f"SIM-{plan_code}-A"
+
+        baseline_plan = Plan.objects.filter(name="Berau-ABL Feasible Schedule Horizon").first()
+        if baseline_plan and baseline_plan.code != plan_code:
+            baseline_plan.code = plan_code
+            baseline_plan.save(update_fields=["code", "updated_at"])
+
         plan, _ = Plan.objects.update_or_create(
-            code="PLAN-2026-10-24",
+            code=plan_code,
             defaults={
                 "name": "Berau-ABL Feasible Schedule Horizon",
                 "organization": abl,
-                "horizon_start": timezone.make_aware(datetime(2026, 10, 24, 0, 0)),
-                "horizon_end": timezone.make_aware(datetime(2026, 10, 31, 23, 59)),
+                "horizon_start": self._seed_datetime(start_date, 0, 0),
+                "horizon_end": self._seed_datetime(start_date, 7, 23, 59),
                 "status": Plan.Status.ACTIVE,
             },
         )
@@ -1478,7 +1520,7 @@ class Command(BaseCommand):
             )
 
         approval_request, _ = ApprovalRequest.objects.update_or_create(
-            request_id="APR-PLAN-2026-10-24-V1",
+            request_id=approval_request_id,
             defaults={
                 "plan_version": version,
                 "status": ApprovalRequest.Status.PENDING,
@@ -1510,7 +1552,7 @@ class Command(BaseCommand):
         if scenario_version is None:
             scenario_version = clone_plan_version(source_version=version, created_by=created_by)
         scenario, _ = SimulationScenario.objects.update_or_create(
-            scenario_id="SIM-PLAN-2026-10-24-A",
+            scenario_id=scenario_id,
             defaults={
                 "name": "Tug reassignment A",
                 "scenario_type": "tug_breakdown_recovery",
