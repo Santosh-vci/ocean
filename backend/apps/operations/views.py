@@ -18,6 +18,7 @@ from .models import (
 from .serializers import (
     ConfirmedOperationalEventSerializer,
     DeviceEndpointSerializer,
+    DeviceHealthIngestSerializer,
     DeviceHealthSnapshotSerializer,
     EdgeEventBatchSerializer,
     IntegrationFeedSerializer,
@@ -28,7 +29,9 @@ from .serializers import (
 from .services import (
     apply_confirmed_event,
     confirm_operational_event,
+    ingest_device_health,
     ingest_operational_event,
+    operations_health_summary,
     reject_operational_event,
     require_confirmation_authority,
 )
@@ -75,6 +78,31 @@ class DeviceEndpointViewSet(OperationsViewSet):
 class DeviceHealthSnapshotViewSet(OperationsViewSet):
     queryset = DeviceHealthSnapshot.objects.select_related("device", "device__feed").all()
     serializer_class = DeviceHealthSnapshotSerializer
+    action_permission_map = {
+        **OperationsViewSet.action_permission_map,
+        "ingest": "operations.ingest",
+    }
+
+    def create(self, request, *args, **kwargs):
+        serializer = DeviceHealthIngestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = ingest_device_health(
+            payload=serializer.validated_data,
+            actor=request.user,
+            request=request,
+        )
+        return Response(_health_ingest_response(result), status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"], url_path="ingest")
+    def ingest(self, request):
+        serializer = DeviceHealthIngestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = ingest_device_health(
+            payload=serializer.validated_data,
+            actor=request.user,
+            request=request,
+        )
+        return Response(_health_ingest_response(result), status=status.HTTP_201_CREATED)
 
 
 class OperationalEventCandidateViewSet(OperationsViewSet):
@@ -226,6 +254,7 @@ class OperationsOverviewViewSet(ViewSet):
     action_permission_map = {"list": "operations.view"}
 
     def list(self, request):
+        health_summary = operations_health_summary()
         return Response(
             {
                 "feeds": {
@@ -266,6 +295,7 @@ class OperationsOverviewViewSet(ViewSet):
                 "confirmedEvents": ConfirmedOperationalEvent.objects.count(),
                 "actualizations": OperationalActualization.objects.count(),
                 "edgeBatches": EdgeEventBatch.objects.count(),
+                "health": health_summary,
             }
         )
 
@@ -282,4 +312,19 @@ def _ingest_response(result):
         "duplicate": result.duplicate,
         "auto_confirmed": result.auto_confirmed,
         "trust_evaluation": result.trust_evaluation,
+    }
+
+
+def _health_ingest_response(result):
+    return {
+        "snapshot": DeviceHealthSnapshotSerializer(result.snapshot).data,
+        "device": DeviceEndpointSerializer(result.device).data,
+        "feed": IntegrationFeedSerializer(result.feed).data,
+        "candidate": (
+            OperationalEventCandidateSerializer(result.candidate).data
+            if result.candidate
+            else None
+        ),
+        "created_risk": result.created_risk,
+        "health_summary": result.health_summary,
     }

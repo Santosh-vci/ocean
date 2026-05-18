@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
@@ -14,6 +15,8 @@ from .models import (
 
 
 class IntegrationFeedSerializer(serializers.ModelSerializer):
+    health_summary = serializers.SerializerMethodField()
+
     class Meta:
         model = IntegrationFeed
         fields = [
@@ -24,17 +27,31 @@ class IntegrationFeedSerializer(serializers.ModelSerializer):
             "status",
             "trust_mode",
             "freshness_threshold_seconds",
+            "health_summary",
             "metadata",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
+    def get_health_summary(self, obj) -> dict:
+        device_counts = {
+            status: obj.devices.filter(status=status).count()
+            for status in DeviceEndpoint.Status.values
+        }
+        return {
+            "status": obj.status,
+            "devices": device_counts,
+            "freshnessThresholdSeconds": obj.freshness_threshold_seconds,
+            "latestHealth": obj.metadata.get("health", {}),
+        }
+
 
 class DeviceEndpointSerializer(serializers.ModelSerializer):
     feed_ref = serializers.CharField(source="feed.feed_id", read_only=True)
     location_code = serializers.CharField(source="location.code", read_only=True)
     geofence_ref = serializers.CharField(source="geofence.zone_id", read_only=True)
+    latest_health = serializers.SerializerMethodField()
 
     class Meta:
         model = DeviceEndpoint
@@ -52,6 +69,7 @@ class DeviceEndpointSerializer(serializers.ModelSerializer):
             "geofence_ref",
             "status",
             "last_seen_at",
+            "latest_health",
             "firmware_version",
             "metadata",
             "created_at",
@@ -62,9 +80,27 @@ class DeviceEndpointSerializer(serializers.ModelSerializer):
             "feed_ref",
             "location_code",
             "geofence_ref",
+            "latest_health",
             "created_at",
             "updated_at",
         ]
+
+    def get_latest_health(self, obj) -> dict | None:
+        latest = obj.health_snapshots.order_by("-observed_at", "-id").first()
+        if latest is None:
+            return None
+        age_seconds = max(0, int((timezone.now() - latest.observed_at).total_seconds()))
+        return {
+            "snapshotId": latest.snapshot_id,
+            "healthStatus": latest.health_status,
+            "observedAt": latest.observed_at.isoformat(),
+            "receivedAt": latest.received_at.isoformat(),
+            "ageSeconds": age_seconds,
+            "gapSeconds": latest.gap_seconds,
+            "batteryLevel": latest.battery_level,
+            "networkStatus": latest.network_status,
+            "powerStatus": latest.power_status,
+        }
 
 
 class DeviceHealthSnapshotSerializer(serializers.ModelSerializer):
@@ -89,6 +125,45 @@ class DeviceHealthSnapshotSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "snapshot_id", "device_ref", "created_at"]
+
+
+class DeviceHealthIngestSerializer(serializers.Serializer):
+    feed_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    feed = serializers.PrimaryKeyRelatedField(
+        queryset=IntegrationFeed.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    device_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    device = serializers.PrimaryKeyRelatedField(
+        queryset=DeviceEndpoint.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    observed_at = serializers.DateTimeField()
+    received_at = serializers.DateTimeField(required=False, allow_null=True)
+    health_status = serializers.ChoiceField(
+        choices=DeviceHealthSnapshot.HealthStatus.choices,
+        default=DeviceHealthSnapshot.HealthStatus.UNKNOWN,
+    )
+    battery_level = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=0,
+        max_value=100,
+    )
+    power_status = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    network_status = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    latency_ms = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    gap_seconds = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    metadata = serializers.JSONField(required=False, default=dict)
+
+    def validate(self, attrs):
+        if not attrs.get("device") and not attrs.get("device_id"):
+            raise serializers.ValidationError("Either device or device_id is required.")
+        if attrs.get("device") and attrs.get("device_id"):
+            raise serializers.ValidationError("Use either device or device_id, not both.")
+        return attrs
 
 
 class OperationalEventCandidateSerializer(serializers.ModelSerializer):

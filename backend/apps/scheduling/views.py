@@ -10,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from apps.audit.mixins import AuditMutationMixin
 from apps.audit.services import record_audit_event
 from apps.core.object_storage import read_export_object
+from apps.operations.services import operations_health_summary
 from apps.rbac.permissions import RequiresAccessPermission
 from apps.telemetry.models import LiveEtaProjection, TrackingAlert
 from apps.telemetry.serializers import LiveEtaProjectionSerializer, TrackingAlertSerializer
@@ -927,6 +928,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     )
                     or 0,
                 },
+                "operationsHealthSummary": operations_health_summary(),
                 "validation": {
                     "tripCount": trips.count(),
                     "assignmentCount": assignments.count(),

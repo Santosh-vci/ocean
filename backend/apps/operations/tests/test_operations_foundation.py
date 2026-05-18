@@ -9,12 +9,14 @@ from apps.audit.models import AuditEvent
 from apps.operations.models import (
     ConfirmedOperationalEvent,
     DeviceEndpoint,
+    DeviceHealthSnapshot,
     IntegrationFeed,
     OperationalActualization,
     OperationalEventCandidate,
     OperationalEventKind,
     OperationsAssetType,
 )
+from apps.operations.services import operations_health_summary
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import ScheduleEvent
@@ -426,3 +428,143 @@ def test_seed_phase0_creates_phase4_operation_permissions_and_seed_feed():
 
     assert IntegrationFeed.objects.filter(feed_id="SYN-OPS-PHASE4").exists()
     assert DeviceEndpoint.objects.filter(device_id="JETTY-JTY-SUARAN-OPS").exists()
+
+
+@pytest.mark.django_db
+def test_device_health_ingest_marks_offline_feed_degraded_and_creates_risk():
+    org = organization()
+    source_feed = feed()
+    source_feed.freshness_threshold_seconds = 120
+    source_feed.save(update_fields=["freshness_threshold_seconds"])
+    source_device = device(source_feed)
+    ingester = User.objects.create_user(username="ops-health-ingester", password="secret")
+    assign(ingester, org, ["operations.view", "operations.ingest"])
+
+    client = APIClient()
+    client.force_authenticate(ingester)
+    response = client.post(
+        "/api/operations/device-health/ingest/",
+        {
+            "feed_id": source_feed.feed_id,
+            "device_id": source_device.device_id,
+            "observed_at": timezone.now().isoformat(),
+            "health_status": DeviceHealthSnapshot.HealthStatus.OFFLINE,
+            "network_status": "broker_timeout",
+            "gap_seconds": 360,
+            "metadata": {"source": "unit-test"},
+        },
+        format="json",
+    )
+
+    source_device.refresh_from_db()
+    source_feed.refresh_from_db()
+    candidate = OperationalEventCandidate.objects.get(
+        event_kind=OperationalEventKind.DEVICE_OFFLINE,
+        device=source_device,
+    )
+
+    assert response.status_code == 201
+    assert response.data["created_risk"] is True
+    assert response.data["candidate"]["candidate_id"] == candidate.candidate_id
+    assert source_device.status == DeviceEndpoint.Status.OFFLINE
+    assert source_feed.status == IntegrationFeed.Status.DEGRADED
+    assert candidate.status == OperationalEventCandidate.Status.PENDING
+    assert candidate.metadata["healthRisk"]["riskSeverity"] == "critical"
+    assert AuditEvent.objects.filter(
+        action="operations.device_health.ingested",
+        object_repr=response.data["snapshot"]["snapshot_id"],
+    ).exists()
+
+    overview = client.get("/api/operations/overview/")
+    assert overview.status_code == 200
+    assert overview.data["health"]["devices"]["offline"] == 1
+    assert overview.data["health"]["criticalRiskCount"] == 1
+    assert overview.data["health"]["risks"][0]["candidateId"] == candidate.candidate_id
+
+
+@pytest.mark.django_db
+def test_stale_device_refresh_creates_visible_health_risk():
+    source_feed = feed()
+    source_feed.freshness_threshold_seconds = 60
+    source_feed.save(update_fields=["freshness_threshold_seconds"])
+    source_device = device(source_feed)
+    now = timezone.now()
+    source_device.last_seen_at = now - timezone.timedelta(minutes=3)
+    source_device.save(update_fields=["last_seen_at"])
+
+    summary = operations_health_summary(now=now)
+    source_device.refresh_from_db()
+    source_feed.refresh_from_db()
+
+    assert source_device.status == DeviceEndpoint.Status.OFFLINE
+    assert source_feed.status == IntegrationFeed.Status.DEGRADED
+    assert summary["devices"]["offline"] == 1
+    assert summary["criticalRiskCount"] == 1
+    assert OperationalEventCandidate.objects.filter(
+        event_kind=OperationalEventKind.DEVICE_OFFLINE,
+        status=OperationalEventCandidate.Status.PENDING,
+        device=source_device,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_healthy_device_health_supports_trusted_auto_confirm_policy():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    source_feed = trusted_feed()
+    load_start = ScheduleEvent.objects.select_related(
+        "trip",
+        "trip__assignment",
+        "trip__assignment__jetty",
+    ).filter(event_type=ScheduleEvent.EventType.LOAD_START).order_by("planned_at").first()
+    source_device = DeviceEndpoint.objects.create(
+        device_id="DEV-JTY-SUARAN-HEALTHY",
+        feed=source_feed,
+        device_type=DeviceEndpoint.DeviceType.JETTY_PLC,
+        asset_type=OperationsAssetType.JETTY,
+        asset_code=load_start.trip.assignment.jetty.code,
+    )
+    DeviceHealthSnapshot.objects.create(
+        device=source_device,
+        observed_at=timezone.now(),
+        health_status=DeviceHealthSnapshot.HealthStatus.HEALTHY,
+        network_status="online",
+        gap_seconds=0,
+    )
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        "/api/operations/event-candidates/ingest/",
+        {
+            "feed_id": source_feed.feed_id,
+            "device_id": source_device.device_id,
+            "event_kind": OperationalEventKind.JETTY_LOADING_STARTED,
+            "asset_type": OperationsAssetType.JETTY,
+            "asset_code": source_device.asset_code,
+            "schedule_event_id": load_start.id,
+            "event_at": (load_start.planned_at + timezone.timedelta(minutes=6)).isoformat(),
+            "confidence_score": "98.00",
+            "dedupe_key": "healthy-device-auto-confirm",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.data["auto_confirmed"] is True
+    assert response.data["trust_evaluation"]["deviceHealth"]["healthStatus"] == "healthy"
+
+
+@pytest.mark.django_db
+def test_scheduling_overview_exposes_operations_health_summary():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.get("/api/scheduling/overview/")
+
+    assert response.status_code == 200
+    assert "operationsHealthSummary" in response.data
+    assert "feeds" in response.data["operationsHealthSummary"]
+    assert "devices" in response.data["operationsHealthSummary"]

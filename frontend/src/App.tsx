@@ -1036,6 +1036,7 @@ function App() {
             dashboard={dashboardReadModel}
             etaProjections={etaProjections}
             onNavigate={handleNavigate}
+            operationsHealth={schedulingOverview?.operationsHealthSummary ?? null}
             replayRuns={telemetryReplayRuns}
             trackingAlerts={trackingAlerts}
           />

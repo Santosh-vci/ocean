@@ -968,6 +968,61 @@ export type ScenarioResourceUtilizationRecord = {
   created_at: string;
 };
 
+export type OperationsHealthRiskRecord = {
+  id: number;
+  candidateId: string;
+  feedId: string;
+  deviceId: string | null;
+  eventKind: string;
+  assetType: string;
+  assetCode: string;
+  status: string;
+  severity: string;
+  healthStatus: string | null;
+  deviceStatus: string | null;
+  reason: string | null;
+  message: string;
+  observedAt: string;
+  createdAt: string;
+};
+
+export type OperationsHealthSummary = {
+  feeds: {
+    total: number;
+    active: number;
+    degraded: number;
+    paused: number;
+    retired: number;
+  };
+  devices: {
+    total: number;
+    active: number;
+    degraded: number;
+    offline: number;
+    paused: number;
+    retired: number;
+    stale: number;
+  };
+  snapshots: {
+    total: number;
+    healthy: number;
+    warning: number;
+    critical: number;
+    offline: number;
+    unknown: number;
+    latestObservedAt: string | null;
+  };
+  risks: OperationsHealthRiskRecord[];
+  criticalRiskCount: number;
+  status: string;
+  refresh: {
+    changedDevices: number;
+    createdRisks: number;
+    refreshedAt: string;
+  } | null;
+  calculatedAt: string;
+};
+
 export type SchedulingOverview = {
   plans: PlanRecord[];
   planVersions: PlanVersionRecord[];
@@ -988,6 +1043,7 @@ export type SchedulingOverview = {
     criticalAlertCount: number;
     highestVarianceMinutes: number;
   };
+  operationsHealthSummary: OperationsHealthSummary;
   validation: {
     tripCount: number;
     assignmentCount: number;

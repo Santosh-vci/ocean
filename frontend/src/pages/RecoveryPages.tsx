@@ -15,6 +15,7 @@ import type {
   ScenarioResourceUtilizationRecord,
   ScenarioRunRecord,
   ScenarioTripProjectionRecord,
+  OperationsHealthRiskRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TrackingAlertRecord,
@@ -54,7 +55,7 @@ type RecoveryPageProps = {
 
 type QueueSelection = {
   id: number;
-  kind: "conflict" | "override" | "tracking";
+  kind: "conflict" | "override" | "tracking" | "health";
 };
 
 const EMPTY_CONFLICTS: ConflictRecord[] = [];
@@ -63,6 +64,7 @@ const EMPTY_APPROVALS: ApprovalRequestRecord[] = [];
 const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
 const EMPTY_TRACKING_ALERTS: TrackingAlertRecord[] = [];
+const EMPTY_HEALTH_RISKS: OperationsHealthRiskRecord[] = [];
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
@@ -264,6 +266,37 @@ function trackingImpactNodes(alert: TrackingAlertRecord | undefined): ImpactChai
   ];
 }
 
+function healthImpactNodes(risk: OperationsHealthRiskRecord | undefined): ImpactChainNodeRecord[] {
+  if (!risk) return [];
+  return [
+    {
+      id: "health-source",
+      type: "device_health",
+      label: "DEVICE HEALTH",
+      value: short(risk.healthStatus ?? risk.reason),
+      status: risk.severity,
+      detail: `${risk.feedId} / ${risk.deviceId ?? risk.assetCode}`,
+      projectedAt: risk.observedAt,
+    },
+    {
+      id: "feed-trust",
+      type: "feed_trust",
+      label: "FEED TRUST",
+      value: short(risk.deviceStatus ?? "review"),
+      status: risk.severity,
+      detail: "Auto-confirm is blocked until the device or feed recovers.",
+    },
+    {
+      id: "ops-risk",
+      type: "operations_risk",
+      label: "OPERATIONS RISK",
+      value: risk.assetCode || risk.candidateId,
+      status: risk.severity,
+      detail: risk.message,
+    },
+  ];
+}
+
 function nodeValue(node: ImpactChainNodeRecord) {
   if (node.type === "source_event" && node.projectedAt) return dt(node.projectedAt);
   return node.value;
@@ -318,6 +351,7 @@ export function ExceptionCenterPage({
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const overrides = overview?.overrideRequests ?? EMPTY_OVERRIDES;
   const trackingAlerts = overview?.trackingAlerts ?? EMPTY_TRACKING_ALERTS;
+  const healthRisks = overview?.operationsHealthSummary?.risks ?? EMPTY_HEALTH_RISKS;
   const openTrackingAlerts = trackingAlerts.filter((alert) => (
     alert.status === "open" || alert.status === "acknowledged"
   ));
@@ -326,9 +360,11 @@ export function ExceptionCenterPage({
       ? { id: conflicts[0].id, kind: "conflict" }
       : openTrackingAlerts[0]
         ? { id: openTrackingAlerts[0].id, kind: "tracking" }
-        : overrides[0]
-          ? { id: overrides[0].id, kind: "override" }
-          : null,
+        : healthRisks[0]
+          ? { id: healthRisks[0].id, kind: "health" }
+          : overrides[0]
+            ? { id: overrides[0].id, kind: "override" }
+            : null,
   );
   const selectedConflict = selectedQueueItem?.kind === "conflict"
     ? selectedConflictFor(conflicts, selectedQueueItem.id)
@@ -340,14 +376,21 @@ export function ExceptionCenterPage({
     : !selectedConflict && !selectedQueueItem
       ? openTrackingAlerts[0]
       : undefined;
+  const selectedHealthRisk = selectedQueueItem?.kind === "health"
+    ? healthRisks.find((risk) => risk.id === selectedQueueItem.id) ?? healthRisks[0]
+    : !selectedConflict && !selectedTrackingAlert && !selectedQueueItem
+      ? healthRisks[0]
+      : undefined;
   const selectedOverride = selectedQueueItem?.kind === "override"
     ? overrides.find((override) => override.id === selectedQueueItem.id) ?? (!selectedConflict ? overrides[0] : undefined)
-    : !selectedConflict && !selectedTrackingAlert ? overrides[0] : undefined;
+    : !selectedConflict && !selectedTrackingAlert && !selectedHealthRisk ? overrides[0] : undefined;
   const selectedOverrideDelta = selectedOverride ? overrideDelta(selectedOverride) : null;
   const selectedImpactAssessment = selectedOverride?.impact_assessment;
   const impactNodes = selectedTrackingAlert
     ? trackingImpactNodes(selectedTrackingAlert)
-    : impactNodesFor(selectedConflict, selectedOverride);
+    : selectedHealthRisk
+      ? healthImpactNodes(selectedHealthRisk)
+      : impactNodesFor(selectedConflict, selectedOverride);
   const selectedTrip = trips.find((trip) => (
     trip.id === selectedConflict?.trip || trip.id === selectedTrackingAlert?.trip
   ));
@@ -357,7 +400,9 @@ export function ExceptionCenterPage({
   const resolved = conflicts.filter((conflict) => conflict.resolved_at).length;
   const trackingCritical = openTrackingAlerts.filter((alert) => alert.severity === "critical").length;
   const trackingWarning = openTrackingAlerts.filter((alert) => alert.severity === "warning").length;
-  const activeQueueCount = conflicts.length + overrides.length + openTrackingAlerts.length;
+  const healthCritical = healthRisks.filter((risk) => risk.severity === "critical").length;
+  const healthWarning = healthRisks.filter((risk) => risk.severity === "warning").length;
+  const activeQueueCount = conflicts.length + overrides.length + openTrackingAlerts.length + healthRisks.length;
 
   return (
     <section className="workspace-page recovery-board">
@@ -398,12 +443,12 @@ export function ExceptionCenterPage({
 
       <div className="metric-strip seven-up recovery-kpis">
         <div><span>Active</span><strong>{activeQueueCount}</strong></div>
-        <div><span>Critical</span><strong className="critical-text">{critical + trackingCritical}</strong></div>
-        <div><span>Warning</span><strong className="warning-text">{warning + trackingWarning}</strong></div>
+        <div><span>Critical</span><strong className="critical-text">{critical + trackingCritical + healthCritical}</strong></div>
+        <div><span>Warning</span><strong className="warning-text">{warning + trackingWarning + healthWarning}</strong></div>
         <div><span>Observed</span><strong className={openTrackingAlerts.length ? "warning-text" : ""}>{openTrackingAlerts.length}</strong></div>
         <div><span>Pending</span><strong>{pending}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overrides.length}</strong></div>
-        <div><span>Resolved</span><strong className="success-text">{resolved}</strong></div>
+        <div><span>Health</span><strong className={healthRisks.length ? "critical-text" : "success-text"}>{healthRisks.length}</strong></div>
       </div>
 
       <div className="exception-layout">
@@ -413,10 +458,11 @@ export function ExceptionCenterPage({
           </div>
           <section>
             <h2>Severity</h2>
-            <span>Critical ({critical + trackingCritical})</span>
-            <span>Warning ({warning + trackingWarning})</span>
+            <span>Critical ({critical + trackingCritical + healthCritical})</span>
+            <span>Warning ({warning + trackingWarning + healthWarning})</span>
             <span>Blocking ({pending})</span>
             <span>Observed ({openTrackingAlerts.length})</span>
+            <span>Health ({healthRisks.length})</span>
           </section>
           <section>
             <h2>OGV focus</h2>
@@ -471,6 +517,23 @@ export function ExceptionCenterPage({
                     <td>WATCH</td>
                   </tr>
                 ))}
+                {healthRisks.map((risk) => (
+                  <tr
+                    className={selectedHealthRisk?.id === risk.id ? "selected-row" : ""}
+                    key={`health-${risk.id}`}
+                    onClick={() => setSelectedQueueItem({ id: risk.id, kind: "health" })}
+                  >
+                    <td><span className={`status-chip ${statusTone(risk.severity)}`}>{short(risk.severity)}</span></td>
+                    <td><GridDate value={risk.observedAt} /></td>
+                    <td>{risk.candidateId}</td>
+                    <td>DEVICE HEALTH</td>
+                    <td>{risk.feedId}</td>
+                    <td>{risk.deviceId ?? risk.assetCode}</td>
+                    <td>{short(risk.healthStatus ?? risk.reason)}</td>
+                    <td>{short(risk.status)}</td>
+                    <td>REVIEW</td>
+                  </tr>
+                ))}
                 {conflicts.map((conflict) => (
                   <tr
                     className={selectedConflict?.id === conflict.id ? "selected-row" : ""}
@@ -505,9 +568,9 @@ export function ExceptionCenterPage({
                     <td>GOVERNED</td>
                   </tr>
                 ))}
-                {!conflicts.length && !overrides.length && !openTrackingAlerts.length ? (
+                {!conflicts.length && !overrides.length && !openTrackingAlerts.length && !healthRisks.length ? (
                   <tr>
-                    <td colSpan={9}>No active exceptions, observed tracking alerts, or governed overrides for the active plan.</td>
+                    <td colSpan={9}>No active exceptions, observed tracking alerts, device health risks, or governed overrides for the active plan.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -523,9 +586,11 @@ export function ExceptionCenterPage({
                 ? `EX-${selectedConflict.id}`
                 : selectedTrackingAlert
                   ? selectedTrackingAlert.alert_id
-                  : selectedOverride
-                    ? `OR-${selectedOverride.id}`
-                    : "No exception"}
+                  : selectedHealthRisk
+                    ? selectedHealthRisk.candidateId
+                    : selectedOverride
+                      ? `OR-${selectedOverride.id}`
+                      : "No exception"}
             </span>
           </div>
           {selectedConflict ? (
@@ -579,6 +644,26 @@ export function ExceptionCenterPage({
                   Create scenario
                 </button>
               ) : null}
+            </div>
+          ) : selectedHealthRisk ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedHealthRisk.severity)}`}>
+                HEALTH {short(selectedHealthRisk.severity)}
+              </span>
+              <h2>{selectedHealthRisk.deviceId ?? selectedHealthRisk.assetCode}</h2>
+              <p>{selectedHealthRisk.message}</p>
+              <dl>
+                <div><dt>Feed</dt><dd>{selectedHealthRisk.feedId}</dd></div>
+                <div><dt>Candidate</dt><dd>{selectedHealthRisk.candidateId}</dd></div>
+                <div><dt>Health</dt><dd>{short(selectedHealthRisk.healthStatus)}</dd></div>
+                <div><dt>Device status</dt><dd>{short(selectedHealthRisk.deviceStatus)}</dd></div>
+                <div><dt>Reason</dt><dd>{short(selectedHealthRisk.reason)}</dd></div>
+                <div><dt>Observed</dt><dd><GridDate value={selectedHealthRisk.observedAt} /></dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Trust gate</strong>
+                <p>Device health risk blocks trusted auto-confirm until an operator reviews the feed or the device reports healthy again.</p>
+              </section>
             </div>
           ) : selectedOverride && selectedOverrideDelta ? (
             <div className="inspector-body">

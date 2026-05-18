@@ -7,6 +7,7 @@ import type {
   DashboardKpi,
   DashboardReadModel,
   LiveEtaProjectionRecord,
+  OperationsHealthSummary,
   TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
@@ -17,6 +18,7 @@ type DashboardPageProps = {
   dashboard: DashboardReadModel | null;
   etaProjections: LiveEtaProjectionRecord[];
   onNavigate: (path: string) => void;
+  operationsHealth: OperationsHealthSummary | null;
   replayRuns: TelemetryReplayRunRecord[];
   trackingAlerts: TrackingAlertRecord[];
 };
@@ -48,6 +50,7 @@ export function DashboardPage({
   dashboard,
   etaProjections,
   onNavigate,
+  operationsHealth,
   replayRuns,
   trackingAlerts,
 }: DashboardPageProps) {
@@ -58,6 +61,7 @@ export function DashboardPage({
   const recentAudit = auditEvents.slice(0, 5);
   const openTrackingAlerts = trackingAlerts.filter((alert) => alert.status === "open");
   const criticalTrackingAlerts = openTrackingAlerts.filter((alert) => alert.severity === "critical");
+  const healthRisks = operationsHealth?.risks ?? [];
   const highestVariance = etaProjections
     .filter((projection) => typeof projection.variance_minutes === "number")
     .sort((left, right) => (
@@ -300,6 +304,50 @@ export function DashboardPage({
             ))}
             {!openTrackingAlerts.length ? (
               <p>No observed tracking alerts are open.</p>
+            ) : null}
+          </section>
+
+          <section className="tracking-signal-card">
+            <h2>Operations feed health</h2>
+            <dl>
+              <div>
+                <dt>Feeds degraded</dt>
+                <dd className={operationsHealth?.feeds.degraded ? "warning-text" : "success-text"}>
+                  {operationsHealth?.feeds.degraded ?? 0}
+                </dd>
+              </div>
+              <div>
+                <dt>Devices offline</dt>
+                <dd className={operationsHealth?.devices.offline ? "critical-text" : ""}>
+                  {operationsHealth?.devices.offline ?? 0}
+                </dd>
+              </div>
+              <div>
+                <dt>Stale devices</dt>
+                <dd className={operationsHealth?.devices.stale ? "warning-text" : ""}>
+                  {operationsHealth?.devices.stale ?? 0}
+                </dd>
+              </div>
+              <div>
+                <dt>Latest health</dt>
+                <dd>
+                  {operationsHealth?.snapshots.latestObservedAt
+                    ? formatGridDateLabel(operationsHealth.snapshots.latestObservedAt)
+                    : "No feed"}
+                </dd>
+              </div>
+            </dl>
+            {healthRisks.slice(0, 2).map((risk) => (
+              <button key={risk.candidateId} onClick={() => onNavigate("/exceptions/center")} type="button">
+                <span className={`status-chip ${toneClass(risk.severity)}`}>
+                  {short(risk.healthStatus ?? risk.reason)}
+                </span>
+                <strong>{risk.deviceId ?? risk.assetCode}</strong>
+                <em>{risk.message}</em>
+              </button>
+            ))}
+            {!healthRisks.length ? (
+              <p>No device/feed health risks are open.</p>
             ) : null}
           </section>
 

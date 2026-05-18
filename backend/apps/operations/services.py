@@ -20,6 +20,7 @@ from .models import (
     OperationalActualization,
     OperationalEventCandidate,
     OperationalEventKind,
+    OperationsAssetType,
 )
 
 JETTY_EVENT_KINDS = {
@@ -107,6 +108,16 @@ class IngestionResult:
     auto_confirmed: bool
     confirmed_event: ConfirmedOperationalEvent | None
     trust_evaluation: dict
+
+
+@dataclass(frozen=True)
+class HealthIngestionResult:
+    snapshot: DeviceHealthSnapshot
+    device: DeviceEndpoint
+    feed: IntegrationFeed
+    candidate: OperationalEventCandidate | None
+    created_risk: bool
+    health_summary: dict
 
 
 @dataclass(frozen=True)
@@ -321,6 +332,199 @@ def ingest_operational_event(
         confirmed_event=confirmed_event,
         trust_evaluation=trust,
     )
+
+
+def ingest_device_health(
+    *,
+    payload: dict,
+    actor=None,
+    request=None,
+) -> HealthIngestionResult:
+    device = _resolve_health_device(payload)
+    feed = device.feed
+    observed_at = _coerce_datetime(
+        _required(payload, "observed_at"),
+        field_name="observed_at",
+    )
+    received_at = _coerce_datetime(payload.get("received_at") or timezone.now())
+    health_status = payload.get("health_status") or DeviceHealthSnapshot.HealthStatus.UNKNOWN
+
+    with transaction.atomic():
+        snapshot = DeviceHealthSnapshot.objects.create(
+            device=device,
+            observed_at=observed_at,
+            received_at=received_at,
+            health_status=health_status,
+            battery_level=payload.get("battery_level"),
+            power_status=payload.get("power_status", ""),
+            network_status=payload.get("network_status", ""),
+            latency_ms=payload.get("latency_ms"),
+            gap_seconds=payload.get("gap_seconds"),
+            metadata=payload.get("metadata") or {},
+        )
+        health_summary = _apply_device_health_snapshot(snapshot=snapshot, now=received_at)
+        candidate = None
+        created_risk = False
+        if health_summary["riskSeverity"] == "critical":
+            candidate, created_risk = _ensure_device_health_candidate(
+                device=device,
+                snapshot=snapshot,
+                health_summary=health_summary,
+                actor=actor,
+                request=request,
+            )
+        _refresh_feed_health(feed)
+
+        record_audit_event(
+            actor=actor,
+            organization=None,
+            action="operations.device_health.ingested",
+            object_type="device_health_snapshot",
+            object_id=str(snapshot.pk),
+            object_repr=snapshot.snapshot_id,
+            metadata={
+                "device_id": device.device_id,
+                "feed_id": feed.feed_id,
+                "health_status": snapshot.health_status,
+                "device_status": health_summary["deviceStatus"],
+                "risk_severity": health_summary["riskSeverity"],
+                "risk_candidate": candidate.candidate_id if candidate else None,
+            },
+            request=request,
+        )
+
+    device.refresh_from_db()
+    feed.refresh_from_db()
+    return HealthIngestionResult(
+        snapshot=snapshot,
+        device=device,
+        feed=feed,
+        candidate=candidate,
+        created_risk=created_risk,
+        health_summary=health_summary,
+    )
+
+
+def refresh_operations_health(*, now=None) -> dict:
+    now = _coerce_datetime(now or timezone.now())
+    changed_devices = 0
+    created_risks = 0
+    for device in DeviceEndpoint.objects.select_related("feed").all():
+        if device.status in {DeviceEndpoint.Status.PAUSED, DeviceEndpoint.Status.RETIRED}:
+            continue
+        latest = device.health_snapshots.order_by("-observed_at", "-id").first()
+        health_summary = _device_health_evaluation(device=device, snapshot=latest, now=now)
+        if health_summary["deviceStatus"] != device.status:
+            device.status = health_summary["deviceStatus"]
+            device.metadata = {
+                **device.metadata,
+                "health": health_summary,
+            }
+            device.save(update_fields=["status", "metadata", "updated_at"])
+            changed_devices += 1
+        if (
+            health_summary["riskSeverity"] == "critical"
+            and latest is None
+            and health_summary["reason"] in {"freshness_offline", "stale_offline"}
+        ):
+            candidate, created = _ensure_device_health_candidate(
+                device=device,
+                snapshot=latest,
+                health_summary=health_summary,
+                actor=None,
+                request=None,
+            )
+            if created:
+                created_risks += 1
+
+    for feed in IntegrationFeed.objects.all():
+        _refresh_feed_health(feed)
+
+    return {
+        "changedDevices": changed_devices,
+        "createdRisks": created_risks,
+        "refreshedAt": now.isoformat(),
+    }
+
+
+def operations_health_summary(*, refresh: bool = True, now=None) -> dict:
+    now = _coerce_datetime(now or timezone.now())
+    refresh_result = refresh_operations_health(now=now) if refresh else None
+    feed_counts = {
+        status: IntegrationFeed.objects.filter(status=status).count()
+        for status in IntegrationFeed.Status.values
+    }
+    device_counts = {
+        status: DeviceEndpoint.objects.filter(status=status).count()
+        for status in DeviceEndpoint.Status.values
+    }
+    health_counts = {
+        status: DeviceHealthSnapshot.objects.filter(health_status=status).count()
+        for status in DeviceHealthSnapshot.HealthStatus.values
+    }
+    pending_risks = OperationalEventCandidate.objects.select_related(
+        "feed",
+        "device",
+    ).filter(
+        event_kind=OperationalEventKind.DEVICE_OFFLINE,
+        status=OperationalEventCandidate.Status.PENDING,
+    )
+    latest_snapshot = DeviceHealthSnapshot.objects.order_by("-observed_at", "-id").first()
+    stale_devices = [
+        _device_health_evaluation(
+            device=device,
+            snapshot=device.health_snapshots.order_by("-observed_at", "-id").first(),
+            now=now,
+        )
+        for device in DeviceEndpoint.objects.select_related("feed").all()
+    ]
+    stale_count = sum(
+        1
+        for summary in stale_devices
+        if summary["reason"] in {"freshness_degraded", "freshness_offline", "stale_offline"}
+    )
+    critical_count = pending_risks.count()
+    return {
+        "feeds": {
+            "total": IntegrationFeed.objects.count(),
+            "active": feed_counts.get(IntegrationFeed.Status.ACTIVE, 0),
+            "degraded": feed_counts.get(IntegrationFeed.Status.DEGRADED, 0),
+            "paused": feed_counts.get(IntegrationFeed.Status.PAUSED, 0),
+            "retired": feed_counts.get(IntegrationFeed.Status.RETIRED, 0),
+        },
+        "devices": {
+            "total": DeviceEndpoint.objects.count(),
+            "active": device_counts.get(DeviceEndpoint.Status.ACTIVE, 0),
+            "degraded": device_counts.get(DeviceEndpoint.Status.DEGRADED, 0),
+            "offline": device_counts.get(DeviceEndpoint.Status.OFFLINE, 0),
+            "paused": device_counts.get(DeviceEndpoint.Status.PAUSED, 0),
+            "retired": device_counts.get(DeviceEndpoint.Status.RETIRED, 0),
+            "stale": stale_count,
+        },
+        "snapshots": {
+            "total": DeviceHealthSnapshot.objects.count(),
+            "healthy": health_counts.get(DeviceHealthSnapshot.HealthStatus.HEALTHY, 0),
+            "warning": health_counts.get(DeviceHealthSnapshot.HealthStatus.WARNING, 0),
+            "critical": health_counts.get(DeviceHealthSnapshot.HealthStatus.CRITICAL, 0),
+            "offline": health_counts.get(DeviceHealthSnapshot.HealthStatus.OFFLINE, 0),
+            "unknown": health_counts.get(DeviceHealthSnapshot.HealthStatus.UNKNOWN, 0),
+            "latestObservedAt": latest_snapshot.observed_at.isoformat()
+            if latest_snapshot
+            else None,
+        },
+        "risks": [_health_risk_candidate_summary(candidate) for candidate in pending_risks[:12]],
+        "criticalRiskCount": critical_count,
+        "status": (
+            "critical"
+            if device_counts.get(DeviceEndpoint.Status.OFFLINE, 0) or critical_count
+            else "warning"
+            if device_counts.get(DeviceEndpoint.Status.DEGRADED, 0)
+            or feed_counts.get(IntegrationFeed.Status.DEGRADED, 0)
+            else "ok"
+        ),
+        "refresh": refresh_result,
+        "calculatedAt": now.isoformat(),
+    }
 
 
 def match_operational_event(
@@ -803,6 +1007,28 @@ def _resolve_device(payload: dict, *, feed: IntegrationFeed) -> DeviceEndpoint |
     return None
 
 
+def _resolve_health_device(payload: dict) -> DeviceEndpoint:
+    device = payload.get("device")
+    if isinstance(device, DeviceEndpoint):
+        return device
+    queryset = DeviceEndpoint.objects.select_related("feed")
+    if device:
+        return queryset.get(pk=device)
+
+    device_id = payload.get("device_id")
+    if not device_id:
+        raise ValidationError({"device_id": "A device endpoint is required."})
+    feed = payload.get("feed")
+    feed_id = payload.get("feed_id")
+    if isinstance(feed, IntegrationFeed):
+        queryset = queryset.filter(feed=feed)
+    elif feed:
+        queryset = queryset.filter(feed_id=feed)
+    elif feed_id:
+        queryset = queryset.filter(feed__feed_id=feed_id)
+    return queryset.get(device_id=device_id)
+
+
 def _resolve_schedule_event(payload: dict) -> ScheduleEvent | None:
     schedule_event = payload.get("schedule_event")
     if isinstance(schedule_event, ScheduleEvent):
@@ -957,9 +1183,25 @@ def _dedupe_key(
 def _device_health_summary(device: DeviceEndpoint | None) -> dict:
     if device is None:
         return {"isHealthy": False, "reason": "missing_device"}
+    if device.feed.status != IntegrationFeed.Status.ACTIVE:
+        return {
+            "isHealthy": False,
+            "reason": "feed_not_active",
+            "feedStatus": device.feed.status,
+        }
     if device.status != DeviceEndpoint.Status.ACTIVE:
         return {"isHealthy": False, "reason": "device_not_active", "status": device.status}
     latest = device.health_snapshots.order_by("-observed_at", "-id").first()
+    evaluation = _device_health_evaluation(device=device, snapshot=latest, now=timezone.now())
+    if evaluation["deviceStatus"] != DeviceEndpoint.Status.ACTIVE:
+        return {
+            "isHealthy": False,
+            "reason": evaluation["reason"],
+            "status": evaluation["deviceStatus"],
+            "healthStatus": evaluation["healthStatus"],
+            "observedAt": evaluation["observedAt"],
+            "freshnessSeconds": evaluation["freshnessSeconds"],
+        }
     if latest and latest.health_status in {
         DeviceHealthSnapshot.HealthStatus.CRITICAL,
         DeviceHealthSnapshot.HealthStatus.OFFLINE,
@@ -1041,6 +1283,211 @@ def _summarize_actualizations(
         "applied": status_counts.get(OperationalActualization.Status.APPLIED, 0),
         "skipped": status_counts.get(OperationalActualization.Status.SKIPPED, 0),
         "failed": status_counts.get(OperationalActualization.Status.FAILED, 0),
+    }
+
+
+def _apply_device_health_snapshot(*, snapshot: DeviceHealthSnapshot, now) -> dict:
+    device = DeviceEndpoint.objects.select_for_update().select_related("feed").get(
+        pk=snapshot.device_id
+    )
+    health_summary = _device_health_evaluation(device=device, snapshot=snapshot, now=now)
+    update_fields = ["status", "metadata", "updated_at"]
+    device.status = health_summary["deviceStatus"]
+    device.metadata = {
+        **device.metadata,
+        "health": health_summary,
+    }
+    if device.last_seen_at is None or snapshot.observed_at > device.last_seen_at:
+        device.last_seen_at = snapshot.observed_at
+        update_fields.append("last_seen_at")
+    device.save(update_fields=update_fields)
+    return health_summary
+
+
+def _device_health_evaluation(
+    *,
+    device: DeviceEndpoint,
+    snapshot: DeviceHealthSnapshot | None,
+    now,
+) -> dict:
+    threshold = max(int(device.feed.freshness_threshold_seconds or 0), 60)
+    observed_at = snapshot.observed_at if snapshot else device.last_seen_at
+    health_status = snapshot.health_status if snapshot else "not_reported"
+    age_seconds = (
+        max(0, int((now - observed_at).total_seconds())) if observed_at is not None else None
+    )
+    observed_gap = snapshot.gap_seconds if snapshot and snapshot.gap_seconds is not None else None
+    freshness_seconds = max(
+        [value for value in [age_seconds, observed_gap] if value is not None],
+        default=None,
+    )
+    device_status = DeviceEndpoint.Status.ACTIVE
+    risk_severity = "ok"
+    reason = "healthy"
+
+    if snapshot is None:
+        reason = "not_reported" if observed_at is None else "active_device_no_snapshot"
+    elif health_status == DeviceHealthSnapshot.HealthStatus.OFFLINE:
+        device_status = DeviceEndpoint.Status.OFFLINE
+        risk_severity = "critical"
+        reason = "health_offline"
+    elif health_status == DeviceHealthSnapshot.HealthStatus.CRITICAL:
+        device_status = DeviceEndpoint.Status.DEGRADED
+        risk_severity = "critical"
+        reason = "health_critical"
+    elif health_status in {
+        DeviceHealthSnapshot.HealthStatus.WARNING,
+        DeviceHealthSnapshot.HealthStatus.UNKNOWN,
+    }:
+        device_status = DeviceEndpoint.Status.DEGRADED
+        risk_severity = "warning"
+        reason = f"health_{health_status}"
+
+    if freshness_seconds is not None and freshness_seconds >= threshold * 2:
+        device_status = DeviceEndpoint.Status.OFFLINE
+        risk_severity = "critical"
+        reason = "freshness_offline"
+    elif freshness_seconds is not None and freshness_seconds > threshold:
+        if device_status == DeviceEndpoint.Status.ACTIVE:
+            device_status = DeviceEndpoint.Status.DEGRADED
+        if risk_severity == "ok":
+            risk_severity = "warning"
+        if reason == "healthy":
+            reason = "freshness_degraded"
+
+    return {
+        "deviceId": device.device_id,
+        "feedId": device.feed.feed_id,
+        "healthStatus": health_status,
+        "deviceStatus": device_status,
+        "riskSeverity": risk_severity,
+        "reason": reason,
+        "freshnessThresholdSeconds": threshold,
+        "freshnessSeconds": freshness_seconds,
+        "ageSeconds": age_seconds,
+        "gapSeconds": observed_gap,
+        "observedAt": observed_at.isoformat() if observed_at else None,
+        "calculatedAt": now.isoformat(),
+    }
+
+
+def _refresh_feed_health(feed: IntegrationFeed) -> None:
+    if feed.status in {IntegrationFeed.Status.PAUSED, IntegrationFeed.Status.RETIRED}:
+        return
+    device_counts = {
+        status: feed.devices.filter(status=status).count()
+        for status in DeviceEndpoint.Status.values
+    }
+    target_status = (
+        IntegrationFeed.Status.DEGRADED
+        if device_counts.get(DeviceEndpoint.Status.DEGRADED, 0)
+        or device_counts.get(DeviceEndpoint.Status.OFFLINE, 0)
+        else IntegrationFeed.Status.ACTIVE
+    )
+    feed.metadata = {
+        **feed.metadata,
+        "health": {
+            "devices": device_counts,
+            "status": target_status,
+            "calculatedAt": timezone.now().isoformat(),
+        },
+    }
+    feed.status = target_status
+    feed.save(update_fields=["status", "metadata", "updated_at"])
+
+
+def _ensure_device_health_candidate(
+    *,
+    device: DeviceEndpoint,
+    snapshot: DeviceHealthSnapshot | None,
+    health_summary: dict,
+    actor,
+    request,
+) -> tuple[OperationalEventCandidate, bool]:
+    event_at = snapshot.observed_at if snapshot else timezone.now()
+    bucket = event_at.replace(minute=0, second=0, microsecond=0).isoformat()
+    dedupe_key = "|".join(
+        [
+            device.feed.feed_id,
+            device.device_id,
+            "device_health",
+            health_summary["reason"],
+            bucket,
+        ]
+    )
+    existing = (
+        OperationalEventCandidate.objects.filter(feed=device.feed, dedupe_key=dedupe_key)
+        .exclude(status=OperationalEventCandidate.Status.DUPLICATE)
+        .order_by("created_at", "id")
+        .first()
+    )
+    if existing:
+        return existing, False
+
+    candidate = OperationalEventCandidate.objects.create(
+        feed=device.feed,
+        device=device,
+        source_kind=OperationalEventCandidate.SourceKind.DEVICE,
+        event_kind=OperationalEventKind.DEVICE_OFFLINE,
+        asset_type=device.asset_type or OperationsAssetType.DEVICE,
+        asset_code=device.asset_code or device.device_id,
+        event_at=event_at,
+        received_at=timezone.now(),
+        confidence_score=Decimal("100.00"),
+        dedupe_key=dedupe_key,
+        status=OperationalEventCandidate.Status.PENDING,
+        payload={
+            "source": "device_health",
+            "snapshot_id": snapshot.snapshot_id if snapshot else None,
+            "device_id": device.device_id,
+            "feed_id": device.feed.feed_id,
+            "health": health_summary,
+        },
+        metadata={
+            "healthRisk": {
+                **health_summary,
+                "snapshotRef": snapshot.snapshot_id if snapshot else None,
+                "message": _health_risk_message(device=device, health_summary=health_summary),
+            }
+        },
+    )
+    _record_candidate_audit(
+        candidate=candidate,
+        actor=actor,
+        action="operations.device_health.risk_created",
+        request=request,
+        metadata={"healthRisk": candidate.metadata["healthRisk"]},
+    )
+    return candidate, True
+
+
+def _health_risk_message(*, device: DeviceEndpoint, health_summary: dict) -> str:
+    status = str(health_summary.get("healthStatus", "unknown")).replace("_", " ")
+    reason = str(health_summary.get("reason", "health risk")).replace("_", " ")
+    return (
+        f"{device.device_id} reports {status}; feed {device.feed.feed_id} is "
+        f"not trusted for auto-confirm until {reason} is reviewed."
+    )
+
+
+def _health_risk_candidate_summary(candidate: OperationalEventCandidate) -> dict:
+    risk = candidate.metadata.get("healthRisk") or {}
+    return {
+        "id": candidate.id,
+        "candidateId": candidate.candidate_id,
+        "feedId": candidate.feed.feed_id,
+        "deviceId": candidate.device.device_id if candidate.device_id else None,
+        "eventKind": candidate.event_kind,
+        "assetType": candidate.asset_type,
+        "assetCode": candidate.asset_code,
+        "status": candidate.status,
+        "severity": risk.get("riskSeverity", "critical"),
+        "healthStatus": risk.get("healthStatus"),
+        "deviceStatus": risk.get("deviceStatus"),
+        "reason": risk.get("reason"),
+        "message": risk.get("message", "Device or feed health requires review."),
+        "observedAt": risk.get("observedAt") or candidate.event_at.isoformat(),
+        "createdAt": candidate.created_at.isoformat(),
     }
 
 
