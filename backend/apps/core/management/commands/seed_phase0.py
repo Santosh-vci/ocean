@@ -20,6 +20,16 @@ from apps.masters.models import (
     Stockpile,
     Tug,
 )
+from apps.operations.models import (
+    ConfirmedOperationalEvent,
+    DeviceEndpoint,
+    DeviceHealthSnapshot,
+    EdgeEventBatch,
+    IntegrationFeed,
+    OperationalActualization,
+    OperationalEventCandidate,
+    OperationsAssetType,
+)
 from apps.organizations.models import Organization
 from apps.planning.models import (
     AssetAvailabilityWindow,
@@ -129,6 +139,44 @@ class Command(BaseCommand):
             ("export.generate", "export", "generate", "Generate governed export artifacts"),
             ("telemetry.view", "telemetry", "view", "View live tracking telemetry"),
             ("telemetry.ingest", "telemetry", "ingest", "Ingest telemetry pings"),
+            ("operations.view", "operations", "view", "View operational event feeds"),
+            ("operations.ingest", "operations", "ingest", "Ingest operational event candidates"),
+            (
+                "operations.confirm_jetty",
+                "operations",
+                "confirm_jetty",
+                "Confirm jetty operational events",
+            ),
+            (
+                "operations.confirm_cts",
+                "operations",
+                "confirm_cts",
+                "Confirm CTS operational events",
+            ),
+            (
+                "operations.confirm_bridge",
+                "operations",
+                "confirm_bridge",
+                "Confirm bridge operational events",
+            ),
+            (
+                "operations.confirm_tide",
+                "operations",
+                "confirm_tide",
+                "Confirm tide operational events",
+            ),
+            (
+                "operations.manage_feeds",
+                "operations",
+                "manage_feeds",
+                "Manage operational feeds and devices",
+            ),
+            (
+                "operations.replay",
+                "operations",
+                "replay",
+                "Replay buffered operational event batches",
+            ),
             ("admin.view", "admin", "view", "View admin consoles"),
             ("admin.manage_users", "admin", "manage_users", "Manage users and organizations"),
         ]
@@ -185,6 +233,8 @@ class Command(BaseCommand):
                     permissions["simulation.run"],
                     permissions["masterdata.view"],
                     permissions["telemetry.view"],
+                    permissions["operations.view"],
+                    permissions["operations.confirm_jetty"],
                     permissions["audit.view"],
                     permissions["export.view"],
                 ],
@@ -202,6 +252,11 @@ class Command(BaseCommand):
                     permissions["simulation.run"],
                     permissions["telemetry.view"],
                     permissions["telemetry.ingest"],
+                    permissions["operations.view"],
+                    permissions["operations.ingest"],
+                    permissions["operations.confirm_cts"],
+                    permissions["operations.confirm_bridge"],
+                    permissions["operations.confirm_tide"],
                     permissions["audit.view"],
                     permissions["export.view"],
                 ],
@@ -218,6 +273,14 @@ class Command(BaseCommand):
                     permissions["fleet.view"],
                     permissions["telemetry.view"],
                     permissions["telemetry.ingest"],
+                    permissions["operations.view"],
+                    permissions["operations.ingest"],
+                    permissions["operations.confirm_jetty"],
+                    permissions["operations.confirm_cts"],
+                    permissions["operations.confirm_bridge"],
+                    permissions["operations.confirm_tide"],
+                    permissions["operations.manage_feeds"],
+                    permissions["operations.replay"],
                     permissions["audit.view"],
                     permissions["export.view"],
                     permissions["export.generate"],
@@ -231,6 +294,7 @@ class Command(BaseCommand):
                     permissions["schedule.view"],
                     permissions["fleet.view"],
                     permissions["telemetry.view"],
+                    permissions["operations.view"],
                 ],
             },
         }
@@ -306,6 +370,7 @@ class Command(BaseCommand):
 
         self._seed_master_data(berau=berau, abl=abl)
         self._seed_telemetry_foundation()
+        self._seed_operations_foundation()
         if options["master_data_only"]:
             self.stdout.write(
                 self.style.SUCCESS(
@@ -381,6 +446,14 @@ class Command(BaseCommand):
         )
 
     def _reset_operational_data(self):
+        OperationalActualization.objects.all().delete()
+        ConfirmedOperationalEvent.objects.all().delete()
+        OperationalEventCandidate.objects.all().delete()
+        DeviceHealthSnapshot.objects.all().delete()
+        EdgeEventBatch.objects.all().delete()
+        DeviceEndpoint.objects.all().delete()
+        IntegrationFeed.objects.all().delete()
+
         TelemetryReplayRun.objects.all().delete()
         LatestAssetState.objects.all().delete()
         TrackingAlert.objects.all().delete()
@@ -512,6 +585,99 @@ class Command(BaseCommand):
                         "parentArea": location.parent_area,
                         "operationalNotes": location.operational_notes,
                         "source": "master_location_seed",
+                    },
+                },
+            )
+
+    def _seed_operations_foundation(self):
+        synthetic_feed, _ = IntegrationFeed.objects.update_or_create(
+            feed_id="SYN-OPS-PHASE4",
+            defaults={
+                "name": "Phase 4 Synthetic Operations Event Feed",
+                "feed_type": IntegrationFeed.FeedType.SYNTHETIC,
+                "status": IntegrationFeed.Status.ACTIVE,
+                "trust_mode": IntegrationFeed.TrustMode.MANUAL_REVIEW,
+                "freshness_threshold_seconds": 900,
+                "metadata": {
+                    "seeded": True,
+                    "purpose": "Phase 4 operational event foundation and replay proof",
+                },
+            },
+        )
+        manual_feed, _ = IntegrationFeed.objects.update_or_create(
+            feed_id="MANUAL-OPS-CONTROL",
+            defaults={
+                "name": "Control Tower Manual Operations Feed",
+                "feed_type": IntegrationFeed.FeedType.MANUAL,
+                "status": IntegrationFeed.Status.ACTIVE,
+                "trust_mode": IntegrationFeed.TrustMode.MANUAL_REVIEW,
+                "freshness_threshold_seconds": 1800,
+                "metadata": {
+                    "seeded": True,
+                    "purpose": "Operator-entered confirmations until device integrations exist",
+                },
+            },
+        )
+
+        device_rows = [
+            (
+                "JETTY-JTY-SUARAN-OPS",
+                synthetic_feed,
+                DeviceEndpoint.DeviceType.JETTY_PLC,
+                OperationsAssetType.JETTY,
+                "JTY-SUARAN",
+                "LOC-SUARAN-PORT",
+            ),
+            (
+                "BRIDGE-GATE-B-OPS",
+                synthetic_feed,
+                DeviceEndpoint.DeviceType.BRIDGE_CONSOLE,
+                OperationsAssetType.BRIDGE,
+                "BRDG-GATE-B",
+                "LOC-BRIDGE-GATE-B",
+            ),
+            (
+                "TIDE-RANTAU-OPS",
+                synthetic_feed,
+                DeviceEndpoint.DeviceType.TIDE_SENSOR,
+                OperationsAssetType.TIDE_GATE,
+                "TIDE-RANTAU",
+                "LOC-RANTAU-DELTA",
+            ),
+            (
+                "CTS-BORNEO-OPS",
+                synthetic_feed,
+                DeviceEndpoint.DeviceType.CTS_PLC,
+                OperationsAssetType.CTS,
+                "CTS-BORNEO",
+                "LOC-CTS-ALPHA",
+            ),
+            (
+                "CONTROL-TOWER-TABLET-OPS",
+                manual_feed,
+                DeviceEndpoint.DeviceType.OPERATOR_TABLET,
+                OperationsAssetType.DEVICE,
+                "CONTROL-TOWER",
+                "LOC-MUARA-PANTAI",
+            ),
+        ]
+        for device_id, feed, device_type, asset_type, asset_code, location_code in device_rows:
+            location = Location.objects.filter(code=location_code).first()
+            geofence = GeofenceZone.objects.filter(zone_id=f"GEO-{location_code}").first()
+            DeviceEndpoint.objects.update_or_create(
+                device_id=device_id,
+                defaults={
+                    "feed": feed,
+                    "device_type": device_type,
+                    "asset_type": asset_type,
+                    "asset_code": asset_code,
+                    "location": location,
+                    "geofence": geofence,
+                    "status": DeviceEndpoint.Status.ACTIVE,
+                    "firmware_version": "synthetic-phase4",
+                    "metadata": {
+                        "seeded": True,
+                        "source": "phase_4_operations_foundation",
                     },
                 },
             )
