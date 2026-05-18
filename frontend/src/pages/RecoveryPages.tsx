@@ -17,6 +17,7 @@ import type {
   ScenarioTripProjectionRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
+  TrackingAlertRecord,
   TripRecord,
 } from "../types";
 
@@ -53,7 +54,7 @@ type RecoveryPageProps = {
 
 type QueueSelection = {
   id: number;
-  kind: "conflict" | "override";
+  kind: "conflict" | "override" | "tracking";
 };
 
 const EMPTY_CONFLICTS: ConflictRecord[] = [];
@@ -61,6 +62,7 @@ const EMPTY_TRIPS: TripRecord[] = [];
 const EMPTY_APPROVALS: ApprovalRequestRecord[] = [];
 const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
+const EMPTY_TRACKING_ALERTS: TrackingAlertRecord[] = [];
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
@@ -228,6 +230,40 @@ function impactNodesFor(
   ];
 }
 
+function trackingImpactNodes(alert: TrackingAlertRecord | undefined): ImpactChainNodeRecord[] {
+  if (!alert) return [];
+  const variance = valueNum(alert.evidence.varianceMinutes, 0);
+  return [
+    {
+      id: "tracking-source",
+      type: "observed_signal",
+      label: "OBSERVED SIGNAL",
+      value: alert.source_ping_ref ?? short(alert.source_kind),
+      status: alert.severity,
+      detail: `${alert.source_id} evidence linked to ${alert.asset_code}.`,
+    },
+    {
+      id: "eta-projection",
+      type: "eta_projection",
+      label: "ETA VARIANCE",
+      value: variance ? `${variance > 0 ? "+" : ""}${variance}m` : "NO VARIANCE",
+      status: alert.severity,
+      detail: `${short(alert.schedule_event_type)} planned vs observed ETA.`,
+      plannedAt: alert.schedule_event_planned_at,
+      projectedAt: String(alert.evidence.observedEta ?? "") || null,
+      marginMinutes: variance,
+    },
+    {
+      id: "tracking-alert",
+      type: "tracking_alert",
+      label: short(alert.alert_type),
+      value: short(alert.severity),
+      status: alert.severity,
+      detail: alert.message,
+    },
+  ];
+}
+
 function nodeValue(node: ImpactChainNodeRecord) {
   if (node.type === "source_event" && node.projectedAt) return dt(node.projectedAt);
   return node.value;
@@ -281,26 +317,47 @@ export function ExceptionCenterPage({
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const overrides = overview?.overrideRequests ?? EMPTY_OVERRIDES;
+  const trackingAlerts = overview?.trackingAlerts ?? EMPTY_TRACKING_ALERTS;
+  const openTrackingAlerts = trackingAlerts.filter((alert) => (
+    alert.status === "open" || alert.status === "acknowledged"
+  ));
   const [selectedQueueItem, setSelectedQueueItem] = useState<QueueSelection | null>(
-    conflicts[0] ? { id: conflicts[0].id, kind: "conflict" } : null,
+    conflicts[0]
+      ? { id: conflicts[0].id, kind: "conflict" }
+      : openTrackingAlerts[0]
+        ? { id: openTrackingAlerts[0].id, kind: "tracking" }
+        : overrides[0]
+          ? { id: overrides[0].id, kind: "override" }
+          : null,
   );
   const selectedConflict = selectedQueueItem?.kind === "conflict"
     ? selectedConflictFor(conflicts, selectedQueueItem.id)
     : selectedQueueItem
       ? undefined
       : conflicts[0];
+  const selectedTrackingAlert = selectedQueueItem?.kind === "tracking"
+    ? openTrackingAlerts.find((alert) => alert.id === selectedQueueItem.id) ?? openTrackingAlerts[0]
+    : !selectedConflict && !selectedQueueItem
+      ? openTrackingAlerts[0]
+      : undefined;
   const selectedOverride = selectedQueueItem?.kind === "override"
     ? overrides.find((override) => override.id === selectedQueueItem.id) ?? (!selectedConflict ? overrides[0] : undefined)
-    : !selectedConflict ? overrides[0] : undefined;
+    : !selectedConflict && !selectedTrackingAlert ? overrides[0] : undefined;
   const selectedOverrideDelta = selectedOverride ? overrideDelta(selectedOverride) : null;
   const selectedImpactAssessment = selectedOverride?.impact_assessment;
-  const impactNodes = impactNodesFor(selectedConflict, selectedOverride);
-  const selectedTrip = trips.find((trip) => trip.id === selectedConflict?.trip);
+  const impactNodes = selectedTrackingAlert
+    ? trackingImpactNodes(selectedTrackingAlert)
+    : impactNodesFor(selectedConflict, selectedOverride);
+  const selectedTrip = trips.find((trip) => (
+    trip.id === selectedConflict?.trip || trip.id === selectedTrackingAlert?.trip
+  ));
   const critical = conflicts.filter((conflict) => conflict.severity === "critical").length;
   const warning = conflicts.filter((conflict) => conflict.severity === "warning").length;
   const pending = conflicts.filter((conflict) => conflict.is_blocking).length;
   const resolved = conflicts.filter((conflict) => conflict.resolved_at).length;
-  const activeQueueCount = conflicts.length + overrides.length;
+  const trackingCritical = openTrackingAlerts.filter((alert) => alert.severity === "critical").length;
+  const trackingWarning = openTrackingAlerts.filter((alert) => alert.severity === "warning").length;
+  const activeQueueCount = conflicts.length + overrides.length + openTrackingAlerts.length;
 
   return (
     <section className="workspace-page recovery-board">
@@ -312,7 +369,7 @@ export function ExceptionCenterPage({
         <div className="planning-actions">
           <span className="phase-chip">Active triage</span>
           <button
-            disabled={!canEdit || !onCreateScenario || isActionRunning}
+            disabled={!canEdit || !onCreateScenario || isActionRunning || Boolean(selectedTrackingAlert)}
             onClick={() => onCreateScenario?.(
               selectedConflict
                 ? { kind: "conflict", id: selectedConflict.id }
@@ -320,7 +377,11 @@ export function ExceptionCenterPage({
                   ? { kind: "override", id: selectedOverride.id }
                   : { kind: "manual" },
             )}
-            title={!canEdit ? "Your role cannot convert exceptions to scenarios." : undefined}
+            title={selectedTrackingAlert
+              ? "Tracking alert scenario handoff is planned for Chunk 3.5."
+              : !canEdit
+                ? "Your role cannot convert exceptions to scenarios."
+                : undefined}
             type="button"
           >
             Convert to scenario
@@ -335,10 +396,11 @@ export function ExceptionCenterPage({
         </div>
       </header>
 
-      <div className="metric-strip six-up recovery-kpis">
+      <div className="metric-strip seven-up recovery-kpis">
         <div><span>Active</span><strong>{activeQueueCount}</strong></div>
-        <div><span>Critical</span><strong className="critical-text">{critical}</strong></div>
-        <div><span>Warning</span><strong className="warning-text">{warning}</strong></div>
+        <div><span>Critical</span><strong className="critical-text">{critical + trackingCritical}</strong></div>
+        <div><span>Warning</span><strong className="warning-text">{warning + trackingWarning}</strong></div>
+        <div><span>Observed</span><strong className={openTrackingAlerts.length ? "warning-text" : ""}>{openTrackingAlerts.length}</strong></div>
         <div><span>Pending</span><strong>{pending}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overrides.length}</strong></div>
         <div><span>Resolved</span><strong className="success-text">{resolved}</strong></div>
@@ -351,9 +413,10 @@ export function ExceptionCenterPage({
           </div>
           <section>
             <h2>Severity</h2>
-            <span>Critical ({critical})</span>
-            <span>Warning ({warning})</span>
+            <span>Critical ({critical + trackingCritical})</span>
+            <span>Warning ({warning + trackingWarning})</span>
             <span>Blocking ({pending})</span>
+            <span>Observed ({openTrackingAlerts.length})</span>
           </section>
           <section>
             <h2>OGV focus</h2>
@@ -387,6 +450,27 @@ export function ExceptionCenterPage({
                 </tr>
               </thead>
               <tbody>
+                {openTrackingAlerts.map((alert) => (
+                  <tr
+                    className={selectedTrackingAlert?.id === alert.id ? "selected-row" : ""}
+                    key={`tracking-${alert.id}`}
+                    onClick={() => setSelectedQueueItem({ id: alert.id, kind: "tracking" })}
+                  >
+                    <td><span className={`status-chip ${statusTone(alert.severity)}`}>{short(alert.severity)}</span></td>
+                    <td><GridDate value={alert.opened_at} /></td>
+                    <td>{alert.alert_id}</td>
+                    <td>{short(alert.alert_type)}</td>
+                    <td>{alert.vessel_name ?? "Observed asset"}</td>
+                    <td>{alert.asset_code}</td>
+                    <td>
+                      {typeof alert.evidence.varianceMinutes === "number"
+                        ? `${alert.evidence.varianceMinutes > 0 ? "+" : ""}${alert.evidence.varianceMinutes}m ETA`
+                        : "Observed candidate"}
+                    </td>
+                    <td>{short(alert.status)}</td>
+                    <td>WATCH</td>
+                  </tr>
+                ))}
                 {conflicts.map((conflict) => (
                   <tr
                     className={selectedConflict?.id === conflict.id ? "selected-row" : ""}
@@ -421,9 +505,9 @@ export function ExceptionCenterPage({
                     <td>GOVERNED</td>
                   </tr>
                 ))}
-                {!conflicts.length && !overrides.length ? (
+                {!conflicts.length && !overrides.length && !openTrackingAlerts.length ? (
                   <tr>
-                    <td colSpan={9}>No active exceptions or governed overrides for the active plan.</td>
+                    <td colSpan={9}>No active exceptions, observed tracking alerts, or governed overrides for the active plan.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -435,7 +519,13 @@ export function ExceptionCenterPage({
           <div className="grid-header">
             <div><SvgIcon name="account-tree" /><strong>Exception detail</strong></div>
             <span>
-              {selectedConflict ? `EX-${selectedConflict.id}` : selectedOverride ? `OR-${selectedOverride.id}` : "No exception"}
+              {selectedConflict
+                ? `EX-${selectedConflict.id}`
+                : selectedTrackingAlert
+                  ? selectedTrackingAlert.alert_id
+                  : selectedOverride
+                    ? `OR-${selectedOverride.id}`
+                    : "No exception"}
             </span>
           </div>
           {selectedConflict ? (
@@ -453,6 +543,29 @@ export function ExceptionCenterPage({
               <section className="recovery-box">
                 <strong>Recommended recovery</strong>
                 <p>Run simulation before any plan mutation. Published plan remains untouched.</p>
+              </section>
+            </div>
+          ) : selectedTrackingAlert ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedTrackingAlert.severity)}`}>
+                OBSERVED {short(selectedTrackingAlert.severity)}
+              </span>
+              <h2>{short(selectedTrackingAlert.alert_type)}</h2>
+              <p>{selectedTrackingAlert.message}</p>
+              <dl>
+                <div><dt>Source</dt><dd>{selectedTrackingAlert.source_id}</dd></div>
+                <div><dt>Candidate status</dt><dd>{short(selectedTrackingAlert.status)}</dd></div>
+                <div><dt>Asset</dt><dd>{selectedTrackingAlert.asset_code}</dd></div>
+                <div><dt>Trip</dt><dd>{selectedTrackingAlert.trip_ref ?? "Unlinked"}</dd></div>
+                <div><dt>Planned event</dt><dd>{short(selectedTrackingAlert.schedule_event_type)}</dd></div>
+                <div><dt>Planned at</dt><dd><GridDate value={selectedTrackingAlert.schedule_event_planned_at ?? ""} /></dd></div>
+                <div><dt>Observed ETA</dt><dd>{dt(String(selectedTrackingAlert.evidence.observedEta ?? ""))}</dd></div>
+                <div><dt>Variance</dt><dd>{valueNum(selectedTrackingAlert.evidence.varianceMinutes, 0)}m</dd></div>
+                <div><dt>Source ping</dt><dd>{selectedTrackingAlert.source_ping_ref ?? "No ping"}</dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Observed candidate</strong>
+                <p>Tracking evidence is visible for triage, but it does not mutate the approved schedule.</p>
               </section>
             </div>
           ) : selectedOverride && selectedOverrideDelta ? (

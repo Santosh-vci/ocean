@@ -11,9 +11,11 @@ from apps.telemetry.models import (
     AssetIdentity,
     GeofenceZone,
     LatestAssetState,
+    LiveEtaProjection,
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TrackingAlert,
 )
 from apps.telemetry.services import ingest_position_ping, refresh_signal_health
 
@@ -323,5 +325,64 @@ def test_seed_phase0_sample_movement_events_are_idempotent():
     assert MovementEvent.objects.count() == 5
 
     latest_state = LatestAssetState.objects.get(asset_code="BRG-VAL-08")
-    assert latest_state.current_geofence.zone_id == "GEO-LOC-BRIDGE-GATE-B"
+    assert latest_state.current_geofence.zone_id == "GEO-LOC-SUARAN-PORT"
     assert latest_state.freshness_status == LatestAssetState.FreshnessStatus.FRESH
+    assert LiveEtaProjection.objects.filter(asset_code="BRG-VAL-08").exists()
+    delay_alert = TrackingAlert.objects.get(
+        asset_code="BRG-VAL-08",
+        alert_type=TrackingAlert.AlertType.DELAY,
+    )
+    assert delay_alert.schedule_event.event_type == "depart_jetty"
+    assert delay_alert.source_ping is not None
+    assert delay_alert.evidence["varianceMinutes"] == 45
+
+
+@pytest.mark.django_db
+def test_seed_phase0_on_time_track_does_not_create_false_delay_alert():
+    call_command("seed_phase0", verbosity=0)
+
+    assert LiveEtaProjection.objects.filter(
+        asset_code="BER-TUG-08",
+        status=LiveEtaProjection.Status.ON_TIME,
+    ).exists()
+    assert not TrackingAlert.objects.filter(
+        asset_code="BER-TUG-08",
+        alert_type=TrackingAlert.AlertType.DELAY,
+        status=TrackingAlert.Status.OPEN,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_refresh_signal_health_creates_stale_signal_alert_with_evidence():
+    call_command("seed_phase0", verbosity=0)
+    latest_state = LatestAssetState.objects.get(asset_code="BRG-VAL-08")
+
+    refresh_signal_health(now=latest_state.last_seen_at + timezone.timedelta(minutes=40))
+
+    stale_alert = TrackingAlert.objects.get(
+        asset_code="BRG-VAL-08",
+        alert_type=TrackingAlert.AlertType.STALE_SIGNAL,
+    )
+    assert stale_alert.status == TrackingAlert.Status.OPEN
+    assert stale_alert.source_ping == latest_state.last_ping
+    assert stale_alert.schedule_event is not None
+    assert stale_alert.evidence["sourcePingId"] == latest_state.last_ping.ping_id
+
+
+@pytest.mark.django_db
+def test_eta_projection_and_tracking_alert_api_are_viewable():
+    call_command("seed_phase0", verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    projection_response = client.get("/api/telemetry/eta-projections/")
+    alert_response = client.get("/api/telemetry/alerts/")
+    overview_response = client.get("/api/scheduling/overview/")
+
+    assert projection_response.status_code == 200
+    assert alert_response.status_code == 200
+    assert overview_response.status_code == 200
+    assert projection_response.data[0]["schedule_event_type"]
+    assert any(item["alert_type"] == "delay" for item in alert_response.data)
+    assert overview_response.data["trackingSummary"]["openAlertCount"] >= 1

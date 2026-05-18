@@ -63,9 +63,11 @@ from apps.telemetry.models import (
     AssetIdentity,
     GeofenceZone,
     LatestAssetState,
+    LiveEtaProjection,
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TrackingAlert,
 )
 from apps.telemetry.services import ensure_missing_latest_state, ingest_position_ping
 
@@ -379,6 +381,8 @@ class Command(BaseCommand):
 
     def _reset_operational_data(self):
         LatestAssetState.objects.all().delete()
+        TrackingAlert.objects.all().delete()
+        LiveEtaProjection.objects.all().delete()
         MovementEvent.objects.all().delete()
         PositionPing.objects.all().delete()
 
@@ -516,14 +520,75 @@ class Command(BaseCommand):
     def _seed_telemetry_sample_movements(self):
         source = TelemetrySource.objects.get(source_id="SYN-GPS-PHASE3")
         locations = {location.code: location for location in Location.objects.all()}
-        now = timezone.now()
+        active_version = (
+            PlanVersion.objects.filter(status=PlanVersion.Status.APPROVED)
+            .order_by("-created_at")
+            .first()
+            or PlanVersion.objects.filter(
+                status__in=[
+                    PlanVersion.Status.DRAFT,
+                    PlanVersion.Status.VALIDATED,
+                    PlanVersion.Status.PROPOSED,
+                ]
+            )
+            .order_by("-created_at")
+            .first()
+            or PlanVersion.objects.order_by("-created_at").first()
+        )
+        assignments = list(
+            Assignment.objects.select_related(
+                "trip",
+                "tug",
+                "barge",
+                "jetty",
+                "cts",
+            )
+            .prefetch_related("trip__events")
+            .filter(trip__plan_version=active_version)
+            .order_by("trip__plan_version__created_at", "trip__sequence")
+        )
+        latest_assignment_for_barge = next(
+            (item for item in assignments if item.barge and item.barge.code == "BRG-VAL-08"),
+            None,
+        )
+        latest_assignment_for_tug = next(
+            (item for item in assignments if item.tug and item.tug.code == "BER-TUG-08"),
+            None,
+        )
+        latest_assignment_for_cts = next(
+            (item for item in assignments if item.cts and item.cts.code == "CTS-BORNEO"),
+            None,
+        )
+        brg_depart = self._event_at(
+            assignment=latest_assignment_for_barge,
+            event_type=ScheduleEvent.EventType.DEPART_JETTY,
+            fallback=timezone.now(),
+        )
+        tug_depart = self._event_at(
+            assignment=latest_assignment_for_tug,
+            event_type=ScheduleEvent.EventType.DEPART_JETTY,
+            fallback=timezone.now(),
+        )
+        tug_bridge = self._event_at(
+            assignment=latest_assignment_for_tug,
+            event_type=ScheduleEvent.EventType.BRIDGE_CROSS,
+            fallback=tug_depart + timedelta(minutes=20),
+        )
+        cts_arrival = self._event_at(
+            assignment=latest_assignment_for_cts,
+            event_type=ScheduleEvent.EventType.ARRIVE_CTS,
+            fallback=timezone.now(),
+        )
+        tug_jetty_location = self._location_code_for_jetty(latest_assignment_for_tug)
+        barge_jetty_location = self._location_code_for_jetty(latest_assignment_for_barge)
+        cts_location = self._location_code_for_cts(latest_assignment_for_cts)
         sample_rows = [
             (
                 "GPS-768",
                 AssetIdentity.AssetType.TUG,
                 "BER-TUG-08",
-                "LOC-SUARAN-PORT",
-                now - timedelta(minutes=12),
+                tug_jetty_location,
+                tug_depart - timedelta(minutes=12),
                 "0.20",
                 "095.00",
             ),
@@ -532,7 +597,7 @@ class Command(BaseCommand):
                 AssetIdentity.AssetType.TUG,
                 "BER-TUG-08",
                 "LOC-BRIDGE-GATE-B",
-                now - timedelta(minutes=3),
+                tug_bridge - timedelta(minutes=5),
                 "5.40",
                 "090.00",
             ),
@@ -540,22 +605,27 @@ class Command(BaseCommand):
                 "SYN-BRG-VAL-08",
                 AssetIdentity.AssetType.BARGE,
                 "BRG-VAL-08",
-                "LOC-BRIDGE-GATE-B",
-                now - timedelta(minutes=4),
-                "4.60",
+                barge_jetty_location,
+                brg_depart + timedelta(minutes=45),
+                "0.30",
                 "090.00",
             ),
             (
                 "SYN-CTS-BORNEO",
                 AssetIdentity.AssetType.CTS,
                 "CTS-BORNEO",
-                "LOC-CTS-ALPHA",
-                now - timedelta(minutes=5),
+                cts_location,
+                cts_arrival + timedelta(minutes=5),
                 "0.00",
                 "180.00",
             ),
         ]
         sample_asset_codes = {row[2] for row in sample_rows}
+        TrackingAlert.objects.filter(
+            asset_code__in=sample_asset_codes,
+            source_kind=TrackingAlert.SourceKind.SYNTHETIC,
+        ).delete()
+        LiveEtaProjection.objects.filter(asset_code__in=sample_asset_codes).delete()
         PositionPing.objects.filter(raw_payload__seed="phase_3_sample_movement").delete()
         LatestAssetState.objects.filter(asset_code__in=sample_asset_codes).update(
             last_ping=None,
@@ -600,6 +670,37 @@ class Command(BaseCommand):
                     },
                 }
             )
+
+    def _event_at(self, *, assignment, event_type, fallback):
+        if not assignment:
+            return fallback
+        event = next(
+            (
+                item
+                for item in assignment.trip.events.all()
+                if item.event_type == event_type
+            ),
+            None,
+        )
+        return event.planned_at if event else fallback
+
+    def _location_code_for_jetty(self, assignment):
+        if not assignment or not assignment.jetty:
+            return "LOC-SUARAN-PORT"
+        return {
+            "JTY-SUARAN": "LOC-SUARAN-PORT",
+            "JTY-LATI": "LOC-LATI-PORT",
+            "JTY-GMB": "LOC-GURIMBANG",
+        }.get(assignment.jetty.code, "LOC-SUARAN-PORT")
+
+    def _location_code_for_cts(self, assignment):
+        if not assignment or not assignment.cts:
+            return "LOC-CTS-ALPHA"
+        return {
+            "CTS-BORNEO": "LOC-CTS-ALPHA",
+            "CTS-JAVA": "LOC-CTS-BRAVO",
+            "FC-CHLOE": "LOC-CTS-BRAVO",
+        }.get(assignment.cts.code, "LOC-CTS-ALPHA")
 
     def _seed_datetime(self, start_date, day_offset, hour, minute=0):
         target_date = start_date + timedelta(days=day_offset)

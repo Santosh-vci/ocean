@@ -1,13 +1,22 @@
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import { formatGridDateLabel } from "../lib/gridDate";
-import type { AuditEvent, CurrentUser, DashboardKpi, DashboardReadModel } from "../types";
+import type {
+  AuditEvent,
+  CurrentUser,
+  DashboardKpi,
+  DashboardReadModel,
+  LiveEtaProjectionRecord,
+  TrackingAlertRecord,
+} from "../types";
 
 type DashboardPageProps = {
   auditEvents: AuditEvent[];
   currentUser: CurrentUser;
   dashboard: DashboardReadModel | null;
+  etaProjections: LiveEtaProjectionRecord[];
   onNavigate: (path: string) => void;
+  trackingAlerts: TrackingAlertRecord[];
 };
 
 function toneClass(tone: string | undefined) {
@@ -35,13 +44,28 @@ export function DashboardPage({
   auditEvents,
   currentUser,
   dashboard,
+  etaProjections,
   onNavigate,
+  trackingAlerts,
 }: DashboardPageProps) {
   const role = dashboard?.roleShape;
   const planRisk = dashboard?.planRisk;
   const queue = dashboard?.queuePressure;
   const kpis = dashboard?.kpis ?? [];
   const recentAudit = auditEvents.slice(0, 5);
+  const openTrackingAlerts = trackingAlerts.filter((alert) => alert.status === "open");
+  const criticalTrackingAlerts = openTrackingAlerts.filter((alert) => alert.severity === "critical");
+  const highestVariance = etaProjections
+    .filter((projection) => typeof projection.variance_minutes === "number")
+    .sort((left, right) => (
+      (right.variance_minutes ?? Number.NEGATIVE_INFINITY)
+      - (left.variance_minutes ?? Number.NEGATIVE_INFINITY)
+    ))[0];
+  const latestProjection = etaProjections
+    .slice()
+    .sort((left, right) => (
+      new Date(right.calculated_at).getTime() - new Date(left.calculated_at).getTime()
+    ))[0];
 
   return (
     <section className="workspace-page situation-board">
@@ -223,6 +247,47 @@ export function DashboardPage({
                 </span>
               ))}
             </div>
+          </section>
+
+          <section className="tracking-signal-card">
+            <h2>Live tracking</h2>
+            <dl>
+              <div>
+                <dt>Open alerts</dt>
+                <dd className={openTrackingAlerts.length ? "warning-text" : "success-text"}>
+                  {openTrackingAlerts.length}
+                </dd>
+              </div>
+              <div>
+                <dt>Critical</dt>
+                <dd className={criticalTrackingAlerts.length ? "critical-text" : ""}>
+                  {criticalTrackingAlerts.length}
+                </dd>
+              </div>
+              <div>
+                <dt>Highest variance</dt>
+                <dd>
+                  {highestVariance?.variance_minutes !== undefined
+                    && highestVariance?.variance_minutes !== null
+                    ? `${highestVariance.variance_minutes}m`
+                    : "0m"}
+                </dd>
+              </div>
+              <div>
+                <dt>Latest ETA calc</dt>
+                <dd>{latestProjection ? formatGridDateLabel(latestProjection.calculated_at) : "No feed"}</dd>
+              </div>
+            </dl>
+            {openTrackingAlerts.slice(0, 2).map((alert) => (
+              <button key={alert.alert_id} onClick={() => onNavigate("/exceptions/center")} type="button">
+                <span className={`status-chip ${toneClass(alert.severity)}`}>{short(alert.alert_type)}</span>
+                <strong>{alert.asset_code}</strong>
+                <em>{alert.message}</em>
+              </button>
+            ))}
+            {!openTrackingAlerts.length ? (
+              <p>No observed tracking alerts are open.</p>
+            ) : null}
           </section>
 
           <section className="drilldown-card">

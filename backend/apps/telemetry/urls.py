@@ -4,9 +4,11 @@ from .views import (
     AssetIdentityViewSet,
     GeofenceZoneViewSet,
     LatestAssetStateViewSet,
+    LiveEtaProjectionViewSet,
     MovementEventViewSet,
     PositionPingViewSet,
     TelemetrySourceViewSet,
+    TrackingAlertViewSet,
 )
 
 router = DefaultRouter()
@@ -20,5 +22,7 @@ router.register(
     basename="latest-asset-state",
 )
 router.register("telemetry/movement-events", MovementEventViewSet, basename="movement-event")
+router.register("telemetry/eta-projections", LiveEtaProjectionViewSet, basename="eta-projection")
+router.register("telemetry/alerts", TrackingAlertViewSet, basename="tracking-alert")
 
 urlpatterns = router.urls

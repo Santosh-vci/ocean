@@ -5,17 +5,21 @@ import { formatGridDateLabel } from "../lib/gridDate";
 import type {
   GeofenceZoneRecord,
   LatestAssetStateRecord,
+  LiveEtaProjectionRecord,
   MovementEventRecord,
   SchedulingOverview,
+  TrackingAlertRecord,
 } from "../types";
 
 type LiveResourceMapPageProps = {
+  etaProjections: LiveEtaProjectionRecord[];
   geofenceZones: GeofenceZoneRecord[];
   latestAssetStates: LatestAssetStateRecord[];
   movementEvents: MovementEventRecord[];
   overview: SchedulingOverview | null;
   canRunSimulation: boolean;
   onNavigate: (path: string) => void;
+  trackingAlerts: TrackingAlertRecord[];
 };
 
 const EMPTY_ASSIGNMENTS: NonNullable<SchedulingOverview["assignments"]> = [];
@@ -66,6 +70,26 @@ function zoneTone(zoneType: string | undefined) {
   return "info";
 }
 
+function alertTone(alert: TrackingAlertRecord | undefined) {
+  if (!alert) return "ok";
+  if (alert.severity === "critical") return "critical";
+  if (alert.severity === "warning") return "pending";
+  return "info";
+}
+
+function projectionTone(projection: LiveEtaProjectionRecord | undefined) {
+  if (!projection) return "info";
+  if (projection.status === "delayed") return "critical";
+  if (projection.status === "watch" || projection.status === "unknown") return "pending";
+  return "ok";
+}
+
+function varianceLabel(projection: LiveEtaProjectionRecord | undefined) {
+  if (!projection || projection.variance_minutes === null) return "No ETA";
+  const sign = projection.variance_minutes > 0 ? "+" : "";
+  return `${sign}${projection.variance_minutes}m`;
+}
+
 function coordinateNumber(value: string | null | undefined) {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
@@ -73,12 +97,14 @@ function coordinateNumber(value: string | null | undefined) {
 }
 
 export function LiveResourceMapPage({
+  etaProjections,
   geofenceZones,
   latestAssetStates,
   movementEvents,
   overview,
   canRunSimulation,
   onNavigate,
+  trackingAlerts,
 }: LiveResourceMapPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
@@ -86,6 +112,27 @@ export function LiveResourceMapPage({
     () => new Map(latestAssetStates.map((state) => [state.asset_code, state])),
     [latestAssetStates],
   );
+  const latestProjectionByAsset = useMemo(() => {
+    const rows = new Map<string, LiveEtaProjectionRecord>();
+    etaProjections.forEach((projection) => {
+      const current = rows.get(projection.asset_code);
+      if (
+        !current
+        || new Date(projection.calculated_at).getTime() > new Date(current.calculated_at).getTime()
+      ) {
+        rows.set(projection.asset_code, projection);
+      }
+    });
+    return rows;
+  }, [etaProjections]);
+  const openAlerts = trackingAlerts.filter((alert) => alert.status === "open");
+  const alertsByAsset = useMemo(() => {
+    const rows = new Map<string, TrackingAlertRecord[]>();
+    openAlerts.forEach((alert) => {
+      rows.set(alert.asset_code, [...(rows.get(alert.asset_code) ?? []), alert]);
+    });
+    return rows;
+  }, [openAlerts]);
   const [selectedAssetCode, setSelectedAssetCode] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"manual" | "tide" | "exception">("manual");
   const defaultSignalCode = latestAssetStates.find((state) => state.current_geofence_ref)?.asset_code
@@ -101,20 +148,20 @@ export function LiveResourceMapPage({
   ) ?? assignments[0];
   const selectedConflict = conflicts.find((conflict) => conflict.trip === selected?.trip);
   const selectedState = selectedCode ? statesByAsset.get(selectedCode) : undefined;
+  const selectedProjection = selectedCode ? latestProjectionByAsset.get(selectedCode) : undefined;
+  const selectedAlerts = selectedCode ? alertsByAsset.get(selectedCode) ?? [] : [];
   const freshCount = latestAssetStates.filter((state) => state.freshness_status === "fresh").length;
   const agingCount = latestAssetStates.filter((state) => state.freshness_status === "aging").length;
   const staleCount = latestAssetStates.filter(
     (state) => state.freshness_status === "stale" || state.freshness_status === "missing",
   ).length;
   const activeGeofenceCount = geofenceZones.filter((zone) => zone.status === "active").length;
-  const avgConfidence = latestAssetStates.length
-    ? Math.round(
-      latestAssetStates.reduce(
-        (sum, state) => sum + Number(state.confidence_score ?? 0),
-        0,
-      ) / latestAssetStates.length,
-    )
-    : null;
+  const highestVariance = etaProjections
+    .filter((projection) => typeof projection.variance_minutes === "number")
+    .sort((left, right) => (
+      (right.variance_minutes ?? Number.NEGATIVE_INFINITY)
+      - (left.variance_minutes ?? Number.NEGATIVE_INFINITY)
+    ))[0];
   const latestSeen = latestAssetStates
     .filter((state) => state.last_seen_at)
     .sort((left, right) => (
@@ -181,9 +228,11 @@ export function LiveResourceMapPage({
           top: projected?.top ?? 24 + ((index * 17) % 46),
           conflict: assignment ? conflicts.find((item) => item.trip === assignment.trip) : undefined,
           signal,
+          projection: latestProjectionByAsset.get(signal.asset_code),
+          alerts: alertsByAsset.get(signal.asset_code) ?? [],
         };
       }),
-    [assignments, conflicts, latestAssetStates, projectPoint],
+    [alertsByAsset, assignments, conflicts, latestAssetStates, latestProjectionByAsset, projectPoint],
   );
 
   return (
@@ -206,14 +255,15 @@ export function LiveResourceMapPage({
         </div>
       </header>
 
-      <div className="metric-strip seven-up map-kpis">
+      <div className="metric-strip eight-up map-kpis">
         <div><span>Assets tracked</span><strong>{latestAssetStates.length}</strong></div>
         <div><span>Fresh signals</span><strong className="ok-text">{freshCount}</strong></div>
         <div><span>Aging signals</span><strong className="pending-text">{agingCount}</strong></div>
         <div><span>Stale / missing</span><strong className="critical-text">{staleCount}</strong></div>
         <div><span>Geofences</span><strong>{activeGeofenceCount}</strong></div>
         <div><span>Movement events</span><strong>{movementEvents.length}</strong></div>
-        <div><span>Confidence</span><strong>{avgConfidence === null ? "?" : `${avgConfidence}%`}</strong></div>
+        <div><span>Open alerts</span><strong className={openAlerts.length ? "warning-text" : "ok-text"}>{openAlerts.length}</strong></div>
+        <div><span>Max ETA variance</span><strong className={`${projectionTone(highestVariance)}-text`}>{varianceLabel(highestVariance)}</strong></div>
       </div>
 
       <div className="live-map-layout">
@@ -301,10 +351,14 @@ export function LiveResourceMapPage({
                 </div>
               ) : null;
             })}
-            {markers.map(({ assignment, left, top, conflict, signal }) => (
+            {markers.map(({ assignment, left, top, conflict, signal, projection, alerts }) => (
               <button
                 className={`asset-marker ${
-                  signal ? toneForFreshness(signal.freshness_status) : toneFor(assignment?.status, conflict?.is_blocking)
+                  alerts[0]
+                    ? alertTone(alerts[0])
+                    : signal
+                      ? toneForFreshness(signal.freshness_status)
+                      : toneFor(assignment?.status, conflict?.is_blocking)
                 }`}
                 key={`${signal.asset_type}-${signal.asset_code}`}
                 onClick={() => setSelectedAssetCode(signal.asset_code)}
@@ -313,17 +367,30 @@ export function LiveResourceMapPage({
               >
                 <SvgIcon name="fleet" />
                 <span>{signal.asset_code ?? assignment?.trip_ref}</span>
-                {signal ? <em>{stateAgeLabel(signal)}</em> : null}
+                {projection ? <em>{varianceLabel(projection)}</em> : signal ? <em>{stateAgeLabel(signal)}</em> : null}
+                {alerts.length ? <b>{alerts.length}</b> : null}
               </button>
             ))}
           </div>
           <div className="map-movement-log">
             <div>
-              <strong>Movement events</strong>
-              <span>Derived from geofence transitions; schedule remains the planning baseline.</span>
+              <strong>Observed ETA & alerts</strong>
+              <span>Projection compares live evidence to planned schedule events.</span>
             </div>
             <div className="movement-event-list">
-              {movementEvents.slice(0, 4).map((event) => (
+              {openAlerts.slice(0, 2).map((alert) => (
+                <button
+                  className={alertTone(alert)}
+                  key={alert.alert_id}
+                  onClick={() => setSelectedAssetCode(alert.asset_code)}
+                  type="button"
+                >
+                  <strong>{alert.asset_code}</strong>
+                  <span>{short(alert.alert_type)}</span>
+                  <em>{alert.message}</em>
+                </button>
+              ))}
+              {!openAlerts.length ? movementEvents.slice(0, 4).map((event) => (
                 <button
                   className={zoneTone(event.geofence_type)}
                   key={event.event_id}
@@ -334,8 +401,8 @@ export function LiveResourceMapPage({
                   <span>{eventLabel(event.event_type)}</span>
                   <em>{event.geofence_name}</em>
                 </button>
-              ))}
-              {!movementEvents.length ? <span>No movement events</span> : null}
+              )) : null}
+              {!openAlerts.length && !movementEvents.length ? <span>No movement events</span> : null}
             </div>
             <em>{latestSeen ? formatGridDateLabel(latestSeen) : "No signal received"}</em>
           </div>
@@ -362,6 +429,10 @@ export function LiveResourceMapPage({
                 <div><dt>Heading</dt><dd>{selectedState?.heading_degrees ? `${selectedState.heading_degrees} deg` : "Unknown"}</dd></div>
                 <div><dt>Current zone</dt><dd>{selectedState?.current_geofence_name ?? "Outside geofence"}</dd></div>
                 <div><dt>Last movement</dt><dd>{eventLabel(selectedState?.last_movement_event_type)}</dd></div>
+                <div><dt>Planned event</dt><dd>{short(selectedProjection?.schedule_event_type)}</dd></div>
+                <div><dt>Observed ETA</dt><dd>{selectedProjection?.observed_eta ? formatGridDateLabel(selectedProjection.observed_eta) : "Not calculated"}</dd></div>
+                <div><dt>ETA variance</dt><dd className={`${projectionTone(selectedProjection)}-text`}>{varianceLabel(selectedProjection)}</dd></div>
+                <div><dt>Open alerts</dt><dd>{selectedAlerts.length ? selectedAlerts.map((alert) => short(alert.alert_type)).join(", ") : "None"}</dd></div>
                 <div><dt>Paired asset</dt><dd>{selected?.barge?.code ?? "No barge"}</dd></div>
                 <div><dt>Jetty</dt><dd>{selected?.jetty?.code ?? "Unassigned"}</dd></div>
                 <div><dt>CTS</dt><dd>{selected?.cts?.code ?? "Unassigned"}</dd></div>
@@ -378,6 +449,11 @@ export function LiveResourceMapPage({
               >
                 Open simulation workspace
               </button>
+              {selectedAlerts.length ? (
+                <button onClick={() => onNavigate("/exceptions/center")} type="button">
+                  Open tracking alert
+                </button>
+              ) : null}
             </div>
           ) : null}
         </aside>

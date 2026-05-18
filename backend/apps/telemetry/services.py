@@ -4,15 +4,21 @@ from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import F, Q
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+
+from apps.scheduling.models import Assignment, PlanVersion, ScheduleEvent
 
 from .models import (
     AssetIdentity,
     GeofenceZone,
     LatestAssetState,
+    LiveEtaProjection,
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TrackingAlert,
 )
 
 SYNTHETIC_SOURCE_TYPES = {
@@ -46,12 +52,12 @@ def ingest_position_ping(*, payload: dict) -> dict:
             raw_payload_ref=normalized.get("raw_payload_ref", ""),
             is_synthetic=source.source_type in SYNTHETIC_SOURCE_TYPES,
         )
-        latest_state_updated, movement_events = _update_latest_asset_state(ping=ping)
+        latest_state_updated, movement_events, alerts = _update_latest_asset_state(ping=ping)
     return {
         "ping": ping,
         "latest_state_updated": latest_state_updated,
         "geofence_events": movement_events,
-        "alerts": [],
+        "alerts": alerts,
     }
 
 
@@ -74,7 +80,11 @@ def ensure_missing_latest_state(*, asset_identity: AssetIdentity) -> LatestAsset
 def refresh_signal_health(*, now=None) -> int:
     now = now or timezone.now()
     updated = 0
-    for state in LatestAssetState.objects.select_related("source").all():
+    for state in LatestAssetState.objects.select_related(
+        "source",
+        "asset_identity",
+        "last_ping",
+    ).all():
         freshness_status = _freshness_status(
             source=state.source,
             last_seen_at=state.last_seen_at,
@@ -89,9 +99,18 @@ def refresh_signal_health(*, now=None) -> int:
             state.freshness_status != freshness_status
             or state.confidence_score != confidence_score
         ):
+            previous_status = state.freshness_status
             state.freshness_status = freshness_status
             state.confidence_score = confidence_score
             state.save(update_fields=["freshness_status", "confidence_score", "updated_at"])
+            if freshness_status == LatestAssetState.FreshnessStatus.STALE:
+                _sync_stale_signal_alert(state=state, now=now)
+            elif previous_status == LatestAssetState.FreshnessStatus.STALE:
+                _resolve_tracking_alerts(
+                    asset_code=state.asset_code,
+                    alert_type=TrackingAlert.AlertType.STALE_SIGNAL,
+                    now=now,
+                )
             updated += 1
     return updated
 
@@ -223,13 +242,16 @@ def _resolve_asset_identity(*, source: TelemetrySource, payload: dict) -> AssetI
     return identity
 
 
-def _update_latest_asset_state(*, ping: PositionPing) -> tuple[bool, list[MovementEvent]]:
+def _update_latest_asset_state(
+    *,
+    ping: PositionPing,
+) -> tuple[bool, list[MovementEvent], list[TrackingAlert]]:
     state = LatestAssetState.objects.filter(
         asset_type=ping.asset_type,
         asset_code=ping.asset_code,
     ).select_related("current_geofence").first()
     if state and state.last_seen_at and ping.device_timestamp < state.last_seen_at:
-        return False, []
+        return False, [], []
 
     freshness_status = _freshness_status(
         source=ping.source,
@@ -256,7 +278,7 @@ def _update_latest_asset_state(*, ping: PositionPing) -> tuple[bool, list[Moveme
     last_movement_event = movement_events[-1] if movement_events else (
         state.last_movement_event if state else None
     )
-    LatestAssetState.objects.update_or_create(
+    latest_state, _ = LatestAssetState.objects.update_or_create(
         asset_type=ping.asset_type,
         asset_code=ping.asset_code,
         defaults={
@@ -282,7 +304,673 @@ def _update_latest_asset_state(*, ping: PositionPing) -> tuple[bool, list[Moveme
             },
         },
     )
-    return True, movement_events
+    alerts = _evaluate_eta_projection_and_alerts(latest_state=latest_state, ping=ping)
+    return True, movement_events, alerts
+
+
+def _evaluate_eta_projection_and_alerts(
+    *,
+    latest_state: LatestAssetState,
+    ping: PositionPing,
+) -> list[TrackingAlert]:
+    assignment = _assignment_for_asset(asset_code=ping.asset_code)
+    if not assignment:
+        return []
+
+    schedule_event = _target_schedule_event(
+        latest_state=latest_state,
+        assignment=assignment,
+        ping=ping,
+    )
+    if not schedule_event:
+        return []
+
+    observed_eta, method = _observed_eta_for_event(
+        latest_state=latest_state,
+        ping=ping,
+        assignment=assignment,
+        schedule_event=schedule_event,
+    )
+    variance_minutes = None
+    if observed_eta:
+        variance_minutes = round(
+            (observed_eta - schedule_event.planned_at).total_seconds() / 60
+        )
+    status = _projection_status(
+        variance_minutes=variance_minutes,
+        schedule_event=schedule_event,
+    )
+    projection = _upsert_eta_projection(
+        latest_state=latest_state,
+        ping=ping,
+        assignment=assignment,
+        schedule_event=schedule_event,
+        observed_eta=observed_eta,
+        variance_minutes=variance_minutes,
+        method=method,
+        status=status,
+    )
+    alerts = _sync_projection_alerts(
+        latest_state=latest_state,
+        ping=ping,
+        assignment=assignment,
+        schedule_event=schedule_event,
+        projection=projection,
+    )
+    alerts.extend(
+        _sync_location_alerts(
+            latest_state=latest_state,
+            ping=ping,
+            assignment=assignment,
+            schedule_event=schedule_event,
+            projection=projection,
+        )
+    )
+    return alerts
+
+
+def _active_schedule_version() -> PlanVersion | None:
+    queryset = PlanVersion.objects.select_related("plan", "created_by", "source_version")
+    publish_candidate = (
+        queryset.filter(status=PlanVersion.Status.APPROVED).order_by("-created_at").first()
+    )
+    if publish_candidate:
+        return publish_candidate
+
+    active_candidate = (
+        queryset.filter(
+            status__in=[
+                PlanVersion.Status.DRAFT,
+                PlanVersion.Status.VALIDATED,
+                PlanVersion.Status.PROPOSED,
+            ]
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if active_candidate:
+        return active_candidate
+
+    return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at").first()
+
+
+def _assignment_for_asset(*, asset_code: str) -> Assignment | None:
+    active_version = _active_schedule_version()
+    if not active_version:
+        return None
+
+    return (
+        Assignment.objects.filter(trip__plan_version=active_version)
+        .filter(
+            Q(tug__code=asset_code)
+            | Q(barge__code=asset_code)
+            | Q(cts__code=asset_code)
+        )
+        .select_related(
+            "trip",
+            "trip__voyage",
+            "tug",
+            "barge",
+            "jetty",
+            "cts",
+            "route_segment",
+        )
+        .order_by("trip__sequence")
+        .first()
+    )
+
+
+def _target_schedule_event(
+    *,
+    latest_state: LatestAssetState,
+    assignment: Assignment,
+    ping: PositionPing,
+) -> ScheduleEvent | None:
+    zone_type = latest_state.current_geofence.zone_type if latest_state.current_geofence else ""
+    event_type = None
+    if zone_type == GeofenceZone.ZoneType.JETTY:
+        event_type = ScheduleEvent.EventType.DEPART_JETTY
+    elif zone_type == GeofenceZone.ZoneType.BRIDGE:
+        event_type = ScheduleEvent.EventType.BRIDGE_CROSS
+    elif zone_type == GeofenceZone.ZoneType.TIDE_GATE:
+        event_type = ScheduleEvent.EventType.TIDE_GATE
+    elif zone_type == GeofenceZone.ZoneType.CTS_ZONE:
+        event_type = ScheduleEvent.EventType.ARRIVE_CTS
+
+    events = ScheduleEvent.objects.filter(trip=assignment.trip).order_by("sequence")
+    if event_type:
+        target = events.filter(event_type=event_type).first()
+        if target:
+            return target
+
+    return (
+        events.filter(planned_at__gte=ping.device_timestamp)
+        .order_by("planned_at", "sequence")
+        .first()
+        or events.order_by("-planned_at", "-sequence").first()
+    )
+
+
+def _observed_eta_for_event(
+    *,
+    latest_state: LatestAssetState,
+    ping: PositionPing,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+) -> tuple[object | None, str]:
+    raw_eta = ping.raw_payload.get("observed_eta") or ping.raw_payload.get("observedEta")
+    if raw_eta:
+        parsed = parse_datetime(str(raw_eta))
+        if parsed:
+            if timezone.is_naive(parsed):
+                parsed = timezone.make_aware(parsed)
+            return parsed, LiveEtaProjection.CalculationMethod.SYNTHETIC_SCRIPT
+
+    target_zone = _zone_for_schedule_event(assignment=assignment, schedule_event=schedule_event)
+    if target_zone and latest_state.current_geofence_id == target_zone.id:
+        return ping.device_timestamp, LiveEtaProjection.CalculationMethod.GEOFENCE_SEQUENCE
+
+    speed_knots = Decimal(ping.speed_knots or 0)
+    if not target_zone or speed_knots < Decimal("0.50"):
+        return None, LiveEtaProjection.CalculationMethod.SIMPLE_SPEED
+
+    distance_m = _distance_m(
+        latitude_a=ping.latitude,
+        longitude_a=ping.longitude,
+        latitude_b=target_zone.latitude,
+        longitude_b=target_zone.longitude,
+    )
+    meters_per_second = float(speed_knots) * 1852 / 3600
+    if meters_per_second <= 0:
+        return None, LiveEtaProjection.CalculationMethod.SIMPLE_SPEED
+    travel_seconds = max(60, min(int(distance_m / meters_per_second), 72 * 3600))
+    return (
+        ping.device_timestamp + timezone.timedelta(seconds=travel_seconds),
+        LiveEtaProjection.CalculationMethod.SIMPLE_SPEED,
+    )
+
+
+def _zone_for_schedule_event(
+    *,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+) -> GeofenceZone | None:
+    if schedule_event.event_type in {
+        ScheduleEvent.EventType.LOAD_START,
+        ScheduleEvent.EventType.LOAD_COMPLETE,
+        ScheduleEvent.EventType.DEPART_JETTY,
+    }:
+        return _zone_for_jetty(assignment.jetty.code if assignment.jetty else "")
+    if schedule_event.event_type == ScheduleEvent.EventType.BRIDGE_CROSS:
+        return GeofenceZone.objects.filter(
+            status=GeofenceZone.Status.ACTIVE,
+            zone_type=GeofenceZone.ZoneType.BRIDGE,
+        ).order_by("zone_id").first()
+    if schedule_event.event_type == ScheduleEvent.EventType.TIDE_GATE:
+        return GeofenceZone.objects.filter(
+            status=GeofenceZone.Status.ACTIVE,
+            zone_type=GeofenceZone.ZoneType.TIDE_GATE,
+        ).order_by("zone_id").first()
+    if schedule_event.event_type in {
+        ScheduleEvent.EventType.ARRIVE_CTS,
+        ScheduleEvent.EventType.DISCHARGE_START,
+        ScheduleEvent.EventType.DISCHARGE_COMPLETE,
+    }:
+        return _zone_for_cts(assignment.cts.code if assignment.cts else "")
+    return None
+
+
+def _zone_for_jetty(jetty_code: str) -> GeofenceZone | None:
+    token_map = {
+        "JTY-SUARAN": "LOC-SUARAN-PORT",
+        "JTY-LATI": "LOC-LATI-PORT",
+        "JTY-GMB": "LOC-GURIMBANG",
+    }
+    location_code = token_map.get(jetty_code)
+    if location_code:
+        zone = GeofenceZone.objects.filter(
+            status=GeofenceZone.Status.ACTIVE,
+            source_location__code=location_code,
+        ).first()
+        if zone:
+            return zone
+    token = jetty_code.replace("JTY-", "").lower()
+    return GeofenceZone.objects.filter(
+        status=GeofenceZone.Status.ACTIVE,
+        zone_type=GeofenceZone.ZoneType.JETTY,
+        source_location__code__icontains=token,
+    ).first()
+
+
+def _zone_for_cts(cts_code: str) -> GeofenceZone | None:
+    token_map = {
+        "CTS-BORNEO": "LOC-CTS-ALPHA",
+        "CTS-JAVA": "LOC-CTS-BRAVO",
+        "FC-CHLOE": "LOC-CTS-BRAVO",
+    }
+    location_code = token_map.get(cts_code)
+    if location_code:
+        zone = GeofenceZone.objects.filter(
+            status=GeofenceZone.Status.ACTIVE,
+            source_location__code=location_code,
+        ).first()
+        if zone:
+            return zone
+    return GeofenceZone.objects.filter(
+        status=GeofenceZone.Status.ACTIVE,
+        zone_type=GeofenceZone.ZoneType.CTS_ZONE,
+    ).order_by("zone_id").first()
+
+
+def _projection_status(
+    *,
+    variance_minutes: int | None,
+    schedule_event: ScheduleEvent,
+) -> str:
+    if variance_minutes is None:
+        return LiveEtaProjection.Status.UNKNOWN
+    if variance_minutes <= 10:
+        return LiveEtaProjection.Status.ON_TIME
+    if schedule_event.event_type in {
+        ScheduleEvent.EventType.BRIDGE_CROSS,
+        ScheduleEvent.EventType.TIDE_GATE,
+    }:
+        return (
+            LiveEtaProjection.Status.DELAYED
+            if variance_minutes > 20
+            else LiveEtaProjection.Status.WATCH
+        )
+    return (
+        LiveEtaProjection.Status.DELAYED
+        if variance_minutes > 30
+        else LiveEtaProjection.Status.WATCH
+    )
+
+
+def _upsert_eta_projection(
+    *,
+    latest_state: LatestAssetState,
+    ping: PositionPing,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+    observed_eta,
+    variance_minutes: int | None,
+    method: str,
+    status: str,
+) -> LiveEtaProjection:
+    now = timezone.now()
+    projection, _ = LiveEtaProjection.objects.get_or_create(
+        asset_code=ping.asset_code,
+        trip=assignment.trip,
+        schedule_event=schedule_event,
+        defaults={
+            "projection_id": _next_eta_projection_id(),
+            "asset_type": ping.asset_type,
+            "source": ping.source,
+            "asset_identity": ping.asset_identity,
+            "planned_at": schedule_event.planned_at,
+            "observed_eta": observed_eta,
+            "variance_minutes": variance_minutes,
+            "calculation_method": method,
+            "confidence_score": latest_state.confidence_score,
+            "source_ping": ping,
+            "current_geofence": latest_state.current_geofence,
+            "status": status,
+            "metadata": {},
+            "calculated_at": now,
+        },
+    )
+    projection.asset_type = ping.asset_type
+    projection.source = ping.source
+    projection.asset_identity = ping.asset_identity
+    projection.planned_at = schedule_event.planned_at
+    projection.observed_eta = observed_eta
+    projection.variance_minutes = variance_minutes
+    projection.calculation_method = method
+    projection.confidence_score = latest_state.confidence_score
+    projection.source_ping = ping
+    projection.current_geofence = latest_state.current_geofence
+    projection.status = status
+    projection.metadata = {
+        "sourcePingId": ping.ping_id,
+        "currentGeofence": (
+            latest_state.current_geofence.zone_id
+            if latest_state.current_geofence
+            else None
+        ),
+        "scheduleEventType": schedule_event.event_type,
+        "seed": ping.raw_payload.get("seed"),
+    }
+    projection.calculated_at = now
+    projection.save(
+        update_fields=[
+            "asset_type",
+            "source",
+            "asset_identity",
+            "planned_at",
+            "observed_eta",
+            "variance_minutes",
+            "calculation_method",
+            "confidence_score",
+            "source_ping",
+            "current_geofence",
+            "status",
+            "metadata",
+            "calculated_at",
+            "updated_at",
+        ]
+    )
+    return projection
+
+
+def _sync_projection_alerts(
+    *,
+    latest_state: LatestAssetState,
+    ping: PositionPing,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+    projection: LiveEtaProjection,
+) -> list[TrackingAlert]:
+    variance = projection.variance_minutes
+    alerts = []
+    is_departure_delay = (
+        schedule_event.event_type == ScheduleEvent.EventType.DEPART_JETTY
+        and variance is not None
+        and variance > 15
+    )
+    is_eta_risk = (
+        schedule_event.event_type in {
+            ScheduleEvent.EventType.BRIDGE_CROSS,
+            ScheduleEvent.EventType.TIDE_GATE,
+            ScheduleEvent.EventType.ARRIVE_CTS,
+        }
+        and projection.status in {
+            LiveEtaProjection.Status.WATCH,
+            LiveEtaProjection.Status.DELAYED,
+        }
+    )
+
+    if is_departure_delay:
+        severity = (
+            TrackingAlert.Severity.CRITICAL
+            if variance is not None and variance >= 60
+            else TrackingAlert.Severity.WARNING
+        )
+        alerts.append(
+            _upsert_tracking_alert(
+                alert_type=TrackingAlert.AlertType.DELAY,
+                severity=severity,
+                latest_state=latest_state,
+                ping=ping,
+                assignment=assignment,
+                schedule_event=schedule_event,
+                projection=projection,
+                message=(
+                    f"{ping.asset_code} is still at jetty with observed departure "
+                    f"{variance} minutes after plan."
+                ),
+            )
+        )
+    else:
+        _resolve_tracking_alerts(
+            asset_code=ping.asset_code,
+            alert_type=TrackingAlert.AlertType.DELAY,
+            trip=assignment.trip,
+            schedule_event=schedule_event,
+        )
+
+    if is_eta_risk:
+        severity = (
+            TrackingAlert.Severity.CRITICAL
+            if variance is not None and variance >= 45
+            else TrackingAlert.Severity.WARNING
+        )
+        alerts.append(
+            _upsert_tracking_alert(
+                alert_type=TrackingAlert.AlertType.ETA_RISK,
+                severity=severity,
+                latest_state=latest_state,
+                ping=ping,
+                assignment=assignment,
+                schedule_event=schedule_event,
+                projection=projection,
+                message=(
+                    f"{ping.asset_code} observed ETA is {variance} minutes off "
+                    f"{schedule_event.event_type.replace('_', ' ')}."
+                ),
+            )
+        )
+    else:
+        _resolve_tracking_alerts(
+            asset_code=ping.asset_code,
+            alert_type=TrackingAlert.AlertType.ETA_RISK,
+            trip=assignment.trip,
+            schedule_event=schedule_event,
+        )
+
+    return alerts
+
+
+def _sync_location_alerts(
+    *,
+    latest_state: LatestAssetState,
+    ping: PositionPing,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+    projection: LiveEtaProjection,
+) -> list[TrackingAlert]:
+    alerts = []
+    current_zone = latest_state.current_geofence
+    if current_zone and current_zone.zone_type == GeofenceZone.ZoneType.MAINTENANCE:
+        alerts.append(
+            _upsert_tracking_alert(
+                alert_type=TrackingAlert.AlertType.ROUTE_DEVIATION,
+                severity=TrackingAlert.Severity.WARNING,
+                latest_state=latest_state,
+                ping=ping,
+                assignment=assignment,
+                schedule_event=schedule_event,
+                projection=projection,
+                message=f"{ping.asset_code} entered maintenance geofence while assigned.",
+            )
+        )
+    else:
+        _resolve_tracking_alerts(
+            asset_code=ping.asset_code,
+            alert_type=TrackingAlert.AlertType.ROUTE_DEVIATION,
+            trip=assignment.trip,
+        )
+
+    dwell_minutes = _dwell_minutes(latest_state=latest_state, ping=ping)
+    if current_zone and dwell_minutes is not None and dwell_minutes >= 30:
+        alerts.append(
+            _upsert_tracking_alert(
+                alert_type=TrackingAlert.AlertType.GEOFENCE_DWELL,
+                severity=TrackingAlert.Severity.WARNING,
+                latest_state=latest_state,
+                ping=ping,
+                assignment=assignment,
+                schedule_event=schedule_event,
+                projection=projection,
+                message=(
+                    f"{ping.asset_code} has dwelled in {current_zone.name} "
+                    f"for {dwell_minutes} minutes."
+                ),
+            )
+        )
+    else:
+        _resolve_tracking_alerts(
+            asset_code=ping.asset_code,
+            alert_type=TrackingAlert.AlertType.GEOFENCE_DWELL,
+            trip=assignment.trip,
+        )
+    return alerts
+
+
+def _dwell_minutes(*, latest_state: LatestAssetState, ping: PositionPing) -> int | None:
+    if not latest_state.current_geofence:
+        return None
+    if latest_state.current_geofence.zone_type == GeofenceZone.ZoneType.JETTY:
+        assignment = _assignment_for_asset(asset_code=ping.asset_code)
+        event = ScheduleEvent.objects.filter(
+            trip=assignment.trip if assignment else None,
+            event_type=ScheduleEvent.EventType.DEPART_JETTY,
+        ).first()
+        if event and ping.device_timestamp > event.planned_at:
+            return round((ping.device_timestamp - event.planned_at).total_seconds() / 60)
+    event_at = (
+        latest_state.last_movement_event.event_at
+        if latest_state.last_movement_event
+        else None
+    )
+    if not event_at:
+        return None
+    return round((ping.device_timestamp - event_at).total_seconds() / 60)
+
+
+def _sync_stale_signal_alert(*, state: LatestAssetState, now) -> TrackingAlert | None:
+    assignment = _assignment_for_asset(asset_code=state.asset_code)
+    if not assignment:
+        return None
+    schedule_event = (
+        ScheduleEvent.objects.filter(
+            trip=assignment.trip,
+            planned_at__gte=state.last_seen_at or now,
+        )
+        .order_by("planned_at")
+        .first()
+        or ScheduleEvent.objects.filter(trip=assignment.trip).order_by("-planned_at").first()
+    )
+    if not schedule_event:
+        return None
+    return _upsert_tracking_alert(
+        alert_type=TrackingAlert.AlertType.STALE_SIGNAL,
+        severity=TrackingAlert.Severity.WARNING,
+        latest_state=state,
+        ping=state.last_ping,
+        assignment=assignment,
+        schedule_event=schedule_event,
+        projection=None,
+        message=f"{state.asset_code} telemetry signal is stale against the active trip.",
+        now=now,
+    )
+
+
+def _upsert_tracking_alert(
+    *,
+    alert_type: str,
+    severity: str,
+    latest_state: LatestAssetState,
+    ping: PositionPing | None,
+    assignment: Assignment,
+    schedule_event: ScheduleEvent,
+    projection: LiveEtaProjection | None,
+    message: str,
+    now=None,
+) -> TrackingAlert:
+    now = now or timezone.now()
+    evidence = {
+        "sourcePingId": ping.ping_id if ping else None,
+        "scheduleEventId": schedule_event.id,
+        "scheduleEventType": schedule_event.event_type,
+        "plannedAt": schedule_event.planned_at.isoformat(),
+        "observedEta": (
+            projection.observed_eta.isoformat()
+            if projection and projection.observed_eta
+            else None
+        ),
+        "varianceMinutes": projection.variance_minutes if projection else None,
+        "currentGeofence": (
+            latest_state.current_geofence.zone_id if latest_state.current_geofence else None
+        ),
+        "currentGeofenceName": (
+            latest_state.current_geofence.name if latest_state.current_geofence else None
+        ),
+        "seed": ping.raw_payload.get("seed") if ping else None,
+    }
+    existing = TrackingAlert.objects.filter(
+        asset_code=latest_state.asset_code,
+        alert_type=alert_type,
+        trip=assignment.trip,
+        schedule_event=schedule_event,
+        status__in=[TrackingAlert.Status.OPEN, TrackingAlert.Status.ACKNOWLEDGED],
+    ).first()
+    defaults = {
+        "severity": severity,
+        "asset_type": latest_state.asset_type,
+        "source": latest_state.source,
+        "asset_identity": latest_state.asset_identity,
+        "source_ping": ping,
+        "eta_projection": projection,
+        "message": message,
+        "evidence": evidence,
+        "source_kind": _source_kind_for_ping(ping=ping),
+        "opened_at": existing.opened_at if existing else now,
+        "resolved_at": None,
+    }
+    if existing:
+        for field, value in defaults.items():
+            setattr(existing, field, value)
+        existing.status = TrackingAlert.Status.OPEN
+        existing.save(
+            update_fields=[
+                "severity",
+                "asset_type",
+                "source",
+                "asset_identity",
+                "source_ping",
+                "eta_projection",
+                "message",
+                "evidence",
+                "source_kind",
+                "status",
+                "opened_at",
+                "resolved_at",
+                "updated_at",
+            ]
+        )
+        return existing
+
+    return TrackingAlert.objects.create(
+        alert_id=_next_tracking_alert_id(alert_type=alert_type),
+        alert_type=alert_type,
+        asset_code=latest_state.asset_code,
+        trip=assignment.trip,
+        schedule_event=schedule_event,
+        status=TrackingAlert.Status.OPEN,
+        **defaults,
+    )
+
+
+def _resolve_tracking_alerts(
+    *,
+    asset_code: str,
+    alert_type: str,
+    trip=None,
+    schedule_event=None,
+    now=None,
+) -> int:
+    now = now or timezone.now()
+    queryset = TrackingAlert.objects.filter(
+        asset_code=asset_code,
+        alert_type=alert_type,
+        status__in=[TrackingAlert.Status.OPEN, TrackingAlert.Status.ACKNOWLEDGED],
+    )
+    if trip:
+        queryset = queryset.filter(trip=trip)
+    if schedule_event:
+        queryset = queryset.filter(schedule_event=schedule_event)
+    return queryset.update(status=TrackingAlert.Status.RESOLVED, resolved_at=now)
+
+
+def _source_kind_for_ping(*, ping: PositionPing | None) -> str:
+    if not ping:
+        return TrackingAlert.SourceKind.OBSERVED
+    if ping.is_synthetic:
+        return TrackingAlert.SourceKind.SYNTHETIC
+    if ping.source.source_type == TelemetrySource.SourceType.VENDOR_API:
+        return TrackingAlert.SourceKind.VENDOR
+    return TrackingAlert.SourceKind.OBSERVED
 
 
 def _nearest_geofence_for_ping(*, ping: PositionPing) -> GeofenceZone | None:
@@ -458,3 +1146,12 @@ def _next_ping_id(*, source_id: str) -> str:
 def _next_movement_event_id(*, event_type: str) -> str:
     prefix = "ENTER" if event_type == MovementEvent.EventType.ENTER_GEOFENCE else "EXIT"
     return f"MEV-{prefix}-{uuid4().hex[:12].upper()}"
+
+
+def _next_eta_projection_id() -> str:
+    return f"ETA-{uuid4().hex[:12].upper()}"
+
+
+def _next_tracking_alert_id(*, alert_type: str) -> str:
+    prefix = alert_type.replace("_", "-").upper()
+    return f"TRK-{prefix}-{uuid4().hex[:10].upper()}"

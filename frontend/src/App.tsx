@@ -39,6 +39,7 @@ import type {
   GeofenceZoneRecord,
   ImportJobRecord,
   LatestAssetStateRecord,
+  LiveEtaProjectionRecord,
   MasterDataCatalogs,
   MasterDataRecord,
   MasterDataOverview,
@@ -51,6 +52,7 @@ import type {
   RbacOverview,
   SchedulingOverview,
   SimulationScenarioRecord,
+  TrackingAlertRecord,
 } from "./types";
 
 function currentHashPath() {
@@ -119,6 +121,8 @@ function App() {
   const [latestAssetStates, setLatestAssetStates] = useState<LatestAssetStateRecord[]>([]);
   const [geofenceZones, setGeofenceZones] = useState<GeofenceZoneRecord[]>([]);
   const [movementEvents, setMovementEvents] = useState<MovementEventRecord[]>([]);
+  const [etaProjections, setEtaProjections] = useState<LiveEtaProjectionRecord[]>([]);
+  const [trackingAlerts, setTrackingAlerts] = useState<TrackingAlertRecord[]>([]);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -249,10 +253,18 @@ function App() {
       refreshes.push(apiFetch<MovementEventRecord[]>("/telemetry/movement-events/")
         .then(setMovementEvents)
         .catch(() => setMovementEvents([])));
+      refreshes.push(apiFetch<LiveEtaProjectionRecord[]>("/telemetry/eta-projections/")
+        .then(setEtaProjections)
+        .catch(() => setEtaProjections([])));
+      refreshes.push(apiFetch<TrackingAlertRecord[]>("/telemetry/alerts/")
+        .then(setTrackingAlerts)
+        .catch(() => setTrackingAlerts([])));
     } else {
       setLatestAssetStates([]);
       setGeofenceZones([]);
       setMovementEvents([]);
+      setEtaProjections([]);
+      setTrackingAlerts([]);
     }
 
     await Promise.all(refreshes);
@@ -306,6 +318,8 @@ function App() {
     setLatestAssetStates([]);
     setGeofenceZones([]);
     setMovementEvents([]);
+    setEtaProjections([]);
+    setTrackingAlerts([]);
     setDashboardReadModel(null);
     setExportOverview(null);
     setAuditEvents([]);
@@ -962,11 +976,13 @@ function App() {
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
             canRunSimulation={canRunSimulation}
+            etaProjections={etaProjections}
             geofenceZones={geofenceZones}
             latestAssetStates={latestAssetStates}
             movementEvents={movementEvents}
             onNavigate={handleNavigate}
             overview={schedulingOverview}
+            trackingAlerts={trackingAlerts}
           />
         ) : null}
         {route === "/dashboard/situation" ? (
@@ -974,7 +990,9 @@ function App() {
             auditEvents={auditEvents}
             currentUser={currentUser}
             dashboard={dashboardReadModel}
+            etaProjections={etaProjections}
             onNavigate={handleNavigate}
+            trackingAlerts={trackingAlerts}
           />
         ) : null}
       </section>

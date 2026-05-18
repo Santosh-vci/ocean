@@ -979,6 +979,14 @@ export type SchedulingOverview = {
   approvalRequests: ApprovalRequestRecord[];
   publishedSnapshots: PublishedPlanSnapshotRecord[];
   simulationScenarios: SimulationScenarioRecord[];
+  liveEtaProjections: LiveEtaProjectionRecord[];
+  trackingAlerts: TrackingAlertRecord[];
+  trackingSummary: {
+    projectionCount: number;
+    openAlertCount: number;
+    criticalAlertCount: number;
+    highestVarianceMinutes: number;
+  };
   validation: {
     tripCount: number;
     assignmentCount: number;
@@ -989,6 +997,8 @@ export type SchedulingOverview = {
     overrideCount: number;
     approvalPendingCount: number;
     scenarioCount: number;
+    trackingAlertCount: number;
+    openTrackingAlertCount: number;
     plannedMt: number;
     loadedMt: number;
   };
@@ -1070,4 +1080,68 @@ export type MovementEventRecord = {
   confidence_score: string;
   metadata: Record<string, unknown>;
   created_at: string;
+};
+
+export type LiveEtaProjectionRecord = {
+  id: number;
+  projection_id: string;
+  asset_type: string;
+  asset_code: string;
+  source: number;
+  source_id: string;
+  asset_identity: number;
+  external_id: string;
+  trip: number;
+  trip_ref: string;
+  vessel_name: string;
+  schedule_event: number;
+  schedule_event_type: string;
+  schedule_event_label: string;
+  planned_at: string;
+  observed_eta: string | null;
+  variance_minutes: number | null;
+  calculation_method: string;
+  confidence_score: string;
+  source_ping: number | null;
+  source_ping_ref: string | null;
+  current_geofence: number | null;
+  current_geofence_ref: string | null;
+  current_geofence_name: string | null;
+  status: "on_time" | "watch" | "delayed" | "unknown" | string;
+  metadata: Record<string, unknown>;
+  calculated_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TrackingAlertRecord = {
+  id: number;
+  alert_id: string;
+  alert_type: string;
+  severity: "info" | "warning" | "critical" | string;
+  asset_type: string;
+  asset_code: string;
+  source: number;
+  source_id: string;
+  asset_identity: number;
+  external_id: string;
+  source_ping: number | null;
+  source_ping_ref: string | null;
+  trip: number | null;
+  trip_ref: string | null;
+  vessel_name: string | null;
+  schedule_event: number | null;
+  schedule_event_type: string | null;
+  schedule_event_planned_at: string | null;
+  eta_projection: number | null;
+  eta_projection_ref: string | null;
+  message: string;
+  evidence: Record<string, unknown>;
+  status: string;
+  source_kind: string;
+  opened_at: string;
+  resolved_at: string | null;
+  created_scenario: number | null;
+  created_at: string;
+  updated_at: string;
 };

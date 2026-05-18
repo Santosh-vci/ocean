@@ -11,6 +11,8 @@ from apps.audit.mixins import AuditMutationMixin
 from apps.audit.services import record_audit_event
 from apps.core.object_storage import read_export_object
 from apps.rbac.permissions import RequiresAccessPermission
+from apps.telemetry.models import LiveEtaProjection, TrackingAlert
+from apps.telemetry.serializers import LiveEtaProjectionSerializer, TrackingAlertSerializer
 
 from .export_services import (
     create_governed_export,
@@ -742,6 +744,8 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         override_requests = OverrideRequest.objects.none()
         approval_requests = ApprovalRequest.objects.none()
         scenarios = SimulationScenario.objects.none()
+        eta_projections = LiveEtaProjection.objects.none()
+        tracking_alerts = TrackingAlert.objects.none()
 
         if active_version:
             trips = (
@@ -826,6 +830,29 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "runs__ogv_projections__voyage",
                 "runs__resource_utilizations",
             )
+            eta_projections = LiveEtaProjection.objects.filter(
+                trip__plan_version=active_version
+            ).select_related(
+                "source",
+                "asset_identity",
+                "trip",
+                "trip__voyage",
+                "schedule_event",
+                "source_ping",
+                "current_geofence",
+            )
+            tracking_alerts = TrackingAlert.objects.filter(
+                trip__plan_version=active_version
+            ).select_related(
+                "source",
+                "asset_identity",
+                "source_ping",
+                "trip",
+                "trip__voyage",
+                "schedule_event",
+                "eta_projection",
+                "created_scenario",
+            )
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -875,6 +902,31 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     scenarios,
                     many=True,
                 ).data,
+                "liveEtaProjections": LiveEtaProjectionSerializer(
+                    eta_projections,
+                    many=True,
+                ).data,
+                "trackingAlerts": TrackingAlertSerializer(
+                    tracking_alerts,
+                    many=True,
+                ).data,
+                "trackingSummary": {
+                    "projectionCount": eta_projections.count(),
+                    "openAlertCount": tracking_alerts.filter(
+                        status=TrackingAlert.Status.OPEN,
+                    ).count(),
+                    "criticalAlertCount": tracking_alerts.filter(
+                        status=TrackingAlert.Status.OPEN,
+                        severity=TrackingAlert.Severity.CRITICAL,
+                    ).count(),
+                    "highestVarianceMinutes": (
+                        eta_projections.filter(variance_minutes__isnull=False)
+                        .order_by("-variance_minutes")
+                        .values_list("variance_minutes", flat=True)
+                        .first()
+                    )
+                    or 0,
+                },
                 "validation": {
                     "tripCount": trips.count(),
                     "assignmentCount": assignments.count(),
@@ -887,6 +939,10 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                         status=ApprovalRequest.Status.PENDING
                     ).count(),
                     "scenarioCount": scenarios.count(),
+                    "trackingAlertCount": tracking_alerts.count(),
+                    "openTrackingAlertCount": tracking_alerts.filter(
+                        status=TrackingAlert.Status.OPEN,
+                    ).count(),
                     "plannedMt": trip_totals["required"] or 0,
                     "loadedMt": trip_totals["loaded"] or 0,
                 },

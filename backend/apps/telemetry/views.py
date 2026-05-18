@@ -9,19 +9,23 @@ from .models import (
     AssetIdentity,
     GeofenceZone,
     LatestAssetState,
+    LiveEtaProjection,
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TrackingAlert,
 )
 from .serializers import (
     AssetIdentitySerializer,
     GeofenceZoneSerializer,
     LatestAssetStateSerializer,
+    LiveEtaProjectionSerializer,
     MovementEventSerializer,
     PositionPingIngestResponseSerializer,
     PositionPingIngestSerializer,
     PositionPingSerializer,
     TelemetrySourceSerializer,
+    TrackingAlertSerializer,
 )
 from .services import ingest_position_ping, refresh_signal_health
 
@@ -120,3 +124,48 @@ class MovementEventViewSet(ReadOnlyModelViewSet):
         "geofence",
     ).all()
     serializer_class = MovementEventSerializer
+
+
+class LiveEtaProjectionViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+    }
+    queryset = LiveEtaProjection.objects.select_related(
+        "source",
+        "asset_identity",
+        "trip",
+        "trip__voyage",
+        "schedule_event",
+        "source_ping",
+        "current_geofence",
+    ).all()
+    serializer_class = LiveEtaProjectionSerializer
+
+
+class TrackingAlertViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+        "acknowledge": "telemetry.ingest",
+    }
+    queryset = TrackingAlert.objects.select_related(
+        "source",
+        "asset_identity",
+        "source_ping",
+        "trip",
+        "trip__voyage",
+        "schedule_event",
+        "eta_projection",
+        "created_scenario",
+    ).all()
+    serializer_class = TrackingAlertSerializer
+
+    @action(detail=True, methods=["post"], url_path="acknowledge")
+    def acknowledge(self, request, pk=None):
+        alert = self.get_object()
+        alert.status = TrackingAlert.Status.ACKNOWLEDGED
+        alert.save(update_fields=["status", "updated_at"])
+        return Response(TrackingAlertSerializer(alert).data)

@@ -7,9 +7,11 @@ from .models import (
     AssetIdentity,
     GeofenceZone,
     LatestAssetState,
+    LiveEtaProjection,
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TrackingAlert,
 )
 
 
@@ -227,6 +229,120 @@ class MovementEventSerializer(serializers.ModelSerializer):
         return max(0, int((timezone.now() - obj.event_at).total_seconds()))
 
 
+class LiveEtaProjectionSerializer(serializers.ModelSerializer):
+    source_id = serializers.CharField(source="source.source_id", read_only=True)
+    external_id = serializers.CharField(source="asset_identity.external_id", read_only=True)
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+    vessel_name = serializers.CharField(source="trip.voyage.vessel_name", read_only=True)
+    schedule_event_type = serializers.CharField(
+        source="schedule_event.event_type",
+        read_only=True,
+    )
+    schedule_event_label = serializers.CharField(
+        source="schedule_event.location_label",
+        read_only=True,
+    )
+    source_ping_ref = serializers.CharField(source="source_ping.ping_id", read_only=True)
+    current_geofence_ref = serializers.CharField(
+        source="current_geofence.zone_id",
+        read_only=True,
+    )
+    current_geofence_name = serializers.CharField(
+        source="current_geofence.name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = LiveEtaProjection
+        fields = [
+            "id",
+            "projection_id",
+            "asset_type",
+            "asset_code",
+            "source",
+            "source_id",
+            "asset_identity",
+            "external_id",
+            "trip",
+            "trip_ref",
+            "vessel_name",
+            "schedule_event",
+            "schedule_event_type",
+            "schedule_event_label",
+            "planned_at",
+            "observed_eta",
+            "variance_minutes",
+            "calculation_method",
+            "confidence_score",
+            "source_ping",
+            "source_ping_ref",
+            "current_geofence",
+            "current_geofence_ref",
+            "current_geofence_name",
+            "status",
+            "metadata",
+            "calculated_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class TrackingAlertSerializer(serializers.ModelSerializer):
+    source_id = serializers.CharField(source="source.source_id", read_only=True)
+    external_id = serializers.CharField(source="asset_identity.external_id", read_only=True)
+    source_ping_ref = serializers.CharField(source="source_ping.ping_id", read_only=True)
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+    vessel_name = serializers.CharField(source="trip.voyage.vessel_name", read_only=True)
+    schedule_event_type = serializers.CharField(
+        source="schedule_event.event_type",
+        read_only=True,
+    )
+    schedule_event_planned_at = serializers.DateTimeField(
+        source="schedule_event.planned_at",
+        read_only=True,
+    )
+    eta_projection_ref = serializers.CharField(
+        source="eta_projection.projection_id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = TrackingAlert
+        fields = [
+            "id",
+            "alert_id",
+            "alert_type",
+            "severity",
+            "asset_type",
+            "asset_code",
+            "source",
+            "source_id",
+            "asset_identity",
+            "external_id",
+            "source_ping",
+            "source_ping_ref",
+            "trip",
+            "trip_ref",
+            "vessel_name",
+            "schedule_event",
+            "schedule_event_type",
+            "schedule_event_planned_at",
+            "eta_projection",
+            "eta_projection_ref",
+            "message",
+            "evidence",
+            "status",
+            "source_kind",
+            "opened_at",
+            "resolved_at",
+            "created_scenario",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
 class PositionPingIngestSerializer(serializers.Serializer):
     source_id = serializers.CharField(max_length=80)
     source_type = serializers.ChoiceField(choices=TelemetrySource.SourceType.choices)
@@ -302,4 +418,4 @@ class PositionPingIngestResponseSerializer(serializers.Serializer):
     ping = PositionPingSerializer()
     latest_state_updated = serializers.BooleanField()
     geofence_events = MovementEventSerializer(many=True)
-    alerts = serializers.ListField()
+    alerts = TrackingAlertSerializer(many=True)

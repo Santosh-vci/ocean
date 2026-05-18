@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.masters.models import Location
+from apps.scheduling.models import ScheduleEvent, SimulationScenario, Trip
 
 
 class TelemetrySource(models.Model):
@@ -320,3 +321,196 @@ class MovementEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.asset_code} {self.event_type} {self.geofence.zone_id}"
+
+
+class LiveEtaProjection(models.Model):
+    class CalculationMethod(models.TextChoices):
+        ROUTE_REMAINING = "route_remaining", "Route remaining"
+        GEOFENCE_SEQUENCE = "geofence_sequence", "Geofence sequence"
+        SIMPLE_SPEED = "simple_speed", "Simple speed"
+        SYNTHETIC_SCRIPT = "synthetic_script", "Synthetic script"
+
+    class Status(models.TextChoices):
+        ON_TIME = "on_time", "On time"
+        WATCH = "watch", "Watch"
+        DELAYED = "delayed", "Delayed"
+        UNKNOWN = "unknown", "Unknown"
+
+    projection_id = models.CharField(max_length=96, unique=True)
+    asset_type = models.CharField(max_length=32, choices=AssetIdentity.AssetType.choices)
+    asset_code = models.CharField(max_length=80)
+    source = models.ForeignKey(
+        TelemetrySource,
+        on_delete=models.PROTECT,
+        related_name="eta_projections",
+    )
+    asset_identity = models.ForeignKey(
+        AssetIdentity,
+        on_delete=models.PROTECT,
+        related_name="eta_projections",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        related_name="live_eta_projections",
+    )
+    schedule_event = models.ForeignKey(
+        ScheduleEvent,
+        on_delete=models.CASCADE,
+        related_name="live_eta_projections",
+    )
+    planned_at = models.DateTimeField()
+    observed_eta = models.DateTimeField(null=True, blank=True)
+    variance_minutes = models.IntegerField(null=True, blank=True)
+    calculation_method = models.CharField(
+        max_length=40,
+        choices=CalculationMethod.choices,
+        default=CalculationMethod.SIMPLE_SPEED,
+    )
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    source_ping = models.ForeignKey(
+        PositionPing,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eta_projections",
+    )
+    current_geofence = models.ForeignKey(
+        GeofenceZone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eta_projections",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.UNKNOWN,
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    calculated_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-calculated_at", "asset_code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("asset_code", "trip", "schedule_event"),
+                name="unique_live_eta_asset_trip_event",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("asset_code", "status")),
+            models.Index(fields=("trip", "status")),
+            models.Index(fields=("schedule_event", "status")),
+        ]
+
+    def __str__(self) -> str:
+        return self.projection_id
+
+
+class TrackingAlert(models.Model):
+    class AlertType(models.TextChoices):
+        DELAY = "delay", "Delay"
+        STALE_SIGNAL = "stale_signal", "Stale signal"
+        ROUTE_DEVIATION = "route_deviation", "Route deviation"
+        GEOFENCE_DWELL = "geofence_dwell", "Geofence dwell"
+        MISSING_ASSET = "missing_asset", "Missing asset"
+        ETA_RISK = "eta_risk", "ETA risk"
+
+    class Severity(models.TextChoices):
+        INFO = "info", "Info"
+        WARNING = "warning", "Warning"
+        CRITICAL = "critical", "Critical"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        ACKNOWLEDGED = "acknowledged", "Acknowledged"
+        CONVERTED_TO_SCENARIO = "converted_to_scenario", "Converted to scenario"
+        DISMISSED = "dismissed", "Dismissed"
+        RESOLVED = "resolved", "Resolved"
+
+    class SourceKind(models.TextChoices):
+        SYNTHETIC = "synthetic", "Synthetic"
+        OBSERVED = "observed", "Observed"
+        VENDOR = "vendor", "Vendor"
+
+    alert_id = models.CharField(max_length=96, unique=True)
+    alert_type = models.CharField(max_length=40, choices=AlertType.choices)
+    severity = models.CharField(
+        max_length=32,
+        choices=Severity.choices,
+        default=Severity.INFO,
+    )
+    asset_type = models.CharField(max_length=32, choices=AssetIdentity.AssetType.choices)
+    asset_code = models.CharField(max_length=80)
+    source = models.ForeignKey(
+        TelemetrySource,
+        on_delete=models.PROTECT,
+        related_name="tracking_alerts",
+    )
+    asset_identity = models.ForeignKey(
+        AssetIdentity,
+        on_delete=models.PROTECT,
+        related_name="tracking_alerts",
+    )
+    source_ping = models.ForeignKey(
+        PositionPing,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracking_alerts",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracking_alerts",
+    )
+    schedule_event = models.ForeignKey(
+        ScheduleEvent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracking_alerts",
+    )
+    eta_projection = models.ForeignKey(
+        LiveEtaProjection,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracking_alerts",
+    )
+    message = models.CharField(max_length=255)
+    evidence = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=40, choices=Status.choices, default=Status.OPEN)
+    source_kind = models.CharField(
+        max_length=32,
+        choices=SourceKind.choices,
+        default=SourceKind.OBSERVED,
+    )
+    opened_at = models.DateTimeField()
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_scenario = models.ForeignKey(
+        SimulationScenario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_tracking_alerts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-opened_at", "severity", "asset_code"]
+        indexes = [
+            models.Index(fields=("status", "severity", "opened_at")),
+            models.Index(fields=("asset_code", "status", "alert_type")),
+            models.Index(fields=("trip", "status", "alert_type")),
+            models.Index(fields=("source_kind", "status")),
+        ]
+
+    def __str__(self) -> str:
+        return self.alert_id
