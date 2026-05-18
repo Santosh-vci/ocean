@@ -180,6 +180,9 @@ def test_confirm_candidate_requires_domain_authority_and_records_audit_event():
     assert denied.status_code == 403
     assert confirmed.status_code == 201
     assert confirmed.data["event_id"] == event.event_id
+    assert confirmed.data["asset_code"] == "JTY-SUARAN"
+    assert confirmed.data["feed_ref"] == source_feed.feed_id
+    assert confirmed.data["device_ref"] == source_device.device_id
     assert candidate.status == OperationalEventCandidate.Status.CONFIRMED
     assert event.confirmed_by == jetty_controller
     assert event.reason_code == "operator_verified"

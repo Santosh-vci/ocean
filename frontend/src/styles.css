@@ -283,6 +283,10 @@ button {
   grid-template-columns: repeat(8, minmax(0, 1fr));
 }
 
+.metric-strip.nine-up {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
 .metric-strip div {
   display: grid;
   gap: 0.15rem;
@@ -551,6 +555,7 @@ tbody tr:hover,
   .metric-strip.six-up,
   .metric-strip.seven-up,
   .metric-strip.eight-up,
+  .metric-strip.nine-up,
   .cockpit-grid,
   .governance-layout,
   .audit-layout,
@@ -2225,6 +2230,7 @@ tbody tr:hover,
 
 .logistics-split,
 .jetty-layout,
+.cts-layout,
 .published-layout {
   min-height: 0;
   display: grid;
@@ -2238,6 +2244,10 @@ tbody tr:hover,
 
 .jetty-layout {
   grid-template-columns: minmax(46rem, 1fr) 22rem;
+}
+
+.cts-layout {
+  grid-template-columns: minmax(42rem, 1fr) 22rem;
 }
 
 .published-layout {
@@ -2362,10 +2372,10 @@ tbody tr:hover,
 
 .jetty-row {
   display: grid;
-  grid-template-columns: 1.2fr 0.7fr 0.7fr 0.8fr 1fr 1.3fr 0.7fr 1.3fr;
+  grid-template-columns: 1.2fr 0.7fr 0.7fr 0.8fr 1fr 1.3fr 1.3fr 0.7fr 1.3fr;
   gap: 0.45rem;
   align-items: center;
-  min-width: 62rem;
+  min-width: 72rem;
   min-height: 1.85rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.62);
   padding: 0 0.65rem;
@@ -2411,6 +2421,139 @@ tbody tr:hover,
 
 .jetty-row .critical {
   color: var(--status-critical);
+}
+
+.board-event-review {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.board-event-review p,
+.board-event-review em {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+.board-event-review dl {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.board-event-review dl div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.45rem;
+}
+
+.board-event-review dt,
+.board-event-review dd {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.board-event-review dt {
+  color: var(--on-surface-variant);
+}
+
+.board-event-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.board-event-actions label {
+  display: grid;
+  gap: 0.18rem;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.board-event-actions input,
+.board-event-actions textarea {
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.38rem 0.45rem;
+  font-size: 0.7rem;
+}
+
+.board-event-actions textarea {
+  min-height: 2.8rem;
+  resize: vertical;
+}
+
+.board-event-actions button {
+  min-height: 1.9rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.board-event-actions button:hover:not(:disabled) {
+  border-color: rgba(137, 206, 255, 0.45);
+  color: var(--primary);
+}
+
+.board-event-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.observed-gate-panel {
+  overflow: hidden;
+}
+
+.observed-gate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.observed-gate-grid article {
+  display: grid;
+  gap: 0.45rem;
+  border-right: 1px solid var(--border-subtle);
+  padding: 0.65rem;
+}
+
+.observed-gate-grid article:last-child {
+  border-right: 0;
+}
+
+.observed-gate-grid h2 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.82rem;
+}
+
+.observed-gate-grid dl {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.observed-gate-grid dl div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.45rem;
+}
+
+.observed-gate-grid dt,
+.observed-gate-grid dd {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.observed-gate-grid dt {
+  color: var(--on-surface-variant);
 }
 
 .schedule-gantt {
@@ -2522,6 +2665,7 @@ tbody tr:hover,
 @media (max-width: 1180px) {
   .logistics-split,
   .jetty-layout,
+  .cts-layout,
   .published-layout {
     grid-template-columns: 1fr;
   }
@@ -3922,6 +4066,49 @@ tbody tr:hover,
   color: var(--status-warning);
 }
 
+.operational-marker {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  gap: 0.08rem;
+  transform: translate(-50%, calc(-100% - 0.45rem));
+  border: 1px solid var(--border-subtle);
+  background: rgba(6, 14, 32, 0.92);
+  color: var(--on-surface);
+  padding: 0.28rem 0.38rem;
+  font-size: 0.55rem;
+  text-align: left;
+}
+
+.operational-marker strong,
+.operational-marker span {
+  white-space: nowrap;
+}
+
+.operational-marker strong {
+  color: inherit;
+  font-family: "JetBrains Mono", Consolas, monospace;
+}
+
+.operational-marker span {
+  color: var(--on-surface-variant);
+}
+
+.operational-marker.ok {
+  border-color: rgba(16, 185, 129, 0.55);
+  color: var(--status-success);
+}
+
+.operational-marker.pending {
+  border-color: rgba(245, 158, 11, 0.62);
+  color: var(--status-warning);
+}
+
+.operational-marker.critical {
+  border-color: rgba(239, 68, 68, 0.62);
+  color: var(--status-critical);
+}
+
 .map-movement-log {
   display: grid;
   grid-template-columns: 13rem minmax(0, 1fr) max-content;
@@ -4065,6 +4252,21 @@ tbody tr:hover,
   .map-movement-log,
   .movement-event-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .observed-gate-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .observed-gate-grid article {
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .observed-gate-grid article:last-child {
+    border-bottom: 0;
   }
 }
 

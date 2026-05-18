@@ -3,6 +3,12 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import { formatGridDateLabel } from "../lib/gridDate";
+import {
+  deriveOperationalExceptions,
+  operationalVarianceLabel,
+  type OperationalExceptionRecord,
+  shortOperationalLabel,
+} from "../lib/operations";
 import type {
   ApprovalRequestRecord,
   ConflictRecord,
@@ -16,6 +22,8 @@ import type {
   ScenarioRunRecord,
   ScenarioTripProjectionRecord,
   OperationsHealthRiskRecord,
+  ConfirmedOperationalEventRecord,
+  OperationalEventCandidateRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TrackingAlertRecord,
@@ -51,11 +59,13 @@ type RecoveryPageProps = {
   onPromoteScenario?: (scenarioId?: number, runId?: number) => void;
   onPublishTriage?: () => void;
   canPublish?: boolean;
+  operationCandidates?: OperationalEventCandidateRecord[];
+  confirmedOperationalEvents?: ConfirmedOperationalEventRecord[];
 };
 
 type QueueSelection = {
-  id: number;
-  kind: "conflict" | "override" | "tracking" | "health";
+  id: number | string;
+  kind: "conflict" | "override" | "tracking" | "health" | "operational";
 };
 
 const EMPTY_CONFLICTS: ConflictRecord[] = [];
@@ -65,6 +75,8 @@ const EMPTY_OVERRIDES: OverrideRequestRecord[] = [];
 const EMPTY_SCENARIOS: SimulationScenarioRecord[] = [];
 const EMPTY_TRACKING_ALERTS: TrackingAlertRecord[] = [];
 const EMPTY_HEALTH_RISKS: OperationsHealthRiskRecord[] = [];
+const EMPTY_OPERATION_CANDIDATES: OperationalEventCandidateRecord[] = [];
+const EMPTY_CONFIRMED_OPERATIONAL_EVENTS: ConfirmedOperationalEventRecord[] = [];
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
@@ -297,6 +309,39 @@ function healthImpactNodes(risk: OperationsHealthRiskRecord | undefined): Impact
   ];
 }
 
+function operationalImpactNodes(
+  item: OperationalExceptionRecord | undefined,
+): ImpactChainNodeRecord[] {
+  if (!item) return [];
+  return [
+    {
+      id: "operational-source",
+      type: item.source === "confirmed_event" ? "confirmed_event" : "event_candidate",
+      label: item.source === "confirmed_event" ? "CONFIRMED EVENT" : "EVENT CANDIDATE",
+      value: shortOperationalLabel(item.eventKind),
+      status: item.severity,
+      detail: `${item.assetCode} / ${item.tripRef ?? "Unlinked trip"}`,
+      projectedAt: item.raisedAt,
+    },
+    {
+      id: "operational-variance",
+      type: "operational_variance",
+      label: "OPERATIONAL IMPACT",
+      value: operationalVarianceLabel(item.varianceMinutes),
+      status: item.severity,
+      detail: item.message,
+    },
+    {
+      id: "operational-next",
+      type: "triage_action",
+      label: "NEXT ACTION",
+      value: item.nextAction.toUpperCase(),
+      status: item.severity,
+      detail: "Review operational evidence without mutating the approved plan.",
+    },
+  ];
+}
+
 function nodeValue(node: ImpactChainNodeRecord) {
   if (node.type === "source_event" && node.projectedAt) return dt(node.projectedAt);
   return node.value;
@@ -346,6 +391,8 @@ export function ExceptionCenterPage({
   isActionRunning = false,
   onCreateScenario,
   onPublishTriage,
+  operationCandidates = EMPTY_OPERATION_CANDIDATES,
+  confirmedOperationalEvents = EMPTY_CONFIRMED_OPERATIONAL_EVENTS,
 }: RecoveryPageProps) {
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
@@ -355,8 +402,14 @@ export function ExceptionCenterPage({
   const openTrackingAlerts = trackingAlerts.filter((alert) => (
     alert.status === "open" || alert.status === "acknowledged"
   ));
+  const operationalExceptions = useMemo(
+    () => deriveOperationalExceptions(operationCandidates, confirmedOperationalEvents, trips),
+    [confirmedOperationalEvents, operationCandidates, trips],
+  );
   const [selectedQueueItem, setSelectedQueueItem] = useState<QueueSelection | null>(
-    conflicts[0]
+    operationalExceptions[0]
+      ? { id: operationalExceptions[0].id, kind: "operational" }
+      : conflicts[0]
       ? { id: conflicts[0].id, kind: "conflict" }
       : openTrackingAlerts[0]
         ? { id: openTrackingAlerts[0].id, kind: "tracking" }
@@ -367,7 +420,7 @@ export function ExceptionCenterPage({
             : null,
   );
   const selectedConflict = selectedQueueItem?.kind === "conflict"
-    ? selectedConflictFor(conflicts, selectedQueueItem.id)
+    ? selectedConflictFor(conflicts, Number(selectedQueueItem.id))
     : selectedQueueItem
       ? undefined
       : conflicts[0];
@@ -381,18 +434,29 @@ export function ExceptionCenterPage({
     : !selectedConflict && !selectedTrackingAlert && !selectedQueueItem
       ? healthRisks[0]
       : undefined;
+  const selectedOperationalException = selectedQueueItem?.kind === "operational"
+    ? operationalExceptions.find((item) => item.id === selectedQueueItem.id) ?? operationalExceptions[0]
+    : !selectedConflict && !selectedTrackingAlert && !selectedHealthRisk && !selectedQueueItem
+      ? operationalExceptions[0]
+      : undefined;
   const selectedOverride = selectedQueueItem?.kind === "override"
     ? overrides.find((override) => override.id === selectedQueueItem.id) ?? (!selectedConflict ? overrides[0] : undefined)
-    : !selectedConflict && !selectedTrackingAlert && !selectedHealthRisk ? overrides[0] : undefined;
+    : !selectedConflict && !selectedTrackingAlert && !selectedHealthRisk && !selectedOperationalException
+      ? overrides[0]
+      : undefined;
   const selectedOverrideDelta = selectedOverride ? overrideDelta(selectedOverride) : null;
   const selectedImpactAssessment = selectedOverride?.impact_assessment;
   const impactNodes = selectedTrackingAlert
     ? trackingImpactNodes(selectedTrackingAlert)
     : selectedHealthRisk
       ? healthImpactNodes(selectedHealthRisk)
-      : impactNodesFor(selectedConflict, selectedOverride);
+      : selectedOperationalException
+        ? operationalImpactNodes(selectedOperationalException)
+        : impactNodesFor(selectedConflict, selectedOverride);
   const selectedTrip = trips.find((trip) => (
-    trip.id === selectedConflict?.trip || trip.id === selectedTrackingAlert?.trip
+    trip.id === selectedConflict?.trip
+    || trip.id === selectedTrackingAlert?.trip
+    || trip.id === selectedOperationalException?.tripId
   ));
   const critical = conflicts.filter((conflict) => conflict.severity === "critical").length;
   const warning = conflicts.filter((conflict) => conflict.severity === "warning").length;
@@ -401,7 +465,13 @@ export function ExceptionCenterPage({
   const trackingWarning = openTrackingAlerts.filter((alert) => alert.severity === "warning").length;
   const healthCritical = healthRisks.filter((risk) => risk.severity === "critical").length;
   const healthWarning = healthRisks.filter((risk) => risk.severity === "warning").length;
-  const activeQueueCount = conflicts.length + overrides.length + openTrackingAlerts.length + healthRisks.length;
+  const operationalCritical = operationalExceptions.filter((item) => item.severity === "critical").length;
+  const operationalWarning = operationalExceptions.filter((item) => item.severity === "warning").length;
+  const activeQueueCount = conflicts.length
+    + overrides.length
+    + openTrackingAlerts.length
+    + healthRisks.length
+    + operationalExceptions.length;
 
   return (
     <section className="workspace-page recovery-board">
@@ -413,7 +483,11 @@ export function ExceptionCenterPage({
         <div className="planning-actions">
           <span className="phase-chip">Active triage</span>
           <button
-            disabled={!canEdit || !onCreateScenario || isActionRunning || Boolean(selectedTrackingAlert)}
+            disabled={!canEdit
+              || !onCreateScenario
+              || isActionRunning
+              || Boolean(selectedTrackingAlert)
+              || Boolean(selectedOperationalException)}
             onClick={() => onCreateScenario?.(
               selectedConflict
                 ? { kind: "conflict", id: selectedConflict.id }
@@ -421,8 +495,8 @@ export function ExceptionCenterPage({
                   ? { kind: "override", id: selectedOverride.id }
                   : { kind: "manual" },
             )}
-            title={selectedTrackingAlert
-              ? "Use the observed alert detail to create a scenario."
+            title={selectedTrackingAlert || selectedOperationalException
+              ? "Use the event detail to review operational evidence before scenario creation."
               : !canEdit
                 ? "Your role cannot convert exceptions to scenarios."
                 : undefined}
@@ -442,8 +516,8 @@ export function ExceptionCenterPage({
 
       <div className="metric-strip seven-up recovery-kpis">
         <div><span>Active</span><strong>{activeQueueCount}</strong></div>
-        <div><span>Critical</span><strong className="critical-text">{critical + trackingCritical + healthCritical}</strong></div>
-        <div><span>Warning</span><strong className="warning-text">{warning + trackingWarning + healthWarning}</strong></div>
+        <div><span>Critical</span><strong className="critical-text">{critical + trackingCritical + healthCritical + operationalCritical}</strong></div>
+        <div><span>Warning</span><strong className="warning-text">{warning + trackingWarning + healthWarning + operationalWarning}</strong></div>
         <div><span>Observed</span><strong className={openTrackingAlerts.length ? "warning-text" : ""}>{openTrackingAlerts.length}</strong></div>
         <div><span>Pending</span><strong>{pending}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overrides.length}</strong></div>
@@ -457,11 +531,12 @@ export function ExceptionCenterPage({
           </div>
           <section>
             <h2>Severity</h2>
-            <span>Critical ({critical + trackingCritical + healthCritical})</span>
-            <span>Warning ({warning + trackingWarning + healthWarning})</span>
+            <span>Critical ({critical + trackingCritical + healthCritical + operationalCritical})</span>
+            <span>Warning ({warning + trackingWarning + healthWarning + operationalWarning})</span>
             <span>Blocking ({pending})</span>
             <span>Observed ({openTrackingAlerts.length})</span>
             <span>Health ({healthRisks.length})</span>
+            <span>Operations ({operationalExceptions.length})</span>
           </section>
           <section>
             <h2>OGV focus</h2>
@@ -495,6 +570,23 @@ export function ExceptionCenterPage({
                 </tr>
               </thead>
               <tbody>
+                {operationalExceptions.map((item) => (
+                  <tr
+                    className={selectedOperationalException?.id === item.id ? "selected-row" : ""}
+                    key={item.id}
+                    onClick={() => setSelectedQueueItem({ id: item.id, kind: "operational" })}
+                  >
+                    <td><span className={`status-chip ${statusTone(item.severity)}`}>{short(item.severity)}</span></td>
+                    <td><GridDate value={item.raisedAt} /></td>
+                    <td>{item.code}</td>
+                    <td>{item.source === "confirmed_event" ? "CONFIRMED EVENT" : "EVENT CANDIDATE"}</td>
+                    <td>{item.vesselName ?? item.tripRef ?? "Operational asset"}</td>
+                    <td>{item.assetCode}</td>
+                    <td>{operationalVarianceLabel(item.varianceMinutes)}</td>
+                    <td>{shortOperationalLabel(item.eventKind)}</td>
+                    <td>{item.nextAction.toUpperCase()}</td>
+                  </tr>
+                ))}
                 {openTrackingAlerts.map((alert) => (
                   <tr
                     className={selectedTrackingAlert?.id === alert.id ? "selected-row" : ""}
@@ -567,9 +659,9 @@ export function ExceptionCenterPage({
                     <td>GOVERNED</td>
                   </tr>
                 ))}
-                {!conflicts.length && !overrides.length && !openTrackingAlerts.length && !healthRisks.length ? (
+                {!conflicts.length && !overrides.length && !openTrackingAlerts.length && !healthRisks.length && !operationalExceptions.length ? (
                   <tr>
-                    <td colSpan={9}>No active exceptions, observed tracking alerts, device health risks, or governed overrides for the active plan.</td>
+                    <td colSpan={9}>No active exceptions, operational events, observed tracking alerts, device health risks, or governed overrides for the active plan.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -587,6 +679,8 @@ export function ExceptionCenterPage({
                   ? selectedTrackingAlert.alert_id
                   : selectedHealthRisk
                     ? selectedHealthRisk.candidateId
+                    : selectedOperationalException
+                      ? selectedOperationalException.code
                     : selectedOverride
                       ? `OR-${selectedOverride.id}`
                       : "No exception"}
@@ -607,6 +701,26 @@ export function ExceptionCenterPage({
               <section className="recovery-box">
                 <strong>Recommended recovery</strong>
                 <p>Run simulation before any plan mutation. Published plan remains untouched.</p>
+              </section>
+            </div>
+          ) : selectedOperationalException ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedOperationalException.severity)}`}>
+                {selectedOperationalException.source === "confirmed_event" ? "CONFIRMED" : "CANDIDATE"} {short(selectedOperationalException.severity)}
+              </span>
+              <h2>{selectedOperationalException.title}</h2>
+              <p>{selectedOperationalException.message}</p>
+              <dl>
+                <div><dt>Source</dt><dd>{selectedOperationalException.source === "confirmed_event" ? "Confirmed operational event" : "Pending event candidate"}</dd></div>
+                <div><dt>Event</dt><dd>{shortOperationalLabel(selectedOperationalException.eventKind)}</dd></div>
+                <div><dt>Asset</dt><dd>{selectedOperationalException.assetCode}</dd></div>
+                <div><dt>Trip</dt><dd>{selectedOperationalException.tripRef ?? "Unlinked"}</dd></div>
+                <div><dt>Variance</dt><dd>{operationalVarianceLabel(selectedOperationalException.varianceMinutes)}</dd></div>
+                <div><dt>Raised</dt><dd><GridDate value={selectedOperationalException.raisedAt} /></dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Operational evidence</strong>
+                <p>Board actuals remain separate from planned timestamps until a governed planning or recovery action is chosen.</p>
               </section>
             </div>
           ) : selectedTrackingAlert ? (

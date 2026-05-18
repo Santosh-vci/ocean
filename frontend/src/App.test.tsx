@@ -3,11 +3,18 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
-import { JettyLoadingPage } from "./pages/LogisticsPages";
+import { CtsOperationsPage, JettyLoadingPage } from "./pages/LogisticsPages";
 import { LiveResourceMapPage } from "./pages/MapPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import { ExceptionCenterPage, SimulationWorkspacePage } from "./pages/RecoveryPages";
-import type { SchedulingOverview } from "./types";
+import { TideBridgePage } from "./pages/TideBridgePage";
+import type {
+  ConfirmedOperationalEventRecord,
+  DeviceEndpointRecord,
+  OperationalEventCandidateRecord,
+  PlanningOverview,
+  SchedulingOverview,
+} from "./types";
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -188,6 +195,119 @@ function stageSevenOverview(): SchedulingOverview {
   } as unknown as SchedulingOverview;
 }
 
+function phaseFourCandidate(
+  overrides: Partial<OperationalEventCandidateRecord> = {},
+): OperationalEventCandidateRecord {
+  return {
+    id: 1,
+    candidate_id: "OEC-001",
+    feed: 1,
+    feed_ref: "SYN-OPS-PHASE4",
+    device: 1,
+    device_ref: "JETTY-JTY-SUARAN-OPS",
+    source_kind: "synthetic",
+    event_kind: "jetty_loading_completed",
+    asset_type: "jetty",
+    asset_code: "JTY-SUARAN",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    assignment: 101,
+    assignment_ref: "PI-PLAN-UI-0001",
+    schedule_event: 301,
+    schedule_event_type: "load_complete",
+    schedule_event_planned_at: "2026-05-17T03:30:00.000Z",
+    schedule_event_actual_at: null,
+    event_at: "2026-05-17T04:05:00.000Z",
+    received_at: "2026-05-17T04:06:00.000Z",
+    confidence_score: "65.00",
+    dedupe_key: "phase4-load-complete",
+    status: "pending",
+    payload: {},
+    raw_payload_ref: "",
+    metadata: {},
+    confirmed_event_ref: null,
+    created_at: "2026-05-17T04:06:00.000Z",
+    updated_at: "2026-05-17T04:06:00.000Z",
+    ...overrides,
+  };
+}
+
+function phaseFourConfirmedEvent(
+  overrides: Partial<ConfirmedOperationalEventRecord> = {},
+): ConfirmedOperationalEventRecord {
+  return {
+    id: 10,
+    event_id: "OPE-0010",
+    candidate: 1,
+    candidate_ref: "OEC-001",
+    feed_ref: "SYN-OPS-PHASE4",
+    device_ref: "JETTY-JTY-SUARAN-OPS",
+    event_kind: "jetty_loading_completed",
+    asset_type: "jetty",
+    asset_code: "JTY-SUARAN",
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    assignment: 101,
+    assignment_ref: "PI-PLAN-UI-0001",
+    schedule_event: 301,
+    schedule_event_type: "load_complete",
+    schedule_event_planned_at: "2026-05-17T03:30:00.000Z",
+    schedule_event_actual_at: "2026-05-17T04:05:00.000Z",
+    actual_at: "2026-05-17T04:05:00.000Z",
+    confirmed_quantity_mt: "12650.00",
+    confirmed_rate_tph: null,
+    confirmed_grade_code: "EBONY",
+    confirmed_by: 1,
+    confirmed_by_email: "admin@coalflow.local",
+    confirmed_at: "2026-05-17T04:06:00.000Z",
+    confirmation_mode: "manual_confirmed",
+    reason_code: "operator_verified",
+    before_state: {},
+    after_state: {},
+    metadata: {},
+    created_at: "2026-05-17T04:06:00.000Z",
+    ...overrides,
+  };
+}
+
+function phaseFourDevice(
+  overrides: Partial<DeviceEndpointRecord> = {},
+): DeviceEndpointRecord {
+  return {
+    id: 1,
+    device_id: "JETTY-JTY-SUARAN-OPS",
+    feed: 1,
+    feed_ref: "SYN-OPS-PHASE4",
+    device_type: "plc",
+    asset_type: "jetty",
+    asset_code: "JTY-SUARAN",
+    location: 1,
+    location_code: "LOC-SUARAN-PORT",
+    geofence: 1,
+    geofence_ref: "GEO-LOC-SUARAN-PORT",
+    status: "active",
+    last_seen_at: "2026-05-17T04:06:00.000Z",
+    latest_health: {
+      snapshotId: "DHS-001",
+      healthStatus: "healthy",
+      observedAt: "2026-05-17T04:06:00.000Z",
+      receivedAt: "2026-05-17T04:06:00.000Z",
+      ageSeconds: 10,
+      gapSeconds: 0,
+      batteryLevel: null,
+      networkStatus: "online",
+      powerStatus: "mains",
+    },
+    firmware_version: "1.0.0",
+    metadata: {},
+    created_at: "2026-05-17T04:06:00.000Z",
+    updated_at: "2026-05-17T04:06:00.000Z",
+    ...overrides,
+  };
+}
+
 test("force-start jetty captures an effective start time", () => {
   const onForceStartJetty = vi.fn();
   render(
@@ -203,6 +323,146 @@ test("force-start jetty captures an effective start time", () => {
   fireEvent.click(screen.getByRole("button", { name: "Apply governed override" }));
 
   expect(onForceStartJetty).toHaveBeenCalledWith(101, expect.stringContaining("T"));
+});
+
+test("jetty and CTS boards surface operational actuals and pending review", () => {
+  const overview = stageSevenOverview();
+  overview.assignments[0].cts = { code: "CTS-BORNEO" } as never;
+  overview.trips[0].events = [
+    { event_type: "load_start", planned_at: "2026-05-17T01:30:00.000Z", actual_at: "2026-05-17T01:40:00.000Z" },
+    { event_type: "load_complete", planned_at: "2026-05-17T03:30:00.000Z", actual_at: "2026-05-17T04:05:00.000Z" },
+    { event_type: "arrive_cts", planned_at: "2026-05-17T07:30:00.000Z", actual_at: null },
+    { event_type: "discharge_start", planned_at: "2026-05-17T07:45:00.000Z", actual_at: null },
+    { event_type: "discharge_complete", planned_at: "2026-05-17T10:30:00.000Z", actual_at: null },
+  ] as never;
+
+  const { rerender } = render(
+    <JettyLoadingPage
+      confirmedOperationalEvents={[phaseFourConfirmedEvent()]}
+      operationCandidates={[phaseFourCandidate()]}
+      operationDevices={[phaseFourDevice()]}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getByText("Confirmed jetty events")).toBeInTheDocument();
+  expect(screen.getAllByText(/JETTY LOADING COMPLETED/).length).toBeGreaterThan(0);
+  expect(screen.getByText("Confirmation panel")).toBeInTheDocument();
+
+  rerender(
+    <CtsOperationsPage
+      operationCandidates={[phaseFourCandidate({
+        id: 2,
+        candidate_id: "OEC-CTS-002",
+        event_kind: "cts_rate_updated",
+        asset_type: "cts",
+        asset_code: "CTS-BORNEO",
+        device_ref: "CTS-BORNEO-OPS",
+        payload: { planned_rate_tph: "2200.00" },
+      })]}
+      operationDevices={[phaseFourDevice({
+        id: 2,
+        device_id: "CTS-BORNEO-OPS",
+        asset_type: "cts",
+        asset_code: "CTS-BORNEO",
+      })]}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getByText("Low-rate signals")).toBeInTheDocument();
+  expect(screen.getByText(/CTS RATE UPDATED/)).toBeInTheDocument();
+});
+
+test("tide and bridge board shows observed gate state beside planned windows", () => {
+  const overview = {
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+  } as unknown as PlanningOverview;
+  render(
+    <TideBridgePage
+      canEdit={false}
+      confirmedOperationalEvents={[
+        phaseFourConfirmedEvent({
+          id: 20,
+          event_id: "OPE-BRIDGE-20",
+          event_kind: "bridge_crossed",
+          asset_type: "bridge",
+          asset_code: "BRDG-UI-OPERATING-01",
+          schedule_event_type: "bridge_cross",
+        }),
+        phaseFourConfirmedEvent({
+          id: 21,
+          event_id: "OPE-TIDE-21",
+          event_kind: "tide_gate_passed",
+          asset_type: "tide_gate",
+          asset_code: "TIDE-UI-OPERATING-01",
+          schedule_event_type: "tide_gate",
+        }),
+      ]}
+      isActionRunning={false}
+      onEnterOperatingWindows={vi.fn()}
+      operationDevices={[
+        phaseFourDevice({
+          id: 3,
+          device_id: "BRIDGE-GATE-B-OPS",
+          asset_type: "bridge",
+          asset_code: "BRDG-UI-OPERATING-01",
+        }),
+        phaseFourDevice({
+          id: 4,
+          device_id: "TIDE-RANTAU-OPS",
+          asset_type: "tide_gate",
+          asset_code: "TIDE-UI-OPERATING-01",
+        }),
+      ]}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getByText("Observed gate state")).toBeInTheDocument();
+  expect(screen.getByText("BRIDGE CROSSED")).toBeInTheDocument();
+  expect(screen.getByText("TIDE GATE PASSED")).toBeInTheDocument();
+});
+
+test("live map shows operational overlays for instrumented assets", () => {
+  render(
+    <LiveResourceMapPage
+      canRunReplay={false}
+      canRunSimulation={false}
+      confirmedOperationalEvents={[phaseFourConfirmedEvent()]}
+      etaProjections={[]}
+      geofenceZones={[{
+        id: 1,
+        zone_id: "GEO-LOC-SUARAN-PORT",
+        name: "Suaran Port",
+        zone_type: "jetty",
+        source_location: 1,
+        source_location_code: "LOC-SUARAN-PORT",
+        source_location_name: "Suaran Port",
+        latitude: "0.6000",
+        longitude: "117.1000",
+        radius_m: 500,
+        status: "active",
+        metadata: {},
+        created_at: "2026-05-17T04:06:00.000Z",
+        updated_at: "2026-05-17T04:06:00.000Z",
+      }]}
+      isActionRunning={false}
+      latestAssetStates={[]}
+      movementEvents={[]}
+      onNavigate={vi.fn()}
+      onStartReplay={vi.fn()}
+      operationDevices={[phaseFourDevice()]}
+      overview={null}
+      replayRuns={[]}
+      trackingAlerts={[]}
+    />,
+  );
+
+  expect(screen.getByText("Operational overlays")).toBeInTheDocument();
+  expect(screen.getByText("JETTY LOADING COMPLETED")).toBeInTheDocument();
 });
 
 test("operations event console confirms pending evidence with reason capture", () => {
@@ -308,6 +568,20 @@ test("exception center renders calculated impact chain nodes", () => {
   expect(screen.getAllByText("+120m").length).toBeGreaterThan(0);
   expect(screen.getByText("TIDE WINDOW MISSED")).toBeInTheDocument();
   expect(screen.queryByText("Barge delay (+2h)")).not.toBeInTheDocument();
+});
+
+test("exception center renders operational event-driven triage rows", () => {
+  const overview = stageSevenOverview();
+  render(
+    <ExceptionCenterPage
+      confirmedOperationalEvents={[phaseFourConfirmedEvent()]}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getAllByText("LOADING_COMPLETE_LATE").length).toBeGreaterThan(0);
+  expect(screen.getByText("Loading complete late")).toBeInTheDocument();
+  expect(screen.getAllByText("+35m").length).toBeGreaterThan(0);
 });
 
 test("exception center converts a delay tracking alert into a scenario", () => {

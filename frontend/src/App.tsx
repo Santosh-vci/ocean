@@ -183,6 +183,12 @@ function App() {
   const canViewOperations = currentUser
     ? canAccess(currentUser.permissions, "operations.view")
     : false;
+  const canConfirmJetty = currentUser
+    ? canAccess(currentUser.permissions, "operations.confirm_jetty")
+    : false;
+  const canConfirmCts = currentUser
+    ? canAccess(currentUser.permissions, "operations.confirm_cts")
+    : false;
   const canRunTelemetryReplay = currentUser
     ? canAccess(currentUser.permissions, "telemetry.ingest")
     : false;
@@ -1022,8 +1028,11 @@ function App() {
         {route === "/constraints/tide-bridge" && canViewSchedule ? (
           <TideBridgePage
             canEdit={canEditSchedule}
+            confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
             onEnterOperatingWindows={handleEnterOperatingWindows}
+            operationCandidates={operationCandidates}
+            operationDevices={operationDevices}
             overview={planningOverview}
           />
         ) : null}
@@ -1041,17 +1050,29 @@ function App() {
           <JettyLoadingPage
             canEdit={canEditSchedule && activePlanIsEditable}
             canExport={canGenerateExports}
+            canConfirmJetty={canConfirmJetty}
+            confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
+            onConfirmOperationalEvent={handleConfirmOperationalEvent}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
             onForceStartJetty={handleForceStartJetty}
+            onRejectOperationalEvent={handleRejectOperationalEvent}
+            operationCandidates={operationCandidates}
+            operationDevices={operationDevices}
             overview={schedulingOverview}
           />
         ) : null}
         {route === "/operations/cts-floating-crane" && canViewSchedule ? (
           <CtsOperationsPage
             canExport={canGenerateExports}
+            canConfirmCts={canConfirmCts}
+            confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
+            onConfirmOperationalEvent={handleConfirmOperationalEvent}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            onRejectOperationalEvent={handleRejectOperationalEvent}
+            operationCandidates={operationCandidates}
+            operationDevices={operationDevices}
             overview={schedulingOverview}
           />
         ) : null}
@@ -1067,7 +1088,9 @@ function App() {
         {route === "/exceptions/center" && canViewSchedule ? (
           <ExceptionCenterPage
             canEdit={canEditSchedule && activePlanIsEditable}
+            confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
+            operationCandidates={operationCandidates}
             onCreateScenario={handleCreateScenario}
             onPublishTriage={canGenerateExports
               ? () => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })
@@ -1107,6 +1130,9 @@ function App() {
             isActionRunning={isWorkspaceActionRunning}
             latestAssetStates={latestAssetStates}
             movementEvents={movementEvents}
+            operationCandidates={operationCandidates}
+            operationDevices={operationDevices}
+            confirmedOperationalEvents={confirmedOperationalEvents}
             onNavigate={handleNavigate}
             onStartReplay={handleStartTelemetryReplay}
             overview={schedulingOverview}

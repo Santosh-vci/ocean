@@ -2,9 +2,22 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  confirmedEventForCandidate,
+  CTS_EVENT_KINDS,
+  JETTY_EVENT_KINDS,
+  latestCandidate,
+  latestConfirmedEvent,
+  operationalVarianceLabel,
+  operationalVarianceMinutes,
+  shortOperationalLabel,
+} from "../lib/operations";
 import type {
   AssignmentRecord,
+  ConfirmedOperationalEventRecord,
   ConflictRecord,
+  DeviceEndpointRecord,
+  OperationalEventCandidateRecord,
   SchedulingOverview,
   TripRecord,
 } from "../types";
@@ -18,13 +31,31 @@ type LogisticsPageProps = {
   onCreateDraft?: () => void;
   onExport?: () => void;
   onForceStartJetty?: (assignmentId: number, actualStartAt: string) => void | Promise<void>;
+  onConfirmOperationalEvent?: (
+    candidateId: number,
+    actualAt: string,
+    reasonCode: string,
+  ) => void | Promise<void>;
+  onRejectOperationalEvent?: (
+    candidateId: number,
+    reasonCode: string,
+    notes: string,
+  ) => void | Promise<void>;
   onRegenerate?: () => void;
   onSubmitApproval?: () => void;
+  operationCandidates?: OperationalEventCandidateRecord[];
+  confirmedOperationalEvents?: ConfirmedOperationalEventRecord[];
+  operationDevices?: DeviceEndpointRecord[];
+  canConfirmJetty?: boolean;
+  canConfirmCts?: boolean;
 };
 
 const EMPTY_ASSIGNMENTS: AssignmentRecord[] = [];
 const EMPTY_TRIPS: TripRecord[] = [];
 const EMPTY_CONFLICTS: ConflictRecord[] = [];
+const EMPTY_CANDIDATES: OperationalEventCandidateRecord[] = [];
+const EMPTY_CONFIRMED_EVENTS: ConfirmedOperationalEventRecord[] = [];
+const EMPTY_DEVICES: DeviceEndpointRecord[] = [];
 
 function mt(value: number) {
   return `${Math.round(value).toLocaleString()} MT`;
@@ -84,6 +115,122 @@ function selectedTripFor(
   const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId)
     ?? assignments[0];
   return trips.find((trip) => trip.id === selectedAssignment?.trip) ?? trips[0];
+}
+
+function eventFor(trip: TripRecord | undefined, eventType: string) {
+  return trip?.events.find((event) => event.event_type === eventType);
+}
+
+function deviceFor(devices: DeviceEndpointRecord[], assetCode: string | null | undefined) {
+  return devices.find((device) => device.asset_code === assetCode) ?? null;
+}
+
+function deviceHealthLabel(device: DeviceEndpointRecord | null) {
+  return shortOperationalLabel(device?.latest_health?.healthStatus ?? device?.status);
+}
+
+function operationalTone(status: string | null | undefined) {
+  if (status === "confirmed" || status === "auto_confirmed" || status === "healthy" || status === "active") {
+    return "ok";
+  }
+  if (status === "rejected" || status === "offline" || status === "critical") return "critical";
+  return "pending";
+}
+
+function CandidateReviewPanel({
+  candidate,
+  confirmedEvent,
+  canConfirm,
+  isActionRunning,
+  onConfirm,
+  onReject,
+}: {
+  candidate: OperationalEventCandidateRecord | null;
+  confirmedEvent: ConfirmedOperationalEventRecord | null;
+  canConfirm: boolean;
+  isActionRunning: boolean;
+  onConfirm?: LogisticsPageProps["onConfirmOperationalEvent"];
+  onReject?: LogisticsPageProps["onRejectOperationalEvent"];
+}) {
+  const [confirmReason, setConfirmReason] = useState("operator_verified");
+  const [rejectReason, setRejectReason] = useState("manual_reject");
+  const [rejectNotes, setRejectNotes] = useState("");
+
+  useEffect(() => {
+    setConfirmReason("operator_verified");
+    setRejectReason("manual_reject");
+    setRejectNotes("");
+  }, [candidate?.id]);
+
+  if (!candidate) {
+    return (
+      <section className="recovery-box board-event-review">
+        <strong>Confirmation panel</strong>
+        <p>No event candidate is waiting on this selected chain.</p>
+      </section>
+    );
+  }
+
+  const variance = operationalVarianceMinutes(
+    candidate.schedule_event_planned_at,
+    candidate.event_at,
+  );
+
+  return (
+    <section className="recovery-box board-event-review">
+      <strong>Confirmation panel</strong>
+      <span className={`status-chip ${operationalTone(candidate.status)}`}>
+        {shortOperationalLabel(candidate.status)}
+      </span>
+      <p>{shortOperationalLabel(candidate.event_kind)} / {candidate.candidate_id}</p>
+      <dl>
+        <div><dt>Evidence</dt><dd>{candidate.feed_ref}</dd></div>
+        <div><dt>Confidence</dt><dd>{Math.round(Number(candidate.confidence_score))}%</dd></div>
+        <div><dt>Variance</dt><dd>{operationalVarianceLabel(variance)}</dd></div>
+      </dl>
+      {confirmedEvent ? (
+        <em>Confirmed as {confirmedEvent.event_id}</em>
+      ) : candidate.status === "pending" ? (
+        <div className="board-event-actions">
+          <label>
+            Confirm reason
+            <input
+              onChange={(event) => setConfirmReason(event.target.value)}
+              value={confirmReason}
+            />
+          </label>
+          <button
+            disabled={!canConfirm || !onConfirm || !confirmReason.trim() || isActionRunning}
+            onClick={() => onConfirm?.(candidate.id, candidate.event_at, confirmReason.trim())}
+            type="button"
+          >
+            Confirm
+          </button>
+          <label>
+            Reject reason
+            <input
+              onChange={(event) => setRejectReason(event.target.value)}
+              value={rejectReason}
+            />
+          </label>
+          <label>
+            Notes
+            <textarea
+              onChange={(event) => setRejectNotes(event.target.value)}
+              value={rejectNotes}
+            />
+          </label>
+          <button
+            disabled={!canConfirm || !onReject || !rejectReason.trim() || isActionRunning}
+            onClick={() => onReject?.(candidate.id, rejectReason.trim(), rejectNotes.trim())}
+            type="button"
+          >
+            Reject
+          </button>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 export function TugBargeAssignmentPage({
@@ -236,10 +383,16 @@ export function TugBargeAssignmentPage({
 export function JettyLoadingPage({
   overview,
   canEdit = false,
+  canConfirmJetty = false,
   canExport = false,
   isActionRunning = false,
+  operationCandidates = EMPTY_CANDIDATES,
+  confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
+  operationDevices = EMPTY_DEVICES,
   onExport,
   onForceStartJetty,
+  onConfirmOperationalEvent,
+  onRejectOperationalEvent,
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
@@ -264,6 +417,24 @@ export function JettyLoadingPage({
   const plannedLoadStart = selectedTrip?.events.find((event) => event.event_type === "load_start")?.planned_at
     ?? selectedTrip?.planned_start
     ?? "";
+  const loadStartEvent = eventFor(selectedTrip, "load_start");
+  const loadCompleteEvent = eventFor(selectedTrip, "load_complete");
+  const departJettyEvent = eventFor(selectedTrip, "depart_jetty");
+  const selectedJettyCandidate = latestCandidate(operationCandidates, (candidate) => (
+    candidate.trip === selectedTrip?.id
+    && JETTY_EVENT_KINDS.includes(candidate.event_kind as (typeof JETTY_EVENT_KINDS)[number])
+    && candidate.status === "pending"
+  ));
+  const selectedJettyConfirmedEvent = selectedJettyCandidate
+    ? confirmedEventForCandidate(confirmedOperationalEvents, selectedJettyCandidate.id)
+    : latestConfirmedEvent(confirmedOperationalEvents, (event) => (
+      event.trip === selectedTrip?.id
+      && JETTY_EVENT_KINDS.includes(event.event_kind as (typeof JETTY_EVENT_KINDS)[number])
+    ));
+  const selectedDevice = deviceFor(operationDevices, selectedAssignment?.jetty?.code);
+  const confirmedJettyCount = confirmedOperationalEvents.filter((event) => (
+    event.asset_type === "jetty"
+  )).length;
 
   useEffect(() => {
     if (!selectedAssignmentId && assignments.length) {
@@ -311,6 +482,14 @@ export function JettyLoadingPage({
         </div>
       </header>
 
+      <div className="metric-strip five-up planning-kpis">
+        <div><span>Confirmed jetty events</span><strong className="success-text">{confirmedJettyCount}</strong></div>
+        <div><span>Pending review</span><strong className={selectedJettyCandidate ? "warning-text" : ""}>{selectedJettyCandidate ? 1 : 0}</strong></div>
+        <div><span>Actual load start</span><strong>{loadStartEvent?.actual_at ? "SET" : "-"}</strong></div>
+        <div><span>Actual load end</span><strong className={loadCompleteEvent?.actual_at ? "success-text" : ""}>{loadCompleteEvent?.actual_at ? "SET" : "-"}</strong></div>
+        <div><span>Feed health</span><strong className={`${operationalTone(selectedDevice?.latest_health?.healthStatus ?? selectedDevice?.status)}-text`}>{deviceHealthLabel(selectedDevice)}</strong></div>
+      </div>
+
       <div className="jetty-layout">
         <section className="board-surface jetty-plan-panel">
           <div className="grid-header">
@@ -323,7 +502,7 @@ export function JettyLoadingPage({
                 <h2>{jettyCode}<span>{rows[0]?.jetty?.status?.toUpperCase() ?? "PLANNED"}</span></h2>
                 <div className="jetty-row jetty-row-header">
                   <span>OGV</span><span>Grade</span><span>Hatch</span><span>Load MT</span>
-                  <span>Progress</span><span>Start / End</span><span>Readiness</span><span>Next</span>
+                  <span>Progress</span><span>Planned start / end</span><span>Actual start / end</span><span>Readiness</span><span>Next</span>
                 </div>
                 {rows.map((assignment) => {
                   const trip = trips.find((item) => item.id === assignment.trip);
@@ -340,6 +519,11 @@ export function JettyLoadingPage({
                       <span>{mt(assignment.planned_quantity_mt)}</span>
                       <span><i style={{ width: `${trip ? progressFor(trip) : 0}%` }} /></span>
                       <span>{dt(trip?.planned_start)} / {dt(trip?.planned_end)}</span>
+                      <span>
+                        {dt(eventFor(trip, "load_start")?.actual_at)}
+                        {" / "}
+                        {dt(eventFor(trip, "load_complete")?.actual_at)}
+                      </span>
                       <span className={statusTone(assignment.status, conflict?.is_blocking)}>{trip ? `${progressFor(trip)}%` : "0%"}</span>
                       <span>{conflict?.code ?? assignment.next_action}</span>
                     </div>
@@ -363,7 +547,13 @@ export function JettyLoadingPage({
               : "Select an assignment before applying a governed override."}</p>
             <dl>
               <div><dt>Planned load</dt><dd>{dt(plannedLoadStart)}</dd></div>
+              <div><dt>Actual start</dt><dd>{dt(loadStartEvent?.actual_at)}</dd></div>
+              <div><dt>Actual complete</dt><dd>{dt(loadCompleteEvent?.actual_at)}</dd></div>
+              <div><dt>Loaded MT</dt><dd>{selectedTrip ? mt(selectedTrip.loaded_quantity_mt) : "-"}</dd></div>
               <div><dt>Barge</dt><dd>{selectedAssignment?.barge?.code ?? "Unassigned"}</dd></div>
+              <div><dt>Grade</dt><dd>{selectedTrip?.cargo_layer_step?.coal_grade.code ?? "-"}</dd></div>
+              <div><dt>Departure ready</dt><dd>{departJettyEvent?.actual_at ? "Confirmed" : "Pending"}</dd></div>
+              <div><dt>Feed health</dt><dd>{deviceHealthLabel(selectedDevice)}</dd></div>
               <div><dt>Status</dt><dd>{selectedAssignment ? shortStatus(selectedAssignment.status) : "-"}</dd></div>
             </dl>
             {isOverridePanelOpen ? (
@@ -387,10 +577,20 @@ export function JettyLoadingPage({
                 </div>
               </form>
             ) : (
-              <section className="recovery-box">
-                <strong>Calculated impact</strong>
-                <p>Force start captures the effective start time and calculates current-trip tide and bridge risk.</p>
-              </section>
+              <>
+                <section className="recovery-box">
+                  <strong>Calculated impact</strong>
+                  <p>Force start captures the effective start time and calculates current-trip tide and bridge risk.</p>
+                </section>
+                <CandidateReviewPanel
+                  candidate={selectedJettyCandidate}
+                  canConfirm={canConfirmJetty}
+                  confirmedEvent={selectedJettyConfirmedEvent}
+                  isActionRunning={isActionRunning}
+                  onConfirm={onConfirmOperationalEvent}
+                  onReject={onRejectOperationalEvent}
+                />
+              </>
             )}
           </div>
         </aside>
@@ -401,9 +601,15 @@ export function JettyLoadingPage({
 
 export function CtsOperationsPage({
   overview,
+  canConfirmCts = false,
   canExport = false,
   isActionRunning = false,
+  operationCandidates = EMPTY_CANDIDATES,
+  confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
+  operationDevices = EMPTY_DEVICES,
   onExport,
+  onConfirmOperationalEvent,
+  onRejectOperationalEvent,
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
@@ -411,6 +617,26 @@ export function CtsOperationsPage({
   const activeCts = new Set(assignments.map((assignment) => assignment.cts?.code).filter(Boolean)).size;
   const waitingQueue = assignments.filter((assignment) => assignment.status.includes("waiting")).length;
   const downtime = assignments.filter((assignment) => statusTone(assignment.status) === "critical").length;
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(assignments[0]?.id ?? null);
+  const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId)
+    ?? assignments[0];
+  const selectedTrip = trips.find((trip) => trip.id === selectedAssignment?.trip);
+  const selectedCtsCandidate = latestCandidate(operationCandidates, (candidate) => (
+    candidate.trip === selectedTrip?.id
+    && CTS_EVENT_KINDS.includes(candidate.event_kind as (typeof CTS_EVENT_KINDS)[number])
+    && candidate.status === "pending"
+  ));
+  const selectedCtsConfirmedEvent = selectedCtsCandidate
+    ? confirmedEventForCandidate(confirmedOperationalEvents, selectedCtsCandidate.id)
+    : latestConfirmedEvent(confirmedOperationalEvents, (event) => (
+      event.trip === selectedTrip?.id
+      && CTS_EVENT_KINDS.includes(event.event_kind as (typeof CTS_EVENT_KINDS)[number])
+    ));
+  const selectedCtsDevice = deviceFor(operationDevices, selectedAssignment?.cts?.code);
+  const lowRateCandidates = operationCandidates.filter((candidate) => (
+    candidate.event_kind === "cts_rate_updated"
+    && candidate.status === "pending"
+  ));
 
   return (
     <section className="workspace-page logistics-board">
@@ -435,49 +661,83 @@ export function CtsOperationsPage({
         <div><span>Active CTS</span><strong>{activeCts}</strong></div>
         <div><span>Avg discharge rate</span><strong>{Math.round((overview?.validation.loadedMt ?? 0) / Math.max(activeCts, 1)).toLocaleString()}</strong></div>
         <div><span>Barge queue</span><strong className={waitingQueue ? "warning-text" : ""}>{waitingQueue}</strong></div>
-        <div><span>CTS downtime</span><strong className={downtime ? "critical-text" : ""}>{downtime}</strong></div>
+        <div><span>Low-rate signals</span><strong className={lowRateCandidates.length ? "warning-text" : ""}>{lowRateCandidates.length || downtime}</strong></div>
       </div>
 
-      <section className="board-surface planning-grid-panel cts-panel">
-        <div className="grid-header">
-          <div><SvgIcon name="operations" /><strong>CTS operations board</strong></div>
-          <span>Current OGV, assigned barge, queue position, coal grade, hatch, release, rate, status</span>
-        </div>
-        <div className="grid-scroll">
-          <table className="planning-table logistics-table">
-            <thead>
-              <tr>
-                <th>CTS ID</th><th>Current OGV</th><th>Assigned Barge</th><th>Queue Pos</th>
-                <th>Coal Grade</th><th>Hatch</th><th>Pred Release</th><th>Est Comp</th>
-                <th>Rate</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((assignment, index) => {
-                const trip = trips.find((item) => item.id === assignment.trip);
-                const conflict = conflictForTrip(conflicts, assignment.trip);
-                const rate = assignment.cts?.daily_capacity_mt
-                  ? Math.round(assignment.cts.daily_capacity_mt / 18)
-                  : 0;
-                return (
-                  <tr key={assignment.id}>
-                    <td><strong>{assignment.cts?.code ?? "UNASSIGNED"}</strong></td>
-                    <td>{assignment.vessel_name}</td>
-                    <td>{assignment.barge?.code ?? "-"}</td>
-                    <td>Q{index + 1}</td>
-                    <td>{trip?.cargo_layer_step?.coal_grade.code ?? "-"}</td>
-                    <td>H{trip?.cargo_layer_step?.hatch_no ?? "-"}/L{trip?.cargo_layer_step?.layer_no ?? "-"}</td>
-                    <td>{dt(assignment.planned_arrival)}</td>
-                    <td>{dt(trip?.planned_end)}</td>
-                    <td>{rate.toLocaleString()} MT/H</td>
-                    <td><span className={`status-chip ${statusTone(assignment.status, conflict?.is_blocking)}`}>{shortStatus(assignment.status)}</span></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div className="cts-layout">
+        <section className="board-surface planning-grid-panel cts-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="operations" /><strong>CTS operations board</strong></div>
+            <span>Planned versus actual discharge state, low-rate signals, queue pressure</span>
+          </div>
+          <div className="grid-scroll">
+            <table className="planning-table logistics-table">
+              <thead>
+                <tr>
+                  <th>CTS ID</th><th>Current OGV</th><th>Assigned Barge</th><th>Queue Pos</th>
+                  <th>Coal Grade</th><th>Planned start</th><th>Actual start</th><th>Actual complete</th>
+                  <th>Rate signal</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assignment, index) => {
+                  const trip = trips.find((item) => item.id === assignment.trip);
+                  const conflict = conflictForTrip(conflicts, assignment.trip);
+                  const rateCandidate = latestCandidate(operationCandidates, (candidate) => (
+                    candidate.trip === trip?.id && candidate.event_kind === "cts_rate_updated"
+                  ));
+                  return (
+                    <tr
+                      className={selectedAssignment?.id === assignment.id ? "selected-row" : ""}
+                      key={assignment.id}
+                      onClick={() => setSelectedAssignmentId(assignment.id)}
+                    >
+                      <td><strong>{assignment.cts?.code ?? "UNASSIGNED"}</strong></td>
+                      <td>{assignment.vessel_name}</td>
+                      <td>{assignment.barge?.code ?? "-"}</td>
+                      <td>Q{index + 1}</td>
+                      <td>{trip?.cargo_layer_step?.coal_grade.code ?? "-"}</td>
+                      <td>{dt(eventFor(trip, "arrive_cts")?.planned_at)}</td>
+                      <td>{dt(eventFor(trip, "discharge_start")?.actual_at)}</td>
+                      <td>{dt(eventFor(trip, "discharge_complete")?.actual_at)}</td>
+                      <td>{rateCandidate ? shortOperationalLabel(rateCandidate.status) : "-"}</td>
+                      <td><span className={`status-chip ${statusTone(assignment.status, conflict?.is_blocking)}`}>{shortStatus(assignment.status)}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="board-surface logistics-inspector">
+          <div className="grid-header">
+            <div><SvgIcon name="account-tree" /><strong>CTS event detail</strong></div>
+            <span>{selectedAssignment?.cts?.code ?? "No CTS"}</span>
+          </div>
+          <div className="inspector-body">
+            <span className={`status-chip ${operationalTone(selectedCtsDevice?.latest_health?.healthStatus ?? selectedCtsDevice?.status)}`}>
+              {deviceHealthLabel(selectedCtsDevice)}
+            </span>
+            <h2>{selectedAssignment?.vessel_name ?? "CTS queue"}</h2>
+            <dl>
+              <div><dt>Arrived actual</dt><dd>{dt(eventFor(selectedTrip, "arrive_cts")?.actual_at)}</dd></div>
+              <div><dt>Discharge start</dt><dd>{dt(eventFor(selectedTrip, "discharge_start")?.actual_at)}</dd></div>
+              <div><dt>Discharge complete</dt><dd>{dt(eventFor(selectedTrip, "discharge_complete")?.actual_at)}</dd></div>
+              <div><dt>Pending rate</dt><dd>{selectedCtsCandidate?.event_kind === "cts_rate_updated" ? shortOperationalLabel(selectedCtsCandidate.status) : "-"}</dd></div>
+              <div><dt>Queue impact</dt><dd>{selectedCtsCandidate ? "Review before downstream release" : "No active signal"}</dd></div>
+            </dl>
+            <CandidateReviewPanel
+              candidate={selectedCtsCandidate}
+              canConfirm={canConfirmCts}
+              confirmedEvent={selectedCtsConfirmedEvent}
+              isActionRunning={isActionRunning}
+              onConfirm={onConfirmOperationalEvent}
+              onReject={onRejectOperationalEvent}
+            />
+          </div>
+        </aside>
+      </div>
     </section>
   );
 }

@@ -1091,7 +1091,11 @@ export type ConfirmedOperationalEventRecord = {
   event_id: string;
   candidate: number | null;
   candidate_ref: string | null;
+  feed_ref: string | null;
+  device_ref: string | null;
   event_kind: string;
+  asset_type: string | null;
+  asset_code: string | null;
   plan_version: number | null;
   plan_version_ref: string | null;
   trip: number | null;

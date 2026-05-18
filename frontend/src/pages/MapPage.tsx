@@ -2,11 +2,15 @@ import { useCallback, useMemo, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
 import { formatGridDateLabel } from "../lib/gridDate";
+import { shortOperationalLabel } from "../lib/operations";
 import type {
+  ConfirmedOperationalEventRecord,
+  DeviceEndpointRecord,
   GeofenceZoneRecord,
   LatestAssetStateRecord,
   LiveEtaProjectionRecord,
   MovementEventRecord,
+  OperationalEventCandidateRecord,
   SchedulingOverview,
   TelemetryReplayRunRecord,
   TrackingAlertRecord,
@@ -19,6 +23,9 @@ type LiveResourceMapPageProps = {
   isActionRunning: boolean;
   latestAssetStates: LatestAssetStateRecord[];
   movementEvents: MovementEventRecord[];
+  operationCandidates?: OperationalEventCandidateRecord[];
+  confirmedOperationalEvents?: ConfirmedOperationalEventRecord[];
+  operationDevices?: DeviceEndpointRecord[];
   overview: SchedulingOverview | null;
   canRunSimulation: boolean;
   onNavigate: (path: string) => void;
@@ -29,6 +36,9 @@ type LiveResourceMapPageProps = {
 
 const EMPTY_ASSIGNMENTS: NonNullable<SchedulingOverview["assignments"]> = [];
 const EMPTY_CONFLICTS: NonNullable<SchedulingOverview["conflicts"]> = [];
+const EMPTY_CANDIDATES: OperationalEventCandidateRecord[] = [];
+const EMPTY_CONFIRMED_EVENTS: ConfirmedOperationalEventRecord[] = [];
+const EMPTY_DEVICES: DeviceEndpointRecord[] = [];
 
 function toneFor(status: string | undefined, blocked = false) {
   if (blocked || status === "blocked" || status === "maintenance") return "critical";
@@ -108,6 +118,12 @@ function coordinateNumber(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function operationalEventTone(status: string | null | undefined) {
+  if (status === "confirmed" || status === "auto_confirmed") return "ok";
+  if (status === "rejected" || status === "critical") return "critical";
+  return "pending";
+}
+
 export function LiveResourceMapPage({
   canRunReplay,
   etaProjections,
@@ -115,6 +131,9 @@ export function LiveResourceMapPage({
   isActionRunning,
   latestAssetStates,
   movementEvents,
+  operationCandidates = EMPTY_CANDIDATES,
+  confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
+  operationDevices = EMPTY_DEVICES,
   overview,
   canRunSimulation,
   onNavigate,
@@ -149,6 +168,33 @@ export function LiveResourceMapPage({
     });
     return rows;
   }, [openAlerts]);
+  const devicesByAsset = useMemo(
+    () => new Map(operationDevices.map((device) => [device.asset_code, device])),
+    [operationDevices],
+  );
+  const latestOperationalCandidateByAsset = useMemo(() => {
+    const rows = new Map<string, OperationalEventCandidateRecord>();
+    operationCandidates
+      .filter((candidate) => candidate.status === "pending")
+      .forEach((candidate) => {
+        const current = rows.get(candidate.asset_code);
+        if (!current || new Date(candidate.event_at).getTime() > new Date(current.event_at).getTime()) {
+          rows.set(candidate.asset_code, candidate);
+        }
+      });
+    return rows;
+  }, [operationCandidates]);
+  const latestOperationalConfirmedByAsset = useMemo(() => {
+    const rows = new Map<string, ConfirmedOperationalEventRecord>();
+    confirmedOperationalEvents.forEach((event) => {
+      if (!event.asset_code) return;
+      const current = rows.get(event.asset_code);
+      if (!current || new Date(event.actual_at).getTime() > new Date(current.actual_at).getTime()) {
+        rows.set(event.asset_code, event);
+      }
+    });
+    return rows;
+  }, [confirmedOperationalEvents]);
   const [selectedAssetCode, setSelectedAssetCode] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"manual" | "tide" | "exception">("manual");
   const activeReplay = replayRuns.find((run) => run.status === "running")
@@ -177,6 +223,12 @@ export function LiveResourceMapPage({
   const selectedState = selectedCode ? statesByAsset.get(selectedCode) : undefined;
   const selectedProjection = selectedCode ? latestProjectionByAsset.get(selectedCode) : undefined;
   const selectedAlerts = selectedCode ? alertsByAsset.get(selectedCode) ?? [] : [];
+  const selectedOperationalCandidate = selectedCode
+    ? latestOperationalCandidateByAsset.get(selectedCode)
+    : undefined;
+  const selectedOperationalConfirmed = selectedCode
+    ? latestOperationalConfirmedByAsset.get(selectedCode)
+    : undefined;
   const freshCount = latestAssetStates.filter((state) => state.freshness_status === "fresh").length;
   const agingCount = latestAssetStates.filter((state) => state.freshness_status === "aging").length;
   const staleCount = latestAssetStates.filter(
@@ -261,6 +313,41 @@ export function LiveResourceMapPage({
       }),
     [alertsByAsset, assignments, conflicts, latestAssetStates, latestProjectionByAsset, projectPoint],
   );
+  const operationalMarkers = useMemo(
+    () => [...new Set([
+      ...latestOperationalCandidateByAsset.keys(),
+      ...latestOperationalConfirmedByAsset.keys(),
+    ])]
+      .map((assetCode) => {
+        const device = devicesByAsset.get(assetCode);
+        const zone = geofenceZones.find((item) => item.zone_id === device?.geofence_ref);
+        const projected = zone ? projectPoint(zone.latitude, zone.longitude) : null;
+        const candidate = latestOperationalCandidateByAsset.get(assetCode);
+        const confirmedEvent = latestOperationalConfirmedByAsset.get(assetCode);
+        if (!projected || (!candidate && !confirmedEvent)) return null;
+        return {
+          assetCode,
+          left: projected.left,
+          top: projected.top,
+          candidate,
+          confirmedEvent,
+        };
+      })
+      .filter((item): item is {
+        assetCode: string;
+        left: number;
+        top: number;
+        candidate: OperationalEventCandidateRecord | undefined;
+        confirmedEvent: ConfirmedOperationalEventRecord | undefined;
+      } => item !== null),
+    [
+      devicesByAsset,
+      geofenceZones,
+      latestOperationalCandidateByAsset,
+      latestOperationalConfirmedByAsset,
+      projectPoint,
+    ],
+  );
 
   return (
     <section className="workspace-page live-map-board">
@@ -287,7 +374,7 @@ export function LiveResourceMapPage({
         </div>
       </header>
 
-      <div className="metric-strip eight-up map-kpis">
+      <div className="metric-strip nine-up map-kpis">
         <div><span>Assets tracked</span><strong>{latestAssetStates.length}</strong></div>
         <div><span>Fresh signals</span><strong className="ok-text">{freshCount}</strong></div>
         <div><span>Aging signals</span><strong className="pending-text">{agingCount}</strong></div>
@@ -295,6 +382,7 @@ export function LiveResourceMapPage({
         <div><span>Geofences</span><strong>{activeGeofenceCount}</strong></div>
         <div><span>Movement events</span><strong>{movementEvents.length}</strong></div>
         <div><span>Open alerts</span><strong className={openAlerts.length ? "warning-text" : "ok-text"}>{openAlerts.length}</strong></div>
+        <div><span>Operational overlays</span><strong className={operationalMarkers.length ? "warning-text" : ""}>{operationalMarkers.length}</strong></div>
         <div><span>Max ETA variance</span><strong className={`${projectionTone(highestVariance)}-text`}>{varianceLabel(highestVariance)}</strong></div>
       </div>
 
@@ -439,6 +527,18 @@ export function LiveResourceMapPage({
                 {alerts.length ? <b>{alerts.length}</b> : null}
               </button>
             ))}
+            {operationalMarkers.map(({ assetCode, left, top, candidate, confirmedEvent }) => (
+              <button
+                className={`operational-marker ${operationalEventTone(candidate?.status ?? confirmedEvent?.confirmation_mode)}`}
+                key={`operational-${assetCode}`}
+                onClick={() => setSelectedAssetCode(assetCode)}
+                style={{ left: `${left}%`, top: `${top}%` }}
+                type="button"
+              >
+                <strong>{assetCode}</strong>
+                <span>{shortOperationalLabel(candidate?.event_kind ?? confirmedEvent?.event_kind)}</span>
+              </button>
+            ))}
           </div>
           <div className="map-movement-log">
             <div>
@@ -501,6 +601,13 @@ export function LiveResourceMapPage({
                 <div><dt>Observed ETA</dt><dd>{selectedProjection?.observed_eta ? formatGridDateLabel(selectedProjection.observed_eta) : "Not calculated"}</dd></div>
                 <div><dt>ETA variance</dt><dd className={`${projectionTone(selectedProjection)}-text`}>{varianceLabel(selectedProjection)}</dd></div>
                 <div><dt>Open alerts</dt><dd>{selectedAlerts.length ? selectedAlerts.map((alert) => short(alert.alert_type)).join(", ") : "None"}</dd></div>
+                <div><dt>Ops event</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.event_kind ?? selectedOperationalConfirmed?.event_kind)}</dd></div>
+                <div><dt>Ops state</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.status ?? selectedOperationalConfirmed?.confirmation_mode)}</dd></div>
+                <div><dt>Ops actual</dt><dd>{selectedOperationalCandidate?.event_at
+                  ? formatGridDateLabel(selectedOperationalCandidate.event_at)
+                  : selectedOperationalConfirmed?.actual_at
+                    ? formatGridDateLabel(selectedOperationalConfirmed.actual_at)
+                    : "No event"}</dd></div>
                 <div><dt>Paired asset</dt><dd>{selected?.barge?.code ?? "No barge"}</dd></div>
                 <div><dt>Jetty</dt><dd>{selected?.jetty?.code ?? "Unassigned"}</dd></div>
                 <div><dt>CTS</dt><dd>{selected?.cts?.code ?? "Unassigned"}</dd></div>
@@ -517,9 +624,9 @@ export function LiveResourceMapPage({
               >
                 Open simulation workspace
               </button>
-              {selectedAlerts.length ? (
+              {selectedAlerts.length || selectedOperationalCandidate ? (
                 <button onClick={() => onNavigate("/exceptions/center")} type="button">
-                  Open tracking alert
+                  Open exception center
                 </button>
               ) : null}
             </div>

@@ -2,9 +2,21 @@ import { useMemo } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  BRIDGE_EVENT_KINDS,
+  latestCandidate,
+  latestConfirmedEvent,
+  operationalVarianceLabel,
+  operationalVarianceMinutes,
+  shortOperationalLabel,
+  TIDE_EVENT_KINDS,
+} from "../lib/operations";
 import type {
   BridgeWindowRecord,
+  ConfirmedOperationalEventRecord,
+  DeviceEndpointRecord,
   NavigationConstraintCheckRecord,
+  OperationalEventCandidateRecord,
   PlanningOverview,
   TideWindowRecord,
 } from "../types";
@@ -14,11 +26,17 @@ type TideBridgePageProps = {
   canEdit: boolean;
   isActionRunning: boolean;
   onEnterOperatingWindows: () => void;
+  operationCandidates?: OperationalEventCandidateRecord[];
+  confirmedOperationalEvents?: ConfirmedOperationalEventRecord[];
+  operationDevices?: DeviceEndpointRecord[];
 };
 
 const EMPTY_CHECKS: NavigationConstraintCheckRecord[] = [];
 const EMPTY_TIDE_WINDOWS: TideWindowRecord[] = [];
 const EMPTY_BRIDGE_WINDOWS: BridgeWindowRecord[] = [];
+const EMPTY_CANDIDATES: OperationalEventCandidateRecord[] = [];
+const EMPTY_CONFIRMED_EVENTS: ConfirmedOperationalEventRecord[] = [];
+const EMPTY_DEVICES: DeviceEndpointRecord[] = [];
 
 type WindowRecord = TideWindowRecord | BridgeWindowRecord;
 
@@ -137,11 +155,37 @@ function bestRecovery(checks: NavigationConstraintCheckRecord[]) {
   return checks.find((check) => check.status === "missed") ?? checks.find((check) => check.status === "marginal");
 }
 
+function deviceFor(devices: DeviceEndpointRecord[], assetType: string) {
+  return devices.find((device) => device.asset_type === assetType) ?? null;
+}
+
+function deviceHealth(device: DeviceEndpointRecord | null) {
+  return shortOperationalLabel(device?.latest_health?.healthStatus ?? device?.status);
+}
+
+function operationalTone(status: string | null | undefined) {
+  if (status === "confirmed" || status === "auto_confirmed" || status === "healthy" || status === "active") return "ok";
+  if (status === "rejected" || status === "offline" || status === "critical") return "critical";
+  return "pending";
+}
+
+function observedStateLabel(
+  candidate: OperationalEventCandidateRecord | null,
+  event: ConfirmedOperationalEventRecord | null,
+) {
+  if (candidate) return shortOperationalLabel(candidate.status);
+  if (event) return "CONFIRMED";
+  return "NO SIGNAL";
+}
+
 export function TideBridgePage({
   overview,
   canEdit,
   isActionRunning,
   onEnterOperatingWindows,
+  operationCandidates = EMPTY_CANDIDATES,
+  confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
+  operationDevices = EMPTY_DEVICES,
 }: TideBridgePageProps) {
   const tideWindows = overview?.tideWindows ?? EMPTY_TIDE_WINDOWS;
   const bridgeWindows = overview?.bridgeWindows ?? EMPTY_BRIDGE_WINDOWS;
@@ -172,6 +216,22 @@ export function TideBridgePage({
   const openCount = timelineTideWindows.filter((item) => item.risk_level !== "closed").length
     + timelineBridgeWindows.filter((item) => item.status === "open").length;
   const missedCount = visibleChecks.filter((check) => check.status === "missed").length;
+  const latestBridgeCandidate = latestCandidate(operationCandidates, (candidate) => (
+    BRIDGE_EVENT_KINDS.includes(candidate.event_kind as (typeof BRIDGE_EVENT_KINDS)[number])
+    && candidate.status === "pending"
+  ));
+  const latestTideCandidate = latestCandidate(operationCandidates, (candidate) => (
+    TIDE_EVENT_KINDS.includes(candidate.event_kind as (typeof TIDE_EVENT_KINDS)[number])
+    && candidate.status === "pending"
+  ));
+  const latestBridgeConfirmed = latestConfirmedEvent(confirmedOperationalEvents, (event) => (
+    BRIDGE_EVENT_KINDS.includes(event.event_kind as (typeof BRIDGE_EVENT_KINDS)[number])
+  ));
+  const latestTideConfirmed = latestConfirmedEvent(confirmedOperationalEvents, (event) => (
+    TIDE_EVENT_KINDS.includes(event.event_kind as (typeof TIDE_EVENT_KINDS)[number])
+  ));
+  const bridgeDevice = deviceFor(operationDevices, "bridge");
+  const tideDevice = deviceFor(operationDevices, "tide_gate");
 
   return (
     <section className="workspace-page planning-board">
@@ -322,6 +382,48 @@ export function TideBridgePage({
           ) : null}
         </aside>
       </div>
+
+      <section className="board-surface observed-gate-panel">
+        <div className="grid-header">
+          <div>
+            <SvgIcon name="operations" />
+            <strong>Observed gate state</strong>
+          </div>
+          <span>Live operational evidence shown beside planned windows</span>
+        </div>
+        <div className="observed-gate-grid">
+          <article>
+            <span className={`status-chip ${operationalTone(latestBridgeCandidate?.status ?? latestBridgeConfirmed?.confirmation_mode)}`}>
+              {observedStateLabel(latestBridgeCandidate, latestBridgeConfirmed)}
+            </span>
+            <h2>Bridge gate</h2>
+            <dl>
+              <div><dt>Latest signal</dt><dd>{shortOperationalLabel(latestBridgeCandidate?.event_kind ?? latestBridgeConfirmed?.event_kind)}</dd></div>
+              <div><dt>Actual at</dt><dd>{dt(latestBridgeCandidate?.event_at ?? latestBridgeConfirmed?.actual_at ?? "")}</dd></div>
+              <div><dt>Variance</dt><dd>{operationalVarianceLabel(operationalVarianceMinutes(
+                latestBridgeCandidate?.schedule_event_planned_at ?? latestBridgeConfirmed?.schedule_event_planned_at,
+                latestBridgeCandidate?.event_at ?? latestBridgeConfirmed?.actual_at,
+              ))}</dd></div>
+              <div><dt>Feed health</dt><dd>{deviceHealth(bridgeDevice)}</dd></div>
+            </dl>
+          </article>
+          <article>
+            <span className={`status-chip ${operationalTone(latestTideCandidate?.status ?? latestTideConfirmed?.confirmation_mode)}`}>
+              {observedStateLabel(latestTideCandidate, latestTideConfirmed)}
+            </span>
+            <h2>Tide gate</h2>
+            <dl>
+              <div><dt>Latest signal</dt><dd>{shortOperationalLabel(latestTideCandidate?.event_kind ?? latestTideConfirmed?.event_kind)}</dd></div>
+              <div><dt>Actual at</dt><dd>{dt(latestTideCandidate?.event_at ?? latestTideConfirmed?.actual_at ?? "")}</dd></div>
+              <div><dt>Variance</dt><dd>{operationalVarianceLabel(operationalVarianceMinutes(
+                latestTideCandidate?.schedule_event_planned_at ?? latestTideConfirmed?.schedule_event_planned_at,
+                latestTideCandidate?.event_at ?? latestTideConfirmed?.actual_at,
+              ))}</dd></div>
+              <div><dt>Feed health</dt><dd>{deviceHealth(tideDevice)}</dd></div>
+            </dl>
+          </article>
+        </div>
+      </section>
 
       <section className="board-surface planning-grid-panel affected-trips-panel">
         <div className="grid-header">

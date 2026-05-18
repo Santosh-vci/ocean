@@ -307,6 +307,10 @@ class OperationalEventIngestSerializer(serializers.Serializer):
 
 class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
     candidate_ref = serializers.CharField(source="candidate.candidate_id", read_only=True)
+    feed_ref = serializers.CharField(source="candidate.feed.feed_id", read_only=True)
+    device_ref = serializers.CharField(source="candidate.device.device_id", read_only=True)
+    asset_type = serializers.CharField(source="candidate.asset_type", read_only=True)
+    asset_code = serializers.CharField(source="candidate.asset_code", read_only=True)
     plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
     trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
     assignment_ref = serializers.CharField(source="assignment.trip.trip_id", read_only=True)
@@ -328,7 +332,11 @@ class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
             "event_id",
             "candidate",
             "candidate_ref",
+            "feed_ref",
+            "device_ref",
             "event_kind",
+            "asset_type",
+            "asset_code",
             "plan_version",
             "plan_version_ref",
             "trip",
@@ -357,6 +365,10 @@ class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
             "id",
             "event_id",
             "candidate_ref",
+            "feed_ref",
+            "device_ref",
+            "asset_type",
+            "asset_code",
             "plan_version_ref",
             "trip_ref",
             "assignment_ref",
