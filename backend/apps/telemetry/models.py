@@ -514,3 +514,34 @@ class TrackingAlert(models.Model):
 
     def __str__(self) -> str:
         return self.alert_id
+
+
+class TelemetryReplayRun(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        RUNNING = "running", "Running"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    replay_id = models.CharField(max_length=96, unique=True)
+    name = models.CharField(max_length=180)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.DRAFT)
+    scenario_code = models.CharField(max_length=80)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    speed_multiplier = models.DecimalField(max_digits=6, decimal_places=2, default=1)
+    seed_start_at = models.DateTimeField()
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["scenario_code", "replay_id"]
+        indexes = [
+            models.Index(fields=("status", "scenario_code")),
+            models.Index(fields=("started_at", "completed_at")),
+        ]
+
+    def __str__(self) -> str:
+        return self.replay_id

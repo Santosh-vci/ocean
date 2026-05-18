@@ -11,6 +11,7 @@ from .models import (
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TelemetryReplayRun,
     TrackingAlert,
 )
 
@@ -341,6 +342,33 @@ class TrackingAlertSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+
+class TelemetryReplayRunSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelemetryReplayRun
+        fields = [
+            "id",
+            "replay_id",
+            "name",
+            "status",
+            "scenario_code",
+            "started_at",
+            "completed_at",
+            "speed_multiplier",
+            "seed_start_at",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "status",
+            "started_at",
+            "completed_at",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class PositionPingIngestSerializer(serializers.Serializer):

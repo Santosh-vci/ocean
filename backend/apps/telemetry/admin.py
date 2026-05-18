@@ -7,6 +7,7 @@ from .models import (
     LiveEtaProjection,
     MovementEvent,
     PositionPing,
+    TelemetryReplayRun,
     TelemetrySource,
     TrackingAlert,
 )
@@ -102,3 +103,17 @@ class TrackingAlertAdmin(admin.ModelAdmin):
     )
     search_fields = ("alert_id", "asset_code", "trip__trip_id", "message")
     list_filter = ("alert_type", "severity", "status", "source_kind")
+
+
+@admin.register(TelemetryReplayRun)
+class TelemetryReplayRunAdmin(admin.ModelAdmin):
+    list_display = (
+        "replay_id",
+        "scenario_code",
+        "status",
+        "speed_multiplier",
+        "started_at",
+        "completed_at",
+    )
+    search_fields = ("replay_id", "name", "scenario_code")
+    list_filter = ("status", "scenario_code")

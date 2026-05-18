@@ -66,6 +66,7 @@ from apps.telemetry.models import (
     LiveEtaProjection,
     MovementEvent,
     PositionPing,
+    TelemetryReplayRun,
     TelemetrySource,
     TrackingAlert,
 )
@@ -380,6 +381,7 @@ class Command(BaseCommand):
         )
 
     def _reset_operational_data(self):
+        TelemetryReplayRun.objects.all().delete()
         LatestAssetState.objects.all().delete()
         TrackingAlert.objects.all().delete()
         LiveEtaProjection.objects.all().delete()

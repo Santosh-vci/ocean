@@ -8,17 +8,22 @@ import type {
   LiveEtaProjectionRecord,
   MovementEventRecord,
   SchedulingOverview,
+  TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
 
 type LiveResourceMapPageProps = {
+  canRunReplay: boolean;
   etaProjections: LiveEtaProjectionRecord[];
   geofenceZones: GeofenceZoneRecord[];
+  isActionRunning: boolean;
   latestAssetStates: LatestAssetStateRecord[];
   movementEvents: MovementEventRecord[];
   overview: SchedulingOverview | null;
   canRunSimulation: boolean;
   onNavigate: (path: string) => void;
+  onStartReplay: (replayId: string) => Promise<void>;
+  replayRuns: TelemetryReplayRunRecord[];
   trackingAlerts: TrackingAlertRecord[];
 };
 
@@ -90,6 +95,13 @@ function varianceLabel(projection: LiveEtaProjectionRecord | undefined) {
   return `${sign}${projection.variance_minutes}m`;
 }
 
+function replayTone(status: string | undefined) {
+  if (status === "failed" || status === "canceled") return "critical";
+  if (status === "running") return "pending";
+  if (status === "completed") return "ok";
+  return "info";
+}
+
 function coordinateNumber(value: string | null | undefined) {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
@@ -97,13 +109,17 @@ function coordinateNumber(value: string | null | undefined) {
 }
 
 export function LiveResourceMapPage({
+  canRunReplay,
   etaProjections,
   geofenceZones,
+  isActionRunning,
   latestAssetStates,
   movementEvents,
   overview,
   canRunSimulation,
   onNavigate,
+  onStartReplay,
+  replayRuns,
   trackingAlerts,
 }: LiveResourceMapPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
@@ -135,6 +151,17 @@ export function LiveResourceMapPage({
   }, [openAlerts]);
   const [selectedAssetCode, setSelectedAssetCode] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"manual" | "tide" | "exception">("manual");
+  const activeReplay = replayRuns.find((run) => run.status === "running")
+    ?? replayRuns
+      .filter((run) => run.completed_at)
+      .sort((left, right) => (
+        new Date(right.completed_at ?? 0).getTime() - new Date(left.completed_at ?? 0).getTime()
+      ))[0]
+    ?? replayRuns[0];
+  const [selectedReplayId, setSelectedReplayId] = useState<string | null>(null);
+  const selectedReplay = replayRuns.find(
+    (run) => run.replay_id === (selectedReplayId ?? activeReplay?.replay_id),
+  );
   const defaultSignalCode = latestAssetStates.find((state) => state.current_geofence_ref)?.asset_code
     ?? latestAssetStates.find((state) => state.freshness_status === "fresh")?.asset_code;
   const selectedCode = selectedAssetCode
@@ -246,6 +273,11 @@ export function LiveResourceMapPage({
           <span className="phase-chip secure">
             {mapMode === "manual" ? "Live signal view" : mapMode === "tide" ? "Tide / bridge view" : "Exception view"}
           </span>
+          {selectedReplay ? (
+            <span className={`status-chip ${replayTone(selectedReplay.status)}`}>
+              {selectedReplay.scenario_code}
+            </span>
+          ) : null}
           <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">
             Open assignment board
           </button>
@@ -296,6 +328,42 @@ export function LiveResourceMapPage({
           >
             Exception overlay
           </button>
+          <section className="map-replay-control">
+            <h2>Synthetic replay</h2>
+            <select
+              onChange={(event) => setSelectedReplayId(event.target.value)}
+              value={selectedReplay?.replay_id ?? ""}
+            >
+              {replayRuns.map((run) => (
+                <option key={run.replay_id} value={run.replay_id}>
+                  {run.scenario_code}
+                </option>
+              ))}
+            </select>
+            <div>
+              <span className={`status-chip ${replayTone(selectedReplay?.status)}`}>
+                {short(selectedReplay?.status)}
+              </span>
+              <em>{selectedReplay ? `${selectedReplay.speed_multiplier}x` : "No replay"}</em>
+            </div>
+            <button
+              disabled={!canRunReplay || !selectedReplay || isActionRunning}
+              onClick={() => {
+                if (selectedReplay) {
+                  void onStartReplay(selectedReplay.replay_id);
+                }
+              }}
+              title={!canRunReplay ? "Your role cannot start replay runs." : undefined}
+              type="button"
+            >
+              Start replay
+            </button>
+            <p>
+              {selectedReplay?.completed_at
+                ? `Last completed ${formatGridDateLabel(selectedReplay.completed_at)}`
+                : "Select a seeded replay family"}
+            </p>
+          </section>
           <section>
             <h2>Asset layers</h2>
             <span>Tugs <strong>{stateCounts.tug ?? 0}</strong></span>

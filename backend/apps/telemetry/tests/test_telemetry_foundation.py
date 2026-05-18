@@ -14,9 +14,11 @@ from apps.telemetry.models import (
     LiveEtaProjection,
     MovementEvent,
     PositionPing,
+    TelemetryReplayRun,
     TelemetrySource,
     TrackingAlert,
 )
+from apps.telemetry.replay import seed_phase3_replay_runs, start_synthetic_replay
 from apps.telemetry.services import ingest_position_ping, refresh_signal_health
 
 
@@ -386,3 +388,60 @@ def test_eta_projection_and_tracking_alert_api_are_viewable():
     assert projection_response.data[0]["schedule_event_type"]
     assert any(item["alert_type"] == "delay" for item in alert_response.data)
     assert overview_response.data["trackingSummary"]["openAlertCount"] >= 1
+
+
+@pytest.mark.django_db
+def test_seed_phase3_replay_creates_all_fixture_families_and_runs_are_rerunnable():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+
+    replay_runs = seed_phase3_replay_runs()
+    replay_run = TelemetryReplayRun.objects.get(scenario_code="TRACK-JETTY-DELAY")
+    first = start_synthetic_replay(replay_run=replay_run)
+    identity_count = AssetIdentity.objects.count()
+    second = start_synthetic_replay(replay_run=replay_run)
+
+    assert {run.scenario_code for run in replay_runs} == {
+        "TRACK-ON-TIME",
+        "TRACK-JETTY-DELAY",
+        "TRACK-BRIDGE-WAIT",
+        "TRACK-STALE-SIGNAL",
+        "TRACK-OGV-ETA-SHIFT",
+        "TRACK-CTS-APPROACH",
+    }
+    assert first["run"].status == TelemetryReplayRun.Status.COMPLETED
+    assert first["ping_count"] == second["ping_count"] == 2
+    assert AssetIdentity.objects.count() == identity_count
+    assert TrackingAlert.objects.filter(
+        alert_type=TrackingAlert.AlertType.DELAY,
+        evidence__replayId=replay_run.replay_id,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_replay_run_api_can_start_a_seeded_synthetic_flow():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    replay_run = seed_phase3_replay_runs()[0]
+    organization = Organization.objects.create(
+        name="Coalflow Platform Replay",
+        slug="coalflow-platform-replay-test",
+        kind=Organization.Kind.PLATFORM,
+    )
+    viewer = User.objects.create_user(username="replay-viewer", password="secret")
+    dispatcher = User.objects.create_user(username="replay-dispatcher", password="secret")
+    assign(viewer, organization, ["telemetry.view"])
+    assign(dispatcher, organization, ["telemetry.view", "telemetry.ingest"])
+
+    client = APIClient()
+    client.force_authenticate(viewer)
+    denied = client.post(f"/api/telemetry/replay-runs/{replay_run.replay_id}/start/")
+
+    client.force_authenticate(dispatcher)
+    response = client.post(f"/api/telemetry/replay-runs/{replay_run.replay_id}/start/")
+    list_response = client.get("/api/telemetry/replay-runs/")
+
+    assert denied.status_code == 403
+    assert response.status_code == 200
+    assert response.data["status"] == TelemetryReplayRun.Status.COMPLETED
+    assert response.data["metadata"]["pingCount"] >= 1
+    assert list_response.status_code == 200
+    assert len(list_response.data) == 6

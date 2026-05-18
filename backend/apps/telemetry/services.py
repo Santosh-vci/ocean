@@ -640,6 +640,7 @@ def _upsert_eta_projection(
         ),
         "scheduleEventType": schedule_event.event_type,
         "seed": ping.raw_payload.get("seed"),
+        "replayId": ping.raw_payload.get("replayId"),
     }
     projection.calculated_at = now
     projection.save(
@@ -887,6 +888,7 @@ def _upsert_tracking_alert(
             latest_state.current_geofence.name if latest_state.current_geofence else None
         ),
         "seed": ping.raw_payload.get("seed") if ping else None,
+        "replayId": ping.raw_payload.get("replayId") if ping else None,
     }
     existing = TrackingAlert.objects.filter(
         asset_code=latest_state.asset_code,

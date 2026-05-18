@@ -7,6 +7,7 @@ import type {
   DashboardKpi,
   DashboardReadModel,
   LiveEtaProjectionRecord,
+  TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
 
@@ -16,6 +17,7 @@ type DashboardPageProps = {
   dashboard: DashboardReadModel | null;
   etaProjections: LiveEtaProjectionRecord[];
   onNavigate: (path: string) => void;
+  replayRuns: TelemetryReplayRunRecord[];
   trackingAlerts: TrackingAlertRecord[];
 };
 
@@ -46,6 +48,7 @@ export function DashboardPage({
   dashboard,
   etaProjections,
   onNavigate,
+  replayRuns,
   trackingAlerts,
 }: DashboardPageProps) {
   const role = dashboard?.roleShape;
@@ -66,6 +69,12 @@ export function DashboardPage({
     .sort((left, right) => (
       new Date(right.calculated_at).getTime() - new Date(left.calculated_at).getTime()
     ))[0];
+  const activeReplay = replayRuns.find((run) => run.status === "running")
+    ?? replayRuns
+      .filter((run) => run.completed_at)
+      .sort((left, right) => (
+        new Date(right.completed_at ?? 0).getTime() - new Date(left.completed_at ?? 0).getTime()
+      ))[0];
 
   return (
     <section className="workspace-page situation-board">
@@ -276,6 +285,10 @@ export function DashboardPage({
               <div>
                 <dt>Latest ETA calc</dt>
                 <dd>{latestProjection ? formatGridDateLabel(latestProjection.calculated_at) : "No feed"}</dd>
+              </div>
+              <div>
+                <dt>Replay state</dt>
+                <dd>{activeReplay ? `${short(activeReplay.status)} / ${activeReplay.scenario_code}` : "No replay"}</dd>
               </div>
             </dl>
             {openTrackingAlerts.slice(0, 2).map((alert) => (

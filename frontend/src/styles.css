@@ -3649,6 +3649,51 @@ tbody tr:hover,
   padding: 0.65rem 0;
 }
 
+.map-replay-control select {
+  width: calc(100% - 1.3rem);
+  min-height: 2rem;
+  margin: 0 0.65rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0 0.5rem;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.66rem;
+}
+
+.map-replay-control > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin: 0 0.65rem;
+}
+
+.map-replay-control .status-chip {
+  display: inline-flex;
+  justify-content: center;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.map-replay-control > div em,
+.map-replay-control p {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.64rem;
+  font-style: normal;
+}
+
+.map-replay-control p {
+  margin-inline: 0.65rem;
+}
+
+.map-replay-control button:disabled {
+  opacity: 0.48;
+}
+
 .map-filter-rail h2 {
   margin: 0 0.65rem;
   color: var(--primary);

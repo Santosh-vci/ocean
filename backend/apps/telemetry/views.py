@@ -13,6 +13,7 @@ from .models import (
     MovementEvent,
     PositionPing,
     TelemetrySource,
+    TelemetryReplayRun,
     TrackingAlert,
 )
 from .serializers import (
@@ -24,9 +25,11 @@ from .serializers import (
     PositionPingIngestResponseSerializer,
     PositionPingIngestSerializer,
     PositionPingSerializer,
+    TelemetryReplayRunSerializer,
     TelemetrySourceSerializer,
     TrackingAlertSerializer,
 )
+from .replay import cancel_synthetic_replay, start_synthetic_replay
 from .services import ingest_position_ping, refresh_signal_health
 
 
@@ -169,3 +172,29 @@ class TrackingAlertViewSet(ReadOnlyModelViewSet):
         alert.status = TrackingAlert.Status.ACKNOWLEDGED
         alert.save(update_fields=["status", "updated_at"])
         return Response(TrackingAlertSerializer(alert).data)
+
+
+class TelemetryReplayRunViewSet(TelemetryViewSet):
+    queryset = TelemetryReplayRun.objects.all()
+    serializer_class = TelemetryReplayRunSerializer
+    lookup_field = "replay_id"
+    action_permission_map = {
+        **TelemetryViewSet.action_permission_map,
+        "start": "telemetry.ingest",
+        "stop": "telemetry.ingest",
+    }
+
+    @action(detail=True, methods=["post"], url_path="start")
+    def start(self, request, replay_id=None):
+        replay_run = self.get_object()
+        speed_multiplier = request.data.get("speed_multiplier")
+        result = start_synthetic_replay(
+            replay_run=replay_run,
+            speed_multiplier=speed_multiplier,
+        )
+        return Response(TelemetryReplayRunSerializer(result["run"]).data)
+
+    @action(detail=True, methods=["post"], url_path="stop")
+    def stop(self, request, replay_id=None):
+        replay_run = cancel_synthetic_replay(replay_run=self.get_object())
+        return Response(TelemetryReplayRunSerializer(replay_run).data)

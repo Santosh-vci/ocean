@@ -1145,3 +1145,18 @@ export type TrackingAlertRecord = {
   created_at: string;
   updated_at: string;
 };
+
+export type TelemetryReplayRunRecord = {
+  id: number;
+  replay_id: string;
+  name: string;
+  status: string;
+  scenario_code: string;
+  started_at: string | null;
+  completed_at: string | null;
+  speed_multiplier: string;
+  seed_start_at: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};

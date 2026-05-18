@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
 import { JettyLoadingPage } from "./pages/LogisticsPages";
+import { LiveResourceMapPage } from "./pages/MapPage";
 import { ExceptionCenterPage, SimulationWorkspacePage } from "./pages/RecoveryPages";
 import type { SchedulingOverview } from "./types";
 
@@ -88,6 +89,44 @@ test("exposes governed exports through export visibility", () => {
   expect(visibleNavItems(["dashboard.view", "export.view"]).map((item) => item.label)).toContain(
     "Exports & Handoff",
   );
+});
+
+test("live map exposes seeded replay controls", () => {
+  const onStartReplay = vi.fn();
+  render(
+    <LiveResourceMapPage
+      canRunReplay
+      canRunSimulation={false}
+      etaProjections={[]}
+      geofenceZones={[]}
+      isActionRunning={false}
+      latestAssetStates={[]}
+      movementEvents={[]}
+      onNavigate={vi.fn()}
+      onStartReplay={onStartReplay}
+      overview={null}
+      replayRuns={[{
+        id: 1,
+        replay_id: "RPL-TRACK-ON-TIME",
+        name: "On-time route proof",
+        status: "draft",
+        scenario_code: "TRACK-ON-TIME",
+        started_at: null,
+        completed_at: null,
+        speed_multiplier: "4.00",
+        seed_start_at: "2026-05-19T00:00:00.000Z",
+        metadata: {},
+        created_at: "2026-05-18T00:00:00.000Z",
+        updated_at: "2026-05-18T00:00:00.000Z",
+      }]}
+      trackingAlerts={[]}
+    />,
+  );
+
+  expect(screen.getByText("Synthetic replay")).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "TRACK-ON-TIME" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Start replay" }));
+  expect(onStartReplay).toHaveBeenCalledWith("RPL-TRACK-ON-TIME");
 });
 
 test("renders the role-aware dashboard shell", async () => {

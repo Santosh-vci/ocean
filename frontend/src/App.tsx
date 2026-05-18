@@ -52,6 +52,7 @@ import type {
   RbacOverview,
   SchedulingOverview,
   SimulationScenarioRecord,
+  TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "./types";
 
@@ -123,6 +124,7 @@ function App() {
   const [movementEvents, setMovementEvents] = useState<MovementEventRecord[]>([]);
   const [etaProjections, setEtaProjections] = useState<LiveEtaProjectionRecord[]>([]);
   const [trackingAlerts, setTrackingAlerts] = useState<TrackingAlertRecord[]>([]);
+  const [telemetryReplayRuns, setTelemetryReplayRuns] = useState<TelemetryReplayRunRecord[]>([]);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -168,6 +170,9 @@ function App() {
   const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
   const canViewTelemetry = currentUser
     ? canAccess(currentUser.permissions, "telemetry.view")
+    : false;
+  const canRunTelemetryReplay = currentUser
+    ? canAccess(currentUser.permissions, "telemetry.ingest")
     : false;
   const canViewAdmin = currentUser ? canAccess(currentUser.permissions, "admin.view") : false;
   const canViewMasterData = currentUser
@@ -259,12 +264,16 @@ function App() {
       refreshes.push(apiFetch<TrackingAlertRecord[]>("/telemetry/alerts/")
         .then(setTrackingAlerts)
         .catch(() => setTrackingAlerts([])));
+      refreshes.push(apiFetch<TelemetryReplayRunRecord[]>("/telemetry/replay-runs/")
+        .then(setTelemetryReplayRuns)
+        .catch(() => setTelemetryReplayRuns([])));
     } else {
       setLatestAssetStates([]);
       setGeofenceZones([]);
       setMovementEvents([]);
       setEtaProjections([]);
       setTrackingAlerts([]);
+      setTelemetryReplayRuns([]);
     }
 
     await Promise.all(refreshes);
@@ -320,6 +329,7 @@ function App() {
     setMovementEvents([]);
     setEtaProjections([]);
     setTrackingAlerts([]);
+    setTelemetryReplayRuns([]);
     setDashboardReadModel(null);
     setExportOverview(null);
     setAuditEvents([]);
@@ -624,6 +634,22 @@ function App() {
       );
       handleNavigate("/simulation/workspace");
       return `Scenario created: ${scenario.scenario_id}`;
+    });
+  }
+
+  async function handleStartTelemetryReplay(replayId: string) {
+    await runWorkspaceAction("Start synthetic replay", async () => {
+      const csrfToken = await getCsrfToken();
+      const replay = await apiFetch<TelemetryReplayRunRecord>(
+        `/telemetry/replay-runs/${replayId}/start/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Synthetic replay completed: ${replay.scenario_code.replaceAll("_", " ")}`;
     });
   }
 
@@ -975,13 +1001,17 @@ function App() {
         ) : null}
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
+            canRunReplay={canRunTelemetryReplay}
             canRunSimulation={canRunSimulation}
             etaProjections={etaProjections}
             geofenceZones={geofenceZones}
+            isActionRunning={isWorkspaceActionRunning}
             latestAssetStates={latestAssetStates}
             movementEvents={movementEvents}
             onNavigate={handleNavigate}
+            onStartReplay={handleStartTelemetryReplay}
             overview={schedulingOverview}
+            replayRuns={telemetryReplayRuns}
             trackingAlerts={trackingAlerts}
           />
         ) : null}
@@ -992,6 +1022,7 @@ function App() {
             dashboard={dashboardReadModel}
             etaProjections={etaProjections}
             onNavigate={handleNavigate}
+            replayRuns={telemetryReplayRuns}
             trackingAlerts={trackingAlerts}
           />
         ) : null}
