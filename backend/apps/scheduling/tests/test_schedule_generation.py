@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
-from apps.masters.models import AssetCompatibilityRule, Location
+from apps.masters.models import AssetCompatibilityRule, CTSAsset, Location
 from apps.organizations.models import Organization
 from apps.planning.models import BridgeWindow, TideWindow
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
@@ -37,6 +37,15 @@ from apps.scheduling.models import (
     SimulationScenario,
     Trip,
 )
+from apps.scheduling.recovery_services import (
+    RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
+    RECOVERY_MATERIALIZATION_ALGORITHM_VERSION,
+    RECOVERY_REPAIR_ALGORITHM_VERSION,
+    RECOVERY_SCORING_ALGORITHM_VERSION,
+    build_recovery_input_snapshot,
+    generate_recovery_recommendations,
+    materialize_recommendation_as_scenario,
+)
 from apps.scheduling.services import (
     clone_plan_version,
     compute_plan_diff,
@@ -47,13 +56,6 @@ from apps.scheduling.services import (
     record_approval_decision,
     simulate_scenario,
     submit_approval_request,
-)
-from apps.scheduling.recovery_services import (
-    RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
-    RECOVERY_REPAIR_ALGORITHM_VERSION,
-    RECOVERY_SCORING_ALGORITHM_VERSION,
-    build_recovery_input_snapshot,
-    generate_recovery_recommendations,
 )
 
 
@@ -1138,6 +1140,12 @@ def test_manual_reassignment_persists_resource_delta_and_rechecks_compatibility(
     baseline = seeded_plan_version()
     trip = baseline.trips.order_by("sequence").first()
     assignment = trip.assignment
+    replacement_cts = (
+        CTSAsset.objects.exclude(code=assignment.cts.code if assignment.cts else "")
+        .order_by("code")
+        .first()
+    )
+    assert replacement_cts is not None
     AssetCompatibilityRule.objects.create(
         code="CMP-TEST-TUG09-BRGKAL22",
         name="Test incompatible replacement pair",
@@ -1162,6 +1170,7 @@ def test_manual_reassignment_persists_resource_delta_and_rechecks_compatibility(
             "assignment_id": assignment.id,
             "tug_code": "BER-TUG-09",
             "barge_code": "BRG-KAL-22",
+            "cts_code": replacement_cts.code,
         },
     )
 
@@ -1171,6 +1180,7 @@ def test_manual_reassignment_persists_resource_delta_and_rechecks_compatibility(
 
     assert projection.assignment_delta["resourceChanged"] is True
     assert projection.assignment_delta["projectedResources"]["tug"] == "BER-TUG-09"
+    assert projection.assignment_delta["projectedResources"]["cts"] == replacement_cts.code
     assert ScenarioConstraintEvaluation.objects.filter(
         run=run,
         code="TUG_BARGE_INCOMPATIBLE",
@@ -1574,7 +1584,10 @@ def test_phase5_deterministic_repair_engine_persists_candidate_set():
         recommendation__optimizer_run=optimizer_run,
     )
     assert evaluations.count() == len(recommendations)
-    assert all(item.score_breakdown["algorithmVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION for item in evaluations)
+    assert all(
+        item.score_breakdown["algorithmVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION
+        for item in evaluations
+    )
     assert all("components" in item.score_breakdown for item in evaluations)
     assert all("risk" in item.score_breakdown for item in evaluations)
     assert optimizer_run.summary["mode"] == "deterministic_repair"
@@ -1646,6 +1659,108 @@ def test_phase5_recovery_run_api_generates_governed_optimizer_run():
         action="recovery.optimizer.run",
         object_repr=response.data["run_id"],
     ).exists()
+
+
+@pytest.mark.django_db
+def test_phase5_recommendation_materialization_creates_simulated_scenario_without_plan_mutation():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    optimizer_run = OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+    recommendation = (
+        optimizer_run.recommendations.filter(
+            actions__action_type__in=[
+                RecoveryAction.ActionType.DELAY_TRIP,
+                RecoveryAction.ActionType.SHIFT_WINDOW,
+                RecoveryAction.ActionType.RESEQUENCE_TRIP,
+                RecoveryAction.ActionType.REASSIGN_TUG,
+                RecoveryAction.ActionType.REASSIGN_BARGE,
+                RecoveryAction.ActionType.REASSIGN_CTS,
+            ],
+        )
+        .order_by("rank")
+        .distinct()
+        .first()
+    )
+    assert recommendation is not None
+    target_action = (
+        recommendation.actions.exclude(target_trip__isnull=True)
+        .order_by("sequence")
+        .first()
+    )
+    target_trip = target_action.target_trip
+    baseline_start = target_trip.planned_start
+    plan_version_count = PlanVersion.objects.count()
+
+    materialized = materialize_recommendation_as_scenario(
+        recommendation=recommendation,
+        name="Materialized recovery proof",
+        run_simulation=True,
+    )
+    scenario = materialized.scenario
+    run = scenario.runs.get(status=ScenarioRun.Status.SUCCEEDED)
+    assumption_payloads = list(
+        scenario.assumptions.order_by("created_at", "id").values_list("payload", flat=True)
+    )
+
+    target_trip.refresh_from_db()
+    assert materialized.status == RecoveryRecommendation.Status.MATERIALIZED
+    assert scenario.status == SimulationScenario.Status.SIMULATED
+    assert scenario.scenario_type == "recovery_recommendation"
+    assert scenario.scenario_version_id is None
+    assert target_trip.planned_start == baseline_start
+    assert PlanVersion.objects.count() == plan_version_count
+    assert scenario.metadata["materialization"]["algorithmVersion"] == (
+        RECOVERY_MATERIALIZATION_ALGORITHM_VERSION
+    )
+    assert materialized.metadata["materialization"]["scenarioId"] == scenario.scenario_id
+    assert materialized.metadata["materialization"]["scenarioRunId"] == run.run_id
+    assert materialized.metadata["materialization"]["assumptionCount"] == (
+        scenario.assumptions.count()
+    )
+    assert all(
+        payload["source_recommendation"] == recommendation.recommendation_id
+        for payload in assumption_payloads
+    )
+    assert ScenarioTripProjection.objects.filter(run=run).exists()
+    assert ScenarioEventProjection.objects.filter(run=run).exists()
+
+
+@pytest.mark.django_db
+def test_phase5_recommendation_materialize_api_is_audited_and_visible_in_overview():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    recommendation = (
+        OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+        .recommendations.exclude(actions__action_type=RecoveryAction.ActionType.NOOP)
+        .order_by("rank")
+        .first()
+    )
+    assert recommendation is not None
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        f"/api/scheduling/recovery-recommendations/{recommendation.id}/materialize-scenario/",
+        {"name": "API materialized recovery", "run_simulation": True},
+        format="json",
+    )
+    overview = client.get("/api/scheduling/overview/")
+
+    assert response.status_code == 201
+    assert response.data["status"] == RecoveryRecommendation.Status.MATERIALIZED
+    assert response.data["scenario"] is not None
+    assert response.data["scenario_ref"].startswith("SIM-")
+    assert response.data["metadata"]["materialization"]["algorithmVersion"] == (
+        RECOVERY_MATERIALIZATION_ALGORITHM_VERSION
+    )
+    assert response.data["metadata"]["materialization"]["scenarioRunId"]
+    assert AuditEvent.objects.filter(
+        action="recovery.recommendation.materialize_scenario",
+        object_repr=response.data["recommendation_id"],
+    ).exists()
+    assert overview.status_code == 200
+    assert response.data["scenario_ref"] in {
+        item["scenario_id"] for item in overview.data["simulationScenarios"]
+    }
 
 
 @pytest.mark.django_db

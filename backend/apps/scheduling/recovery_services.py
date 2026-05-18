@@ -27,13 +27,14 @@ from apps.telemetry.models import LatestAssetState, LiveEtaProjection, TrackingA
 from .models import (
     Assignment,
     Conflict,
-    OverrideRequest,
     OptimizerRun,
+    OverrideRequest,
     PlanVersion,
     RecommendationEvaluation,
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    ScenarioAssumption,
     ScheduleEvent,
     SimulationScenario,
     Trip,
@@ -42,6 +43,7 @@ from .models import (
 RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION = "phase5.1-input-snapshot-builder"
 RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.3-scored-deterministic-repair"
 RECOVERY_SCORING_ALGORITHM_VERSION = "phase5.3-scoring-explanation"
+RECOVERY_MATERIALIZATION_ALGORITHM_VERSION = "phase5.4-scenario-materialization"
 DEFAULT_REPAIR_OBJECTIVE_WEIGHTS = {
     "delayMinutes": 0.30,
     "missedWindows": 0.22,
@@ -326,6 +328,324 @@ def generate_recovery_recommendations(
             ]
         )
         return optimizer_run
+
+
+def materialize_recommendation_as_scenario(
+    *,
+    recommendation: RecoveryRecommendation,
+    actor=None,
+    name: str = "",
+    run_simulation: bool = True,
+) -> RecoveryRecommendation:
+    from .services import (
+        create_scenario_assumption,
+        create_scenario_from_conflict,
+        simulate_scenario,
+    )
+
+    with transaction.atomic():
+        recommendation = (
+            RecoveryRecommendation.objects.select_for_update(of=("self",))
+            .select_related(
+                "optimizer_run",
+                "optimizer_run__input_snapshot",
+                "optimizer_run__input_snapshot__source_conflict",
+                "optimizer_run__input_snapshot__source_override",
+                "optimizer_run__plan_version",
+                "scenario",
+            )
+            .prefetch_related("actions", "evaluation")
+            .get(pk=recommendation.pk)
+        )
+        if recommendation.optimizer_run.status != OptimizerRun.Status.SUCCEEDED:
+            raise ValidationError(
+                "Only recommendations from a successful optimizer run can be materialized."
+            )
+        if recommendation.status == RecoveryRecommendation.Status.DISMISSED:
+            raise ValidationError("Dismissed recommendations cannot be materialized.")
+
+        if recommendation.scenario_id:
+            scenario = recommendation.scenario
+            if (
+                run_simulation
+                and scenario.status == SimulationScenario.Status.DRAFT
+                and scenario.assumptions.exists()
+            ):
+                simulate_scenario(scenario=scenario, actor=actor)
+            return _refresh_materialized_recommendation(
+                recommendation=recommendation,
+                scenario=scenario,
+                run_simulation=run_simulation,
+                materialized_assumptions=list(
+                    scenario.assumptions.order_by("created_at", "id")
+                ),
+                skipped_actions=[],
+            )
+
+        snapshot = recommendation.optimizer_run.input_snapshot
+        scenario = create_scenario_from_conflict(
+            baseline_version=recommendation.optimizer_run.plan_version,
+            source_conflict=snapshot.source_conflict,
+            source_override=snapshot.source_override,
+            actor=actor,
+            name=name or f"Recovery recommendation {recommendation.recommendation_id}",
+        )
+        scenario.scenario_type = "recovery_recommendation"
+        scenario.metadata = {
+            **scenario.metadata,
+            "source": _recommendation_source_metadata(recommendation),
+            "materialization": {
+                "algorithmVersion": RECOVERY_MATERIALIZATION_ALGORITHM_VERSION,
+                "state": "building",
+                "runSimulation": run_simulation,
+                "createdAt": timezone.now().isoformat(),
+            },
+        }
+        scenario.save(update_fields=["scenario_type", "metadata", "updated_at"])
+
+        materialized_assumptions = []
+        skipped_actions = []
+        for spec in _scenario_assumption_specs_for_recommendation(recommendation):
+            if spec["kind"] == "skip":
+                skipped_actions.append(spec["action"])
+                continue
+            materialized_assumptions.append(
+                create_scenario_assumption(
+                    scenario=scenario,
+                    actor=actor,
+                    kind=spec["kind"],
+                    scope_type=spec["scope_type"],
+                    scope_id=spec["scope_id"],
+                    payload=spec["payload"],
+                    effective_from=spec.get("effective_from"),
+                    effective_to=spec.get("effective_to"),
+                )
+            )
+
+        if not materialized_assumptions:
+            raise ValidationError(
+                "Recommendation has no materializable action for the scenario engine."
+            )
+
+        scenario.metadata = {
+            **scenario.metadata,
+            "materialization": {
+                **scenario.metadata.get("materialization", {}),
+                "state": "assumptions_created",
+                "assumptionIds": [
+                    assumption.assumption_id for assumption in materialized_assumptions
+                ],
+                "skippedActions": skipped_actions,
+            },
+        }
+        scenario.save(update_fields=["metadata", "updated_at"])
+
+        if run_simulation:
+            simulate_scenario(scenario=scenario, actor=actor)
+            scenario.refresh_from_db()
+
+        return _refresh_materialized_recommendation(
+            recommendation=recommendation,
+            scenario=scenario,
+            run_simulation=run_simulation,
+            materialized_assumptions=materialized_assumptions,
+            skipped_actions=skipped_actions,
+        )
+
+
+def _refresh_materialized_recommendation(
+    *,
+    recommendation: RecoveryRecommendation,
+    scenario: SimulationScenario,
+    run_simulation: bool,
+    materialized_assumptions: list[ScenarioAssumption],
+    skipped_actions: list[dict],
+) -> RecoveryRecommendation:
+    latest_run = scenario.runs.filter(status="succeeded").order_by("-created_at", "-id").first()
+    materialization = {
+        "algorithmVersion": RECOVERY_MATERIALIZATION_ALGORITHM_VERSION,
+        "scenarioId": scenario.scenario_id,
+        "scenarioPk": scenario.pk,
+        "scenarioStatus": scenario.status,
+        "scenarioRunId": latest_run.run_id if latest_run else None,
+        "runSimulation": run_simulation,
+        "assumptionCount": len(materialized_assumptions),
+        "assumptionIds": [
+            assumption.assumption_id for assumption in materialized_assumptions
+        ],
+        "skippedActions": skipped_actions,
+        "materializedAt": timezone.now().isoformat(),
+    }
+    scenario.metadata = {
+        **scenario.metadata,
+        "source": _recommendation_source_metadata(recommendation),
+        "materialization": {
+            **scenario.metadata.get("materialization", {}),
+            **materialization,
+            "state": (
+                "simulated"
+                if scenario.status == SimulationScenario.Status.SIMULATED
+                else "draft"
+            ),
+        },
+    }
+    scenario.save(update_fields=["metadata", "updated_at"])
+
+    recommendation.scenario = scenario
+    recommendation.status = RecoveryRecommendation.Status.MATERIALIZED
+    recommendation.metadata = {
+        **recommendation.metadata,
+        "materialization": materialization,
+    }
+    recommendation.save(update_fields=["scenario", "status", "metadata", "updated_at"])
+    return recommendation
+
+
+def _recommendation_source_metadata(recommendation: RecoveryRecommendation) -> dict:
+    snapshot = recommendation.optimizer_run.input_snapshot
+    return {
+        "kind": "recovery_recommendation",
+        "recommendationId": recommendation.recommendation_id,
+        "recommendationPk": recommendation.pk,
+        "optimizerRunId": recommendation.optimizer_run.run_id,
+        "optimizerRunPk": recommendation.optimizer_run_id,
+        "snapshotId": snapshot.snapshot_id,
+        "snapshotPk": snapshot.pk,
+        "snapshotSourceKind": snapshot.source_kind,
+        "snapshotSourceRef": snapshot.source_ref,
+        "strategy": recommendation.metadata.get("strategy", ""),
+        "riskLevel": recommendation.risk_level,
+        "score": float(recommendation.score),
+    }
+
+
+def _scenario_assumption_specs_for_recommendation(
+    recommendation: RecoveryRecommendation,
+) -> list[dict]:
+    specs = []
+    evaluation = getattr(recommendation, "evaluation", None)
+    fallback_delay = evaluation.delay_minutes if evaluation else 0
+    for action in recommendation.actions.order_by("sequence", "id"):
+        specs.append(
+            _scenario_assumption_spec_for_action(
+                recommendation=recommendation,
+                action=action,
+                fallback_delay=fallback_delay,
+            )
+        )
+    return specs
+
+
+def _scenario_assumption_spec_for_action(
+    *,
+    recommendation: RecoveryRecommendation,
+    action: RecoveryAction,
+    fallback_delay: int,
+) -> dict:
+    delay_actions = {
+        RecoveryAction.ActionType.DELAY_TRIP: "delay",
+        RecoveryAction.ActionType.SHIFT_WINDOW: "window_shift",
+        RecoveryAction.ActionType.RESEQUENCE_TRIP: "sequence_delay_proxy",
+        RecoveryAction.ActionType.HOLD_AT_ANCHORAGE: "anchorage_hold",
+    }
+    if action.action_type in delay_actions:
+        if not action.target_trip_id:
+            return _skipped_action(action=action, reason="missing target trip")
+        return {
+            "kind": ScenarioAssumption.Kind.TRIP_DELAY,
+            "scope_type": ScenarioAssumption.ScopeType.TRIP,
+            "scope_id": action.target_trip_id,
+            "payload": {
+                "delay_minutes": _action_delay_minutes(
+                    action=action,
+                    fallback_delay=fallback_delay,
+                ),
+                "source_recommendation": recommendation.recommendation_id,
+                "recovery_action": action.action_id,
+                "materialization_mode": delay_actions[action.action_type],
+                "strategy": recommendation.metadata.get("strategy", ""),
+                "window_codes": action.metadata.get("windowCodes", []),
+                "constraints_checked": action.constraints_checked,
+            },
+        }
+
+    if action.action_type in {
+        RecoveryAction.ActionType.REASSIGN_TUG,
+        RecoveryAction.ActionType.REASSIGN_BARGE,
+        RecoveryAction.ActionType.REASSIGN_CTS,
+    }:
+        payload = _manual_reassignment_payload(
+            recommendation=recommendation,
+            action=action,
+        )
+        if payload is None:
+            return _skipped_action(
+                action=action,
+                reason="missing target assignment or replacement resource",
+            )
+        return {
+            "kind": ScenarioAssumption.Kind.MANUAL_REASSIGNMENT,
+            "scope_type": ScenarioAssumption.ScopeType.ASSIGNMENT,
+            "scope_id": action.target_assignment_id,
+            "payload": payload,
+        }
+
+    return _skipped_action(action=action, reason="unsupported action type")
+
+
+def _manual_reassignment_payload(
+    *,
+    recommendation: RecoveryRecommendation,
+    action: RecoveryAction,
+) -> dict | None:
+    if not action.target_assignment_id:
+        return None
+    payload = {
+        "assignment_id": action.target_assignment_id,
+        "source_recommendation": recommendation.recommendation_id,
+        "recovery_action": action.action_id,
+        "materialization_mode": "resource_reassignment",
+        "strategy": recommendation.metadata.get("strategy", ""),
+        "constraints_checked": action.constraints_checked,
+    }
+    resource_key = {
+        RecoveryAction.ActionType.REASSIGN_TUG: "tug_code",
+        RecoveryAction.ActionType.REASSIGN_BARGE: "barge_code",
+        RecoveryAction.ActionType.REASSIGN_CTS: "cts_code",
+    }[action.action_type]
+    state_key = resource_key.removesuffix("_code")
+    resource_code = (
+        action.after_state.get(state_key)
+        or action.after_state.get(resource_key)
+        or action.metadata.get(resource_key)
+    )
+    if not resource_code:
+        return None
+    payload[resource_key] = resource_code
+    return payload
+
+
+def _action_delay_minutes(*, action: RecoveryAction, fallback_delay: int) -> int:
+    for key in ("delayMinutes", "shiftMinutes", "holdMinutes"):
+        raw_value = action.after_state.get(key) or action.metadata.get(key)
+        if raw_value in {None, ""}:
+            continue
+        try:
+            return max(0, int(raw_value))
+        except (TypeError, ValueError):
+            continue
+    return max(0, int(fallback_delay or 0))
+
+
+def _skipped_action(*, action: RecoveryAction, reason: str) -> dict:
+    return {
+        "kind": "skip",
+        "action": {
+            "actionId": action.action_id,
+            "actionType": action.action_type,
+            "reason": reason,
+        },
+    }
 
 
 def _deterministic_repair_candidates(
@@ -622,7 +942,13 @@ def _tug_barge_swap_candidate(
     if replacement_tug is None and replacement_barge is None:
         return None
 
-    tug_code = replacement_tug.code if replacement_tug else assignment.tug.code if assignment.tug else ""
+    tug_code = (
+        replacement_tug.code
+        if replacement_tug
+        else assignment.tug.code
+        if assignment.tug
+        else ""
+    )
     barge_code = (
         replacement_barge.code
         if replacement_barge
@@ -986,7 +1312,10 @@ def _source_delay_minutes(*, snapshot: RecoveryInputSnapshot, assignment: Assign
     ]
     if variance_minutes:
         return max(15, max(variance_minutes))
-    if snapshot.source_override_id and snapshot.source_override.reason_code == OverrideRequest.ReasonCode.JETTY_DELAY:
+    if (
+        snapshot.source_override_id
+        and snapshot.source_override.reason_code == OverrideRequest.ReasonCode.JETTY_DELAY
+    ):
         return 120
     if snapshot.source_kind in {
         RecoveryInputSnapshot.SourceKind.CONFLICT,
@@ -1028,7 +1357,9 @@ def _next_window_projection(*, assignment: Assignment, delay_minutes: int) -> di
     return {
         "shift_minutes": shift_minutes,
         "missed_windows": int(bridge_eval["missed"]) + int(tide_eval["missed"]),
-        "hard_constraints_passed": bridge_eval["window"] is not None and tide_eval["window"] is not None,
+        "hard_constraints_passed": (
+            bridge_eval["window"] is not None and tide_eval["window"] is not None
+        ),
         "evidence": [
             bridge_eval["evidence"],
             tide_eval["evidence"],
@@ -1816,7 +2147,6 @@ def _normalized_recovery_input_payload(
         .filter(plan_version=plan_version)
         .order_by("sequence", "trip_id")
     )
-    trip_ids = [trip.id for trip in trips]
     route_segment_ids = sorted(
         {assignment.route_segment_id for assignment in assignments if assignment.route_segment_id}
     )

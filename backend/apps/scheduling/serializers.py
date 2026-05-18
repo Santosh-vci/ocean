@@ -22,8 +22,8 @@ from .models import (
     Conflict,
     ExportJob,
     ImpactChainAssessment,
-    OverrideRequest,
     OptimizerRun,
+    OverrideRequest,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
@@ -323,7 +323,10 @@ class RecoveryInputSnapshotSerializer(serializers.ModelSerializer):
         source="source_operational_event.event_id",
         read_only=True,
     )
-    source_scenario_ref = serializers.CharField(source="source_scenario.scenario_id", read_only=True)
+    source_scenario_ref = serializers.CharField(
+        source="source_scenario.scenario_id",
+        read_only=True,
+    )
     captured_by_email = serializers.EmailField(source="captured_by.email", read_only=True)
 
     class Meta:
@@ -444,6 +447,11 @@ class RecoveryRecommendationSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+
+class RecoveryRecommendationMaterializeSerializer(serializers.Serializer):
+    name = serializers.CharField(required=False, allow_blank=True, max_length=160)
+    run_simulation = serializers.BooleanField(required=False, default=True)
 
 
 class OptimizerRunGenerateSerializer(serializers.Serializer):

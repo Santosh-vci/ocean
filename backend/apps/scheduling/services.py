@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import ValidationError
 
-from apps.masters.models import AssetCompatibilityRule, Barge, Jetty, Location, Tug
+from apps.masters.models import AssetCompatibilityRule, Barge, CTSAsset, Jetty, Location, Tug
 from apps.planning.models import (
     AssetAvailabilityWindow,
     BridgeWindow,
@@ -1219,8 +1219,10 @@ def _materialize_projected_assignment(
     projected_resources = trip_projection.assignment_delta.get("projectedResources", {})
     tug_code = projected_resources.get("tug")
     barge_code = projected_resources.get("barge")
+    cts_code = projected_resources.get("cts")
     tug = Tug.objects.filter(code=tug_code).first() if tug_code else assignment.tug
     barge = Barge.objects.filter(code=barge_code).first() if barge_code else assignment.barge
+    cts = CTSAsset.objects.filter(code=cts_code).first() if cts_code else assignment.cts
     depart_projection = event_projection_index.get(
         (trip_projection.trip_id, ScheduleEvent.EventType.DEPART_JETTY)
     )
@@ -1229,6 +1231,7 @@ def _materialize_projected_assignment(
     )
     assignment.tug = tug
     assignment.barge = barge
+    assignment.cts = cts
     assignment.owner_organization = tug.organization if tug else assignment.owner_organization
     assignment.tug_status = _asset_status_label(tug)
     assignment.barge_status = _asset_status_label(barge)
@@ -1242,6 +1245,7 @@ def _materialize_projected_assignment(
         update_fields=[
             "tug",
             "barge",
+            "cts",
             "owner_organization",
             "planned_departure",
             "planned_arrival",
@@ -1463,14 +1467,17 @@ def _validate_scenario_assumption_payload(*, kind: str, payload: dict) -> None:
     if kind == ScenarioAssumption.Kind.MANUAL_REASSIGNMENT:
         tug_code = str(payload.get("tug_code", "")).strip()
         barge_code = str(payload.get("barge_code", "")).strip()
-        if not tug_code and not barge_code:
+        cts_code = str(payload.get("cts_code", "")).strip()
+        if not tug_code and not barge_code and not cts_code:
             raise ValidationError(
-                {"payload": "Manual reassignment requires a tug_code or barge_code."}
+                {"payload": "Manual reassignment requires a tug_code, barge_code, or cts_code."}
             )
         if tug_code and not Tug.objects.filter(code=tug_code).exists():
             raise ValidationError({"payload": {"tug_code": "Unknown tug code."}})
         if barge_code and not Barge.objects.filter(code=barge_code).exists():
             raise ValidationError({"payload": {"barge_code": "Unknown barge code."}})
+        if cts_code and not CTSAsset.objects.filter(code=cts_code).exists():
+            raise ValidationError({"payload": {"cts_code": "Unknown CTS code."}})
 
 
 def _validate_scenario_assumption_scope(
@@ -1733,12 +1740,16 @@ def _apply_manual_reassignment_assumption(
     replacement_resources = {}
     tug_code = str(assumption.payload.get("tug_code", "")).strip()
     barge_code = str(assumption.payload.get("barge_code", "")).strip()
+    cts_code = str(assumption.payload.get("cts_code", "")).strip()
     if tug_code:
         projected_resources["tug"] = tug_code
         replacement_resources["tug"] = tug_code
     if barge_code:
         projected_resources["barge"] = barge_code
         replacement_resources["barge"] = barge_code
+    if cts_code:
+        projected_resources["cts"] = cts_code
+        replacement_resources["cts"] = cts_code
 
     state["projected_resource_codes"] = projected_resources
     _record_assumption_effect(

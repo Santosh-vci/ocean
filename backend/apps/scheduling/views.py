@@ -26,8 +26,8 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
-    OverrideRequest,
     OptimizerRun,
+    OverrideRequest,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
@@ -44,6 +44,7 @@ from .read_models import build_dashboard_read_model
 from .recovery_services import (
     build_recovery_input_snapshot,
     generate_recovery_recommendations,
+    materialize_recommendation_as_scenario,
 )
 from .serializers import (
     ApprovalDecisionSerializer,
@@ -61,6 +62,7 @@ from .serializers import (
     RecoveryActionSerializer,
     RecoveryInputSnapshotBuildSerializer,
     RecoveryInputSnapshotSerializer,
+    RecoveryRecommendationMaterializeSerializer,
     RecoveryRecommendationSerializer,
     ScenarioAssumptionSerializer,
     ScenarioConstraintEvaluationSerializer,
@@ -645,7 +647,11 @@ class OptimizerRunViewSet(ReadOnlyModelViewSet):
 
 class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
-    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "materialize_scenario": "schedule.edit",
+    }
     queryset = RecoveryRecommendation.objects.select_related(
         "optimizer_run",
         "optimizer_run__input_snapshot",
@@ -653,6 +659,48 @@ class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
         "scenario",
     ).prefetch_related("actions", "evaluation")
     serializer_class = RecoveryRecommendationSerializer
+
+    @action(detail=True, methods=["post"], url_path="materialize-scenario")
+    def materialize_scenario(self, request, pk=None):
+        materialize_serializer = RecoveryRecommendationMaterializeSerializer(
+            data=request.data,
+        )
+        materialize_serializer.is_valid(raise_exception=True)
+        recommendation = materialize_recommendation_as_scenario(
+            recommendation=self.get_object(),
+            actor=request.user,
+            name=materialize_serializer.validated_data.get("name", ""),
+            run_simulation=materialize_serializer.validated_data.get(
+                "run_simulation",
+                True,
+            ),
+        )
+        recommendation = self.get_queryset().get(pk=recommendation.pk)
+        record_audit_event(
+            actor=request.user,
+            organization=recommendation.organization,
+            action="recovery.recommendation.materialize_scenario",
+            object_type="recovery_recommendation",
+            object_id=str(recommendation.pk),
+            object_repr=recommendation.recommendation_id,
+            metadata={
+                "scenario_id": recommendation.scenario.scenario_id
+                if recommendation.scenario
+                else None,
+                "scenario_pk": recommendation.scenario_id,
+                "scenario_status": recommendation.scenario.status
+                if recommendation.scenario
+                else None,
+                "optimizer_run": recommendation.optimizer_run.run_id,
+                "strategy": recommendation.metadata.get("strategy", ""),
+                "materialization": recommendation.metadata.get("materialization", {}),
+            },
+            request=request,
+        )
+        return Response(
+            RecoveryRecommendationSerializer(recommendation).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class RecoveryActionViewSet(ReadOnlyModelViewSet):
