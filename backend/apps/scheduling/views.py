@@ -27,9 +27,14 @@ from .models import (
     Conflict,
     ExportJob,
     OverrideRequest,
+    OptimizerRun,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    RecommendationEvaluation,
+    RecoveryAction,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScenarioRun,
     ScheduleEvent,
     SimulationScenario,
@@ -42,10 +47,15 @@ from .serializers import (
     AssignmentSerializer,
     ConflictSerializer,
     ExportJobSerializer,
+    OptimizerRunSerializer,
     OverrideRequestSerializer,
     PlanSerializer,
     PlanVersionSerializer,
     PublishedPlanSnapshotSerializer,
+    RecommendationEvaluationSerializer,
+    RecoveryActionSerializer,
+    RecoveryInputSnapshotSerializer,
+    RecoveryRecommendationSerializer,
     ScenarioAssumptionSerializer,
     ScenarioConstraintEvaluationSerializer,
     ScenarioEventProjectionSerializer,
@@ -517,6 +527,72 @@ class ExportJobViewSet(ReadOnlyModelViewSet):
         return response
 
 
+class RecoveryInputSnapshotViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    queryset = RecoveryInputSnapshot.objects.select_related(
+        "plan_version",
+        "plan_version__plan",
+        "source_conflict",
+        "source_override",
+        "source_tracking_alert",
+        "source_operational_event",
+        "source_scenario",
+        "captured_by",
+    ).all()
+    serializer_class = RecoveryInputSnapshotSerializer
+
+
+class OptimizerRunViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    queryset = OptimizerRun.objects.select_related(
+        "input_snapshot",
+        "plan_version",
+        "plan_version__plan",
+        "started_by",
+    ).prefetch_related(
+        "recommendations",
+        "recommendations__actions",
+        "recommendations__evaluation",
+    )
+    serializer_class = OptimizerRunSerializer
+
+
+class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    queryset = RecoveryRecommendation.objects.select_related(
+        "optimizer_run",
+        "optimizer_run__input_snapshot",
+        "optimizer_run__plan_version",
+        "scenario",
+    ).prefetch_related("actions", "evaluation")
+    serializer_class = RecoveryRecommendationSerializer
+
+
+class RecoveryActionViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    queryset = RecoveryAction.objects.select_related(
+        "recommendation",
+        "recommendation__optimizer_run",
+        "target_trip",
+        "target_assignment",
+    ).all()
+    serializer_class = RecoveryActionSerializer
+
+
+class RecommendationEvaluationViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    queryset = RecommendationEvaluation.objects.select_related(
+        "recommendation",
+        "recommendation__optimizer_run",
+    ).all()
+    serializer_class = RecommendationEvaluationSerializer
+
+
 class SimulationScenarioViewSet(SchedulingViewSet):
     queryset = SimulationScenario.objects.select_related(
         "baseline_version",
@@ -745,6 +821,9 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         override_requests = OverrideRequest.objects.none()
         approval_requests = ApprovalRequest.objects.none()
         scenarios = SimulationScenario.objects.none()
+        recovery_input_snapshots = RecoveryInputSnapshot.objects.none()
+        optimizer_runs = OptimizerRun.objects.none()
+        recovery_recommendations = RecoveryRecommendation.objects.none()
         eta_projections = LiveEtaProjection.objects.none()
         tracking_alerts = TrackingAlert.objects.none()
 
@@ -831,6 +910,38 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "runs__ogv_projections__voyage",
                 "runs__resource_utilizations",
             )
+            recovery_input_snapshots = RecoveryInputSnapshot.objects.filter(
+                plan_version=active_version
+            ).select_related(
+                "plan_version",
+                "plan_version__plan",
+                "source_conflict",
+                "source_override",
+                "source_tracking_alert",
+                "source_operational_event",
+                "source_scenario",
+                "captured_by",
+            )
+            optimizer_runs = OptimizerRun.objects.filter(
+                plan_version=active_version
+            ).select_related(
+                "input_snapshot",
+                "plan_version",
+                "plan_version__plan",
+                "started_by",
+            ).prefetch_related(
+                "recommendations",
+                "recommendations__actions",
+                "recommendations__evaluation",
+            )
+            recovery_recommendations = RecoveryRecommendation.objects.filter(
+                optimizer_run__plan_version=active_version
+            ).select_related(
+                "optimizer_run",
+                "optimizer_run__input_snapshot",
+                "optimizer_run__plan_version",
+                "scenario",
+            ).prefetch_related("actions", "evaluation")
             eta_projections = LiveEtaProjection.objects.filter(
                 trip__plan_version=active_version
             ).select_related(
@@ -903,6 +1014,18 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     scenarios,
                     many=True,
                 ).data,
+                "recoveryInputSnapshots": RecoveryInputSnapshotSerializer(
+                    recovery_input_snapshots,
+                    many=True,
+                ).data,
+                "optimizerRuns": OptimizerRunSerializer(
+                    optimizer_runs,
+                    many=True,
+                ).data,
+                "recoveryRecommendations": RecoveryRecommendationSerializer(
+                    recovery_recommendations,
+                    many=True,
+                ).data,
                 "liveEtaProjections": LiveEtaProjectionSerializer(
                     eta_projections,
                     many=True,
@@ -941,6 +1064,8 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                         status=ApprovalRequest.Status.PENDING
                     ).count(),
                     "scenarioCount": scenarios.count(),
+                    "optimizerRunCount": optimizer_runs.count(),
+                    "recoveryRecommendationCount": recovery_recommendations.count(),
                     "trackingAlertCount": tracking_alerts.count(),
                     "openTrackingAlertCount": tracking_alerts.filter(
                         status=TrackingAlert.Status.OPEN,

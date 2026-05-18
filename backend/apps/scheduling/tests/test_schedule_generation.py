@@ -18,9 +18,14 @@ from apps.scheduling.models import (
     ApprovalRequest,
     Conflict,
     ImpactChainAssessment,
+    OptimizerRun,
     OverrideRequest,
     PlanVersion,
     PublishedPlanSnapshot,
+    RecommendationEvaluation,
+    RecoveryAction,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -1414,3 +1419,54 @@ def test_scheduling_overview_includes_scenario_when_active_version_is_scenario_o
     assert response.data["validation"]["scenarioCount"] == len(scenario_ids)
     assert scenario.scenario_id in scenario_ids
     assert "SIM-JETTY-DELAY" in scenario_ids
+
+
+@pytest.mark.django_db
+def test_phase5_seed_creates_recovery_model_foundation():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+
+    snapshot = RecoveryInputSnapshot.objects.get(snapshot_id="RIS-PHASE5-SEED")
+    optimizer_run = OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+    recommendations = RecoveryRecommendation.objects.filter(optimizer_run=optimizer_run)
+
+    assert snapshot.plan_version == seeded_plan_version()
+    assert snapshot.input_hash
+    assert snapshot.resource_state["tugs"]
+    assert optimizer_run.input_snapshot == snapshot
+    assert optimizer_run.status == OptimizerRun.Status.SUCCEEDED
+    assert recommendations.count() == 2
+    assert RecoveryAction.objects.filter(recommendation__optimizer_run=optimizer_run).count() == 3
+    assert RecommendationEvaluation.objects.filter(
+        recommendation__optimizer_run=optimizer_run,
+    ).count() == 2
+    assert recommendations.order_by("rank").first().evaluation.hard_constraints_passed is True
+
+
+@pytest.mark.django_db
+def test_phase5_recovery_foundation_read_apis_and_overview_contract():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    snapshots = client.get("/api/scheduling/recovery-input-snapshots/")
+    runs = client.get("/api/scheduling/optimizer-runs/")
+    recommendations = client.get("/api/scheduling/recovery-recommendations/")
+    actions = client.get("/api/scheduling/recovery-actions/")
+    evaluations = client.get("/api/scheduling/recommendation-evaluations/")
+    overview = client.get("/api/scheduling/overview/")
+
+    assert snapshots.status_code == 200
+    assert runs.status_code == 200
+    assert recommendations.status_code == 200
+    assert actions.status_code == 200
+    assert evaluations.status_code == 200
+    assert snapshots.data[0]["snapshot_id"] == "RIS-PHASE5-SEED"
+    assert runs.data[0]["recommendations"][0]["actions"]
+    assert recommendations.data[0]["evaluation"]["evaluation_id"].startswith("REV-")
+    assert actions.data[0]["constraints_checked"]
+    assert evaluations.data[0]["score_breakdown"]
+    assert overview.status_code == 200
+    assert overview.data["validation"]["optimizerRunCount"] == 1
+    assert overview.data["validation"]["recoveryRecommendationCount"] == 2
+    assert overview.data["optimizerRuns"][0]["run_id"] == "OPT-PHASE5-SEED"

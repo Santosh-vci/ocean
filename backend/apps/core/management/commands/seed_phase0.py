@@ -1,3 +1,5 @@
+import hashlib
+import json
 import os
 from datetime import datetime, time, timedelta
 
@@ -55,10 +57,15 @@ from apps.scheduling.models import (
     Assignment,
     Conflict,
     ExportJob,
+    OptimizerRun,
     OverrideRequest,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    RecommendationEvaluation,
+    RecoveryAction,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScenarioAssumption,
     ScheduleEvent,
     SimulationScenario,
@@ -463,6 +470,11 @@ class Command(BaseCommand):
 
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
+        RecommendationEvaluation.objects.all().delete()
+        RecoveryAction.objects.all().delete()
+        RecoveryRecommendation.objects.all().delete()
+        OptimizerRun.objects.all().delete()
+        RecoveryInputSnapshot.objects.all().delete()
         ApprovalDecision.objects.all().delete()
         ApprovalRequest.objects.all().delete()
         SimulationScenario.objects.all().delete()
@@ -2048,6 +2060,7 @@ class Command(BaseCommand):
             created_by=created_by,
             first_override=first_override,
         )
+        self._seed_phase5_recovery_foundation(version=version, created_by=created_by)
 
     def _seed_phase2_scenario_pack(self, *, version, created_by, first_override):
         assignments = list(
@@ -2307,3 +2320,277 @@ class Command(BaseCommand):
                 effective_to=assumption.get("effective_to"),
             )
         return scenario
+
+    def _seed_phase5_recovery_foundation(self, *, version, created_by):
+        assignments = list(
+            Assignment.objects.select_related(
+                "trip",
+                "trip__voyage",
+                "tug",
+                "barge",
+                "jetty",
+                "cts",
+            )
+            .filter(trip__plan_version=version)
+            .order_by("trip__sequence")
+        )
+        if not assignments:
+            return
+
+        source_conflict = (
+            Conflict.objects.filter(plan_version=version, is_blocking=True)
+            .order_by("code", "id")
+            .first()
+        )
+        source_override = (
+            OverrideRequest.objects.filter(plan_version=version)
+            .order_by("-created_at")
+            .first()
+        )
+        first_assignment = assignments[0]
+        second_assignment = assignments[1] if len(assignments) > 1 else first_assignment
+        source_ref = (
+            source_conflict.code
+            if source_conflict
+            else source_override.reason_code
+            if source_override
+            else first_assignment.trip.trip_id
+        )
+        resource_state = {
+            "tugs": sorted({item.tug.code for item in assignments if item.tug}),
+            "barges": sorted({item.barge.code for item in assignments if item.barge}),
+            "jetties": sorted({item.jetty.code for item in assignments if item.jetty}),
+            "cts": sorted({item.cts.code for item in assignments if item.cts}),
+        }
+        event_state = {
+            "trips": [
+                {
+                    "tripId": item.trip.trip_id,
+                    "status": item.trip.status,
+                    "plannedStart": item.trip.planned_start.isoformat(),
+                    "plannedEnd": item.trip.planned_end.isoformat(),
+                    "assignmentStatus": item.status,
+                }
+                for item in assignments[:5]
+            ]
+        }
+        constraint_state = {
+            "openConflicts": Conflict.objects.filter(
+                plan_version=version,
+                resolved_at__isnull=True,
+            ).count(),
+            "blockingConflicts": Conflict.objects.filter(
+                plan_version=version,
+                resolved_at__isnull=True,
+                is_blocking=True,
+            ).count(),
+        }
+        snapshot_payload = {
+            "sourceRef": source_ref,
+            "resourceState": resource_state,
+            "eventState": event_state,
+            "constraintState": constraint_state,
+        }
+        snapshot, _ = RecoveryInputSnapshot.objects.update_or_create(
+            snapshot_id="RIS-PHASE5-SEED",
+            defaults={
+                "plan_version": version,
+                "source_kind": (
+                    RecoveryInputSnapshot.SourceKind.CONFLICT
+                    if source_conflict
+                    else RecoveryInputSnapshot.SourceKind.OVERRIDE
+                ),
+                "source_ref": source_ref,
+                "source_conflict": source_conflict,
+                "source_override": source_override,
+                "input_hash": hashlib.sha256(
+                    json.dumps(snapshot_payload, sort_keys=True).encode("utf-8")
+                ).hexdigest(),
+                "active_conflict_count": constraint_state["openConflicts"],
+                "confirmed_event_count": ConfirmedOperationalEvent.objects.count(),
+                "tracking_alert_count": TrackingAlert.objects.filter(
+                    status=TrackingAlert.Status.OPEN,
+                ).count(),
+                "resource_state": resource_state,
+                "event_state": event_state,
+                "constraint_state": constraint_state,
+                "metadata": {
+                    "seed": "phase5_recovery_foundation",
+                    "scope": "model_foundation_only",
+                    "notes": (
+                        "Deterministic recommendation fixture; Chunk 5.1+ will replace "
+                        "the static snapshot builder and candidate generator."
+                    ),
+                },
+                "captured_by": created_by,
+            },
+        )
+
+        optimizer_run, _ = OptimizerRun.objects.update_or_create(
+            run_id="OPT-PHASE5-SEED",
+            defaults={
+                "input_snapshot": snapshot,
+                "plan_version": version,
+                "status": OptimizerRun.Status.SUCCEEDED,
+                "algorithm_version": "phase5.0-foundation",
+                "objective_weights": {
+                    "delayMinutes": 0.45,
+                    "missedWindows": 0.25,
+                    "resourceConflicts": 0.2,
+                    "changeComplexity": 0.1,
+                },
+                "summary": {
+                    "recommendationCount": 2,
+                    "bestRecommendation": "REC-PHASE5-SEED-01",
+                    "sourceRef": source_ref,
+                    "mode": "seeded_foundation",
+                },
+                "started_by": created_by,
+                "started_at": timezone.now(),
+                "completed_at": timezone.now(),
+            },
+        )
+        optimizer_run.recommendations.all().delete()
+
+        first_recommendation = RecoveryRecommendation.objects.create(
+            recommendation_id="REC-PHASE5-SEED-01",
+            optimizer_run=optimizer_run,
+            rank=1,
+            status=RecoveryRecommendation.Status.CANDIDATE,
+            risk_level=RecoveryRecommendation.RiskLevel.MEDIUM,
+            score="82.500",
+            summary="Hold the disrupted chain and move the next dispatch to the first feasible tide/bridge slot.",
+            explanation=[
+                {
+                    "kind": "source",
+                    "label": "Source disruption",
+                    "value": source_ref,
+                },
+                {
+                    "kind": "constraint",
+                    "label": "Feasibility",
+                    "value": "Preserves confirmed actuals and avoids duplicate tug/barge assignment.",
+                },
+                {
+                    "kind": "governance",
+                    "label": "Next step",
+                    "value": "Materialize as scenario before approval.",
+                },
+            ],
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+        RecoveryAction.objects.create(
+            action_id="RAC-PHASE5-SEED-01A",
+            recommendation=first_recommendation,
+            sequence=1,
+            action_type=RecoveryAction.ActionType.HOLD_AT_ANCHORAGE,
+            target_trip=first_assignment.trip,
+            target_assignment=first_assignment,
+            before_state={
+                "tripId": first_assignment.trip.trip_id,
+                "status": first_assignment.status,
+                "nextAction": first_assignment.next_action,
+            },
+            after_state={
+                "tripId": first_assignment.trip.trip_id,
+                "status": "waiting_tide",
+                "nextAction": "Hold until next feasible gate window, then dispatch.",
+            },
+            constraints_checked=[
+                "confirmed_actuals_frozen",
+                "tide_window_available",
+                "bridge_clearance_available",
+            ],
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+        RecoveryAction.objects.create(
+            action_id="RAC-PHASE5-SEED-01B",
+            recommendation=first_recommendation,
+            sequence=2,
+            action_type=RecoveryAction.ActionType.RESEQUENCE_TRIP,
+            target_trip=second_assignment.trip,
+            target_assignment=second_assignment,
+            before_state={"sequence": second_assignment.trip.sequence},
+            after_state={"sequence": second_assignment.trip.sequence + 1},
+            constraints_checked=["resource_conflict_repair", "ogv_laycan_guardrail"],
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+        RecommendationEvaluation.objects.create(
+            evaluation_id="REV-PHASE5-SEED-01",
+            recommendation=first_recommendation,
+            delay_minutes=90,
+            missed_windows=0,
+            resource_conflicts=0,
+            utilization_delta_pct="4.50",
+            confidence_score="78.00",
+            hard_constraints_passed=True,
+            score_breakdown={
+                "delayScore": 37.5,
+                "windowScore": 25,
+                "resourceScore": 20,
+                "complexityScore": 0,
+            },
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+
+        second_recommendation = RecoveryRecommendation.objects.create(
+            recommendation_id="REC-PHASE5-SEED-02",
+            optimizer_run=optimizer_run,
+            rank=2,
+            status=RecoveryRecommendation.Status.CANDIDATE,
+            risk_level=RecoveryRecommendation.RiskLevel.HIGH,
+            score="68.000",
+            summary="Swap tug assignment to recover dispatch timing with higher execution complexity.",
+            explanation=[
+                {
+                    "kind": "resource",
+                    "label": "Repair",
+                    "value": "Reassign available tug and preserve barge pairing.",
+                },
+                {
+                    "kind": "risk",
+                    "label": "Risk",
+                    "value": "Higher manual coordination and compatibility review required.",
+                },
+            ],
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+        RecoveryAction.objects.create(
+            action_id="RAC-PHASE5-SEED-02A",
+            recommendation=second_recommendation,
+            sequence=1,
+            action_type=RecoveryAction.ActionType.REASSIGN_TUG,
+            target_trip=first_assignment.trip,
+            target_assignment=first_assignment,
+            before_state={
+                "tug": first_assignment.tug.code if first_assignment.tug else "",
+                "tripId": first_assignment.trip.trip_id,
+            },
+            after_state={
+                "tug": "next_available",
+                "tripId": first_assignment.trip.trip_id,
+            },
+            constraints_checked=[
+                "tug_barge_compatibility",
+                "resource_availability",
+                "crew_handover_required",
+            ],
+            metadata={"seed": "phase5_recovery_foundation"},
+        )
+        RecommendationEvaluation.objects.create(
+            evaluation_id="REV-PHASE5-SEED-02",
+            recommendation=second_recommendation,
+            delay_minutes=45,
+            missed_windows=1,
+            resource_conflicts=1,
+            utilization_delta_pct="-2.00",
+            confidence_score="62.00",
+            hard_constraints_passed=False,
+            score_breakdown={
+                "delayScore": 45,
+                "windowScore": 0,
+                "resourceScore": 10,
+                "complexityScore": 13,
+            },
+            metadata={"seed": "phase5_recovery_foundation"},
+        )

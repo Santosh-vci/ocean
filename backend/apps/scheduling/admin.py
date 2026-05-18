@@ -8,9 +8,14 @@ from .models import (
     ExportJob,
     ImpactChainAssessment,
     OverrideRequest,
+    OptimizerRun,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    RecommendationEvaluation,
+    RecoveryAction,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScheduleEvent,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
@@ -79,6 +84,69 @@ class ImpactChainAssessmentAdmin(admin.ModelAdmin):
     list_filter = ("source_kind", "status")
     search_fields = ("assessment_id", "trip__trip_id")
     readonly_fields = ("assessment_id", "nodes", "metadata", "created_at", "updated_at")
+
+
+@admin.register(RecoveryInputSnapshot)
+class RecoveryInputSnapshotAdmin(admin.ModelAdmin):
+    list_display = (
+        "snapshot_id",
+        "plan_version",
+        "source_kind",
+        "source_ref",
+        "active_conflict_count",
+        "confirmed_event_count",
+    )
+    list_filter = ("source_kind", "plan_version")
+    search_fields = ("snapshot_id", "source_ref", "plan_version__plan__code")
+    readonly_fields = (
+        "snapshot_id",
+        "input_hash",
+        "resource_state",
+        "event_state",
+        "constraint_state",
+        "metadata",
+        "generated_at",
+    )
+
+
+@admin.register(OptimizerRun)
+class OptimizerRunAdmin(admin.ModelAdmin):
+    list_display = ("run_id", "plan_version", "status", "algorithm_version", "started_by")
+    list_filter = ("status", "algorithm_version")
+    search_fields = ("run_id", "input_snapshot__snapshot_id", "plan_version__plan__code")
+    readonly_fields = ("run_id", "summary", "created_at", "updated_at")
+
+
+@admin.register(RecoveryRecommendation)
+class RecoveryRecommendationAdmin(admin.ModelAdmin):
+    list_display = ("recommendation_id", "optimizer_run", "rank", "status", "risk_level", "score")
+    list_filter = ("status", "risk_level")
+    search_fields = ("recommendation_id", "optimizer_run__run_id", "summary")
+    readonly_fields = ("recommendation_id", "explanation", "metadata", "created_at", "updated_at")
+
+
+@admin.register(RecoveryAction)
+class RecoveryActionAdmin(admin.ModelAdmin):
+    list_display = ("action_id", "recommendation", "sequence", "action_type", "target_trip")
+    list_filter = ("action_type",)
+    search_fields = ("action_id", "recommendation__recommendation_id", "target_trip__trip_id")
+    readonly_fields = ("action_id", "before_state", "after_state", "constraints_checked", "metadata")
+
+
+@admin.register(RecommendationEvaluation)
+class RecommendationEvaluationAdmin(admin.ModelAdmin):
+    list_display = (
+        "evaluation_id",
+        "recommendation",
+        "delay_minutes",
+        "missed_windows",
+        "resource_conflicts",
+        "confidence_score",
+        "hard_constraints_passed",
+    )
+    list_filter = ("hard_constraints_passed",)
+    search_fields = ("evaluation_id", "recommendation__recommendation_id")
+    readonly_fields = ("evaluation_id", "score_breakdown", "metadata", "created_at")
 
 
 @admin.register(ApprovalRequest)

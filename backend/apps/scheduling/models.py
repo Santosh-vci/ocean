@@ -1,9 +1,35 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 
 from apps.masters.models import Barge, CTSAsset, Jetty, Location, RouteSegment, Tug
 from apps.organizations.models import Organization
 from apps.planning.models import CargoLayerStep, CargoRequirement, OGVVoyage
+
+
+def _reference(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:12].upper()}"
+
+
+def recovery_snapshot_reference() -> str:
+    return _reference("RIS")
+
+
+def optimizer_run_reference() -> str:
+    return _reference("OPT")
+
+
+def recovery_recommendation_reference() -> str:
+    return _reference("REC")
+
+
+def recovery_action_reference() -> str:
+    return _reference("RAC")
+
+
+def recommendation_evaluation_reference() -> str:
+    return _reference("REV")
 
 
 class Plan(models.Model):
@@ -436,6 +462,328 @@ class ImpactChainAssessment(models.Model):
 
     def __str__(self) -> str:
         return self.assessment_id
+
+
+class RecoveryInputSnapshot(models.Model):
+    class SourceKind(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        CONFLICT = "conflict", "Conflict"
+        OVERRIDE = "override", "Override"
+        TRACKING_ALERT = "tracking_alert", "Tracking alert"
+        OPERATIONAL_EVENT = "operational_event", "Operational event"
+        SCENARIO = "scenario", "Scenario"
+
+    snapshot_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=recovery_snapshot_reference,
+    )
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="recovery_input_snapshots",
+    )
+    source_kind = models.CharField(
+        max_length=40,
+        choices=SourceKind.choices,
+        default=SourceKind.MANUAL,
+    )
+    source_ref = models.CharField(max_length=120, blank=True)
+    source_conflict = models.ForeignKey(
+        Conflict,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_input_snapshots",
+    )
+    source_override = models.ForeignKey(
+        OverrideRequest,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_input_snapshots",
+    )
+    source_tracking_alert = models.ForeignKey(
+        "telemetry.TrackingAlert",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_input_snapshots",
+    )
+    source_operational_event = models.ForeignKey(
+        "operations.ConfirmedOperationalEvent",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_input_snapshots",
+    )
+    source_scenario = models.ForeignKey(
+        "SimulationScenario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_input_snapshots",
+    )
+    input_hash = models.CharField(max_length=64, blank=True)
+    active_conflict_count = models.PositiveIntegerField(default=0)
+    confirmed_event_count = models.PositiveIntegerField(default=0)
+    tracking_alert_count = models.PositiveIntegerField(default=0)
+    resource_state = models.JSONField(default=dict, blank=True)
+    event_state = models.JSONField(default=dict, blank=True)
+    constraint_state = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    captured_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="captured_recovery_input_snapshots",
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-generated_at", "-id"]
+        indexes = [
+            models.Index(fields=("plan_version", "source_kind", "generated_at")),
+            models.Index(fields=("source_kind", "source_ref")),
+            models.Index(fields=("input_hash",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization
+
+    def __str__(self) -> str:
+        return self.snapshot_id
+
+
+class OptimizerRun(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    run_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=optimizer_run_reference,
+    )
+    input_snapshot = models.ForeignKey(
+        RecoveryInputSnapshot,
+        on_delete=models.CASCADE,
+        related_name="optimizer_runs",
+    )
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="optimizer_runs",
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.DRAFT)
+    algorithm_version = models.CharField(max_length=80, default="phase5.0-foundation")
+    objective_weights = models.JSONField(default=dict, blank=True)
+    summary = models.JSONField(default=dict, blank=True)
+    error_message = models.CharField(max_length=255, blank=True)
+    started_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="started_optimizer_runs",
+    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=("plan_version", "status", "created_at")),
+            models.Index(fields=("input_snapshot", "status")),
+            models.Index(fields=("algorithm_version", "status")),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization
+
+    def __str__(self) -> str:
+        return self.run_id
+
+
+class RecoveryRecommendation(models.Model):
+    class Status(models.TextChoices):
+        CANDIDATE = "candidate", "Candidate"
+        SHORTLISTED = "shortlisted", "Shortlisted"
+        SELECTED = "selected", "Selected"
+        DISMISSED = "dismissed", "Dismissed"
+        MATERIALIZED = "materialized", "Materialized"
+
+    class RiskLevel(models.TextChoices):
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+        CRITICAL = "critical", "Critical"
+
+    recommendation_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=recovery_recommendation_reference,
+    )
+    optimizer_run = models.ForeignKey(
+        OptimizerRun,
+        on_delete=models.CASCADE,
+        related_name="recommendations",
+    )
+    rank = models.PositiveIntegerField()
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.CANDIDATE,
+    )
+    risk_level = models.CharField(
+        max_length=32,
+        choices=RiskLevel.choices,
+        default=RiskLevel.MEDIUM,
+    )
+    score = models.DecimalField(max_digits=8, decimal_places=3, default=0)
+    summary = models.CharField(max_length=255)
+    explanation = models.JSONField(default=list, blank=True)
+    scenario = models.ForeignKey(
+        "SimulationScenario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_recommendations",
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["optimizer_run", "rank", "id"]
+        indexes = [
+            models.Index(fields=("optimizer_run", "status", "rank")),
+            models.Index(fields=("risk_level", "score")),
+            models.Index(fields=("status", "created_at")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("optimizer_run", "rank"),
+                name="unique_optimizer_run_recommendation_rank",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.optimizer_run.organization
+
+    def __str__(self) -> str:
+        return self.recommendation_id
+
+
+class RecoveryAction(models.Model):
+    class ActionType(models.TextChoices):
+        DELAY_TRIP = "delay_trip", "Delay trip"
+        RESEQUENCE_TRIP = "resequence_trip", "Resequence trip"
+        REASSIGN_TUG = "reassign_tug", "Reassign tug"
+        REASSIGN_BARGE = "reassign_barge", "Reassign barge"
+        REASSIGN_CTS = "reassign_cts", "Reassign CTS"
+        SHIFT_WINDOW = "shift_window", "Shift window"
+        HOLD_AT_ANCHORAGE = "hold_at_anchorage", "Hold at anchorage"
+        NOOP = "noop", "No operation"
+
+    action_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=recovery_action_reference,
+    )
+    recommendation = models.ForeignKey(
+        RecoveryRecommendation,
+        on_delete=models.CASCADE,
+        related_name="actions",
+    )
+    sequence = models.PositiveIntegerField()
+    action_type = models.CharField(max_length=48, choices=ActionType.choices)
+    target_trip = models.ForeignKey(
+        Trip,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_actions",
+    )
+    target_assignment = models.ForeignKey(
+        Assignment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_actions",
+    )
+    before_state = models.JSONField(default=dict, blank=True)
+    after_state = models.JSONField(default=dict, blank=True)
+    constraints_checked = models.JSONField(default=list, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["recommendation", "sequence", "id"]
+        indexes = [
+            models.Index(fields=("recommendation", "sequence")),
+            models.Index(fields=("action_type", "created_at")),
+            models.Index(fields=("target_trip", "action_type")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("recommendation", "sequence"),
+                name="unique_recommendation_action_sequence",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.recommendation.organization
+
+    def __str__(self) -> str:
+        return self.action_id
+
+
+class RecommendationEvaluation(models.Model):
+    evaluation_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=recommendation_evaluation_reference,
+    )
+    recommendation = models.OneToOneField(
+        RecoveryRecommendation,
+        on_delete=models.CASCADE,
+        related_name="evaluation",
+    )
+    delay_minutes = models.IntegerField(default=0)
+    missed_windows = models.PositiveIntegerField(default=0)
+    resource_conflicts = models.PositiveIntegerField(default=0)
+    utilization_delta_pct = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    hard_constraints_passed = models.BooleanField(default=True)
+    score_breakdown = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["recommendation__optimizer_run", "recommendation__rank"]
+        indexes = [
+            models.Index(fields=("hard_constraints_passed", "confidence_score")),
+            models.Index(fields=("delay_minutes", "missed_windows")),
+        ]
+
+    @property
+    def organization(self):
+        return self.recommendation.organization
+
+    def __str__(self) -> str:
+        return self.evaluation_id
 
 
 class ApprovalRequest(models.Model):

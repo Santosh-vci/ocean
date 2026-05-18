@@ -8,10 +8,15 @@ from .views import (
     ConflictViewSet,
     DashboardSituationView,
     ExportJobViewSet,
+    OptimizerRunViewSet,
     OverrideRequestViewSet,
     PlanVersionViewSet,
     PlanViewSet,
     PublishedPlanSnapshotViewSet,
+    RecommendationEvaluationViewSet,
+    RecoveryActionViewSet,
+    RecoveryInputSnapshotViewSet,
+    RecoveryRecommendationViewSet,
     ScheduleEventViewSet,
     SchedulingOverviewViewSet,
     ScenarioRunViewSet,
@@ -41,6 +46,23 @@ router.register(
 router.register("exports", ExportJobViewSet, basename="export")
 router.register("scheduling/scenarios", SimulationScenarioViewSet, basename="simulation-scenario")
 router.register("scheduling/scenario-runs", ScenarioRunViewSet, basename="scenario-run")
+router.register(
+    "scheduling/recovery-input-snapshots",
+    RecoveryInputSnapshotViewSet,
+    basename="recovery-input-snapshot",
+)
+router.register("scheduling/optimizer-runs", OptimizerRunViewSet, basename="optimizer-run")
+router.register(
+    "scheduling/recovery-recommendations",
+    RecoveryRecommendationViewSet,
+    basename="recovery-recommendation",
+)
+router.register("scheduling/recovery-actions", RecoveryActionViewSet, basename="recovery-action")
+router.register(
+    "scheduling/recommendation-evaluations",
+    RecommendationEvaluationViewSet,
+    basename="recommendation-evaluation",
+)
 
 overview = SchedulingOverviewViewSet.as_view({"get": "overview"})
 

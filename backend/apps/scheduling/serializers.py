@@ -21,9 +21,14 @@ from .models import (
     ExportJob,
     ImpactChainAssessment,
     OverrideRequest,
+    OptimizerRun,
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    RecommendationEvaluation,
+    RecoveryAction,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -256,6 +261,175 @@ class ImpactChainAssessmentSerializer(serializers.ModelSerializer):
             "delay_minutes",
             "nodes",
             "metadata",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class RecoveryInputSnapshotSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    source_conflict_code = serializers.CharField(source="source_conflict.code", read_only=True)
+    source_override_reason_code = serializers.CharField(
+        source="source_override.reason_code",
+        read_only=True,
+    )
+    source_tracking_alert_ref = serializers.CharField(
+        source="source_tracking_alert.alert_id",
+        read_only=True,
+    )
+    source_operational_event_ref = serializers.CharField(
+        source="source_operational_event.event_id",
+        read_only=True,
+    )
+    source_scenario_ref = serializers.CharField(source="source_scenario.scenario_id", read_only=True)
+    captured_by_email = serializers.EmailField(source="captured_by.email", read_only=True)
+
+    class Meta:
+        model = RecoveryInputSnapshot
+        fields = (
+            "id",
+            "snapshot_id",
+            "plan_version",
+            "plan_version_ref",
+            "source_kind",
+            "source_ref",
+            "source_conflict",
+            "source_conflict_code",
+            "source_override",
+            "source_override_reason_code",
+            "source_tracking_alert",
+            "source_tracking_alert_ref",
+            "source_operational_event",
+            "source_operational_event_ref",
+            "source_scenario",
+            "source_scenario_ref",
+            "input_hash",
+            "active_conflict_count",
+            "confirmed_event_count",
+            "tracking_alert_count",
+            "resource_state",
+            "event_state",
+            "constraint_state",
+            "metadata",
+            "captured_by",
+            "captured_by_email",
+            "generated_at",
+        )
+        read_only_fields = fields
+
+
+class RecoveryActionSerializer(serializers.ModelSerializer):
+    recommendation_ref = serializers.CharField(
+        source="recommendation.recommendation_id",
+        read_only=True,
+    )
+    target_trip_ref = serializers.CharField(source="target_trip.trip_id", read_only=True)
+    target_assignment_ref = serializers.CharField(source="target_assignment", read_only=True)
+
+    class Meta:
+        model = RecoveryAction
+        fields = (
+            "id",
+            "action_id",
+            "recommendation",
+            "recommendation_ref",
+            "sequence",
+            "action_type",
+            "target_trip",
+            "target_trip_ref",
+            "target_assignment",
+            "target_assignment_ref",
+            "before_state",
+            "after_state",
+            "constraints_checked",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class RecommendationEvaluationSerializer(serializers.ModelSerializer):
+    recommendation_ref = serializers.CharField(
+        source="recommendation.recommendation_id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = RecommendationEvaluation
+        fields = (
+            "id",
+            "evaluation_id",
+            "recommendation",
+            "recommendation_ref",
+            "delay_minutes",
+            "missed_windows",
+            "resource_conflicts",
+            "utilization_delta_pct",
+            "confidence_score",
+            "hard_constraints_passed",
+            "score_breakdown",
+            "metadata",
+            "created_at",
+        )
+        read_only_fields = fields
+
+
+class RecoveryRecommendationSerializer(serializers.ModelSerializer):
+    optimizer_run_ref = serializers.CharField(source="optimizer_run.run_id", read_only=True)
+    scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
+    actions = RecoveryActionSerializer(many=True, read_only=True)
+    evaluation = RecommendationEvaluationSerializer(read_only=True)
+
+    class Meta:
+        model = RecoveryRecommendation
+        fields = (
+            "id",
+            "recommendation_id",
+            "optimizer_run",
+            "optimizer_run_ref",
+            "rank",
+            "status",
+            "risk_level",
+            "score",
+            "summary",
+            "explanation",
+            "scenario",
+            "scenario_ref",
+            "metadata",
+            "actions",
+            "evaluation",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class OptimizerRunSerializer(serializers.ModelSerializer):
+    input_snapshot_ref = serializers.CharField(source="input_snapshot.snapshot_id", read_only=True)
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    started_by_email = serializers.EmailField(source="started_by.email", read_only=True)
+    recommendations = RecoveryRecommendationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = OptimizerRun
+        fields = (
+            "id",
+            "run_id",
+            "input_snapshot",
+            "input_snapshot_ref",
+            "plan_version",
+            "plan_version_ref",
+            "status",
+            "algorithm_version",
+            "objective_weights",
+            "summary",
+            "error_message",
+            "started_by",
+            "started_by_email",
+            "started_at",
+            "completed_at",
+            "recommendations",
             "created_at",
             "updated_at",
         )
