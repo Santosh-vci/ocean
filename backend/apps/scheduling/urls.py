@@ -58,6 +58,11 @@ router.register(
     RecoveryRecommendationViewSet,
     basename="recovery-recommendation",
 )
+router.register(
+    "scheduling/recommendations",
+    RecoveryRecommendationViewSet,
+    basename="recommendation",
+)
 router.register("scheduling/recovery-actions", RecoveryActionViewSet, basename="recovery-action")
 router.register(
     "scheduling/recommendation-evaluations",

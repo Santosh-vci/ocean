@@ -74,6 +74,15 @@ The pack is based on:
 22. `22_Phase_4_Completion_Evidence.md`
     Runtime closure evidence for Phase 4, including the five-stage proof command, browser screenshots, performance evidence, audit evidence, and remaining deferred scope.
 
+23. `23_Phase_5_Implementation_Spec.md`
+    Product Phase 5 implementation specification for deterministic recovery recommendations, scenario materialization, approval handoff, and proof-pack closure.
+
+24. `24_Phase_5_Operator_Runbook.md`
+    Operator-facing runbook for generating recovery options, reviewing ranked recommendations, creating scenarios, and validating governance/audit evidence.
+
+25. `25_Phase_5_Completion_Evidence.md`
+    Runtime closure evidence for Phase 5, including the seven-stage proof command, proof-pack lineage, browser screenshots, governance handoff, and remaining deferred scope.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

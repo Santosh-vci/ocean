@@ -8,6 +8,7 @@ from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.audit.models import AuditEvent
 from apps.masters.models import AssetCompatibilityRule, Barge, CTSAsset, Tug
 from apps.operations.models import (
     ConfirmedOperationalEvent,
@@ -26,10 +27,12 @@ from apps.telemetry.models import LatestAssetState, LiveEtaProjection, TrackingA
 
 from .models import (
     Assignment,
+    ApprovalRequest,
     Conflict,
     OptimizerRun,
     OverrideRequest,
     PlanVersion,
+    PublishedPlanSnapshot,
     RecommendationEvaluation,
     RecoveryAction,
     RecoveryInputSnapshot,
@@ -44,6 +47,7 @@ RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION = "phase5.1-input-snapshot-builder"
 RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.3-scored-deterministic-repair"
 RECOVERY_SCORING_ALGORITHM_VERSION = "phase5.3-scoring-explanation"
 RECOVERY_MATERIALIZATION_ALGORITHM_VERSION = "phase5.4-scenario-materialization"
+RECOVERY_PROOF_PACK_VERSION = "phase5.6-recommendation-proof-pack"
 DEFAULT_REPAIR_OBJECTIVE_WEIGHTS = {
     "delayMinutes": 0.30,
     "missedWindows": 0.22,
@@ -453,6 +457,117 @@ def materialize_recommendation_as_scenario(
         )
 
 
+def build_recommendation_proof_pack(
+    *,
+    recommendation: RecoveryRecommendation,
+) -> dict:
+    recommendation = (
+        RecoveryRecommendation.objects.select_related(
+            "optimizer_run",
+            "optimizer_run__input_snapshot",
+            "optimizer_run__plan_version",
+            "optimizer_run__plan_version__plan",
+            "scenario",
+            "scenario__baseline_version",
+            "scenario__scenario_version",
+        )
+        .prefetch_related(
+            "actions__target_trip",
+            "actions__target_assignment",
+            "evaluation",
+            "scenario__assumptions",
+            "scenario__runs",
+        )
+        .get(pk=recommendation.pk)
+    )
+    optimizer_run = recommendation.optimizer_run
+    snapshot = optimizer_run.input_snapshot
+    evaluation = getattr(recommendation, "evaluation", None)
+    scenario = recommendation.scenario
+    scenario_version = scenario.scenario_version if scenario and scenario.scenario_version_id else None
+    approval_requests = list(
+        ApprovalRequest.objects.select_related("plan_version", "requested_by")
+        .prefetch_related("decisions__actor", "decisions__organization")
+        .filter(plan_version=scenario_version)
+        .order_by("created_at", "id")
+    ) if scenario_version else []
+    published_snapshots = list(
+        PublishedPlanSnapshot.objects.select_related(
+            "plan",
+            "plan_version",
+            "approval_request",
+            "published_by",
+        )
+        .filter(plan_version=scenario_version)
+        .order_by("published_at", "id")
+    ) if scenario_version else []
+
+    return {
+        "proofPackVersion": RECOVERY_PROOF_PACK_VERSION,
+        "generatedAt": timezone.now().isoformat(),
+        "recommendation": {
+            "id": recommendation.pk,
+            "recommendationId": recommendation.recommendation_id,
+            "rank": recommendation.rank,
+            "status": recommendation.status,
+            "riskLevel": recommendation.risk_level,
+            "score": float(recommendation.score),
+            "summary": recommendation.summary,
+            "strategy": recommendation.metadata.get("strategy", ""),
+            "createdAt": _iso(recommendation.created_at),
+        },
+        "inputSnapshot": {
+            "id": snapshot.pk,
+            "snapshotId": snapshot.snapshot_id,
+            "sourceKind": snapshot.source_kind,
+            "sourceRef": snapshot.source_ref,
+            "planVersion": _plan_version_proof_payload(snapshot.plan_version),
+            "inputHash": snapshot.input_hash,
+            "activeConflictCount": snapshot.active_conflict_count,
+            "confirmedEventCount": snapshot.confirmed_event_count,
+            "trackingAlertCount": snapshot.tracking_alert_count,
+            "capturedAt": _iso(snapshot.generated_at),
+            "metadata": snapshot.metadata,
+        },
+        "optimizerRun": {
+            "id": optimizer_run.pk,
+            "runId": optimizer_run.run_id,
+            "status": optimizer_run.status,
+            "algorithmVersion": optimizer_run.algorithm_version,
+            "objectiveWeights": optimizer_run.objective_weights,
+            "summary": optimizer_run.summary,
+            "startedAt": _iso(optimizer_run.started_at),
+            "completedAt": _iso(optimizer_run.completed_at),
+        },
+        "evaluation": _recommendation_evaluation_payload(evaluation),
+        "actions": [
+            _recommendation_action_payload(action)
+            for action in recommendation.actions.order_by("sequence", "id")
+        ],
+        "explanation": recommendation.explanation,
+        "scenarioHandoff": _recommendation_scenario_payload(
+            scenario=scenario,
+            scenario_version=scenario_version,
+        ),
+        "approvalChain": [
+            _approval_request_proof_payload(request)
+            for request in approval_requests
+        ],
+        "publicationChain": [
+            _published_snapshot_proof_payload(snapshot_item)
+            for snapshot_item in published_snapshots
+        ],
+        "auditTrail": _recommendation_audit_trail_payload(
+            snapshot=snapshot,
+            optimizer_run=optimizer_run,
+            recommendation=recommendation,
+            scenario=scenario,
+            approval_requests=approval_requests,
+            published_snapshots=published_snapshots,
+        ),
+    }
+
+
 def _refresh_materialized_recommendation(
     *,
     recommendation: RecoveryRecommendation,
@@ -516,6 +631,176 @@ def _recommendation_source_metadata(recommendation: RecoveryRecommendation) -> d
         "strategy": recommendation.metadata.get("strategy", ""),
         "riskLevel": recommendation.risk_level,
         "score": float(recommendation.score),
+    }
+
+
+def _recommendation_evaluation_payload(
+    evaluation: RecommendationEvaluation | None,
+) -> dict | None:
+    if evaluation is None:
+        return None
+    return {
+        "evaluationId": evaluation.evaluation_id,
+        "delayMinutes": evaluation.delay_minutes,
+        "missedWindows": evaluation.missed_windows,
+        "resourceConflicts": evaluation.resource_conflicts,
+        "utilizationDeltaPct": float(evaluation.utilization_delta_pct),
+        "confidenceScore": float(evaluation.confidence_score),
+        "hardConstraintsPassed": evaluation.hard_constraints_passed,
+        "scoreBreakdown": evaluation.score_breakdown,
+        "metadata": evaluation.metadata,
+    }
+
+
+def _recommendation_action_payload(action: RecoveryAction) -> dict:
+    return {
+        "actionId": action.action_id,
+        "sequence": action.sequence,
+        "actionType": action.action_type,
+        "targetTrip": action.target_trip.trip_id if action.target_trip_id else "",
+        "targetAssignment": action.target_assignment_id,
+        "beforeState": action.before_state,
+        "afterState": action.after_state,
+        "constraintsChecked": action.constraints_checked,
+        "metadata": action.metadata,
+    }
+
+
+def _recommendation_scenario_payload(
+    *,
+    scenario: SimulationScenario | None,
+    scenario_version: PlanVersion | None,
+) -> dict | None:
+    if scenario is None:
+        return None
+    latest_run = scenario.runs.order_by("-created_at", "-id").first()
+    return {
+        "scenarioId": scenario.scenario_id,
+        "scenarioType": scenario.scenario_type,
+        "status": scenario.status,
+        "baselineVersion": _plan_version_proof_payload(scenario.baseline_version),
+        "scenarioVersion": (
+            _plan_version_proof_payload(scenario_version)
+            if scenario_version is not None
+            else None
+        ),
+        "latestRun": {
+            "runId": latest_run.run_id,
+            "status": latest_run.status,
+            "summary": latest_run.summary,
+        } if latest_run else None,
+        "assumptions": [
+            {
+                "assumptionId": assumption.assumption_id,
+                "kind": assumption.kind,
+                "scopeType": assumption.scope_type,
+                "scopeId": assumption.scope_id,
+                "payload": assumption.payload,
+            }
+            for assumption in scenario.assumptions.order_by("created_at", "id")
+        ],
+        "impactSummary": scenario.impact_summary,
+        "deltaSummary": scenario.delta_summary,
+        "metadata": scenario.metadata,
+    }
+
+
+def _approval_request_proof_payload(request: ApprovalRequest) -> dict:
+    return {
+        "requestId": request.request_id,
+        "status": request.status,
+        "reason": request.reason,
+        "requiredAuthorities": request.required_authorities,
+        "requestedBy": request.requested_by.email if request.requested_by_id else "",
+        "decidedAt": _iso(request.decided_at),
+        "decisions": [
+            {
+                "authorityRole": decision.authority_role,
+                "decision": decision.decision,
+                "actor": decision.actor.email if decision.actor_id else "",
+                "organization": (
+                    decision.organization.slug if decision.organization_id else ""
+                ),
+                "comments": decision.comments,
+                "createdAt": _iso(decision.created_at),
+            }
+            for decision in request.decisions.order_by("created_at", "id")
+        ],
+    }
+
+
+def _published_snapshot_proof_payload(snapshot: PublishedPlanSnapshot) -> dict:
+    return {
+        "snapshotId": snapshot.snapshot_id,
+        "status": snapshot.status,
+        "publishedBy": snapshot.published_by.email if snapshot.published_by_id else "",
+        "publishedAt": _iso(snapshot.published_at),
+        "approvalRequestId": (
+            snapshot.approval_request.request_id if snapshot.approval_request_id else ""
+        ),
+    }
+
+
+def _recommendation_audit_trail_payload(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    optimizer_run: OptimizerRun,
+    recommendation: RecoveryRecommendation,
+    scenario: SimulationScenario | None,
+    approval_requests: list[ApprovalRequest],
+    published_snapshots: list[PublishedPlanSnapshot],
+) -> list[dict]:
+    object_filters = (
+        Q(object_type="recovery_input_snapshot", object_id=str(snapshot.pk))
+        | Q(object_type="optimizer_run", object_id=str(optimizer_run.pk))
+        | Q(object_type="recovery_recommendation", object_id=str(recommendation.pk))
+    )
+    if scenario is not None:
+        object_filters |= Q(object_type="simulation_scenario", object_id=str(scenario.pk))
+    for approval_request in approval_requests:
+        object_filters |= Q(
+            object_type="approval_request",
+            object_id=str(approval_request.pk),
+        )
+        object_filters |= Q(
+            object_type="approval_decision",
+            object_id__in=[
+                str(decision.pk)
+                for decision in approval_request.decisions.all()
+            ],
+        )
+    for published_snapshot in published_snapshots:
+        object_filters |= Q(
+            object_type="published_plan_snapshot",
+            object_id=str(published_snapshot.pk),
+        )
+
+    return [
+        {
+            "action": event.action,
+            "objectType": event.object_type,
+            "objectId": event.object_id,
+            "objectRepr": event.object_repr,
+            "actor": event.actor.email if event.actor_id else "",
+            "createdAt": _iso(event.created_at),
+            "metadata": event.metadata,
+        }
+        for event in AuditEvent.objects.select_related("actor")
+        .filter(object_filters)
+        .order_by("created_at", "id")
+    ]
+
+
+def _plan_version_proof_payload(plan_version: PlanVersion) -> dict:
+    return {
+        "id": plan_version.pk,
+        "reference": str(plan_version),
+        "planCode": plan_version.plan.code,
+        "versionNo": plan_version.version_no,
+        "status": plan_version.status,
+        "validationStatus": plan_version.validation_status,
+        "scenarioLineage": plan_version.summary.get("scenarioLineage"),
+        "scenarioDiffSummary": plan_version.summary.get("scenarioDiff", {}).get("summary"),
     }
 
 

@@ -1,6 +1,7 @@
 from django.db.models import Count, F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -42,6 +43,7 @@ from .models import (
 )
 from .read_models import build_dashboard_read_model
 from .recovery_services import (
+    build_recommendation_proof_pack,
     build_recovery_input_snapshot,
     generate_recovery_recommendations,
     materialize_recommendation_as_scenario,
@@ -62,6 +64,7 @@ from .serializers import (
     RecoveryActionSerializer,
     RecoveryInputSnapshotBuildSerializer,
     RecoveryInputSnapshotSerializer,
+    RecoveryRecommendationDismissSerializer,
     RecoveryRecommendationMaterializeSerializer,
     RecoveryRecommendationSerializer,
     ScenarioAssumptionSerializer,
@@ -650,6 +653,8 @@ class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
     action_permission_map = {
         "list": "schedule.view",
         "retrieve": "schedule.view",
+        "proof_pack": "schedule.view",
+        "dismiss": "schedule.edit",
         "materialize_scenario": "schedule.edit",
     }
     queryset = RecoveryRecommendation.objects.select_related(
@@ -659,6 +664,63 @@ class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
         "scenario",
     ).prefetch_related("actions", "evaluation")
     serializer_class = RecoveryRecommendationSerializer
+
+    @action(detail=True, methods=["get"], url_path="proof-pack")
+    def proof_pack(self, request, pk=None):
+        recommendation = self.get_object()
+        payload = build_recommendation_proof_pack(recommendation=recommendation)
+        record_audit_event(
+            actor=request.user,
+            organization=recommendation.organization,
+            action="recovery.recommendation.proof_pack_viewed",
+            object_type="recovery_recommendation",
+            object_id=str(recommendation.pk),
+            object_repr=recommendation.recommendation_id,
+            metadata={
+                "proof_pack_version": payload["proofPackVersion"],
+                "optimizer_run": recommendation.optimizer_run.run_id,
+                "scenario_id": recommendation.scenario.scenario_id
+                if recommendation.scenario
+                else None,
+            },
+            request=request,
+        )
+        return Response(payload)
+
+    @action(detail=True, methods=["post"], url_path="dismiss")
+    def dismiss(self, request, pk=None):
+        dismiss_serializer = RecoveryRecommendationDismissSerializer(data=request.data)
+        dismiss_serializer.is_valid(raise_exception=True)
+        recommendation = self.get_object()
+        if recommendation.scenario_id:
+            return Response(
+                {"detail": "Materialized recommendations cannot be dismissed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        recommendation.status = RecoveryRecommendation.Status.DISMISSED
+        recommendation.metadata = {
+            **recommendation.metadata,
+            "dismissal": {
+                "reason": dismiss_serializer.validated_data["reason"],
+                "dismissedAt": timezone.now().isoformat(),
+                "dismissedBy": request.user.email,
+            },
+        }
+        recommendation.save(update_fields=["status", "metadata", "updated_at"])
+        record_audit_event(
+            actor=request.user,
+            organization=recommendation.organization,
+            action="recovery.recommendation.dismiss",
+            object_type="recovery_recommendation",
+            object_id=str(recommendation.pk),
+            object_repr=recommendation.recommendation_id,
+            metadata={
+                "reason": dismiss_serializer.validated_data["reason"],
+                "optimizer_run": recommendation.optimizer_run.run_id,
+            },
+            request=request,
+        )
+        return Response(RecoveryRecommendationSerializer(recommendation).data)
 
     @action(detail=True, methods=["post"], url_path="materialize-scenario")
     def materialize_scenario(self, request, pk=None):
@@ -1042,8 +1104,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "runs__ogv_projections__voyage",
                 "runs__resource_utilizations",
             )
+            recovery_plan_versions = [active_version.id]
+            if active_version.source_version_id:
+                recovery_plan_versions.append(active_version.source_version_id)
             recovery_input_snapshots = RecoveryInputSnapshot.objects.filter(
-                plan_version=active_version
+                plan_version_id__in=recovery_plan_versions
             ).select_related(
                 "plan_version",
                 "plan_version__plan",
@@ -1055,7 +1120,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "captured_by",
             )
             optimizer_runs = OptimizerRun.objects.filter(
-                plan_version=active_version
+                plan_version_id__in=recovery_plan_versions
             ).select_related(
                 "input_snapshot",
                 "plan_version",
@@ -1067,7 +1132,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "recommendations__evaluation",
             )
             recovery_recommendations = RecoveryRecommendation.objects.filter(
-                optimizer_run__plan_version=active_version
+                optimizer_run__plan_version_id__in=recovery_plan_versions
             ).select_related(
                 "optimizer_run",
                 "optimizer_run__input_snapshot",

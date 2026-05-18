@@ -1,5 +1,7 @@
 ## Phase 5 Implementation Spec Plan
 
+**Status:** implemented through Chunk 5.6 with closure evidence
+
 **Goal:** move from operational visibility to decision intelligence: generate recovery options, score them, convert the selected option into a governed scenario, and route it through approval before plan publication.
 
 **Core Principle**

@@ -1,0 +1,113 @@
+{
+  "approvalHandoff": {
+    "approvalStatus": "approved",
+    "candidateStatus": "proposed",
+    "candidateValidation": "blocked",
+    "candidateVersionId": 83,
+    "candidateVersionRef": "PLAN-2026-05-20 V2",
+    "decisionCount": 2,
+    "publishBlockedByRisk": true,
+    "requestId": "APR-PLAN-2026-05-20-V2"
+  },
+  "audit": {
+    "actions": [
+      "phase5.proof.governed_run_verified",
+      "phase5.proof.ranking_verified",
+      "phase5.proof.scenario_materialized",
+      "phase5.proof.approval_handoff_verified",
+      "phase5.proof.proof_pack_verified",
+      "phase5.proof.audit_verified"
+    ],
+    "eventCount": 6
+  },
+  "browserEvidenceTargets": [
+    "/exceptions/center",
+    "/recovery/recommendations",
+    "/simulation/workspace",
+    "/approvals/publishing",
+    "/admin/audit-logs"
+  ],
+  "definitionOfDone": {
+    "expectedStages": 7,
+    "overall": "PASS",
+    "stagesPassed": 7
+  },
+  "evidenceFile": "docs/evidence/phase5/phase5_recovery_evidence.json",
+  "generatedAt": "2026-05-18T17:32:05.744155+00:00",
+  "optimizerRun": {
+    "bestRecommendation": "REC-BC6AEB2A0C00",
+    "bestStrategy": "cts_reassignment",
+    "recommendationCount": 5,
+    "runId": "OPT-P5-RECOVERY-20260518173204"
+  },
+  "proofPack": {
+    "approvalCount": 1,
+    "auditTrailCount": 7,
+    "proofPackVersion": "phase5.6-recommendation-proof-pack",
+    "recommendationId": "REC-BC6AEB2A0C00",
+    "scenarioId": "SIM-PLAN-2026-05-20-V1-08"
+  },
+  "runId": "P5-RECOVERY-20260518173204",
+  "scenarioHandoff": {
+    "scenarioId": "SIM-PLAN-2026-05-20-V1-08",
+    "scenarioRunId": "RUN-SIM-PLAN-2026-05-20-V1-08-01",
+    "scenarioStatus": "proposed"
+  },
+  "selectedRecommendation": {
+    "rank": 1,
+    "recommendationId": "REC-BC6AEB2A0C00",
+    "riskLevel": "low",
+    "score": 89.0
+  },
+  "stages": [
+    {
+      "auditAction": "phase5.proof.seed_pack_verified",
+      "primaryEvidence": "5 candidates",
+      "result": "PASS",
+      "stage": 1,
+      "title": "Recommendation seed pack"
+    },
+    {
+      "auditAction": "phase5.proof.governed_run_verified",
+      "primaryEvidence": "OPT-P5-RECOVERY-20260518173204",
+      "result": "PASS",
+      "stage": 2,
+      "title": "Governed recovery run"
+    },
+    {
+      "auditAction": "phase5.proof.ranking_verified",
+      "primaryEvidence": "REC-BC6AEB2A0C00",
+      "result": "PASS",
+      "stage": 3,
+      "title": "Recommendation ranking"
+    },
+    {
+      "auditAction": "phase5.proof.scenario_materialized",
+      "primaryEvidence": "REC-BC6AEB2A0C00 -> SIM-PLAN-2026-05-20-V1-08",
+      "result": "PASS",
+      "stage": 4,
+      "title": "Recommendation scenario handoff"
+    },
+    {
+      "auditAction": "phase5.proof.approval_handoff_verified",
+      "primaryEvidence": "APR-PLAN-2026-05-20-V2",
+      "result": "PASS",
+      "stage": 5,
+      "title": "Promotion and approval handoff"
+    },
+    {
+      "auditAction": "phase5.proof.proof_pack_verified",
+      "primaryEvidence": "phase5.6-recommendation-proof-pack",
+      "result": "PASS",
+      "stage": 6,
+      "title": "Recommendation proof pack"
+    },
+    {
+      "auditAction": "phase5.proof.audit_verified",
+      "primaryEvidence": "5 proof events before marker",
+      "result": "PASS",
+      "stage": 7,
+      "title": "Proof audit evidence"
+    }
+  ]
+}

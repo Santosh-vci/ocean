@@ -454,6 +454,10 @@ class RecoveryRecommendationMaterializeSerializer(serializers.Serializer):
     run_simulation = serializers.BooleanField(required=False, default=True)
 
 
+class RecoveryRecommendationDismissSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=255)
+
+
 class OptimizerRunGenerateSerializer(serializers.Serializer):
     input_snapshot = serializers.PrimaryKeyRelatedField(
         queryset=RecoveryInputSnapshot.objects.all(),

@@ -65,6 +65,12 @@ from apps.scheduling.models import (
     RecoveryInputSnapshot,
     RecoveryRecommendation,
     ScenarioAssumption,
+    ScenarioConstraintEvaluation,
+    ScenarioEventProjection,
+    ScenarioOgvProjection,
+    ScenarioResourceUtilization,
+    ScenarioRun,
+    ScenarioTripProjection,
     ScheduleEvent,
     SimulationScenario,
     Trip,
@@ -480,6 +486,13 @@ class Command(BaseCommand):
         RecoveryInputSnapshot.objects.all().delete()
         ApprovalDecision.objects.all().delete()
         ApprovalRequest.objects.all().delete()
+        ScenarioResourceUtilization.objects.all().delete()
+        ScenarioOgvProjection.objects.all().delete()
+        ScenarioConstraintEvaluation.objects.all().delete()
+        ScenarioEventProjection.objects.all().delete()
+        ScenarioTripProjection.objects.all().delete()
+        ScenarioRun.objects.all().delete()
+        ScenarioAssumption.objects.all().delete()
         SimulationScenario.objects.all().delete()
         OverrideRequest.objects.all().delete()
         ScheduleEvent.objects.all().delete()

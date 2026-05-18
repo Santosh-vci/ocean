@@ -40,8 +40,10 @@ from apps.scheduling.models import (
 from apps.scheduling.recovery_services import (
     RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
     RECOVERY_MATERIALIZATION_ALGORITHM_VERSION,
+    RECOVERY_PROOF_PACK_VERSION,
     RECOVERY_REPAIR_ALGORITHM_VERSION,
     RECOVERY_SCORING_ALGORITHM_VERSION,
+    build_recommendation_proof_pack,
     build_recovery_input_snapshot,
     generate_recovery_recommendations,
     materialize_recommendation_as_scenario,
@@ -1439,6 +1441,43 @@ def test_scheduling_overview_includes_scenario_when_active_version_is_scenario_o
 
 
 @pytest.mark.django_db
+def test_scheduling_overview_keeps_recovery_lineage_visible_for_promoted_successor():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    baseline = seeded_plan_version()
+    user = User.objects.get(username="admin@coalflow.local")
+    recommendation = (
+        OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+        .recommendations.exclude(actions__action_type=RecoveryAction.ActionType.NOOP)
+        .order_by("rank")
+        .first()
+    )
+    materialized = materialize_recommendation_as_scenario(
+        recommendation=recommendation,
+        actor=user,
+        name="Promoted recovery lineage proof",
+        run_simulation=True,
+    )
+    scenario = promote_scenario_to_proposed(
+        scenario=materialized.scenario,
+        actor=user,
+    )
+    assert scenario.scenario_version.source_version == baseline
+
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.get("/api/scheduling/overview/")
+
+    assert response.status_code == 200
+    assert response.data["activePlanVersion"]["id"] == scenario.scenario_version_id
+    assert "OPT-PHASE5-SEED" in {
+        item["run_id"] for item in response.data["optimizerRuns"]
+    }
+    assert recommendation.recommendation_id in {
+        item["recommendation_id"] for item in response.data["recoveryRecommendations"]
+    }
+
+
+@pytest.mark.django_db
 def test_phase5_seed_creates_recovery_model_foundation():
     call_command("seed_phase0", reset_operational_data=True, verbosity=0)
 
@@ -1761,6 +1800,76 @@ def test_phase5_recommendation_materialize_api_is_audited_and_visible_in_overvie
     assert response.data["scenario_ref"] in {
         item["scenario_id"] for item in overview.data["simulationScenarios"]
     }
+
+
+@pytest.mark.django_db
+def test_phase5_recommendation_proof_pack_collects_lineage_and_is_audited():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    recommendation = (
+        OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+        .recommendations.exclude(actions__action_type=RecoveryAction.ActionType.NOOP)
+        .order_by("rank")
+        .first()
+    )
+    assert recommendation is not None
+    materialize_recommendation_as_scenario(
+        recommendation=recommendation,
+        name="Proof-pack recommendation",
+        run_simulation=True,
+    )
+    recommendation.refresh_from_db()
+    payload = build_recommendation_proof_pack(recommendation=recommendation)
+
+    assert payload["proofPackVersion"] == RECOVERY_PROOF_PACK_VERSION
+    assert payload["recommendation"]["recommendationId"] == recommendation.recommendation_id
+    assert payload["inputSnapshot"]["snapshotId"] == "RIS-PHASE5-SEED"
+    assert payload["optimizerRun"]["runId"] == "OPT-PHASE5-SEED"
+    assert payload["evaluation"]["hardConstraintsPassed"] is True
+    assert payload["actions"]
+    assert payload["scenarioHandoff"]["scenarioId"] == recommendation.scenario.scenario_id
+
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.get(
+        f"/api/scheduling/recommendations/{recommendation.id}/proof-pack/",
+    )
+
+    assert response.status_code == 200
+    assert response.data["proofPackVersion"] == RECOVERY_PROOF_PACK_VERSION
+    assert response.data["scenarioHandoff"]["scenarioId"] == recommendation.scenario.scenario_id
+    assert AuditEvent.objects.filter(
+        action="recovery.recommendation.proof_pack_viewed",
+        object_repr=recommendation.recommendation_id,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_phase5_recommendation_dismiss_api_is_governed():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    recommendation = (
+        OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+        .recommendations.order_by("-rank")
+        .first()
+    )
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        f"/api/scheduling/recommendations/{recommendation.id}/dismiss/",
+        {"reason": "Lower ranked option retained only for comparison."},
+        format="json",
+    )
+
+    recommendation.refresh_from_db()
+    assert response.status_code == 200
+    assert recommendation.status == RecoveryRecommendation.Status.DISMISSED
+    assert response.data["metadata"]["dismissal"]["reason"].startswith("Lower ranked")
+    assert AuditEvent.objects.filter(
+        action="recovery.recommendation.dismiss",
+        object_repr=recommendation.recommendation_id,
+    ).exists()
 
 
 @pytest.mark.django_db
