@@ -51,6 +51,17 @@ class OperationsViewSet(ModelViewSet):
     }
 
 
+class BoundedOperationsListMixin:
+    default_limit = 120
+    max_limit = 500
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        queryset = queryset[: _list_limit(request, self.default_limit, self.max_limit)]
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class IntegrationFeedViewSet(OperationsViewSet):
     queryset = IntegrationFeed.objects.all()
     serializer_class = IntegrationFeedSerializer
@@ -64,8 +75,11 @@ class IntegrationFeedViewSet(OperationsViewSet):
     }
 
 
-class DeviceEndpointViewSet(OperationsViewSet):
-    queryset = DeviceEndpoint.objects.select_related("feed", "location", "geofence").all()
+class DeviceEndpointViewSet(BoundedOperationsListMixin, OperationsViewSet):
+    default_limit = 80
+    queryset = DeviceEndpoint.objects.select_related("feed", "location", "geofence").order_by(
+        "device_id"
+    )
     serializer_class = DeviceEndpointSerializer
     lookup_field = "device_id"
     action_permission_map = {
@@ -77,8 +91,10 @@ class DeviceEndpointViewSet(OperationsViewSet):
     }
 
 
-class DeviceHealthSnapshotViewSet(OperationsViewSet):
-    queryset = DeviceHealthSnapshot.objects.select_related("device", "device__feed").all()
+class DeviceHealthSnapshotViewSet(BoundedOperationsListMixin, OperationsViewSet):
+    queryset = DeviceHealthSnapshot.objects.select_related("device", "device__feed").order_by(
+        "-observed_at", "-id"
+    )
     serializer_class = DeviceHealthSnapshotSerializer
     action_permission_map = {
         **OperationsViewSet.action_permission_map,
@@ -107,7 +123,7 @@ class DeviceHealthSnapshotViewSet(OperationsViewSet):
         return Response(_health_ingest_response(result), status=status.HTTP_201_CREATED)
 
 
-class OperationalEventCandidateViewSet(OperationsViewSet):
+class OperationalEventCandidateViewSet(BoundedOperationsListMixin, OperationsViewSet):
     queryset = OperationalEventCandidate.objects.select_related(
         "feed",
         "device",
@@ -116,7 +132,7 @@ class OperationalEventCandidateViewSet(OperationsViewSet):
         "assignment",
         "assignment__trip",
         "schedule_event",
-    ).all()
+    ).order_by("-event_at", "-id")
     serializer_class = OperationalEventCandidateSerializer
     action_permission_map = {
         **OperationsViewSet.action_permission_map,
@@ -186,7 +202,7 @@ class OperationalEventCandidateViewSet(OperationsViewSet):
         return Response(OperationalEventCandidateSerializer(candidate).data)
 
 
-class ConfirmedOperationalEventViewSet(OperationsViewSet):
+class ConfirmedOperationalEventViewSet(BoundedOperationsListMixin, OperationsViewSet):
     queryset = ConfirmedOperationalEvent.objects.select_related(
         "candidate",
         "plan_version",
@@ -194,7 +210,7 @@ class ConfirmedOperationalEventViewSet(OperationsViewSet):
         "assignment",
         "schedule_event",
         "confirmed_by",
-    ).all()
+    ).order_by("-actual_at", "-id")
     serializer_class = ConfirmedOperationalEventSerializer
     action_permission_map = {
         **OperationsViewSet.action_permission_map,
@@ -358,3 +374,14 @@ def _health_ingest_response(result):
         "created_risk": result.created_risk,
         "health_summary": result.health_summary,
     }
+
+
+def _list_limit(request, default_limit: int, max_limit: int) -> int:
+    raw_limit = request.query_params.get("limit", default_limit)
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        limit = default_limit
+    if limit < 1:
+        return default_limit
+    return min(limit, max_limit)

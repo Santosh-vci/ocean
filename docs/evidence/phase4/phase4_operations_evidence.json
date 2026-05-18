@@ -1,0 +1,155 @@
+{
+    "audit":  {
+                  "actions":  [
+                                  "operational_event.confirmed",
+                                  "operational_event.duplicate",
+                                  "operational_event.ingested",
+                                  "operations.device_health.ingested",
+                                  "operations.edge_batch.replay_skipped",
+                                  "operations.edge_batch.replayed"
+                              ],
+                  "auditEventCount":  27
+              },
+    "batchPack":  [
+                      {
+                          "autoConfirmedCount":  6,
+                          "batchId":  "OEB-2C6BCEC64EDD",
+                          "batchSequence":  "PHASE4-EXECUTION-001",
+                          "candidateRefs":  [
+                                                "OEC-C8319C68DBDE",
+                                                "OEC-2145D657BC56",
+                                                "OEC-7AB5C7F49522",
+                                                "OEC-434FFA630053",
+                                                "OEC-ED66887CEC9A",
+                                                "OEC-9755245200B6",
+                                                "OEC-F3B4A47C5B47",
+                                                "OEC-A1B6346F2029",
+                                                "OEC-D9EA2CF61E19",
+                                                "OEC-05B77275146E",
+                                                "OEC-06C38935F309",
+                                                "OEC-73C61B20F37C"
+                                            ],
+                          "createdCandidateCount":  11,
+                          "duplicateCandidateCount":  1,
+                          "errorCount":  0,
+                          "errors":  [
+
+                                     ],
+                          "eventCandidateCount":  12,
+                          "healthRiskCount":  0,
+                          "healthSnapshotCount":  4,
+                          "healthSnapshotRefs":  [
+                                                     "DHS-DCDFE66C3821",
+                                                     "DHS-60D31AB095D6",
+                                                     "DHS-80D82B61198F",
+                                                     "DHS-177051C96374"
+                                                 ],
+                          "idempotent":  false,
+                          "messageCount":  16,
+                          "pendingCandidateCount":  5,
+                          "processedCount":  16,
+                          "status":  "processed"
+                      },
+                      {
+                          "autoConfirmedCount":  0,
+                          "batchId":  "OEB-743FB284701C",
+                          "batchSequence":  "PHASE4-HEALTH-001",
+                          "candidateRefs":  [
+
+                                            ],
+                          "createdCandidateCount":  0,
+                          "duplicateCandidateCount":  0,
+                          "errorCount":  0,
+                          "errors":  [
+
+                                     ],
+                          "eventCandidateCount":  0,
+                          "healthRiskCount":  1,
+                          "healthSnapshotCount":  2,
+                          "healthSnapshotRefs":  [
+                                                     "DHS-F113F38A7A90",
+                                                     "DHS-4B2E32434D3A"
+                                                 ],
+                          "idempotent":  false,
+                          "messageCount":  2,
+                          "pendingCandidateCount":  0,
+                          "processedCount":  2,
+                          "status":  "processed"
+                      }
+                  ],
+    "browserEvidenceTargets":  [
+                                   "/dashboard/situation",
+                                   "/operations/event-confirmation",
+                                   "/exceptions/center",
+                                   "/admin/audit-logs"
+                               ],
+    "definitionOfDone":  {
+                             "expectedStages":  5,
+                             "overall":  "PASS",
+                             "stagesPassed":  5
+                         },
+    "generatedAt":  "2026-05-18T12:52:46.415878+00:00",
+    "operationsSummary":  {
+                              "actualizationCount":  18,
+                              "actualizedTargetTypes":  [
+                                                            "assignment",
+                                                            "schedule_event",
+                                                            "trip"
+                                                        ],
+                              "candidateCount":  12,
+                              "confirmedEventCount":  6,
+                              "deviceOfflineRiskCount":  1,
+                              "duplicateCandidateCount":  1,
+                              "healthSnapshotCount":  6,
+                              "pendingCandidateCount":  5
+                          },
+    "rerun":  {
+                  "batchId":  "OEB-2C6BCEC64EDD",
+                  "batchSequence":  "PHASE4-EXECUTION-001",
+                  "counts":  {
+                                 "actualizations":  18,
+                                 "candidates":  13,
+                                 "confirmedEvents":  6,
+                                 "healthSnapshots":  6
+                             },
+                  "idempotent":  true
+              },
+    "runId":  "P4-OPERATIONS-20260518125246",
+    "stages":  [
+                   {
+                       "auditAction":  "phase4.proof.batch_pack_seeded",
+                       "primaryEvidence":  "2 edge batches",
+                       "result":  "PASS",
+                       "stage":  1,
+                       "title":  "Synthetic batch pack seeded"
+                   },
+                   {
+                       "auditAction":  "phase4.proof.replays_executed",
+                       "primaryEvidence":  "18 messages",
+                       "result":  "PASS",
+                       "stage":  2,
+                       "title":  "Synthetic operations batches replayed"
+                   },
+                   {
+                       "auditAction":  "phase4.proof.operational_evidence_verified",
+                       "primaryEvidence":  "6 confirmed / 6 health",
+                       "result":  "PASS",
+                       "stage":  3,
+                       "title":  "Operational evidence verified"
+                   },
+                   {
+                       "auditAction":  "phase4.proof.rerun_verified",
+                       "primaryEvidence":  "PHASE4-EXECUTION-001",
+                       "result":  "PASS",
+                       "stage":  4,
+                       "title":  "Edge batch rerun idempotence"
+                   },
+                   {
+                       "auditAction":  "phase4.proof.audit_verified",
+                       "primaryEvidence":  "27 audit events",
+                       "result":  "PASS",
+                       "stage":  5,
+                       "title":  "Replay audit verified"
+                   }
+               ]
+}

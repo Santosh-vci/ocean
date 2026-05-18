@@ -1,6 +1,6 @@
 # 20 - Phase 4 Implementation Spec
 
-**Status:** draft implementation specification for product Phase 4  
+**Status:** implemented through Chunk 4.6 with closure evidence
 **Phase:** IoT/event-driven operations  
 **Primary goal:** convert live field/device evidence into trusted operational events that can update actual execution state without letting noisy telemetry mutate the schedule silently.
 

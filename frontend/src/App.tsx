@@ -298,13 +298,13 @@ function App() {
       refreshes.push(apiFetch<OperationsOverviewRecord>("/operations/overview/")
         .then(setOperationsOverview)
         .catch(() => setOperationsOverview(null)));
-      refreshes.push(apiFetch<OperationalEventCandidateRecord[]>("/operations/event-candidates/")
+      refreshes.push(apiFetch<OperationalEventCandidateRecord[]>("/operations/event-candidates/?limit=160")
         .then(setOperationCandidates)
         .catch(() => setOperationCandidates([])));
-      refreshes.push(apiFetch<ConfirmedOperationalEventRecord[]>("/operations/confirmed-events/")
+      refreshes.push(apiFetch<ConfirmedOperationalEventRecord[]>("/operations/confirmed-events/?limit=160")
         .then(setConfirmedOperationalEvents)
         .catch(() => setConfirmedOperationalEvents([])));
-      refreshes.push(apiFetch<DeviceEndpointRecord[]>("/operations/devices/")
+      refreshes.push(apiFetch<DeviceEndpointRecord[]>("/operations/devices/?limit=80")
         .then(setOperationDevices)
         .catch(() => setOperationDevices([])));
     } else {

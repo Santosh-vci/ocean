@@ -68,6 +68,12 @@ The pack is based on:
 20. `20_Phase_4_Implementation_Spec.md`
     Product Phase 4 implementation specification for IoT/event-driven operations: event candidates, trusted confirmations, device/feed health, edge replay, actualization, board integration, and closure evidence.
 
+21. `21_Phase_4_Operator_Runbook.md`
+    Operator-facing runbook for using Phase 4 Synthetic Event Feed Mode, event confirmation, actualized operations boards, event-driven exceptions, and audit evidence.
+
+22. `22_Phase_4_Completion_Evidence.md`
+    Runtime closure evidence for Phase 4, including the five-stage proof command, browser screenshots, performance evidence, audit evidence, and remaining deferred scope.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

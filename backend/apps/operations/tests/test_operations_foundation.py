@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -576,6 +578,42 @@ def test_scheduling_overview_exposes_operations_health_summary():
     assert "operationsHealthSummary" in response.data
     assert "feeds" in response.data["operationsHealthSummary"]
     assert "devices" in response.data["operationsHealthSummary"]
+
+
+@pytest.mark.django_db
+def test_operations_event_candidate_list_supports_bounded_runtime_limit():
+    org = organization()
+    source_feed = feed()
+    source_device = device(source_feed)
+    viewer = User.objects.create_user(username="ops-limit-viewer", password="secret")
+    assign(viewer, org, ["operations.view"])
+    base_time = timezone.now()
+    for index in range(5):
+        OperationalEventCandidate.objects.create(
+            **{
+                key: value
+                for key, value in candidate_payload(
+                    source_feed,
+                    source_device,
+                    dedupe_key=f"ops-limit-{index}",
+                    event_at=(base_time + timedelta(minutes=index)).isoformat(),
+                ).items()
+                if key not in {"feed", "device"}
+            },
+            feed=source_feed,
+            device=source_device,
+        )
+    client = APIClient()
+    client.force_authenticate(viewer)
+
+    response = client.get("/api/operations/event-candidates/?limit=2")
+
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert [row["dedupe_key"] for row in response.data] == [
+        "ops-limit-4",
+        "ops-limit-3",
+    ]
 
 
 @pytest.mark.django_db
