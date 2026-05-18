@@ -683,6 +683,123 @@ export type ImpactChainAssessmentRecord = {
   updated_at: string;
 };
 
+export type RecoveryInputSnapshotRecord = {
+  id: number;
+  snapshot_id: string;
+  plan_version: number;
+  plan_version_ref: string;
+  source_kind: string;
+  source_ref: string;
+  source_conflict: number | null;
+  source_conflict_code: string | null;
+  source_override: number | null;
+  source_override_reason_code: string | null;
+  source_tracking_alert: number | null;
+  source_tracking_alert_ref: string | null;
+  source_operational_event: number | null;
+  source_operational_event_ref: string | null;
+  source_scenario: number | null;
+  source_scenario_ref: string | null;
+  input_hash: string;
+  active_conflict_count: number;
+  confirmed_event_count: number;
+  tracking_alert_count: number;
+  resource_state: Record<string, unknown>;
+  event_state: Record<string, unknown>;
+  constraint_state: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  captured_by: number | null;
+  captured_by_email: string | null;
+  generated_at: string;
+};
+
+export type RecoveryActionRecord = {
+  id: number;
+  action_id: string;
+  recommendation: number;
+  recommendation_ref: string;
+  sequence: number;
+  action_type: string;
+  target_trip: number | null;
+  target_trip_ref: string | null;
+  target_assignment: number | null;
+  target_assignment_ref: string | null;
+  before_state: Record<string, unknown>;
+  after_state: Record<string, unknown>;
+  constraints_checked: string[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type RecommendationEvaluationRecord = {
+  id: number;
+  evaluation_id: string;
+  recommendation: number;
+  recommendation_ref: string;
+  delay_minutes: number;
+  missed_windows: number;
+  resource_conflicts: number;
+  utilization_delta_pct: string;
+  confidence_score: string;
+  hard_constraints_passed: boolean;
+  score_breakdown: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type RecommendationExplanationNodeRecord = {
+  id: string;
+  sortOrder: number;
+  kind: string;
+  label: string;
+  value: string;
+  severity: string;
+  detail: string;
+  evidence?: Record<string, unknown>;
+  metric?: Record<string, unknown>;
+};
+
+export type RecoveryRecommendationRecord = {
+  id: number;
+  recommendation_id: string;
+  optimizer_run: number;
+  optimizer_run_ref: string;
+  rank: number;
+  status: string;
+  risk_level: string;
+  score: string;
+  summary: string;
+  explanation: RecommendationExplanationNodeRecord[];
+  scenario: number | null;
+  scenario_ref: string | null;
+  metadata: Record<string, unknown>;
+  actions: RecoveryActionRecord[];
+  evaluation: RecommendationEvaluationRecord | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OptimizerRunRecord = {
+  id: number;
+  run_id: string;
+  input_snapshot: number;
+  input_snapshot_ref: string;
+  plan_version: number;
+  plan_version_ref: string;
+  status: string;
+  algorithm_version: string;
+  objective_weights: Record<string, unknown>;
+  summary: Record<string, unknown>;
+  error_message: string;
+  started_by: number | null;
+  started_by_email: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  recommendations: RecoveryRecommendationRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
 export type OverrideRequestRecord = {
   id: number;
   plan_version: number;
@@ -1156,6 +1273,9 @@ export type SchedulingOverview = {
   approvalRequests: ApprovalRequestRecord[];
   publishedSnapshots: PublishedPlanSnapshotRecord[];
   simulationScenarios: SimulationScenarioRecord[];
+  recoveryInputSnapshots: RecoveryInputSnapshotRecord[];
+  optimizerRuns: OptimizerRunRecord[];
+  recoveryRecommendations: RecoveryRecommendationRecord[];
   liveEtaProjections: LiveEtaProjectionRecord[];
   trackingAlerts: TrackingAlertRecord[];
   trackingSummary: {
@@ -1175,6 +1295,8 @@ export type SchedulingOverview = {
     overrideCount: number;
     approvalPendingCount: number;
     scenarioCount: number;
+    optimizerRunCount: number;
+    recoveryRecommendationCount: number;
     trackingAlertCount: number;
     openTrackingAlertCount: number;
     plannedMt: number;

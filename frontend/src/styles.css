@@ -2697,6 +2697,13 @@ tbody tr:hover,
   min-height: 41rem;
 }
 
+.recommendation-layout {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr) 23rem;
+  gap: 0.65rem;
+  min-height: 26rem;
+}
+
 .recovery-filter-rail,
 .scenario-config {
   display: grid;
@@ -2736,7 +2743,8 @@ tbody tr:hover,
 }
 
 .recovery-grid-panel,
-.simulation-main {
+.simulation-main,
+.recommendation-grid-panel {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -2744,7 +2752,8 @@ tbody tr:hover,
 }
 
 .recovery-grid-panel .grid-scroll,
-.simulation-main .grid-scroll {
+.simulation-main .grid-scroll,
+.recommendation-grid-panel .grid-scroll {
   min-height: 17rem;
 }
 
@@ -2823,10 +2832,153 @@ tbody tr:hover,
   margin: 0 0.65rem 0.65rem;
 }
 
+.recommendation-run-rail {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.recommendation-run-list {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.recommendation-run-list button,
+.recommendation-run-list span {
+  display: grid;
+  gap: 0.1rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.42rem 0.5rem;
+  text-align: left;
+}
+
+.recommendation-run-list button.active {
+  border-color: rgba(137, 206, 255, 0.55);
+  color: var(--primary);
+}
+
+.recommendation-run-list strong {
+  overflow: hidden;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendation-run-list span {
+  color: var(--on-surface-variant);
+  font-size: 0.61rem;
+  text-transform: uppercase;
+}
+
+.recommendation-run-rail dl {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0 0.65rem 0.65rem;
+}
+
+.recommendation-run-rail dl div {
+  display: grid;
+  gap: 0.14rem;
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 0.45rem;
+}
+
+.recommendation-run-rail dt {
+  color: var(--on-surface-variant);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recommendation-run-rail dd {
+  margin: 0;
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.64rem;
+  overflow-wrap: anywhere;
+}
+
+.recommendation-proof-grid {
+  display: grid;
+  grid-template-columns: minmax(28rem, 1.1fr) minmax(24rem, 0.9fr);
+  gap: 0.65rem;
+}
+
+.recommendation-proof-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.recommendation-proof-panel .grid-scroll.compact {
+  min-height: 10rem;
+  max-height: 16rem;
+}
+
+.recommendation-explanation-list {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.recommendation-explanation-node {
+  display: grid;
+  gap: 0.14rem;
+  border: 1px solid var(--border-subtle);
+  border-left-width: 3px;
+  background: rgba(2, 6, 23, 0.24);
+  padding: 0.48rem 0.55rem;
+}
+
+.recommendation-explanation-node strong,
+.recommendation-explanation-node em,
+.recommendation-explanation-node small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.recommendation-explanation-node strong {
+  color: var(--on-surface);
+  font-size: 0.64rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.recommendation-explanation-node em {
+  color: var(--on-surface);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.recommendation-explanation-node small {
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.recommendation-explanation-node.ok {
+  border-left-color: rgba(16, 185, 129, 0.72);
+}
+
+.recommendation-explanation-node.pending {
+  border-left-color: rgba(245, 158, 11, 0.72);
+}
+
+.recommendation-explanation-node.critical {
+  border-left-color: rgba(239, 68, 68, 0.72);
+}
+
 .scenario-create-panel,
 .scenario-list-panel,
 .scenario-assumption-panel,
-.scenario-assumption-list {
+.scenario-assumption-list,
+.scenario-handoff-panel {
   display: grid;
   gap: 0.45rem;
   border-top: 1px solid var(--border-subtle);
@@ -2886,7 +3038,8 @@ tbody tr:hover,
 
 .scenario-list-panel h2,
 .scenario-assumption-panel h2,
-.scenario-assumption-list h2 {
+.scenario-assumption-list h2,
+.scenario-handoff-panel h2 {
   margin: 0;
   color: var(--on-surface-variant);
   font-size: 0.62rem;
@@ -2897,7 +3050,8 @@ tbody tr:hover,
 
 .scenario-list-panel button,
 .scenario-list-panel > span,
-.scenario-assumption-list span {
+.scenario-assumption-list span,
+.scenario-handoff-panel span {
   display: grid;
   gap: 0.1rem;
   border: 1px solid var(--border-subtle);
@@ -2913,7 +3067,8 @@ tbody tr:hover,
 }
 
 .scenario-list-panel strong,
-.scenario-assumption-list strong {
+.scenario-assumption-list strong,
+.scenario-handoff-panel strong {
   overflow: hidden;
   font-size: 0.68rem;
   text-overflow: ellipsis;
@@ -2921,7 +3076,8 @@ tbody tr:hover,
 }
 
 .scenario-list-panel span,
-.scenario-assumption-list em {
+.scenario-assumption-list em,
+.scenario-handoff-panel em {
   color: var(--on-surface-variant);
   font-size: 0.61rem;
   font-style: normal;
@@ -3048,6 +3204,20 @@ tbody tr:hover,
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 0.64rem;
   overflow-wrap: anywhere;
+}
+
+.scenario-handoff-panel button {
+  margin: 0;
+  min-height: 1.9rem;
+  border: 1px solid rgba(137, 206, 255, 0.45);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--primary);
+  padding: 0 0.65rem;
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .impact-chain-track.compact {
@@ -3342,7 +3512,8 @@ tbody tr:hover,
 
 @media (max-width: 1280px) {
   .exception-layout,
-  .approval-layout {
+  .approval-layout,
+  .recommendation-layout {
     grid-template-columns: 1fr;
   }
 
@@ -3363,6 +3534,7 @@ tbody tr:hover,
     grid-template-columns: 1fr;
   }
 
+  .recommendation-proof-grid,
   .scenario-result-grid,
   .scenario-summary-strip {
     grid-template-columns: 1fr;

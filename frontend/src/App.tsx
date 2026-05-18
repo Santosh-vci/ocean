@@ -24,6 +24,8 @@ import { RbacPage } from "./pages/RbacPage";
 import {
   ApprovalsPublishingPage,
   ExceptionCenterPage,
+  RecommendationConsolePage,
+  type RecommendationSourceInput,
   type ScenarioAssumptionDraft,
   type ScenarioSourceInput,
   SimulationWorkspacePage,
@@ -55,6 +57,9 @@ import type {
   PlanVersionRecord,
   PlanningOverview,
   RbacOverview,
+  RecoveryInputSnapshotRecord,
+  RecoveryRecommendationRecord,
+  OptimizerRunRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
   TelemetryReplayRunRecord,
@@ -742,6 +747,64 @@ function App() {
     });
   }
 
+  async function handleGenerateRecoveryOptions(source: RecommendationSourceInput) {
+    await runWorkspaceAction("Generate recovery options", async () => {
+      const activeVersion = schedulingOverview?.activePlanVersion;
+      if (!activeVersion) {
+        throw new Error("No active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const snapshot = await apiFetch<RecoveryInputSnapshotRecord>(
+        "/scheduling/recovery-input-snapshots/build/",
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            plan_version: activeVersion.id,
+            source_kind: source.kind,
+            ...(source.kind === "conflict" ? { source_conflict: source.id } : {}),
+            ...(source.kind === "override" ? { source_override: source.id } : {}),
+            ...(source.kind === "tracking_alert" ? { source_tracking_alert: source.id } : {}),
+            ...(source.kind === "operational_event" ? { source_operational_event: source.id } : {}),
+          }),
+        },
+      );
+      const run = await apiFetch<OptimizerRunRecord>("/scheduling/recovery-runs/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          input_snapshot: snapshot.id,
+        }),
+      });
+      handleNavigate("/recovery/recommendations");
+      return `Recovery options generated: ${run.recommendations.length} candidates from ${snapshot.source_ref}`;
+    });
+  }
+
+  async function handleMaterializeRecommendation(recommendationId: number) {
+    await runWorkspaceAction("Create recovery scenario", async () => {
+      const csrfToken = await getCsrfToken();
+      const recommendation = await apiFetch<RecoveryRecommendationRecord>(
+        `/scheduling/recovery-recommendations/${recommendationId}/materialize-scenario/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            run_simulation: true,
+          }),
+        },
+      );
+      handleNavigate("/simulation/workspace");
+      return `Recovery scenario created: ${recommendation.scenario_ref ?? recommendation.recommendation_id}`;
+    });
+  }
+
   async function handleStartTelemetryReplay(replayId: string) {
     await runWorkspaceAction("Start synthetic replay", async () => {
       const csrfToken = await getCsrfToken();
@@ -1092,9 +1155,19 @@ function App() {
             isActionRunning={isWorkspaceActionRunning}
             operationCandidates={operationCandidates}
             onCreateScenario={handleCreateScenario}
+            onGenerateRecoveryOptions={handleGenerateRecoveryOptions}
             onPublishTriage={canGenerateExports
               ? () => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })
               : undefined}
+            overview={schedulingOverview}
+          />
+        ) : null}
+        {route === "/recovery/recommendations" && canViewSchedule ? (
+          <RecommendationConsolePage
+            canEdit={canEditSchedule && activePlanIsEditable}
+            isActionRunning={isWorkspaceActionRunning}
+            onMaterializeRecommendation={handleMaterializeRecommendation}
+            onNavigate={handleNavigate}
             overview={schedulingOverview}
           />
         ) : null}
@@ -1107,6 +1180,7 @@ function App() {
             onPromoteScenario={handlePromoteScenario}
             onRunSimulation={handleRunSimulation}
             onSubmitApproval={activePlanIsEditable ? handleSubmitApproval : undefined}
+            onNavigate={handleNavigate}
             overview={schedulingOverview}
           />
         ) : null}

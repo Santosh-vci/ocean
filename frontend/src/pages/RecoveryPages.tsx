@@ -14,7 +14,10 @@ import type {
   ConflictRecord,
   ImpactChainAssessmentRecord,
   ImpactChainNodeRecord,
+  OptimizerRunRecord,
   OverrideRequestRecord,
+  RecoveryActionRecord,
+  RecoveryRecommendationRecord,
   ScenarioAssumptionRecord,
   ScenarioConstraintEvaluationRecord,
   ScenarioOgvProjectionRecord,
@@ -36,6 +39,11 @@ export type ScenarioSourceInput = {
   name?: string;
 };
 
+export type RecommendationSourceInput = {
+  kind: "conflict" | "override" | "tracking_alert" | "operational_event";
+  id: number;
+};
+
 export type ScenarioAssumptionDraft = {
   kind: string;
   scope_type: string;
@@ -52,6 +60,9 @@ type RecoveryPageProps = {
   onApprove?: () => void;
   onCreateAssumption?: (scenarioId: number, assumption: ScenarioAssumptionDraft) => void;
   onCreateScenario?: (source: ScenarioSourceInput) => void;
+  onGenerateRecoveryOptions?: (source: RecommendationSourceInput) => void;
+  onMaterializeRecommendation?: (recommendationId: number) => void;
+  onNavigate?: (path: string) => void;
   onPublish?: () => void;
   onReject?: () => void;
   onRunSimulation?: (scenarioId?: number) => void;
@@ -78,6 +89,8 @@ const EMPTY_HEALTH_RISKS: OperationsHealthRiskRecord[] = [];
 const EMPTY_OPERATION_CANDIDATES: OperationalEventCandidateRecord[] = [];
 const EMPTY_CONFIRMED_OPERATIONAL_EVENTS: ConfirmedOperationalEventRecord[] = [];
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
+const EMPTY_OPTIMIZER_RUNS: OptimizerRunRecord[] = [];
+const EMPTY_RECOMMENDATIONS: RecoveryRecommendationRecord[] = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
 const EMPTY_RESOURCE_UTILIZATIONS: ScenarioResourceUtilizationRecord[] = [];
@@ -100,10 +113,24 @@ const OVERRIDE_STATE_KEYS: Record<string, string> = {
 };
 
 function statusTone(status: string | undefined, blocking = false) {
-  if (blocking || status === "critical" || status === "blocked" || status === "rejected") {
+  if (
+    blocking
+    || status === "critical"
+    || status === "high"
+    || status === "blocked"
+    || status === "rejected"
+  ) {
     return "critical";
   }
-  if (status === "warning" || status === "pending" || status === "proposed") return "pending";
+  if (
+    status === "warning"
+    || status === "medium"
+    || status === "pending"
+    || status === "proposed"
+    || status === "candidate"
+  ) {
+    return "pending";
+  }
   return "ok";
 }
 
@@ -136,6 +163,12 @@ function money(value: unknown) {
   });
 }
 
+function textValue(value: unknown, fallback = "-") {
+  if (typeof value === "string" && value.trim()) return value;
+  if (typeof value === "number") return String(value);
+  return fallback;
+}
+
 function signedMinutes(value: unknown) {
   const minutes = valueNum(value, 0);
   return `${minutes > 0 ? "+" : ""}${minutes}m`;
@@ -163,6 +196,22 @@ function projectionChanged(projection?: ScenarioTripProjectionRecord) {
       || projection.assignment_delta.resourceChanged
     ),
   );
+}
+
+function strategyLabel(recommendation: RecoveryRecommendationRecord | undefined) {
+  return short(textValue(recommendation?.metadata.strategy, "unclassified"));
+}
+
+function actionStateLabel(state: Record<string, unknown>) {
+  const parts = Object.entries(state)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value).replaceAll("_", " ")}`);
+  return parts.length ? parts.join(" | ") : "No change";
+}
+
+function evidenceList(recommendation: RecoveryRecommendationRecord | undefined) {
+  const evidence = recommendation?.evaluation?.metadata.hardConstraintEvidence;
+  return Array.isArray(evidence) ? evidence.map((item) => String(item)) : [];
 }
 
 function assignmentChain(
@@ -390,6 +439,7 @@ export function ExceptionCenterPage({
   canEdit = false,
   isActionRunning = false,
   onCreateScenario,
+  onGenerateRecoveryOptions,
   onPublishTriage,
   operationCandidates = EMPTY_OPERATION_CANDIDATES,
   confirmedOperationalEvents = EMPTY_CONFIRMED_OPERATIONAL_EVENTS,
@@ -446,6 +496,18 @@ export function ExceptionCenterPage({
       : undefined;
   const selectedOverrideDelta = selectedOverride ? overrideDelta(selectedOverride) : null;
   const selectedImpactAssessment = selectedOverride?.impact_assessment;
+  const selectedRecoverySource: RecommendationSourceInput | null = selectedConflict
+    ? { kind: "conflict", id: selectedConflict.id }
+    : selectedOverride
+      ? { kind: "override", id: selectedOverride.id }
+      : selectedTrackingAlert
+        ? { kind: "tracking_alert", id: selectedTrackingAlert.id }
+        : selectedOperationalException?.confirmedEvent
+          ? {
+            kind: "operational_event",
+            id: selectedOperationalException.confirmedEvent.id,
+          }
+          : null;
   const impactNodes = selectedTrackingAlert
     ? trackingImpactNodes(selectedTrackingAlert)
     : selectedHealthRisk
@@ -482,6 +544,23 @@ export function ExceptionCenterPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Active triage</span>
+          <button
+            disabled={!canEdit
+              || !onGenerateRecoveryOptions
+              || isActionRunning
+              || !selectedRecoverySource}
+            onClick={() => {
+              if (selectedRecoverySource) onGenerateRecoveryOptions?.(selectedRecoverySource);
+            }}
+            title={!selectedRecoverySource
+              ? "Select a governed exception, observed alert, or confirmed operational disruption."
+              : !canEdit
+                ? "Your role cannot generate recovery recommendations."
+                : undefined}
+            type="button"
+          >
+            Generate recovery options
+          </button>
           <button
             disabled={!canEdit
               || !onCreateScenario
@@ -832,6 +911,266 @@ export function ExceptionCenterPage({
   );
 }
 
+export function RecommendationConsolePage({
+  overview,
+  canEdit = false,
+  isActionRunning = false,
+  onMaterializeRecommendation,
+  onNavigate,
+}: RecoveryPageProps) {
+  const optimizerRuns = overview?.optimizerRuns ?? EMPTY_OPTIMIZER_RUNS;
+  const overviewRecommendations = overview?.recoveryRecommendations ?? EMPTY_RECOMMENDATIONS;
+  const snapshots = overview?.recoveryInputSnapshots ?? [];
+  const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
+  const [selectedRecommendationId, setSelectedRecommendationId] = useState<number | null>(null);
+  const selectedRun = useMemo(
+    () => optimizerRuns.find((run) => run.id === selectedRunId) ?? optimizerRuns[0],
+    [optimizerRuns, selectedRunId],
+  );
+  const recommendations = useMemo(
+    () => selectedRun?.recommendations.length
+      ? selectedRun.recommendations
+      : overviewRecommendations.filter((item) => item.optimizer_run === selectedRun?.id),
+    [overviewRecommendations, selectedRun],
+  );
+  const recommendation = useMemo(
+    () => recommendations.find((item) => item.id === selectedRecommendationId)
+      ?? recommendations[0],
+    [recommendations, selectedRecommendationId],
+  );
+  const snapshot = snapshots.find((item) => item.id === selectedRun?.input_snapshot);
+  const evaluation = recommendation?.evaluation;
+  const hardEvidence = evidenceList(recommendation);
+  const materialized = Boolean(recommendation?.scenario_ref)
+    || recommendation?.status === "materialized";
+  const bestScore = selectedRun
+    ? valueNum(selectedRun.summary.bestScore, valueNum(recommendation?.score, 0))
+    : 0;
+  const riskCounts = recommendations.reduce(
+    (counts, item) => ({
+      ...counts,
+      [item.risk_level]: (counts[item.risk_level] ?? 0) + 1,
+    }),
+    {} as Record<string, number>,
+  );
+  const changedResourceCount = recommendation?.actions.filter((action) => (
+    action.action_type.startsWith("reassign_")
+  )).length ?? 0;
+  const targetTrips = Array.from(
+    new Set(
+      recommendation?.actions
+        .map((action) => action.target_trip_ref)
+        .filter((item): item is string => Boolean(item)) ?? [],
+    ),
+  );
+  const scoreSummary = textValue(
+    recommendation?.metadata.scoreSummary ?? evaluation?.metadata.scoreSummary,
+    "Score explanation unavailable.",
+  );
+
+  return (
+    <section className="workspace-page recovery-board recommendation-board">
+      <header className="page-heading planning-heading">
+        <div>
+          <p>Recovery Loop / Recommendation Console</p>
+          <h1>Recommendation Console</h1>
+        </div>
+        <div className="planning-actions">
+          <span className="phase-chip">Decision support</span>
+          <button onClick={() => onNavigate?.("/exceptions/center")} type="button">
+            Back to triage
+          </button>
+          <button
+            disabled={!canEdit
+              || !recommendation
+              || materialized
+              || recommendation.status === "dismissed"
+              || !onMaterializeRecommendation
+              || isActionRunning}
+            onClick={() => {
+              if (recommendation) onMaterializeRecommendation?.(recommendation.id);
+            }}
+            title={!canEdit ? "Your role cannot create scenarios from recommendations." : undefined}
+            type="button"
+          >
+            Create scenario from recommendation
+          </button>
+        </div>
+      </header>
+
+      <div className="metric-strip six-up recovery-kpis">
+        <div><span>Latest run</span><strong>{selectedRun?.run_id ?? "NONE"}</strong></div>
+        <div><span>Candidates</span><strong>{recommendations.length}</strong></div>
+        <div><span>Best score</span><strong>{bestScore.toFixed(1)}</strong></div>
+        <div><span>Low risk</span><strong className="success-text">{riskCounts.low ?? 0}</strong></div>
+        <div><span>High / critical</span><strong className={(riskCounts.high ?? 0) + (riskCounts.critical ?? 0) ? "critical-text" : "success-text"}>{(riskCounts.high ?? 0) + (riskCounts.critical ?? 0)}</strong></div>
+        <div><span>Materialized</span><strong className={recommendations.some((item) => item.scenario_ref) ? "pending-text" : ""}>{recommendations.filter((item) => item.scenario_ref).length}</strong></div>
+      </div>
+
+      <div className="recommendation-layout">
+        <aside className="board-surface recommendation-run-rail">
+          <div className="grid-header">
+            <div><SvgIcon name="schedule" /><strong>Optimizer runs</strong></div>
+          </div>
+          <section className="recommendation-run-list">
+            {optimizerRuns.length ? optimizerRuns.map((run) => (
+              <button
+                className={selectedRun?.id === run.id ? "active" : ""}
+                key={run.id}
+                onClick={() => {
+                  setSelectedRunId(run.id);
+                  setSelectedRecommendationId(null);
+                }}
+                type="button"
+              >
+                <strong>{run.run_id}</strong>
+                <span>{short(run.status)} / {run.recommendations.length} options</span>
+              </button>
+            )) : <span>No recovery runs yet</span>}
+          </section>
+          <dl>
+            <div><dt>Input snapshot</dt><dd>{selectedRun?.input_snapshot_ref ?? "-"}</dd></div>
+            <div><dt>Source</dt><dd>{snapshot?.source_ref ?? "-"}</dd></div>
+            <div><dt>Source kind</dt><dd>{short(snapshot?.source_kind)}</dd></div>
+            <div><dt>Conflicts</dt><dd>{snapshot?.active_conflict_count ?? 0}</dd></div>
+            <div><dt>Confirmed events</dt><dd>{snapshot?.confirmed_event_count ?? 0}</dd></div>
+            <div><dt>Alerts</dt><dd>{snapshot?.tracking_alert_count ?? 0}</dd></div>
+          </dl>
+        </aside>
+
+        <section className="board-surface recommendation-grid-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="rule" /><strong>Ranked recovery options</strong></div>
+            <span>Rank · score · risk · delay · missed windows · resource conflicts</span>
+          </div>
+          <div className="grid-scroll">
+            <table className="planning-table logistics-table">
+              <thead>
+                <tr>
+                  <th>Rank</th><th>Recommendation</th><th>Strategy</th><th>Score</th>
+                  <th>Risk</th><th>Delay</th><th>Windows</th><th>Conflicts</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recommendations.map((item) => (
+                  <tr
+                    className={recommendation?.id === item.id ? "selected-row" : ""}
+                    key={item.id}
+                    onClick={() => setSelectedRecommendationId(item.id)}
+                  >
+                    <td>#{item.rank}</td>
+                    <td>{item.recommendation_id}</td>
+                    <td>{strategyLabel(item)}</td>
+                    <td>{valueNum(item.score, 0).toFixed(1)}</td>
+                    <td><span className={`status-chip ${statusTone(item.risk_level)}`}>{short(item.risk_level)}</span></td>
+                    <td>{signedMinutes(item.evaluation?.delay_minutes)}</td>
+                    <td>{item.evaluation?.missed_windows ?? 0}</td>
+                    <td>{item.evaluation?.resource_conflicts ?? 0}</td>
+                    <td><span className={`status-chip ${statusTone(item.status)}`}>{short(item.status)}</span></td>
+                  </tr>
+                ))}
+                {!recommendations.length ? (
+                  <tr>
+                    <td colSpan={9}>No ranked recommendations have been generated for the active plan.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="board-surface logistics-inspector recommendation-inspector">
+          <div className="grid-header">
+            <div><SvgIcon name="account-tree" /><strong>Recommendation detail</strong></div>
+            <span>{recommendation?.recommendation_id ?? "No option"}</span>
+          </div>
+          {recommendation ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(recommendation.risk_level)}`}>
+                {short(recommendation.risk_level)}
+              </span>
+              <h2>{strategyLabel(recommendation)}</h2>
+              <p>{recommendation.summary}</p>
+              <dl>
+                <div><dt>Rank</dt><dd>#{recommendation.rank}</dd></div>
+                <div><dt>Score</dt><dd>{valueNum(recommendation.score, 0).toFixed(1)} / 100</dd></div>
+                <div><dt>Delay</dt><dd>{signedMinutes(evaluation?.delay_minutes)}</dd></div>
+                <div><dt>Missed windows</dt><dd>{evaluation?.missed_windows ?? 0}</dd></div>
+                <div><dt>Resource conflicts</dt><dd>{evaluation?.resource_conflicts ?? 0}</dd></div>
+                <div><dt>Changed resources</dt><dd>{changedResourceCount}</dd></div>
+                <div><dt>Hard constraints</dt><dd>{evaluation?.hard_constraints_passed ? "PASSED" : "REVIEW REQUIRED"}</dd></div>
+                <div><dt>Scenario</dt><dd>{recommendation.scenario_ref ?? "Not materialized"}</dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Why it ranks here</strong>
+                <p>{scoreSummary}</p>
+              </section>
+              {materialized ? (
+                <button onClick={() => onNavigate?.("/simulation/workspace")} type="button">
+                  Open simulation workspace
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </aside>
+      </div>
+
+      <div className="recommendation-proof-grid">
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="operations" /><strong>Before / after actions</strong></div>
+            <span>{targetTrips.length ? targetTrips.join(", ") : "No affected trips"}</span>
+          </div>
+          <div className="grid-scroll compact">
+            <table className="planning-table logistics-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Action</th><th>Trip</th><th>Before</th><th>After</th><th>Checks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recommendation?.actions.length ? recommendation.actions.map((action: RecoveryActionRecord) => (
+                  <tr key={action.id}>
+                    <td>{action.sequence}</td>
+                    <td>{short(action.action_type)}</td>
+                    <td>{action.target_trip_ref ?? "-"}</td>
+                    <td>{actionStateLabel(action.before_state)}</td>
+                    <td>{actionStateLabel(action.after_state)}</td>
+                    <td>{action.constraints_checked.join(", ") || "No checks"}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6}>No recommendation actions selected.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="account-tree" /><strong>Explanation chain</strong></div>
+            <span>{hardEvidence.length ? hardEvidence.join(" · ") : "No hard-constraint evidence"}</span>
+          </div>
+          <div className="recommendation-explanation-list">
+            {recommendation?.explanation.length ? recommendation.explanation.map((node) => (
+              <span
+                className={`recommendation-explanation-node ${statusTone(node.severity)}`}
+                key={node.id}
+              >
+                <strong>{node.label}</strong>
+                <em>{node.value}</em>
+                <small>{node.detail}</small>
+              </span>
+            )) : <span className="recommendation-explanation-node"><strong>No explanation</strong><em>-</em><small>Generate a recovery run to inspect ranking evidence.</small></span>}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
 export function SimulationWorkspacePage({
   overview,
   canEdit = false,
@@ -841,6 +1180,7 @@ export function SimulationWorkspacePage({
   onPromoteScenario,
   onRunSimulation,
   onSubmitApproval,
+  onNavigate,
 }: RecoveryPageProps) {
   const scenarios = overview?.simulationScenarios ?? EMPTY_SCENARIOS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
@@ -958,7 +1298,16 @@ export function SimulationWorkspacePage({
     const width = Math.max(3, ((end - start) / timelineSpan) * 100);
     return { marginLeft: `${left}%`, width: `${Math.min(width, 100 - left)}%` };
   };
-  const sourceLabel = scenario?.source_kind === "conflict"
+  const recommendationSource = (
+    scenario?.metadata.source
+    && typeof scenario.metadata.source === "object"
+    && (scenario.metadata.source as Record<string, unknown>).kind === "recovery_recommendation"
+  )
+    ? scenario.metadata.source as Record<string, unknown>
+    : null;
+  const sourceLabel = recommendationSource
+    ? textValue(recommendationSource.recommendationId, "Recovery recommendation")
+    : scenario?.source_kind === "conflict"
     ? scenario.source_conflict_code ?? "Conflict"
     : scenario?.source_kind === "override"
       ? short(scenario.source_override_reason_code)
@@ -1150,6 +1499,23 @@ export function SimulationWorkspacePage({
             <div><dt>Source</dt><dd>{sourceLabel}</dd></div>
             <div><dt>Status</dt><dd>{short(scenario?.status)}</dd></div>
           </dl>
+
+          {recommendationSource ? (
+            <section className="scenario-handoff-panel">
+              <h2>Recommendation handoff</h2>
+              <span>
+                <strong>{textValue(recommendationSource.recommendationId)}</strong>
+                <em>{textValue(recommendationSource.strategy, "strategy unavailable")}</em>
+              </span>
+              <span>
+                <strong>{textValue(recommendationSource.snapshotId)}</strong>
+                <em>{textValue(recommendationSource.snapshotSourceKind, "source unavailable")}</em>
+              </span>
+              <button onClick={() => onNavigate?.("/recovery/recommendations")} type="button">
+                Open recommendation
+              </button>
+            </section>
+          ) : null}
 
           <section className="scenario-assumption-panel">
             <h2>Assumption editor</h2>

@@ -147,6 +147,13 @@ export const NAV_MODULES: NavModule[] = [
         icon: "rule",
       },
       {
+        path: "/recovery/recommendations",
+        label: "Recommendation Console",
+        module: "Recovery Loop",
+        requiredPermission: "schedule.view",
+        icon: "account-tree",
+      },
+      {
         path: "/simulation/workspace",
         label: "Simulation Workspace",
         module: "Recovery Loop",

@@ -6,7 +6,11 @@ import { visibleNavItems } from "./lib/navigation";
 import { CtsOperationsPage, JettyLoadingPage } from "./pages/LogisticsPages";
 import { LiveResourceMapPage } from "./pages/MapPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
-import { ExceptionCenterPage, SimulationWorkspacePage } from "./pages/RecoveryPages";
+import {
+  ExceptionCenterPage,
+  RecommendationConsolePage,
+  SimulationWorkspacePage,
+} from "./pages/RecoveryPages";
 import { TideBridgePage } from "./pages/TideBridgePage";
 import type {
   ConfirmedOperationalEventRecord,
@@ -64,6 +68,7 @@ test("shows implemented admin submodules without exposing future locked routes",
     "CTS / Floating Crane",
     "Published Plan & Schedule",
     "Exception Center",
+    "Recommendation Console",
     "Master Data Console",
   ]);
 });
@@ -83,6 +88,14 @@ test("exposes recovery routes by workflow permission", () => {
       "schedule.approve",
     ]).map((item) => item.label),
   ).toContain("Simulation Workspace");
+  expect(
+    visibleNavItems([
+      "dashboard.view",
+      "schedule.view",
+      "schedule.edit",
+      "schedule.approve",
+    ]).map((item) => item.label),
+  ).toContain("Recommendation Console");
   expect(
     visibleNavItems([
       "dashboard.view",
@@ -193,6 +206,122 @@ function stageSevenOverview(): SchedulingOverview {
     overrideRequests: [],
     validation: { tripCount: 1, assignmentCount: 1, eventCount: 1 },
   } as unknown as SchedulingOverview;
+}
+
+function phaseFiveOverview(): SchedulingOverview {
+  const overview = stageSevenOverview();
+  overview.recoveryInputSnapshots = [{
+    id: 601,
+    snapshot_id: "RIS-PHASE5-UI",
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    source_kind: "override",
+    source_ref: "OR-0050",
+    source_conflict: null,
+    source_conflict_code: null,
+    source_override: 50,
+    source_override_reason_code: "jetty_delay",
+    source_tracking_alert: null,
+    source_tracking_alert_ref: null,
+    source_operational_event: null,
+    source_operational_event_ref: null,
+    source_scenario: null,
+    source_scenario_ref: null,
+    input_hash: "phase5-input",
+    active_conflict_count: 1,
+    confirmed_event_count: 0,
+    tracking_alert_count: 0,
+    resource_state: {},
+    event_state: {},
+    constraint_state: {},
+    metadata: {},
+    captured_by: 1,
+    captured_by_email: "berau.scheduler@coalflow.local",
+    generated_at: "2026-05-18T03:30:00.000Z",
+  }];
+  overview.optimizerRuns = [{
+    id: 701,
+    run_id: "OPT-PHASE5-UI",
+    input_snapshot: 601,
+    input_snapshot_ref: "RIS-PHASE5-UI",
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    status: "succeeded",
+    algorithm_version: "phase5.3-scored-deterministic-repair",
+    objective_weights: {},
+    summary: { bestScore: 92.4 },
+    error_message: "",
+    started_by: 1,
+    started_by_email: "berau.scheduler@coalflow.local",
+    started_at: "2026-05-18T03:31:00.000Z",
+    completed_at: "2026-05-18T03:31:10.000Z",
+    recommendations: [{
+      id: 801,
+      recommendation_id: "REC-PHASE5-UI-01",
+      optimizer_run: 701,
+      optimizer_run_ref: "OPT-PHASE5-UI",
+      rank: 1,
+      status: "candidate",
+      risk_level: "low",
+      score: "92.400",
+      summary: "Move PI-PLAN-UI-0001 to the next feasible gate window.",
+      explanation: [{
+        id: "EXP-01",
+        sortOrder: 1,
+        kind: "source",
+        label: "Input snapshot",
+        value: "RIS-PHASE5-UI / OR-0050",
+        severity: "info",
+        detail: "Calculated from override OR-0050.",
+      }],
+      scenario: null,
+      scenario_ref: null,
+      metadata: {
+        strategy: "next_window_repair",
+        scoreSummary: "92.4 / 100 because delay exposure is low.",
+      },
+      actions: [{
+        id: 901,
+        action_id: "ACT-PHASE5-UI-01",
+        recommendation: 801,
+        recommendation_ref: "REC-PHASE5-UI-01",
+        sequence: 1,
+        action_type: "shift_window",
+        target_trip: 201,
+        target_trip_ref: "PI-PLAN-UI-0001",
+        target_assignment: 101,
+        target_assignment_ref: "Assignment 101",
+        before_state: { window: "TIDE-A" },
+        after_state: { window: "TIDE-B" },
+        constraints_checked: ["tide_window_evaluated", "bridge_window_evaluated"],
+        metadata: {},
+        created_at: "2026-05-18T03:31:10.000Z",
+      }],
+      evaluation: {
+        id: 1001,
+        evaluation_id: "EVAL-PHASE5-UI-01",
+        recommendation: 801,
+        recommendation_ref: "REC-PHASE5-UI-01",
+        delay_minutes: 35,
+        missed_windows: 0,
+        resource_conflicts: 0,
+        utilization_delta_pct: "1.50",
+        confidence_score: "94.00",
+        hard_constraints_passed: true,
+        score_breakdown: {},
+        metadata: {
+          hardConstraintEvidence: ["tide_window_evaluated", "bridge_window_evaluated"],
+        },
+        created_at: "2026-05-18T03:31:10.000Z",
+      },
+      created_at: "2026-05-18T03:31:10.000Z",
+      updated_at: "2026-05-18T03:31:10.000Z",
+    }],
+    created_at: "2026-05-18T03:31:00.000Z",
+    updated_at: "2026-05-18T03:31:10.000Z",
+  }];
+  overview.recoveryRecommendations = overview.optimizerRuns[0].recommendations;
+  return overview;
 }
 
 function phaseFourCandidate(
@@ -628,6 +757,63 @@ test("exception center converts a delay tracking alert into a scenario", () => {
   expect(onCreateScenario).toHaveBeenCalledWith({ kind: "tracking_alert", id: 88 });
 });
 
+test("exception center generates recovery options from a governed override", () => {
+  const onGenerateRecoveryOptions = vi.fn();
+  const overview = stageSevenOverview();
+  overview.overrideRequests = [{
+    id: 50,
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    vessel_name: "MV Operator UI Import",
+    assignment: 101,
+    reason_code: "jetty_delay",
+    description: "Force-started JTY-SUARAN from operator cockpit.",
+    requested_change: { status: "loading" },
+    before_state: { status: "assigned" },
+    after_state: { status: "loading" },
+    status: "applied",
+    requested_by: 1,
+    requested_by_email: "berau.scheduler@coalflow.local",
+    applied_by: 1,
+    applied_by_email: "berau.scheduler@coalflow.local",
+    applied_at: "2026-05-16T08:29:00.000Z",
+    created_at: "2026-05-16T08:29:00.000Z",
+    impact_assessment: null,
+  }];
+
+  render(
+    <ExceptionCenterPage
+      canEdit
+      onGenerateRecoveryOptions={onGenerateRecoveryOptions}
+      overview={overview}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Generate recovery options" }));
+  expect(onGenerateRecoveryOptions).toHaveBeenCalledWith({ kind: "override", id: 50 });
+});
+
+test("recommendation console renders ranking evidence and materializes a scenario", () => {
+  const onMaterializeRecommendation = vi.fn();
+  render(
+    <RecommendationConsolePage
+      canEdit
+      onMaterializeRecommendation={onMaterializeRecommendation}
+      overview={phaseFiveOverview()}
+    />,
+  );
+
+  expect(screen.getByRole("heading", { name: "Recommendation Console" })).toBeInTheDocument();
+  expect(screen.getAllByText("REC-PHASE5-UI-01").length).toBeGreaterThan(0);
+  expect(screen.getAllByText("NEXT WINDOW REPAIR").length).toBeGreaterThan(0);
+  expect(screen.getByText("Before / after actions")).toBeInTheDocument();
+  expect(screen.getAllByText("Input snapshot").length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole("button", { name: "Create scenario from recommendation" }));
+  expect(onMaterializeRecommendation).toHaveBeenCalledWith(801);
+});
+
 test("simulation workspace renders computed run results and impact nodes", () => {
   const overview = stageSevenOverview();
   overview.simulationScenarios = [{
@@ -857,4 +1043,50 @@ test("simulation workspace opens telemetry-origin scenarios with editable seeded
   expect(screen.getByLabelText("Delay minutes")).toHaveValue(45);
   fireEvent.change(screen.getByLabelText("Delay minutes"), { target: { value: "60" } });
   expect(screen.getByLabelText("Delay minutes")).toHaveValue(60);
+});
+
+test("simulation workspace surfaces recommendation handoff lineage", () => {
+  const overview = stageSevenOverview();
+  overview.simulationScenarios = [{
+    id: 888,
+    scenario_id: "SIM-REC-001",
+    name: "Recommendation recovery",
+    scenario_type: "recovery_recommendation",
+    baseline_version: 1,
+    baseline_version_ref: "PLAN-UI V1",
+    scenario_version: null,
+    scenario_version_ref: null,
+    source_conflict: null,
+    source_conflict_code: null,
+    source_conflict_message: null,
+    source_override: null,
+    source_override_reason_code: null,
+    source_override_description: null,
+    source_kind: "manual",
+    status: "simulated",
+    recovery_actions: [],
+    impact_summary: {},
+    delta_summary: {},
+    metadata: {
+      source: {
+        kind: "recovery_recommendation",
+        recommendationId: "REC-PHASE5-UI-01",
+        snapshotId: "RIS-PHASE5-UI",
+        snapshotSourceKind: "override",
+        strategy: "next_window_repair",
+      },
+    },
+    created_by: 1,
+    created_by_email: "berau.scheduler@coalflow.local",
+    assumptions: [],
+    runs: [],
+    created_at: "2026-05-18T03:40:00.000Z",
+    updated_at: "2026-05-18T03:40:00.000Z",
+  }];
+
+  render(<SimulationWorkspacePage overview={overview} />);
+
+  expect(screen.getByText("Recommendation handoff")).toBeInTheDocument();
+  expect(screen.getAllByText("REC-PHASE5-UI-01").length).toBeGreaterThan(0);
+  expect(screen.getByText("next_window_repair")).toBeInTheDocument();
 });
