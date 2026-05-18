@@ -318,6 +318,9 @@ def ingest_operational_event(
             confirmation_mode=trust["confirmationMode"],
             reason_code="trusted_feed_auto_confirm",
             metadata={"trustEvaluation": trust, "ingestedBy": getattr(actor, "username", None)},
+            confirmed_quantity_mt=payload.get("confirmed_quantity_mt"),
+            confirmed_rate_tph=payload.get("confirmed_rate_tph"),
+            confirmed_grade_code=payload.get("confirmed_grade_code", ""),
             request=request,
             skip_authority_check=True,
         )
@@ -595,7 +598,9 @@ def evaluate_trust_policy(candidate: OperationalEventCandidate) -> dict:
     threshold = _metadata_decimal(feed.metadata, "confidenceThreshold", Decimal("90"))
     tolerance_minutes = int(feed.metadata.get("autoConfirmToleranceMinutes", 180))
     confirmation_mode = (
-        ConfirmedOperationalEvent.ConfirmationMode.AUTO_THRESHOLD
+        ConfirmedOperationalEvent.ConfirmationMode.REPLAY_PROOF
+        if candidate.metadata.get("replayProof")
+        else ConfirmedOperationalEvent.ConfirmationMode.AUTO_THRESHOLD
         if feed.trust_mode == IntegrationFeed.TrustMode.AUTO_CONFIRM_WITH_THRESHOLD
         else ConfirmedOperationalEvent.ConfirmationMode.AUTO_TRUSTED_SOURCE
     )
@@ -656,6 +661,8 @@ def confirm_operational_event(
 ) -> ConfirmationResult:
     if not skip_authority_check:
         require_confirmation_authority(actor, candidate.event_kind)
+    confirmed_quantity_mt = _coerce_optional_decimal(confirmed_quantity_mt)
+    confirmed_rate_tph = _coerce_optional_decimal(confirmed_rate_tph)
 
     with transaction.atomic():
         locked = OperationalEventCandidate.objects.select_for_update().get(pk=candidate.pk)
@@ -1544,3 +1551,12 @@ def _coerce_decimal(value) -> Decimal:
         return Decimal(str(value))
     except Exception as exc:
         raise ValidationError({"confidence_score": "Enter a valid decimal."}) from exc
+
+
+def _coerce_optional_decimal(value):
+    if value in (None, ""):
+        return None
+    try:
+        return Decimal(str(value))
+    except Exception as exc:
+        raise ValidationError({"value": "Enter a valid decimal."}) from exc

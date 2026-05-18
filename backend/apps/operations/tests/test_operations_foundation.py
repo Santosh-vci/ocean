@@ -10,12 +10,14 @@ from apps.operations.models import (
     ConfirmedOperationalEvent,
     DeviceEndpoint,
     DeviceHealthSnapshot,
+    EdgeEventBatch,
     IntegrationFeed,
     OperationalActualization,
     OperationalEventCandidate,
     OperationalEventKind,
     OperationsAssetType,
 )
+from apps.operations.replay import replay_edge_batch, seed_phase4_event_pack
 from apps.operations.services import operations_health_summary
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
@@ -568,3 +570,63 @@ def test_scheduling_overview_exposes_operations_health_summary():
     assert "operationsHealthSummary" in response.data
     assert "feeds" in response.data["operationsHealthSummary"]
     assert "devices" in response.data["operationsHealthSummary"]
+
+
+@pytest.mark.django_db
+def test_phase4_edge_batch_replay_is_idempotent_and_marks_duplicates():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    batch = seed_phase4_event_pack()[0]
+
+    first = replay_edge_batch(batch=batch, actor=user)
+    counts_after_first = {
+        "candidates": OperationalEventCandidate.objects.count(),
+        "confirmed": ConfirmedOperationalEvent.objects.count(),
+        "actualizations": OperationalActualization.objects.count(),
+        "health": DeviceHealthSnapshot.objects.count(),
+    }
+    second = replay_edge_batch(batch=batch, actor=user)
+    counts_after_second = {
+        "candidates": OperationalEventCandidate.objects.count(),
+        "confirmed": ConfirmedOperationalEvent.objects.count(),
+        "actualizations": OperationalActualization.objects.count(),
+        "health": DeviceHealthSnapshot.objects.count(),
+    }
+
+    batch.refresh_from_db()
+    assert first.idempotent is False
+    assert first.summary["duplicateCandidateCount"] >= 1
+    assert first.summary["autoConfirmedCount"] >= 1
+    assert second.idempotent is True
+    assert counts_after_second == counts_after_first
+    assert batch.status == EdgeEventBatch.Status.PROCESSED
+    assert OperationalEventCandidate.objects.filter(
+        status=OperationalEventCandidate.Status.DUPLICATE,
+        metadata__seed="phase4_replay",
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_edge_batch_replay_api_reuses_identical_batch_payload():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    seed_batch = seed_phase4_event_pack()[1]
+    payload = {
+        "feed_id": seed_batch.feed.feed_id,
+        "device_id": seed_batch.device.device_id,
+        "batch_sequence": "phase4-health-api-proof",
+        "messages": seed_batch.metadata["messages"],
+        "metadata": {"source": "unit-test"},
+    }
+    client = APIClient()
+    client.force_authenticate(user)
+
+    first = client.post("/api/operations/edge-batches/replay/", payload, format="json")
+    second = client.post("/api/operations/edge-batches/replay/", payload, format="json")
+
+    assert first.status_code == 201
+    assert first.data["created"] is True
+    assert second.status_code == 200
+    assert second.data["created"] is False
+    assert second.data["idempotent"] is True
+    assert EdgeEventBatch.objects.filter(batch_sequence="phase4-health-api-proof").count() == 1

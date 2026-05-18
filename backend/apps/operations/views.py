@@ -15,11 +15,13 @@ from .models import (
     OperationalActualization,
     OperationalEventCandidate,
 )
+from .replay import create_edge_event_batch, replay_edge_batch
 from .serializers import (
     ConfirmedOperationalEventSerializer,
     DeviceEndpointSerializer,
     DeviceHealthIngestSerializer,
     DeviceHealthSnapshotSerializer,
+    EdgeEventBatchReplaySerializer,
     EdgeEventBatchSerializer,
     IntegrationFeedSerializer,
     OperationalActualizationSerializer,
@@ -243,10 +245,38 @@ class EdgeEventBatchViewSet(OperationsViewSet):
     action_permission_map = {
         **OperationsViewSet.action_permission_map,
         "create": "operations.replay",
+        "replay": "operations.replay",
         "update": "operations.replay",
         "partial_update": "operations.replay",
         "destroy": "operations.replay",
     }
+
+    @action(detail=False, methods=["post"], url_path="replay")
+    def replay(self, request):
+        serializer = EdgeEventBatchReplaySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+        if payload.get("batch_id"):
+            batch = EdgeEventBatch.objects.get(batch_id=payload["batch_id"])
+            created = False
+        else:
+            creation = create_edge_event_batch(payload=payload)
+            batch = creation.batch
+            created = creation.created
+        result = replay_edge_batch(
+            batch=batch,
+            actor=request.user,
+            request=request,
+        )
+        return Response(
+            {
+                "batch": EdgeEventBatchSerializer(result.batch).data,
+                "created": created,
+                "idempotent": result.idempotent,
+                "summary": result.summary,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class OperationsOverviewViewSet(ViewSet):

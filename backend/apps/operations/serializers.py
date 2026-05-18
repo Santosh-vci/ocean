@@ -266,6 +266,23 @@ class OperationalEventIngestSerializer(serializers.Serializer):
     dedupe_key = serializers.CharField(max_length=180, required=False, allow_blank=True)
     payload = serializers.JSONField(required=False, default=dict)
     raw_payload_ref = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    confirmed_quantity_mt = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
+    confirmed_rate_tph = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+    )
+    confirmed_grade_code = serializers.CharField(
+        max_length=80,
+        required=False,
+        allow_blank=True,
+    )
     metadata = serializers.JSONField(required=False, default=dict)
 
     def validate(self, attrs):
@@ -379,3 +396,38 @@ class EdgeEventBatchSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "batch_id", "feed_ref", "device_ref", "created_at", "updated_at"]
+
+
+class EdgeEventBatchReplaySerializer(serializers.Serializer):
+    batch_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    feed_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    feed = serializers.PrimaryKeyRelatedField(
+        queryset=IntegrationFeed.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    device_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    device = serializers.PrimaryKeyRelatedField(
+        queryset=DeviceEndpoint.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    batch_sequence = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    captured_from = serializers.DateTimeField(required=False, allow_null=True)
+    captured_to = serializers.DateTimeField(required=False, allow_null=True)
+    received_at = serializers.DateTimeField(required=False, allow_null=True)
+    checksum_sha256 = serializers.CharField(max_length=64, required=False, allow_blank=True)
+    messages = serializers.ListField(child=serializers.JSONField(), required=False, default=list)
+    metadata = serializers.JSONField(required=False, default=dict)
+
+    def validate(self, attrs):
+        batch_id = attrs.get("batch_id")
+        if batch_id:
+            return attrs
+        if not attrs.get("feed") and not attrs.get("feed_id"):
+            raise serializers.ValidationError("Either batch_id or feed/feed_id is required.")
+        if attrs.get("device") and attrs.get("device_id"):
+            raise serializers.ValidationError("Use either device or device_id, not both.")
+        if not attrs.get("messages"):
+            raise serializers.ValidationError("messages are required when creating a batch.")
+        return attrs
