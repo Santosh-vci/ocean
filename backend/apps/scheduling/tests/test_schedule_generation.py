@@ -48,6 +48,10 @@ from apps.scheduling.services import (
     simulate_scenario,
     submit_approval_request,
 )
+from apps.scheduling.recovery_services import (
+    RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
+    build_recovery_input_snapshot,
+)
 
 
 def assign(user, organization, permission_codes):
@@ -1431,7 +1435,11 @@ def test_phase5_seed_creates_recovery_model_foundation():
 
     assert snapshot.plan_version == seeded_plan_version()
     assert snapshot.input_hash
+    assert snapshot.metadata["algorithmVersion"] == RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION
     assert snapshot.resource_state["tugs"]
+    assert snapshot.resource_state["assignments"]
+    assert snapshot.event_state["scheduleEvents"]
+    assert snapshot.constraint_state["hardConstraints"]["confirmedActualsFrozen"] is True
     assert optimizer_run.input_snapshot == snapshot
     assert optimizer_run.status == OptimizerRun.Status.SUCCEEDED
     assert recommendations.count() == 2
@@ -1440,6 +1448,81 @@ def test_phase5_seed_creates_recovery_model_foundation():
         recommendation__optimizer_run=optimizer_run,
     ).count() == 2
     assert recommendations.order_by("rank").first().evaluation.hard_constraints_passed is True
+
+
+@pytest.mark.django_db
+def test_phase5_input_snapshot_builder_normalizes_active_runtime_state():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    version = seeded_plan_version()
+    user = User.objects.get(username="admin@coalflow.local")
+    source_override = OverrideRequest.objects.filter(plan_version=version).first()
+    assert source_override is not None
+
+    snapshot = build_recovery_input_snapshot(
+        plan_version=version,
+        source_override=source_override,
+        actor=user,
+        metadata={"test": "phase5.1"},
+    )
+
+    assert snapshot.source_kind == RecoveryInputSnapshot.SourceKind.OVERRIDE
+    assert snapshot.source_ref == f"{source_override.reason_code}:{source_override.pk}"
+    assert snapshot.captured_by == user
+    assert snapshot.input_hash
+    assert snapshot.active_conflict_count == snapshot.constraint_state["openConflicts"]
+    assert snapshot.confirmed_event_count == snapshot.event_state["summary"][
+        "confirmedEventCount"
+    ]
+    assert snapshot.tracking_alert_count == snapshot.event_state["summary"][
+        "trackingAlertCount"
+    ]
+    assert snapshot.resource_state["summary"]["assignmentCount"] > 0
+    assert snapshot.resource_state["feedHealth"]
+    assert "healthRisks" in snapshot.resource_state
+    assert "trackingAlerts" in snapshot.event_state
+    assert snapshot.constraint_state["tideWindows"]
+    assert snapshot.constraint_state["bridgeWindows"]
+    assert snapshot.constraint_state["hardConstraints"]["tideBridgeWindowsCaptured"] is True
+    assert snapshot.metadata["algorithmVersion"] == RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION
+
+
+@pytest.mark.django_db
+def test_phase5_input_snapshot_build_api_creates_governed_snapshot():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    version = seeded_plan_version()
+    source_override = OverrideRequest.objects.filter(plan_version=version).first()
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        "/api/scheduling/recovery-input-snapshots/build/",
+        {
+            "plan_version": version.id,
+            "source_override": source_override.id,
+            "metadata": {"operatorFlow": "phase5.1"},
+        },
+        format="json",
+    )
+    overview = client.get("/api/scheduling/overview/")
+
+    assert response.status_code == 201
+    assert response.data["snapshot_id"].startswith("RIS-")
+    assert response.data["source_kind"] == RecoveryInputSnapshot.SourceKind.OVERRIDE
+    assert response.data["metadata"]["algorithmVersion"] == (
+        RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION
+    )
+    assert response.data["resource_state"]["assignments"]
+    assert response.data["event_state"]["scheduleEvents"]
+    assert response.data["constraint_state"]["tideWindows"]
+    assert overview.status_code == 200
+    assert response.data["snapshot_id"] in {
+        item["snapshot_id"] for item in overview.data["recoveryInputSnapshots"]
+    }
+    assert AuditEvent.objects.filter(
+        action="recovery.input_snapshot.build",
+        object_repr=response.data["snapshot_id"],
+    ).exists()
 
 
 @pytest.mark.django_db

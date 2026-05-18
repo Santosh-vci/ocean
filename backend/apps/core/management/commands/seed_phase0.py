@@ -1,5 +1,3 @@
-import hashlib
-import json
 import os
 from datetime import datetime, time, timedelta
 
@@ -76,6 +74,7 @@ from apps.scheduling.services import (
     generate_plan_version,
     simulate_scenario,
 )
+from apps.scheduling.recovery_services import build_recovery_input_snapshot
 from apps.telemetry.models import (
     AssetIdentity,
     GeofenceZone,
@@ -388,8 +387,9 @@ class Command(BaseCommand):
             return
 
         self._seed_planning_data(berau=berau, abl=abl, created_by=admin_user)
-        self._seed_schedule_data(abl=abl, created_by=admin_user)
+        version = self._seed_schedule_data(abl=abl, created_by=admin_user)
         self._seed_telemetry_sample_movements()
+        self._seed_phase5_recovery_foundation(version=version, created_by=admin_user)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -2060,7 +2060,7 @@ class Command(BaseCommand):
             created_by=created_by,
             first_override=first_override,
         )
-        self._seed_phase5_recovery_foundation(version=version, created_by=created_by)
+        return version
 
     def _seed_phase2_scenario_pack(self, *, version, created_by, first_override):
         assignments = list(
@@ -2349,82 +2349,23 @@ class Command(BaseCommand):
         )
         first_assignment = assignments[0]
         second_assignment = assignments[1] if len(assignments) > 1 else first_assignment
-        source_ref = (
-            source_conflict.code
-            if source_conflict
-            else source_override.reason_code
-            if source_override
-            else first_assignment.trip.trip_id
-        )
-        resource_state = {
-            "tugs": sorted({item.tug.code for item in assignments if item.tug}),
-            "barges": sorted({item.barge.code for item in assignments if item.barge}),
-            "jetties": sorted({item.jetty.code for item in assignments if item.jetty}),
-            "cts": sorted({item.cts.code for item in assignments if item.cts}),
-        }
-        event_state = {
-            "trips": [
-                {
-                    "tripId": item.trip.trip_id,
-                    "status": item.trip.status,
-                    "plannedStart": item.trip.planned_start.isoformat(),
-                    "plannedEnd": item.trip.planned_end.isoformat(),
-                    "assignmentStatus": item.status,
-                }
-                for item in assignments[:5]
-            ]
-        }
-        constraint_state = {
-            "openConflicts": Conflict.objects.filter(
-                plan_version=version,
-                resolved_at__isnull=True,
-            ).count(),
-            "blockingConflicts": Conflict.objects.filter(
-                plan_version=version,
-                resolved_at__isnull=True,
-                is_blocking=True,
-            ).count(),
-        }
-        snapshot_payload = {
-            "sourceRef": source_ref,
-            "resourceState": resource_state,
-            "eventState": event_state,
-            "constraintState": constraint_state,
-        }
-        snapshot, _ = RecoveryInputSnapshot.objects.update_or_create(
+        snapshot = build_recovery_input_snapshot(
+            plan_version=version,
+            source_conflict=source_conflict,
+            source_override=None if source_conflict else source_override,
+            actor=created_by,
             snapshot_id="RIS-PHASE5-SEED",
-            defaults={
-                "plan_version": version,
-                "source_kind": (
-                    RecoveryInputSnapshot.SourceKind.CONFLICT
-                    if source_conflict
-                    else RecoveryInputSnapshot.SourceKind.OVERRIDE
+            replace_existing=True,
+            metadata={
+                "seed": "phase5_recovery_foundation",
+                "scope": "input_snapshot_builder",
+                "notes": (
+                    "Deterministic recommendation fixture backed by the Chunk 5.1 "
+                    "runtime input snapshot builder."
                 ),
-                "source_ref": source_ref,
-                "source_conflict": source_conflict,
-                "source_override": source_override,
-                "input_hash": hashlib.sha256(
-                    json.dumps(snapshot_payload, sort_keys=True).encode("utf-8")
-                ).hexdigest(),
-                "active_conflict_count": constraint_state["openConflicts"],
-                "confirmed_event_count": ConfirmedOperationalEvent.objects.count(),
-                "tracking_alert_count": TrackingAlert.objects.filter(
-                    status=TrackingAlert.Status.OPEN,
-                ).count(),
-                "resource_state": resource_state,
-                "event_state": event_state,
-                "constraint_state": constraint_state,
-                "metadata": {
-                    "seed": "phase5_recovery_foundation",
-                    "scope": "model_foundation_only",
-                    "notes": (
-                        "Deterministic recommendation fixture; Chunk 5.1+ will replace "
-                        "the static snapshot builder and candidate generator."
-                    ),
-                },
-                "captured_by": created_by,
             },
         )
+        source_ref = snapshot.source_ref
 
         optimizer_run, _ = OptimizerRun.objects.update_or_create(
             run_id="OPT-PHASE5-SEED",

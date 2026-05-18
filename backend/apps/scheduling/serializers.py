@@ -6,12 +6,14 @@ from apps.masters.serializers import (
     JettySerializer,
     TugSerializer,
 )
+from apps.operations.models import ConfirmedOperationalEvent
 from apps.organizations.serializers import OrganizationSerializer
 from apps.planning.serializers import (
     CargoLayerStepSerializer,
     CargoRequirementSerializer,
     OGVVoyageSerializer,
 )
+from apps.telemetry.models import TrackingAlert
 
 from .models import (
     ApprovalDecision,
@@ -265,6 +267,45 @@ class ImpactChainAssessmentSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+
+class RecoveryInputSnapshotBuildSerializer(serializers.Serializer):
+    plan_version = serializers.PrimaryKeyRelatedField(
+        queryset=PlanVersion.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_kind = serializers.ChoiceField(
+        choices=RecoveryInputSnapshot.SourceKind.choices,
+        required=False,
+    )
+    source_ref = serializers.CharField(required=False, allow_blank=True)
+    source_conflict = serializers.PrimaryKeyRelatedField(
+        queryset=Conflict.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_override = serializers.PrimaryKeyRelatedField(
+        queryset=OverrideRequest.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_tracking_alert = serializers.PrimaryKeyRelatedField(
+        queryset=TrackingAlert.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_operational_event = serializers.PrimaryKeyRelatedField(
+        queryset=ConfirmedOperationalEvent.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_scenario = serializers.PrimaryKeyRelatedField(
+        queryset=SimulationScenario.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    metadata = serializers.JSONField(required=False, default=dict)
 
 
 class RecoveryInputSnapshotSerializer(serializers.ModelSerializer):

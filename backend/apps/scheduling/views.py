@@ -41,6 +41,7 @@ from .models import (
     Trip,
 )
 from .read_models import build_dashboard_read_model
+from .recovery_services import build_recovery_input_snapshot
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
@@ -54,6 +55,7 @@ from .serializers import (
     PublishedPlanSnapshotSerializer,
     RecommendationEvaluationSerializer,
     RecoveryActionSerializer,
+    RecoveryInputSnapshotBuildSerializer,
     RecoveryInputSnapshotSerializer,
     RecoveryRecommendationSerializer,
     ScenarioAssumptionSerializer,
@@ -529,7 +531,11 @@ class ExportJobViewSet(ReadOnlyModelViewSet):
 
 class RecoveryInputSnapshotViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
-    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "build": "schedule.edit",
+    }
     queryset = RecoveryInputSnapshot.objects.select_related(
         "plan_version",
         "plan_version__plan",
@@ -541,6 +547,37 @@ class RecoveryInputSnapshotViewSet(ReadOnlyModelViewSet):
         "captured_by",
     ).all()
     serializer_class = RecoveryInputSnapshotSerializer
+
+    @action(detail=False, methods=["post"], url_path="build")
+    def build(self, request):
+        build_serializer = RecoveryInputSnapshotBuildSerializer(data=request.data)
+        build_serializer.is_valid(raise_exception=True)
+        snapshot = build_recovery_input_snapshot(
+            actor=request.user,
+            **build_serializer.validated_data,
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=snapshot.organization,
+            action="recovery.input_snapshot.build",
+            object_type="recovery_input_snapshot",
+            object_id=str(snapshot.pk),
+            object_repr=snapshot.snapshot_id,
+            metadata={
+                "plan_version": str(snapshot.plan_version),
+                "source_kind": snapshot.source_kind,
+                "source_ref": snapshot.source_ref,
+                "input_hash": snapshot.input_hash,
+                "active_conflict_count": snapshot.active_conflict_count,
+                "confirmed_event_count": snapshot.confirmed_event_count,
+                "tracking_alert_count": snapshot.tracking_alert_count,
+            },
+            request=request,
+        )
+        return Response(
+            RecoveryInputSnapshotSerializer(snapshot).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class OptimizerRunViewSet(ReadOnlyModelViewSet):
