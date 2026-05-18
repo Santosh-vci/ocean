@@ -7,7 +7,14 @@ from rest_framework.test import APIClient
 
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
-from apps.telemetry.models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from apps.telemetry.models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
 from apps.telemetry.services import ingest_position_ping, refresh_signal_health
 
 
@@ -58,6 +65,20 @@ def telemetry_payload(**overrides):
     return payload
 
 
+def geofence_zone(**overrides):
+    payload = {
+        "zone_id": "GEO-TEST-BRIDGE",
+        "name": "Test Bridge Gate",
+        "zone_type": GeofenceZone.ZoneType.BRIDGE,
+        "latitude": "-1.2345670",
+        "longitude": "117.2345670",
+        "radius_m": 500,
+        "status": GeofenceZone.Status.ACTIVE,
+    }
+    payload.update(overrides)
+    return GeofenceZone.objects.create(**payload)
+
+
 @pytest.mark.django_db
 def test_ingest_synthetic_ping_creates_source_identity_and_position_ping():
     result = ingest_position_ping(payload=telemetry_payload())
@@ -78,6 +99,63 @@ def test_ingest_synthetic_ping_creates_source_identity_and_position_ping():
     assert latest_state.confidence_score == 96
     assert result["geofence_events"] == []
     assert result["alerts"] == []
+
+
+@pytest.mark.django_db
+def test_ingest_derives_geofence_entry_and_exit_events():
+    zone = geofence_zone()
+
+    first = ingest_position_ping(payload=telemetry_payload())
+    latest_state = LatestAssetState.objects.get(asset_code="BER-TUG-08")
+
+    assert len(first["geofence_events"]) == 1
+    assert first["geofence_events"][0].event_type == MovementEvent.EventType.ENTER_GEOFENCE
+    assert first["geofence_events"][0].geofence == zone
+    assert latest_state.current_geofence == zone
+
+    second = ingest_position_ping(
+        payload=telemetry_payload(
+            latitude="-1.3000000",
+            longitude="117.3000000",
+            device_timestamp=timezone.now() + timezone.timedelta(minutes=5),
+        )
+    )
+    latest_state.refresh_from_db()
+
+    assert len(second["geofence_events"]) == 1
+    assert second["geofence_events"][0].event_type == MovementEvent.EventType.EXIT_GEOFENCE
+    assert latest_state.current_geofence is None
+    assert latest_state.last_movement_event == second["geofence_events"][0]
+
+
+@pytest.mark.django_db
+def test_ingest_derives_cross_geofence_transition():
+    first_zone = geofence_zone(zone_id="GEO-TEST-JETTY", zone_type=GeofenceZone.ZoneType.JETTY)
+    second_zone = geofence_zone(
+        zone_id="GEO-TEST-CTS",
+        name="Test CTS",
+        zone_type=GeofenceZone.ZoneType.CTS_ZONE,
+        latitude="-1.2400000",
+        longitude="117.2400000",
+    )
+
+    ingest_position_ping(payload=telemetry_payload())
+    transition = ingest_position_ping(
+        payload=telemetry_payload(
+            latitude=second_zone.latitude,
+            longitude=second_zone.longitude,
+            device_timestamp=timezone.now() + timezone.timedelta(minutes=5),
+        )
+    )
+    latest_state = LatestAssetState.objects.get(asset_code="BER-TUG-08")
+
+    assert [event.event_type for event in transition["geofence_events"]] == [
+        MovementEvent.EventType.EXIT_GEOFENCE,
+        MovementEvent.EventType.ENTER_GEOFENCE,
+    ]
+    assert transition["geofence_events"][0].geofence == first_zone
+    assert transition["geofence_events"][1].geofence == second_zone
+    assert latest_state.current_geofence == second_zone
 
 
 @pytest.mark.django_db
@@ -189,6 +267,36 @@ def test_latest_state_api_lists_freshness_for_viewers_and_refreshes_for_ingester
 
 
 @pytest.mark.django_db
+def test_geofence_and_movement_event_api_are_viewable_after_ingest():
+    organization = Organization.objects.create(
+        name="Coalflow Platform",
+        slug="coalflow-platform-geofence-test",
+        kind=Organization.Kind.PLATFORM,
+    )
+    viewer = User.objects.create_user(username="geofence-viewer", password="secret")
+    assign(viewer, organization, ["telemetry.view", "telemetry.ingest"])
+    geofence_zone()
+
+    client = APIClient()
+    client.force_authenticate(viewer)
+    response = client.post(
+        "/api/telemetry/position-pings/ingest/",
+        telemetry_payload(device_timestamp=timezone.now().isoformat()),
+        format="json",
+    )
+    geofence_response = client.get("/api/telemetry/geofence-zones/")
+    event_response = client.get("/api/telemetry/movement-events/")
+
+    assert response.status_code == 201
+    assert response.data["geofence_events"][0]["event_type"] == "enter_geofence"
+    assert response.data["geofence_events"][0]["geofence_ref"] == "GEO-TEST-BRIDGE"
+    assert geofence_response.status_code == 200
+    assert geofence_response.data[0]["zone_id"] == "GEO-TEST-BRIDGE"
+    assert event_response.status_code == 200
+    assert event_response.data[0]["event_type"] == "enter_geofence"
+
+
+@pytest.mark.django_db
 def test_seed_phase0_creates_phase3_synthetic_sources_and_asset_identities():
     call_command("seed_phase0", master_data_only=True, verbosity=0)
 
@@ -201,3 +309,19 @@ def test_seed_phase0_creates_phase3_synthetic_sources_and_asset_identities():
         asset_code="BER-TUG-08",
         freshness_status=LatestAssetState.FreshnessStatus.MISSING,
     ).exists()
+    assert GeofenceZone.objects.filter(zone_id="GEO-LOC-BRIDGE-GATE-B").exists()
+
+
+@pytest.mark.django_db
+def test_seed_phase0_sample_movement_events_are_idempotent():
+    call_command("seed_phase0", verbosity=0)
+    call_command("seed_phase0", verbosity=0)
+
+    assert PositionPing.objects.filter(
+        raw_payload__seed="phase_3_sample_movement"
+    ).count() == 4
+    assert MovementEvent.objects.count() == 5
+
+    latest_state = LatestAssetState.objects.get(asset_code="BRG-VAL-08")
+    assert latest_state.current_geofence.zone_id == "GEO-LOC-BRIDGE-GATE-B"
+    assert latest_state.freshness_status == LatestAssetState.FreshnessStatus.FRESH

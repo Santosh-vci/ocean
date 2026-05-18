@@ -36,11 +36,13 @@ import type {
   ExportJobRecord,
   ExportOverview,
   ExportType,
+  GeofenceZoneRecord,
   ImportJobRecord,
   LatestAssetStateRecord,
   MasterDataCatalogs,
   MasterDataRecord,
   MasterDataOverview,
+  MovementEventRecord,
   ApprovalRequestRecord,
   OverrideRequestRecord,
   PlanRecord,
@@ -115,6 +117,8 @@ function App() {
   const [planningOverview, setPlanningOverview] = useState<PlanningOverview | null>(null);
   const [schedulingOverview, setSchedulingOverview] = useState<SchedulingOverview | null>(null);
   const [latestAssetStates, setLatestAssetStates] = useState<LatestAssetStateRecord[]>([]);
+  const [geofenceZones, setGeofenceZones] = useState<GeofenceZoneRecord[]>([]);
+  const [movementEvents, setMovementEvents] = useState<MovementEventRecord[]>([]);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -239,8 +243,16 @@ function App() {
       refreshes.push(apiFetch<LatestAssetStateRecord[]>("/telemetry/latest-asset-states/")
         .then(setLatestAssetStates)
         .catch(() => setLatestAssetStates([])));
+      refreshes.push(apiFetch<GeofenceZoneRecord[]>("/telemetry/geofence-zones/")
+        .then(setGeofenceZones)
+        .catch(() => setGeofenceZones([])));
+      refreshes.push(apiFetch<MovementEventRecord[]>("/telemetry/movement-events/")
+        .then(setMovementEvents)
+        .catch(() => setMovementEvents([])));
     } else {
       setLatestAssetStates([]);
+      setGeofenceZones([]);
+      setMovementEvents([]);
     }
 
     await Promise.all(refreshes);
@@ -292,6 +304,8 @@ function App() {
     setPlanningOverview(null);
     setSchedulingOverview(null);
     setLatestAssetStates([]);
+    setGeofenceZones([]);
+    setMovementEvents([]);
     setDashboardReadModel(null);
     setExportOverview(null);
     setAuditEvents([]);
@@ -948,7 +962,9 @@ function App() {
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
             canRunSimulation={canRunSimulation}
+            geofenceZones={geofenceZones}
             latestAssetStates={latestAssetStates}
+            movementEvents={movementEvents}
             onNavigate={handleNavigate}
             overview={schedulingOverview}
           />

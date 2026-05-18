@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from .models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
 
 
 @admin.register(TelemetrySource)
@@ -41,8 +48,24 @@ class LatestAssetStateAdmin(admin.ModelAdmin):
         "freshness_status",
         "derived_status",
         "source",
+        "current_geofence",
+        "last_movement_event",
         "last_seen_at",
         "confidence_score",
     )
     search_fields = ("asset_code", "source__source_id", "asset_identity__external_id")
     list_filter = ("asset_type", "freshness_status", "derived_status")
+
+
+@admin.register(GeofenceZone)
+class GeofenceZoneAdmin(admin.ModelAdmin):
+    list_display = ("zone_id", "name", "zone_type", "status", "radius_m")
+    search_fields = ("zone_id", "name", "source_location__code")
+    list_filter = ("zone_type", "status")
+
+
+@admin.register(MovementEvent)
+class MovementEventAdmin(admin.ModelAdmin):
+    list_display = ("event_id", "event_type", "asset_code", "geofence", "event_at")
+    search_fields = ("event_id", "asset_code", "geofence__zone_id")
+    list_filter = ("event_type", "asset_type", "geofence__zone_type")

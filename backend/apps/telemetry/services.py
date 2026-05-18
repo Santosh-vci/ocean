@@ -1,11 +1,19 @@
 from decimal import Decimal
+from math import asin, cos, radians, sin, sqrt
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from .models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
 
 SYNTHETIC_SOURCE_TYPES = {
     TelemetrySource.SourceType.SYNTHETIC_GPS,
@@ -38,11 +46,11 @@ def ingest_position_ping(*, payload: dict) -> dict:
             raw_payload_ref=normalized.get("raw_payload_ref", ""),
             is_synthetic=source.source_type in SYNTHETIC_SOURCE_TYPES,
         )
-        latest_state_updated = _update_latest_asset_state(ping=ping)
+        latest_state_updated, movement_events = _update_latest_asset_state(ping=ping)
     return {
         "ping": ping,
         "latest_state_updated": latest_state_updated,
-        "geofence_events": [],
+        "geofence_events": movement_events,
         "alerts": [],
     }
 
@@ -215,13 +223,13 @@ def _resolve_asset_identity(*, source: TelemetrySource, payload: dict) -> AssetI
     return identity
 
 
-def _update_latest_asset_state(*, ping: PositionPing) -> bool:
+def _update_latest_asset_state(*, ping: PositionPing) -> tuple[bool, list[MovementEvent]]:
     state = LatestAssetState.objects.filter(
         asset_type=ping.asset_type,
         asset_code=ping.asset_code,
-    ).first()
+    ).select_related("current_geofence").first()
     if state and state.last_seen_at and ping.device_timestamp < state.last_seen_at:
-        return False
+        return False, []
 
     freshness_status = _freshness_status(
         source=ping.source,
@@ -237,6 +245,17 @@ def _update_latest_asset_state(*, ping: PositionPing) -> bool:
         freshness_status=freshness_status,
         signal_quality=ping.signal_quality,
     )
+    previous_geofence = state.current_geofence if state else None
+    current_geofence = _nearest_geofence_for_ping(ping=ping)
+    movement_events = _derive_movement_events(
+        ping=ping,
+        previous_geofence=previous_geofence,
+        current_geofence=current_geofence,
+        confidence_score=confidence_score,
+    )
+    last_movement_event = movement_events[-1] if movement_events else (
+        state.last_movement_event if state else None
+    )
     LatestAssetState.objects.update_or_create(
         asset_type=ping.asset_type,
         asset_code=ping.asset_code,
@@ -250,6 +269,8 @@ def _update_latest_asset_state(*, ping: PositionPing) -> bool:
             "speed_knots": ping.speed_knots,
             "heading_degrees": ping.heading_degrees,
             "last_seen_at": ping.device_timestamp,
+            "current_geofence": current_geofence,
+            "last_movement_event": last_movement_event,
             "freshness_status": freshness_status,
             "confidence_score": confidence_score,
             "metadata": {
@@ -257,10 +278,118 @@ def _update_latest_asset_state(*, ping: PositionPing) -> bool:
                 "sourceType": ping.source.source_type,
                 "signalQuality": ping.signal_quality,
                 "isSynthetic": ping.is_synthetic,
+                "currentGeofence": current_geofence.zone_id if current_geofence else None,
             },
         },
     )
-    return True
+    return True, movement_events
+
+
+def _nearest_geofence_for_ping(*, ping: PositionPing) -> GeofenceZone | None:
+    if ping.signal_quality == PositionPing.SignalQuality.INVALID:
+        return None
+
+    closest = None
+    closest_distance = None
+    for zone in GeofenceZone.objects.filter(status=GeofenceZone.Status.ACTIVE):
+        distance_m = _distance_m(
+            latitude_a=ping.latitude,
+            longitude_a=ping.longitude,
+            latitude_b=zone.latitude,
+            longitude_b=zone.longitude,
+        )
+        if distance_m <= zone.radius_m and (
+            closest_distance is None or distance_m < closest_distance
+        ):
+            closest = zone
+            closest_distance = distance_m
+    return closest
+
+
+def _derive_movement_events(
+    *,
+    ping: PositionPing,
+    previous_geofence: GeofenceZone | None,
+    current_geofence: GeofenceZone | None,
+    confidence_score: Decimal,
+) -> list[MovementEvent]:
+    if previous_geofence == current_geofence:
+        return []
+
+    events = []
+    if previous_geofence:
+        events.append(
+            _create_movement_event(
+                ping=ping,
+                event_type=MovementEvent.EventType.EXIT_GEOFENCE,
+                geofence=previous_geofence,
+                confidence_score=confidence_score,
+                transition_to=current_geofence,
+            )
+        )
+    if current_geofence:
+        events.append(
+            _create_movement_event(
+                ping=ping,
+                event_type=MovementEvent.EventType.ENTER_GEOFENCE,
+                geofence=current_geofence,
+                confidence_score=confidence_score,
+                transition_from=previous_geofence,
+            )
+        )
+    return events
+
+
+def _create_movement_event(
+    *,
+    ping: PositionPing,
+    event_type: str,
+    geofence: GeofenceZone,
+    confidence_score: Decimal,
+    transition_from: GeofenceZone | None = None,
+    transition_to: GeofenceZone | None = None,
+) -> MovementEvent:
+    distance_m = _distance_m(
+        latitude_a=ping.latitude,
+        longitude_a=ping.longitude,
+        latitude_b=geofence.latitude,
+        longitude_b=geofence.longitude,
+    )
+    event, _ = MovementEvent.objects.get_or_create(
+        position_ping=ping,
+        geofence=geofence,
+        event_type=event_type,
+        defaults={
+            "event_id": _next_movement_event_id(event_type=event_type),
+            "asset_type": ping.asset_type,
+            "asset_code": ping.asset_code,
+            "source": ping.source,
+            "asset_identity": ping.asset_identity,
+            "event_at": ping.device_timestamp,
+            "latitude": ping.latitude,
+            "longitude": ping.longitude,
+            "speed_knots": ping.speed_knots,
+            "confidence_score": confidence_score,
+            "metadata": {
+                "distanceM": round(distance_m, 1),
+                "sourcePingId": ping.ping_id,
+                "transitionFrom": transition_from.zone_id if transition_from else None,
+                "transitionTo": transition_to.zone_id if transition_to else None,
+                "zoneType": geofence.zone_type,
+            },
+        },
+    )
+    return event
+
+
+def _distance_m(*, latitude_a, longitude_a, latitude_b, longitude_b) -> float:
+    earth_radius_m = 6_371_000
+    lat_a = radians(float(latitude_a))
+    lat_b = radians(float(latitude_b))
+    delta_lat = radians(float(latitude_b) - float(latitude_a))
+    delta_lon = radians(float(longitude_b) - float(longitude_a))
+    haversine = sin(delta_lat / 2) ** 2 + cos(lat_a) * cos(lat_b) * sin(delta_lon / 2) ** 2
+    return 2 * earth_radius_m * asin(sqrt(haversine))
 
 
 def _freshness_status(
@@ -324,3 +453,8 @@ def _optional_decimal(value, field: str) -> Decimal | None:
 
 def _next_ping_id(*, source_id: str) -> str:
     return f"PNG-{source_id}-{uuid4().hex[:12].upper()}"
+
+
+def _next_movement_event_id(*, event_type: str) -> str:
+    prefix = "ENTER" if event_type == MovementEvent.EventType.ENTER_GEOFENCE else "EXIT"
+    return f"MEV-{prefix}-{uuid4().hex[:12].upper()}"

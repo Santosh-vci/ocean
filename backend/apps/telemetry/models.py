@@ -1,5 +1,7 @@
 from django.db import models
 
+from apps.masters.models import Location
+
 
 class TelemetrySource(models.Model):
     class SourceType(models.TextChoices):
@@ -176,6 +178,20 @@ class LatestAssetState(models.Model):
     speed_knots = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
     heading_degrees = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     last_seen_at = models.DateTimeField(null=True, blank=True)
+    current_geofence = models.ForeignKey(
+        "GeofenceZone",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="current_asset_states",
+    )
+    last_movement_event = models.ForeignKey(
+        "MovementEvent",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="latest_state_refs",
+    )
     freshness_status = models.CharField(
         max_length=32,
         choices=FreshnessStatus.choices,
@@ -202,3 +218,105 @@ class LatestAssetState(models.Model):
 
     def __str__(self) -> str:
         return f"{self.asset_code} {self.freshness_status}"
+
+
+class GeofenceZone(models.Model):
+    class ZoneType(models.TextChoices):
+        MINE = "mine", "Mine"
+        CPP = "cpp", "CPP"
+        JETTY = "jetty", "Jetty"
+        CHECKPOINT = "checkpoint", "Checkpoint"
+        BRIDGE = "bridge", "Bridge"
+        TIDE_GATE = "tide_gate", "Tide gate"
+        ANCHORAGE = "anchorage", "Anchorage"
+        TRANSSHIPMENT = "transshipment", "Transshipment"
+        CTS_ZONE = "cts_zone", "CTS zone"
+        MAINTENANCE = "maintenance", "Maintenance"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PAUSED = "paused", "Paused"
+        RETIRED = "retired", "Retired"
+
+    zone_id = models.CharField(max_length=96, unique=True)
+    name = models.CharField(max_length=180)
+    zone_type = models.CharField(max_length=40, choices=ZoneType.choices)
+    source_location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="telemetry_geofences",
+    )
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    radius_m = models.PositiveIntegerField()
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACTIVE)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["zone_type", "zone_id"]
+        indexes = [
+            models.Index(fields=("status", "zone_type")),
+            models.Index(fields=("zone_id",)),
+        ]
+
+    def __str__(self) -> str:
+        return self.zone_id
+
+
+class MovementEvent(models.Model):
+    class EventType(models.TextChoices):
+        ENTER_GEOFENCE = "enter_geofence", "Enter geofence"
+        EXIT_GEOFENCE = "exit_geofence", "Exit geofence"
+
+    event_id = models.CharField(max_length=96, unique=True)
+    event_type = models.CharField(max_length=40, choices=EventType.choices)
+    asset_type = models.CharField(max_length=32, choices=AssetIdentity.AssetType.choices)
+    asset_code = models.CharField(max_length=80)
+    source = models.ForeignKey(
+        TelemetrySource,
+        on_delete=models.PROTECT,
+        related_name="movement_events",
+    )
+    asset_identity = models.ForeignKey(
+        AssetIdentity,
+        on_delete=models.PROTECT,
+        related_name="movement_events",
+    )
+    position_ping = models.ForeignKey(
+        PositionPing,
+        on_delete=models.CASCADE,
+        related_name="movement_events",
+    )
+    geofence = models.ForeignKey(
+        GeofenceZone,
+        on_delete=models.PROTECT,
+        related_name="movement_events",
+    )
+    event_at = models.DateTimeField()
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    speed_knots = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-event_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("position_ping", "geofence", "event_type"),
+                name="unique_ping_geofence_movement_event",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("asset_code", "event_at")),
+            models.Index(fields=("event_type", "event_at")),
+            models.Index(fields=("geofence", "event_at")),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_code} {self.event_type} {self.geofence.zone_id}"

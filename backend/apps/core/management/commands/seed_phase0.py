@@ -59,8 +59,15 @@ from apps.scheduling.services import (
     generate_plan_version,
     simulate_scenario,
 )
-from apps.telemetry.models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
-from apps.telemetry.services import ensure_missing_latest_state
+from apps.telemetry.models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
+from apps.telemetry.services import ensure_missing_latest_state, ingest_position_ping
 
 
 class Command(BaseCommand):
@@ -307,6 +314,7 @@ class Command(BaseCommand):
 
         self._seed_planning_data(berau=berau, abl=abl, created_by=admin_user)
         self._seed_schedule_data(abl=abl, created_by=admin_user)
+        self._seed_telemetry_sample_movements()
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -371,6 +379,7 @@ class Command(BaseCommand):
 
     def _reset_operational_data(self):
         LatestAssetState.objects.all().delete()
+        MovementEvent.objects.all().delete()
         PositionPing.objects.all().delete()
 
         ExportJob.objects.all().delete()
@@ -408,7 +417,7 @@ class Command(BaseCommand):
                 "freshness_threshold_seconds": 900,
                 "metadata": {
                     "seeded": True,
-                    "purpose": "Chunk 3.0 telemetry foundation identity mapping",
+                    "purpose": "Phase 3 telemetry foundation identity mapping",
                 },
             },
         )
@@ -421,7 +430,7 @@ class Command(BaseCommand):
                 "freshness_threshold_seconds": 900,
                 "metadata": {
                     "seeded": True,
-                    "purpose": "Chunk 3.0 telemetry foundation identity mapping",
+                    "purpose": "Phase 3 telemetry foundation identity mapping",
                 },
             },
         )
@@ -482,8 +491,115 @@ class Command(BaseCommand):
             )
             ensure_missing_latest_state(asset_identity=identity)
 
+        for location in Location.objects.order_by("code"):
+            GeofenceZone.objects.update_or_create(
+                zone_id=f"GEO-{location.code}",
+                defaults={
+                    "name": location.name,
+                    "zone_type": location.location_type,
+                    "source_location": location,
+                    "latitude": location.latitude,
+                    "longitude": location.longitude,
+                    "radius_m": location.geofence_radius_m,
+                    "status": GeofenceZone.Status.ACTIVE,
+                    "metadata": {
+                        "parentArea": location.parent_area,
+                        "operationalNotes": location.operational_notes,
+                        "source": "master_location_seed",
+                    },
+                },
+            )
+
     def _seed_start_date(self):
         return timezone.localdate() + timedelta(days=1)
+
+    def _seed_telemetry_sample_movements(self):
+        source = TelemetrySource.objects.get(source_id="SYN-GPS-PHASE3")
+        locations = {location.code: location for location in Location.objects.all()}
+        now = timezone.now()
+        sample_rows = [
+            (
+                "GPS-768",
+                AssetIdentity.AssetType.TUG,
+                "BER-TUG-08",
+                "LOC-SUARAN-PORT",
+                now - timedelta(minutes=12),
+                "0.20",
+                "095.00",
+            ),
+            (
+                "GPS-768",
+                AssetIdentity.AssetType.TUG,
+                "BER-TUG-08",
+                "LOC-BRIDGE-GATE-B",
+                now - timedelta(minutes=3),
+                "5.40",
+                "090.00",
+            ),
+            (
+                "SYN-BRG-VAL-08",
+                AssetIdentity.AssetType.BARGE,
+                "BRG-VAL-08",
+                "LOC-BRIDGE-GATE-B",
+                now - timedelta(minutes=4),
+                "4.60",
+                "090.00",
+            ),
+            (
+                "SYN-CTS-BORNEO",
+                AssetIdentity.AssetType.CTS,
+                "CTS-BORNEO",
+                "LOC-CTS-ALPHA",
+                now - timedelta(minutes=5),
+                "0.00",
+                "180.00",
+            ),
+        ]
+        sample_asset_codes = {row[2] for row in sample_rows}
+        PositionPing.objects.filter(raw_payload__seed="phase_3_sample_movement").delete()
+        LatestAssetState.objects.filter(asset_code__in=sample_asset_codes).update(
+            last_ping=None,
+            current_geofence=None,
+            last_movement_event=None,
+            derived_status=LatestAssetState.DerivedStatus.UNKNOWN,
+            latitude=None,
+            longitude=None,
+            speed_knots=None,
+            heading_degrees=None,
+            last_seen_at=None,
+            freshness_status=LatestAssetState.FreshnessStatus.MISSING,
+            confidence_score=0,
+        )
+        for (
+            external_id,
+            asset_type,
+            asset_code,
+            location_code,
+            timestamp,
+            speed,
+            heading,
+        ) in sample_rows:
+            location = locations[location_code]
+            ingest_position_ping(
+                payload={
+                    "source_id": source.source_id,
+                    "source_type": source.source_type,
+                    "external_id": external_id,
+                    "asset_type": asset_type,
+                    "asset_code": asset_code,
+                    "latitude": location.latitude,
+                    "longitude": location.longitude,
+                    "speed_knots": speed,
+                    "course_degrees": heading,
+                    "heading_degrees": heading,
+                    "device_timestamp": timestamp,
+                    "signal_quality": PositionPing.SignalQuality.GOOD,
+                    "raw_payload": {
+                        "seed": "phase_3_sample_movement",
+                        "locationCode": location_code,
+                    },
+                }
+            )
 
     def _seed_datetime(self, start_date, day_offset, hour, minute=0):
         target_date = start_date + timedelta(days=day_offset)

@@ -5,10 +5,19 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from apps.rbac.permissions import RequiresAccessPermission
 
-from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from .models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
 from .serializers import (
     AssetIdentitySerializer,
+    GeofenceZoneSerializer,
     LatestAssetStateSerializer,
+    MovementEventSerializer,
     PositionPingIngestResponseSerializer,
     PositionPingIngestSerializer,
     PositionPingSerializer,
@@ -70,6 +79,8 @@ class LatestAssetStateViewSet(ReadOnlyModelViewSet):
         "source",
         "asset_identity",
         "last_ping",
+        "current_geofence",
+        "last_movement_event",
     ).all()
     serializer_class = LatestAssetStateSerializer
 
@@ -83,3 +94,29 @@ class LatestAssetStateViewSet(ReadOnlyModelViewSet):
                 "states": LatestAssetStateSerializer(states, many=True).data,
             }
         )
+
+
+class GeofenceZoneViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+    }
+    queryset = GeofenceZone.objects.select_related("source_location").all()
+    serializer_class = GeofenceZoneSerializer
+    lookup_field = "zone_id"
+
+
+class MovementEventViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+    }
+    queryset = MovementEvent.objects.select_related(
+        "source",
+        "asset_identity",
+        "position_ping",
+        "geofence",
+    ).all()
+    serializer_class = MovementEventSerializer

@@ -3,7 +3,14 @@ from decimal import Decimal
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import AssetIdentity, LatestAssetState, PositionPing, TelemetrySource
+from .models import (
+    AssetIdentity,
+    GeofenceZone,
+    LatestAssetState,
+    MovementEvent,
+    PositionPing,
+    TelemetrySource,
+)
 
 
 class TelemetrySourceSerializer(serializers.ModelSerializer):
@@ -89,6 +96,24 @@ class LatestAssetStateSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     last_ping_ref = serializers.CharField(source="last_ping.ping_id", read_only=True)
+    current_geofence_ref = serializers.CharField(source="current_geofence.zone_id", read_only=True)
+    current_geofence_name = serializers.CharField(source="current_geofence.name", read_only=True)
+    current_geofence_type = serializers.CharField(
+        source="current_geofence.zone_type",
+        read_only=True,
+    )
+    last_movement_event_ref = serializers.CharField(
+        source="last_movement_event.event_id",
+        read_only=True,
+    )
+    last_movement_event_type = serializers.CharField(
+        source="last_movement_event.event_type",
+        read_only=True,
+    )
+    last_movement_event_at = serializers.DateTimeField(
+        source="last_movement_event.event_at",
+        read_only=True,
+    )
     age_seconds = serializers.SerializerMethodField()
 
     class Meta:
@@ -112,6 +137,14 @@ class LatestAssetStateSerializer(serializers.ModelSerializer):
             "heading_degrees",
             "last_seen_at",
             "age_seconds",
+            "current_geofence",
+            "current_geofence_ref",
+            "current_geofence_name",
+            "current_geofence_type",
+            "last_movement_event",
+            "last_movement_event_ref",
+            "last_movement_event_type",
+            "last_movement_event_at",
             "freshness_status",
             "confidence_score",
             "paired_asset_code",
@@ -125,6 +158,73 @@ class LatestAssetStateSerializer(serializers.ModelSerializer):
         if obj.last_seen_at is None:
             return None
         return max(0, int((timezone.now() - obj.last_seen_at).total_seconds()))
+
+
+class GeofenceZoneSerializer(serializers.ModelSerializer):
+    source_location_code = serializers.CharField(source="source_location.code", read_only=True)
+    source_location_name = serializers.CharField(source="source_location.name", read_only=True)
+
+    class Meta:
+        model = GeofenceZone
+        fields = [
+            "id",
+            "zone_id",
+            "name",
+            "zone_type",
+            "source_location",
+            "source_location_code",
+            "source_location_name",
+            "latitude",
+            "longitude",
+            "radius_m",
+            "status",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class MovementEventSerializer(serializers.ModelSerializer):
+    source_id = serializers.CharField(source="source.source_id", read_only=True)
+    external_id = serializers.CharField(source="asset_identity.external_id", read_only=True)
+    geofence_ref = serializers.CharField(source="geofence.zone_id", read_only=True)
+    geofence_name = serializers.CharField(source="geofence.name", read_only=True)
+    geofence_type = serializers.CharField(source="geofence.zone_type", read_only=True)
+    position_ping_ref = serializers.CharField(source="position_ping.ping_id", read_only=True)
+    age_seconds = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MovementEvent
+        fields = [
+            "id",
+            "event_id",
+            "event_type",
+            "asset_type",
+            "asset_code",
+            "source",
+            "source_id",
+            "asset_identity",
+            "external_id",
+            "position_ping",
+            "position_ping_ref",
+            "geofence",
+            "geofence_ref",
+            "geofence_name",
+            "geofence_type",
+            "event_at",
+            "age_seconds",
+            "latitude",
+            "longitude",
+            "speed_knots",
+            "confidence_score",
+            "metadata",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+    def get_age_seconds(self, obj) -> int:
+        return max(0, int((timezone.now() - obj.event_at).total_seconds()))
 
 
 class PositionPingIngestSerializer(serializers.Serializer):
@@ -201,5 +301,5 @@ class PositionPingIngestSerializer(serializers.Serializer):
 class PositionPingIngestResponseSerializer(serializers.Serializer):
     ping = PositionPingSerializer()
     latest_state_updated = serializers.BooleanField()
-    geofence_events = serializers.ListField()
+    geofence_events = MovementEventSerializer(many=True)
     alerts = serializers.ListField()
