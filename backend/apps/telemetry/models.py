@@ -515,6 +515,11 @@ class TrackingAlert(models.Model):
     def __str__(self) -> str:
         return self.alert_id
 
+    def convert_to_scenario(self, *, actor):
+        from .services import convert_tracking_alert_to_scenario
+
+        return convert_tracking_alert_to_scenario(alert=self, actor=actor)
+
 
 class TelemetryReplayRun(models.Model):
     class Status(models.TextChoices):

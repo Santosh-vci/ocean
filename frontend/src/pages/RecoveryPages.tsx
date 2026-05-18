@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
@@ -22,7 +22,7 @@ import type {
 } from "../types";
 
 export type ScenarioSourceInput = {
-  kind: "manual" | "conflict" | "override";
+  kind: "manual" | "conflict" | "override" | "tracking_alert";
   id?: number | null;
   name?: string;
 };
@@ -378,7 +378,7 @@ export function ExceptionCenterPage({
                   : { kind: "manual" },
             )}
             title={selectedTrackingAlert
-              ? "Tracking alert scenario handoff is planned for Chunk 3.5."
+              ? "Use the observed alert detail to create a scenario."
               : !canEdit
                 ? "Your role cannot convert exceptions to scenarios."
                 : undefined}
@@ -567,6 +567,18 @@ export function ExceptionCenterPage({
                 <strong>Observed candidate</strong>
                 <p>Tracking evidence is visible for triage, but it does not mutate the approved schedule.</p>
               </section>
+              {selectedTrackingAlert.alert_type === "delay" ? (
+                <button
+                  disabled={!canEdit || !onCreateScenario || isActionRunning}
+                  onClick={() => onCreateScenario?.({
+                    kind: "tracking_alert",
+                    id: selectedTrackingAlert.id,
+                  })}
+                  type="button"
+                >
+                  Create scenario
+                </button>
+              ) : null}
             </div>
           ) : selectedOverride && selectedOverrideDelta ? (
             <div className="inspector-body">
@@ -650,6 +662,7 @@ export function SimulationWorkspacePage({
   const [replacementBarge, setReplacementBarge] = useState("");
   const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
   const [selectedConstraintId, setSelectedConstraintId] = useState<number | null>(null);
+  const [hydratedScenarioId, setHydratedScenarioId] = useState<number | null>(null);
   const scenario = useMemo(
     () => scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0],
     [scenarios, selectedScenarioId],
@@ -751,8 +764,26 @@ export function SimulationWorkspacePage({
     ? scenario.source_conflict_code ?? "Conflict"
     : scenario?.source_kind === "override"
       ? short(scenario.source_override_reason_code)
-      : "Manual";
+      : scenario?.source_kind === "tracking_alert"
+        ? String(
+          (scenario.metadata.source as Record<string, unknown> | undefined)?.trackingAlertRef
+            ?? "Tracking alert",
+        )
+        : "Manual";
   const scenarioLocked = scenario?.status === "proposed" || scenario?.status === "canceled";
+
+  useEffect(() => {
+    if (!scenario || scenario.id === hydratedScenarioId) return;
+    const seededAssumption = scenario.assumptions[0];
+    setHydratedScenarioId(scenario.id);
+    if (!seededAssumption) return;
+
+    setAssumptionKind(seededAssumption.kind);
+    if (seededAssumption.kind === "trip_delay") {
+      setTripId(String(seededAssumption.scope_id ?? ""));
+      setDelayMinutes(String(valueNum(seededAssumption.payload.delay_minutes, 0)));
+    }
+  }, [hydratedScenarioId, scenario]);
 
   function createAssumption() {
     if (!scenario || !onCreateAssumption) return;

@@ -870,6 +870,50 @@ def create_scenario_from_conflict(
     return scenario
 
 
+def create_scenario_from_tracking_alert(
+    *,
+    baseline_version: PlanVersion,
+    source_alert,
+    actor,
+    name: str = "",
+) -> SimulationScenario:
+    if source_alert.trip_id is None:
+        raise ValidationError("Scenario source tracking alert must be linked to a trip.")
+    if source_alert.trip.plan_version_id != baseline_version.id:
+        raise ValidationError("Scenario source tracking alert must belong to the baseline version.")
+
+    sequence = baseline_version.baseline_scenarios.count() + 1
+    return SimulationScenario.objects.create(
+        scenario_id=f"SIM-{baseline_version.plan.code}-V{baseline_version.version_no}-{sequence:02d}",
+        name=name or f"Observed delay {source_alert.trip.trip_id}",
+        scenario_type="observed_delay_recovery",
+        baseline_version=baseline_version,
+        source_kind=SimulationScenario.SourceKind.TRACKING_ALERT,
+        status=SimulationScenario.Status.DRAFT,
+        metadata={
+            "source": {
+                "kind": SimulationScenario.SourceKind.TRACKING_ALERT,
+                "trackingAlertId": source_alert.pk,
+                "trackingAlertRef": source_alert.alert_id,
+                "alertType": source_alert.alert_type,
+                "severity": source_alert.severity,
+                "assetCode": source_alert.asset_code,
+                "tripId": source_alert.trip_id,
+                "tripRef": source_alert.trip.trip_id,
+                "scheduleEventId": source_alert.schedule_event_id,
+                "scheduleEventType": (
+                    source_alert.schedule_event.event_type
+                    if source_alert.schedule_event_id
+                    else None
+                ),
+                "sourceKind": source_alert.source_kind,
+                "evidence": source_alert.evidence,
+            }
+        },
+        created_by=actor,
+    )
+
+
 def create_scenario_assumption(
     *,
     scenario: SimulationScenario,

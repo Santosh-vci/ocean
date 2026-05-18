@@ -845,11 +845,12 @@ export type SimulationScenarioRecord = {
   source_override: number | null;
   source_override_reason_code: string | null;
   source_override_description: string | null;
-  source_kind: "manual" | "conflict" | "override" | string;
+  source_kind: "manual" | "conflict" | "override" | "tracking_alert" | string;
   status: string;
   recovery_actions: string[];
   impact_summary: Record<string, unknown>;
   delta_summary: Record<string, unknown>;
+  metadata: Record<string, unknown>;
   created_by: number | null;
   created_by_email: string | null;
   assumptions: ScenarioAssumptionRecord[];

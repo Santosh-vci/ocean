@@ -170,6 +170,7 @@ function stageSevenOverview(): SchedulingOverview {
       planned_quantity_mt: 32000,
       loaded_quantity_mt: 0,
       status: "planned",
+      selection_reason: {},
       cargo_layer_step: { coal_grade: { code: "EBONY" }, hatch_no: 1, layer_no: 1 },
       assignment: null,
       events: [{ event_type: "load_start", planned_at: "2026-05-17T01:30:00.000Z" }],
@@ -252,6 +253,50 @@ test("exception center renders calculated impact chain nodes", () => {
   expect(screen.queryByText("Barge delay (+2h)")).not.toBeInTheDocument();
 });
 
+test("exception center converts a delay tracking alert into a scenario", () => {
+  const onCreateScenario = vi.fn();
+  const overview = stageSevenOverview();
+  overview.trackingAlerts = [{
+    id: 88,
+    alert_id: "ALT-DELAY-0088",
+    alert_type: "delay",
+    severity: "warning",
+    asset_type: "barge",
+    asset_code: "BRG-VAL-08",
+    source: 1,
+    source_id: "SYN-GPS-PHASE3",
+    asset_identity: 1,
+    external_id: "SYN-BRG-VAL-08",
+    source_ping: 10,
+    source_ping_ref: "PNG-SYN-GPS-PHASE3-0010",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    vessel_name: "MV Operator UI Import",
+    schedule_event: 11,
+    schedule_event_type: "depart_jetty",
+    schedule_event_planned_at: "2026-05-17T03:30:00.000Z",
+    eta_projection: 12,
+    eta_projection_ref: "ETA-0012",
+    message: "BRG-VAL-08 is still at jetty with observed departure 45 minutes after plan.",
+    evidence: {
+      varianceMinutes: 45,
+      observedEta: "2026-05-17T04:15:00.000Z",
+    },
+    status: "open",
+    source_kind: "synthetic",
+    opened_at: "2026-05-17T03:45:00.000Z",
+    resolved_at: null,
+    created_scenario: null,
+    created_at: "2026-05-17T03:45:00.000Z",
+    updated_at: "2026-05-17T03:45:00.000Z",
+  }];
+
+  render(<ExceptionCenterPage canEdit onCreateScenario={onCreateScenario} overview={overview} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Create scenario" }));
+  expect(onCreateScenario).toHaveBeenCalledWith({ kind: "tracking_alert", id: 88 });
+});
+
 test("simulation workspace renders computed run results and impact nodes", () => {
   const overview = stageSevenOverview();
   overview.simulationScenarios = [{
@@ -279,6 +324,7 @@ test("simulation workspace renders computed run results and impact nodes", () =>
       fleetUtilizationPct: "4.5",
       remainingViolations: 0,
     },
+    metadata: {},
     created_by: 1,
     created_by_email: "berau.scheduler@coalflow.local",
     assumptions: [{
@@ -422,4 +468,62 @@ test("simulation workspace renders computed run results and impact nodes", () =>
   expect(screen.getByText(/BRG-VAL-08/)).toBeInTheDocument();
   expect(screen.queryByText("OUT OF SERVICE")).not.toBeInTheDocument();
   expect(screen.queryByText("RECOVERY WINDOW")).not.toBeInTheDocument();
+});
+
+test("simulation workspace opens telemetry-origin scenarios with editable seeded assumptions", () => {
+  const overview = stageSevenOverview();
+  overview.simulationScenarios = [{
+    id: 777,
+    scenario_id: "SIM-PLAN-UI-V1-07",
+    name: "Observed delay PI-PLAN-UI-0001",
+    scenario_type: "observed_delay_recovery",
+    baseline_version: 1,
+    baseline_version_ref: "PLAN-UI V1",
+    scenario_version: null,
+    scenario_version_ref: null,
+    source_conflict: null,
+    source_conflict_code: null,
+    source_conflict_message: null,
+    source_override: null,
+    source_override_reason_code: null,
+    source_override_description: null,
+    source_kind: "tracking_alert",
+    status: "draft",
+    recovery_actions: [],
+    impact_summary: {},
+    delta_summary: {},
+    metadata: {
+      source: {
+        trackingAlertRef: "ALT-DELAY-0088",
+      },
+    },
+    created_by: 1,
+    created_by_email: "berau.scheduler@coalflow.local",
+    assumptions: [{
+      id: 778,
+      scenario: 777,
+      scenario_ref: "SIM-PLAN-UI-V1-07",
+      assumption_id: "ASM-SIM-PLAN-UI-V1-07-01",
+      kind: "trip_delay",
+      scope_type: "trip",
+      scope_id: 201,
+      payload: { delay_minutes: 45 },
+      effective_from: "2026-05-17T03:30:00.000Z",
+      effective_to: null,
+      created_by: 1,
+      created_by_email: "berau.scheduler@coalflow.local",
+      created_at: "2026-05-17T03:45:00.000Z",
+      updated_at: "2026-05-17T03:45:00.000Z",
+    }],
+    runs: [],
+    created_at: "2026-05-17T03:45:00.000Z",
+    updated_at: "2026-05-17T03:45:00.000Z",
+  }];
+
+  render(<SimulationWorkspacePage canEdit overview={overview} />);
+
+  expect(screen.getByText("ALT-DELAY-0088")).toBeInTheDocument();
+  expect(screen.getByLabelText("Delay minutes")).toHaveValue(45);
+  fireEvent.change(screen.getByLabelText("Delay minutes"), { target: { value: "60" } });
+  expect(screen.getByLabelText("Delay minutes")).toHaveValue(60);
 });

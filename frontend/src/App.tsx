@@ -612,11 +612,25 @@ function App() {
 
   async function handleCreateScenario(source: ScenarioSourceInput) {
     await runWorkspaceAction("Create scenario", async () => {
+      const csrfToken = await getCsrfToken();
+      if (source.kind === "tracking_alert" && source.id) {
+        const scenario = await apiFetch<SimulationScenarioRecord>(
+          `/telemetry/alerts/${source.id}/convert-to-scenario/`,
+          {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrfToken,
+            },
+          },
+        );
+        handleNavigate("/simulation/workspace");
+        return `Scenario created from observed delay: ${scenario.scenario_id}`;
+      }
+
       const activeVersion = schedulingOverview?.activePlanVersion;
       if (!activeVersion) {
         throw new Error("No active plan version");
       }
-      const csrfToken = await getCsrfToken();
       const scenario = await apiFetch<SimulationScenarioRecord>(
         `/scheduling/plan-versions/${activeVersion.id}/create-scenario/`,
         {

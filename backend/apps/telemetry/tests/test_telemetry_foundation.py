@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.audit.models import AuditEvent
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.telemetry.models import (
@@ -19,7 +20,13 @@ from apps.telemetry.models import (
     TrackingAlert,
 )
 from apps.telemetry.replay import seed_phase3_replay_runs, start_synthetic_replay
-from apps.telemetry.services import ingest_position_ping, refresh_signal_health
+from apps.telemetry.services import (
+    convert_tracking_alert_to_scenario,
+    ingest_position_ping,
+    refresh_signal_health,
+)
+from apps.scheduling.models import ScenarioAssumption, SimulationScenario
+from apps.scheduling.services import simulate_scenario
 
 
 def assign(user, organization, permission_codes):
@@ -445,3 +452,71 @@ def test_replay_run_api_can_start_a_seeded_synthetic_flow():
     assert response.data["metadata"]["pingCount"] >= 1
     assert list_response.status_code == 200
     assert len(list_response.data) == 6
+
+
+@pytest.mark.django_db
+def test_delay_alert_converts_to_scenario_with_prefilled_assumption_and_retained_evidence():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    actor = User.objects.get(username="admin@coalflow.local")
+    alert = TrackingAlert.objects.get(
+        alert_type=TrackingAlert.AlertType.DELAY,
+        asset_code="BRG-VAL-08",
+    )
+    baseline_version = alert.trip.plan_version
+    trip_planned_start = alert.trip.planned_start
+
+    scenario = convert_tracking_alert_to_scenario(alert=alert, actor=actor)
+    assumption = scenario.assumptions.get()
+
+    alert.refresh_from_db()
+    assert scenario.status == SimulationScenario.Status.DRAFT
+    assert scenario.source_kind == SimulationScenario.SourceKind.TRACKING_ALERT
+    assert scenario.baseline_version == baseline_version
+    assert scenario.metadata["source"]["trackingAlertRef"] == alert.alert_id
+    assert scenario.metadata["source"]["evidence"]["varianceMinutes"] == 45
+    assert assumption.kind == ScenarioAssumption.Kind.TRIP_DELAY
+    assert assumption.scope_type == ScenarioAssumption.ScopeType.TRIP
+    assert assumption.scope_id == alert.trip_id
+    assert assumption.payload["delay_minutes"] == 45
+    assert alert.status == TrackingAlert.Status.CONVERTED_TO_SCENARIO
+    assert alert.created_scenario == scenario
+    alert.trip.refresh_from_db()
+    assert alert.trip.planned_start == trip_planned_start
+
+    simulated = simulate_scenario(scenario=scenario, actor=actor)
+    assert simulated.status == SimulationScenario.Status.SIMULATED
+
+
+@pytest.mark.django_db
+def test_delay_alert_conversion_api_requires_schedule_edit_and_audits_handoff():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    alert = TrackingAlert.objects.get(
+        alert_type=TrackingAlert.AlertType.DELAY,
+        asset_code="BRG-VAL-08",
+    )
+    organization = Organization.objects.create(
+        name="Coalflow Platform Handoff",
+        slug="coalflow-platform-handoff-test",
+        kind=Organization.Kind.PLATFORM,
+    )
+    viewer = User.objects.create_user(username="handoff-viewer", password="secret")
+    scheduler = User.objects.create_user(username="handoff-scheduler", password="secret")
+    assign(viewer, organization, ["telemetry.view"])
+    assign(scheduler, organization, ["telemetry.view", "schedule.edit"])
+
+    client = APIClient()
+    client.force_authenticate(viewer)
+    denied = client.post(f"/api/telemetry/alerts/{alert.id}/convert-to-scenario/")
+
+    client.force_authenticate(scheduler)
+    response = client.post(f"/api/telemetry/alerts/{alert.id}/convert-to-scenario/")
+
+    assert denied.status_code == 403
+    assert response.status_code == 201
+    assert response.data["source_kind"] == SimulationScenario.SourceKind.TRACKING_ALERT
+    assert response.data["metadata"]["source"]["trackingAlertRef"] == alert.alert_id
+    assert response.data["assumptions"][0]["payload"]["delay_minutes"] == 45
+    assert AuditEvent.objects.filter(
+        action="tracking_alert.convert_to_scenario",
+        object_id=str(alert.pk),
+    ).exists()

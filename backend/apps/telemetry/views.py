@@ -3,7 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from apps.audit.services import record_audit_event
 from apps.rbac.permissions import RequiresAccessPermission
+from apps.scheduling.serializers import SimulationScenarioSerializer
 
 from .models import (
     AssetIdentity,
@@ -153,6 +155,7 @@ class TrackingAlertViewSet(ReadOnlyModelViewSet):
         "list": "telemetry.view",
         "retrieve": "telemetry.view",
         "acknowledge": "telemetry.ingest",
+        "convert_to_scenario": "schedule.edit",
     }
     queryset = TrackingAlert.objects.select_related(
         "source",
@@ -172,6 +175,32 @@ class TrackingAlertViewSet(ReadOnlyModelViewSet):
         alert.status = TrackingAlert.Status.ACKNOWLEDGED
         alert.save(update_fields=["status", "updated_at"])
         return Response(TrackingAlertSerializer(alert).data)
+
+    @action(detail=True, methods=["post"], url_path="convert-to-scenario")
+    def convert_to_scenario(self, request, pk=None):
+        alert = self.get_object()
+        scenario = alert.convert_to_scenario(actor=request.user)
+        record_audit_event(
+            actor=request.user,
+            organization=scenario.baseline_version.plan.organization,
+            action="tracking_alert.convert_to_scenario",
+            object_type="tracking_alert",
+            object_id=str(alert.pk),
+            object_repr=alert.alert_id,
+            metadata={
+                "tracking_alert_id": alert.pk,
+                "tracking_alert_ref": alert.alert_id,
+                "scenario_id": scenario.scenario_id,
+                "trip": alert.trip.trip_id if alert.trip_id else None,
+                "alert_type": alert.alert_type,
+                "delay_minutes": alert.evidence.get("varianceMinutes"),
+            },
+            request=request,
+        )
+        return Response(
+            SimulationScenarioSerializer(scenario).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TelemetryReplayRunViewSet(TelemetryViewSet):

@@ -642,6 +642,7 @@ class SimulationScenario(models.Model):
         MANUAL = "manual", "Manual"
         CONFLICT = "conflict", "Conflict"
         OVERRIDE = "override", "Override"
+        TRACKING_ALERT = "tracking_alert", "Tracking alert"
 
     scenario_id = models.CharField(max_length=80, unique=True)
     name = models.CharField(max_length=160)
@@ -681,6 +682,7 @@ class SimulationScenario(models.Model):
     recovery_actions = models.JSONField(default=list, blank=True)
     impact_summary = models.JSONField(default=dict, blank=True)
     delta_summary = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

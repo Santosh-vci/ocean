@@ -8,7 +8,11 @@ from django.db.models import F, Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from apps.scheduling.models import Assignment, PlanVersion, ScheduleEvent
+from apps.scheduling.models import Assignment, PlanVersion, ScenarioAssumption, ScheduleEvent
+from apps.scheduling.services import (
+    create_scenario_assumption,
+    create_scenario_from_tracking_alert,
+)
 
 from .models import (
     AssetIdentity,
@@ -75,6 +79,59 @@ def ensure_missing_latest_state(*, asset_identity: AssetIdentity) -> LatestAsset
         },
     )
     return state
+
+
+def convert_tracking_alert_to_scenario(*, alert: TrackingAlert, actor):
+    if alert.alert_type != TrackingAlert.AlertType.DELAY:
+        raise ValidationError("Only delay tracking alerts can be converted to scenarios.")
+    if alert.trip_id is None:
+        raise ValidationError("Tracking alert must be linked to a trip before scenario conversion.")
+    if alert.status not in {
+        TrackingAlert.Status.OPEN,
+        TrackingAlert.Status.ACKNOWLEDGED,
+        TrackingAlert.Status.CONVERTED_TO_SCENARIO,
+    }:
+        raise ValidationError("Only active delay alerts can be converted to scenarios.")
+
+    variance_minutes = alert.evidence.get("varianceMinutes")
+    try:
+        delay_minutes = max(0, int(variance_minutes or 0))
+    except (TypeError, ValueError):
+        delay_minutes = 0
+    if delay_minutes <= 0:
+        raise ValidationError("Delay alerts require positive ETA variance for scenario conversion.")
+
+    with transaction.atomic():
+        locked_alert = TrackingAlert.objects.select_for_update().get(pk=alert.pk)
+        if locked_alert.created_scenario_id:
+            return locked_alert.created_scenario
+
+        scenario = create_scenario_from_tracking_alert(
+            baseline_version=locked_alert.trip.plan_version,
+            source_alert=locked_alert,
+            actor=actor,
+        )
+        create_scenario_assumption(
+            scenario=scenario,
+            actor=actor,
+            kind=ScenarioAssumption.Kind.TRIP_DELAY,
+            scope_type=ScenarioAssumption.ScopeType.TRIP,
+            scope_id=locked_alert.trip_id,
+            payload={
+                "delay_minutes": delay_minutes,
+                "source_tracking_alert_id": locked_alert.pk,
+                "source_tracking_alert_ref": locked_alert.alert_id,
+            },
+            effective_from=(
+                locked_alert.schedule_event.planned_at
+                if locked_alert.schedule_event_id
+                else None
+            ),
+        )
+        locked_alert.created_scenario = scenario
+        locked_alert.status = TrackingAlert.Status.CONVERTED_TO_SCENARIO
+        locked_alert.save(update_fields=["created_scenario", "status", "updated_at"])
+        return scenario
 
 
 def refresh_signal_health(*, now=None) -> int:
