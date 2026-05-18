@@ -59,6 +59,12 @@ The pack is based on:
 17. `17_Phase_3_Implementation_Spec.md`
     Product Phase 3 implementation specification for GPS/AIS live tracking using Synthetic Live Data Mode, telemetry ingestion, geofence events, ETA variance, delay alerts, live map upgrades, and scenario handoff.
 
+18. `18_Phase_3_Operator_Runbook.md`
+    Operator-facing runbook for using Phase 3 telemetry, synthetic replay, observed tracking alerts, and tracking-alert scenario handoff.
+
+19. `19_Phase_3_Completion_Evidence.md`
+    Runtime closure evidence for Phase 3, including the five-stage proof command, browser evidence, screenshots, audit evidence, and remaining deferred scope.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

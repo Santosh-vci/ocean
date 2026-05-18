@@ -1,0 +1,154 @@
+{
+  "browserEvidenceTargets": [
+    "/map/live",
+    "/exceptions/center",
+    "/simulation/workspace",
+    "/admin/audit-logs"
+  ],
+  "definitionOfDone": {
+    "expectedStages": 5,
+    "overall": "PASS",
+    "stagesPassed": 5
+  },
+  "generatedAt": "2026-05-18T08:15:03.237455+00:00",
+  "replayPack": [
+    {
+      "alertCount": 0,
+      "assetCodes": [
+        "BER-TUG-08"
+      ],
+      "movementEventCount": 3,
+      "pingCount": 2,
+      "projectionCount": 2,
+      "replayId": "RPL-TRACK-ON-TIME",
+      "scenarioCode": "TRACK-ON-TIME",
+      "status": "completed"
+    },
+    {
+      "alertCount": 2,
+      "assetCodes": [
+        "BRG-VAL-08"
+      ],
+      "movementEventCount": 1,
+      "pingCount": 2,
+      "projectionCount": 1,
+      "replayId": "RPL-TRACK-JETTY-DELAY",
+      "scenarioCode": "TRACK-JETTY-DELAY",
+      "status": "completed"
+    },
+    {
+      "alertCount": 1,
+      "assetCodes": [
+        "BER-TUG-09"
+      ],
+      "movementEventCount": 3,
+      "pingCount": 2,
+      "projectionCount": 2,
+      "replayId": "RPL-TRACK-BRIDGE-WAIT",
+      "scenarioCode": "TRACK-BRIDGE-WAIT",
+      "status": "completed"
+    },
+    {
+      "alertCount": 1,
+      "assetCodes": [
+        "BRG-NUS-17"
+      ],
+      "movementEventCount": 1,
+      "pingCount": 1,
+      "projectionCount": 1,
+      "replayId": "RPL-TRACK-STALE-SIGNAL",
+      "scenarioCode": "TRACK-STALE-SIGNAL",
+      "status": "completed"
+    },
+    {
+      "alertCount": 0,
+      "assetCodes": [
+        "VOY-PACIFIC-PRIDE"
+      ],
+      "movementEventCount": 1,
+      "pingCount": 2,
+      "projectionCount": 0,
+      "replayId": "RPL-TRACK-OGV-ETA-SHIFT",
+      "scenarioCode": "TRACK-OGV-ETA-SHIFT",
+      "status": "completed"
+    },
+    {
+      "alertCount": 0,
+      "assetCodes": [
+        "BRG-KAL-22"
+      ],
+      "movementEventCount": 3,
+      "pingCount": 2,
+      "projectionCount": 2,
+      "replayId": "RPL-TRACK-CTS-APPROACH",
+      "scenarioCode": "TRACK-CTS-APPROACH",
+      "status": "completed"
+    }
+  ],
+  "rerun": {
+    "identityCount": 14,
+    "pingCountAfterRerun": 2,
+    "replayId": "RPL-TRACK-ON-TIME",
+    "status": "completed"
+  },
+  "runId": "P3-TRACKING-20260518081502",
+  "scenarioHandoff": {
+    "assumptionKind": "trip_delay",
+    "delayMinutes": 45,
+    "runStatus": "succeeded",
+    "scenarioId": "SIM-PLAN-2026-05-19-V1-08",
+    "scenarioRunId": "RUN-SIM-PLAN-2026-05-19-V1-08-01",
+    "scenarioStatus": "simulated",
+    "sourceKind": "tracking_alert",
+    "trackingAlertRef": "TRK-DELAY-4C15E21F25"
+  },
+  "stages": [
+    {
+      "auditAction": "phase3.proof.replay_pack_seeded",
+      "primaryEvidence": "6 replay families",
+      "result": "PASS",
+      "stage": 1,
+      "title": "Replay pack seeded"
+    },
+    {
+      "auditAction": "phase3.proof.replays_executed",
+      "primaryEvidence": "11 pings",
+      "result": "PASS",
+      "stage": 2,
+      "title": "Synthetic replays executed"
+    },
+    {
+      "auditAction": "phase3.proof.observed_evidence_verified",
+      "primaryEvidence": "11 pings / 4 alert types",
+      "result": "PASS",
+      "stage": 3,
+      "title": "Observed evidence verified"
+    },
+    {
+      "auditAction": "phase3.proof.scenario_handoff_verified",
+      "primaryEvidence": "TRK-DELAY-4C15E21F25 -> SIM-PLAN-2026-05-19-V1-08",
+      "result": "PASS",
+      "stage": 4,
+      "title": "Observed alert scenario handoff"
+    },
+    {
+      "auditAction": "phase3.proof.rerun_verified",
+      "primaryEvidence": "RPL-TRACK-ON-TIME",
+      "result": "PASS",
+      "stage": 5,
+      "title": "Replay rerun idempotence"
+    }
+  ],
+  "telemetrySummary": {
+    "alertTypes": [
+      "delay",
+      "eta_risk",
+      "geofence_dwell",
+      "stale_signal"
+    ],
+    "assetIdentityCount": 14,
+    "movementEventCount": 12,
+    "pingCount": 11,
+    "projectionCount": 8
+  }
+}

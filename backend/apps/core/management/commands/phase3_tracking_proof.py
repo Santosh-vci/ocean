@@ -17,6 +17,9 @@ from apps.telemetry.models import (
     TrackingAlert,
 )
 from apps.telemetry.replay import REPLAY_FAMILIES, seed_phase3_replay_runs, start_synthetic_replay
+from apps.telemetry.services import convert_tracking_alert_to_scenario
+from apps.scheduling.models import ScenarioAssumption, SimulationScenario
+from apps.scheduling.services import simulate_scenario
 
 
 class Command(BaseCommand):
@@ -70,6 +73,7 @@ class Phase3TrackingProofRunner:
         replay_runs = self._stage_seed_pack()
         replay_results = self._stage_execute_replays(replay_runs)
         telemetry_summary = self._stage_verify_observed_evidence()
+        scenario_handoff = self._stage_verify_scenario_handoff()
         rerun = self._stage_verify_rerun(replay_runs[0])
 
         return {
@@ -78,14 +82,17 @@ class Phase3TrackingProofRunner:
             "definitionOfDone": {
                 "overall": "PASS",
                 "stagesPassed": len(self.stages),
-                "expectedStages": 4,
+                "expectedStages": 5,
             },
             "replayPack": replay_results,
             "telemetrySummary": telemetry_summary,
+            "scenarioHandoff": scenario_handoff,
             "rerun": rerun,
             "browserEvidenceTargets": [
                 "/map/live",
                 "/exceptions/center",
+                "/simulation/workspace",
+                "/admin/audit-logs",
             ],
             "stages": self.stages,
         }
@@ -168,6 +175,49 @@ class Phase3TrackingProofRunner:
             metadata=summary,
         )
         return summary
+
+    def _stage_verify_scenario_handoff(self) -> dict:
+        alert = (
+            TrackingAlert.objects.filter(
+                alert_type=TrackingAlert.AlertType.DELAY,
+                evidence__replayId="RPL-TRACK-JETTY-DELAY",
+            )
+            .select_related("trip", "trip__plan_version", "schedule_event")
+            .order_by("-opened_at")
+            .first()
+        )
+        if not alert:
+            raise RuntimeError("Replay delay alert was not available for scenario handoff.")
+
+        scenario = convert_tracking_alert_to_scenario(alert=alert, actor=self.admin)
+        assumption = scenario.assumptions.get(kind=ScenarioAssumption.Kind.TRIP_DELAY)
+        if scenario.source_kind != SimulationScenario.SourceKind.TRACKING_ALERT:
+            raise RuntimeError(f"Unexpected scenario source kind: {scenario.source_kind}")
+        if assumption.payload.get("delay_minutes") != alert.evidence.get("varianceMinutes"):
+            raise RuntimeError("Scenario handoff did not preserve the observed delay minutes.")
+
+        simulated = simulate_scenario(scenario=scenario, actor=self.admin)
+        latest_run = simulated.runs.order_by("-created_at").first()
+        if not latest_run or latest_run.status != latest_run.Status.SUCCEEDED:
+            raise RuntimeError("Scenario created from tracking alert did not simulate successfully.")
+
+        handoff = {
+            "trackingAlertRef": alert.alert_id,
+            "scenarioId": simulated.scenario_id,
+            "scenarioStatus": simulated.status,
+            "assumptionKind": assumption.kind,
+            "delayMinutes": assumption.payload.get("delay_minutes"),
+            "scenarioRunId": latest_run.run_id,
+            "runStatus": latest_run.status,
+            "sourceKind": simulated.source_kind,
+        }
+        self._record_stage(
+            action="phase3.proof.scenario_handoff_verified",
+            title="Observed alert scenario handoff",
+            primary=f"{alert.alert_id} -> {simulated.scenario_id}",
+            metadata=handoff,
+        )
+        return handoff
 
     def _stage_verify_rerun(self, replay_run: TelemetryReplayRun) -> dict:
         identity_count_before = AssetIdentity.objects.count()

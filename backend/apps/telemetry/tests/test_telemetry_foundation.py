@@ -398,6 +398,25 @@ def test_eta_projection_and_tracking_alert_api_are_viewable():
 
 
 @pytest.mark.django_db
+def test_recent_telemetry_endpoints_apply_bounded_list_limits():
+    call_command("seed_phase0", verbosity=0)
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    event_response = client.get("/api/telemetry/movement-events/?limit=2")
+    projection_response = client.get("/api/telemetry/eta-projections/?limit=1")
+    alert_response = client.get("/api/telemetry/alerts/?limit=1")
+
+    assert event_response.status_code == 200
+    assert projection_response.status_code == 200
+    assert alert_response.status_code == 200
+    assert len(event_response.data) == 2
+    assert len(projection_response.data) == 1
+    assert len(alert_response.data) == 1
+
+
+@pytest.mark.django_db
 def test_seed_phase3_replay_creates_all_fixture_families_and_runs_are_rerunnable():
     call_command("seed_phase0", reset_operational_data=True, verbosity=0)
 

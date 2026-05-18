@@ -255,13 +255,13 @@ function App() {
       refreshes.push(apiFetch<GeofenceZoneRecord[]>("/telemetry/geofence-zones/")
         .then(setGeofenceZones)
         .catch(() => setGeofenceZones([])));
-      refreshes.push(apiFetch<MovementEventRecord[]>("/telemetry/movement-events/")
+      refreshes.push(apiFetch<MovementEventRecord[]>("/telemetry/movement-events/?limit=120")
         .then(setMovementEvents)
         .catch(() => setMovementEvents([])));
-      refreshes.push(apiFetch<LiveEtaProjectionRecord[]>("/telemetry/eta-projections/")
+      refreshes.push(apiFetch<LiveEtaProjectionRecord[]>("/telemetry/eta-projections/?limit=120")
         .then(setEtaProjections)
         .catch(() => setEtaProjections([])));
-      refreshes.push(apiFetch<TrackingAlertRecord[]>("/telemetry/alerts/")
+      refreshes.push(apiFetch<TrackingAlertRecord[]>("/telemetry/alerts/?limit=120")
         .then(setTrackingAlerts)
         .catch(() => setTrackingAlerts([])));
       refreshes.push(apiFetch<TelemetryReplayRunRecord[]>("/telemetry/replay-runs/")

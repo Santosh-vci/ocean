@@ -75,6 +75,17 @@ The proof reseeds the pilot data by default and verifies these scenario families
 
 To keep a host-side evidence copy, redirect the JSON output to `docs/evidence/phase2/phase2_scenario_evidence.json`.
 
+### 1.6 Generate Phase 3 tracking proof evidence, if required
+
+This is a regression and closure step for the live-tracking phase, not a normal planning operator action. Use it to verify Synthetic Live Data Mode, movement events, ETA variance, tracking alerts, observed-delay scenario handoff, and audit proof.
+
+```text
+docker compose exec -T api python manage.py phase3_tracking_proof --json > docs\evidence\phase3\phase3_tracking_evidence.json
+node scripts\capture_phase3_browser_evidence.mjs
+```
+
+See `18_Phase_3_Operator_Runbook.md` for the UI-first Phase 3 flow.
+
 ## 2. Login roles
 
 | Role | User | Password | Operational use |

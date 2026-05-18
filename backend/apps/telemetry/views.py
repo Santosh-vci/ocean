@@ -35,6 +35,32 @@ from .replay import cancel_synthetic_replay, start_synthetic_replay
 from .services import ingest_position_ping, refresh_signal_health
 
 
+def _bounded_list_limit(request, *, default: int = 120, maximum: int = 250) -> int:
+    raw_limit = request.query_params.get("limit", default)
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        return default
+    return max(1, min(limit, maximum))
+
+
+class BoundedRecentListMixin:
+    default_list_limit = 120
+    max_list_limit = 250
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if getattr(self, "action", None) != "list":
+            return queryset
+        return queryset[
+            : _bounded_list_limit(
+                self.request,
+                default=self.default_list_limit,
+                maximum=self.max_list_limit,
+            )
+        ]
+
+
 class TelemetryViewSet(ModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
@@ -58,7 +84,7 @@ class AssetIdentityViewSet(TelemetryViewSet):
     serializer_class = AssetIdentitySerializer
 
 
-class PositionPingViewSet(ReadOnlyModelViewSet):
+class PositionPingViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
         "list": "telemetry.view",
@@ -116,7 +142,7 @@ class GeofenceZoneViewSet(ReadOnlyModelViewSet):
     lookup_field = "zone_id"
 
 
-class MovementEventViewSet(ReadOnlyModelViewSet):
+class MovementEventViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
         "list": "telemetry.view",
@@ -131,7 +157,7 @@ class MovementEventViewSet(ReadOnlyModelViewSet):
     serializer_class = MovementEventSerializer
 
 
-class LiveEtaProjectionViewSet(ReadOnlyModelViewSet):
+class LiveEtaProjectionViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
         "list": "telemetry.view",
@@ -149,7 +175,7 @@ class LiveEtaProjectionViewSet(ReadOnlyModelViewSet):
     serializer_class = LiveEtaProjectionSerializer
 
 
-class TrackingAlertViewSet(ReadOnlyModelViewSet):
+class TrackingAlertViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
         "list": "telemetry.view",

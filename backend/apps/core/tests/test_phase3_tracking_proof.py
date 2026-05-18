@@ -5,6 +5,7 @@ import pytest
 from django.core.management import call_command
 
 from apps.audit.models import AuditEvent
+from apps.scheduling.models import SimulationScenario
 from apps.telemetry.models import TelemetryReplayRun, TrackingAlert
 
 
@@ -17,8 +18,8 @@ def test_phase3_tracking_proof_command_creates_repeatable_replay_evidence():
     evidence = json.loads(output.getvalue())
     assert evidence["definitionOfDone"] == {
         "overall": "PASS",
-        "stagesPassed": 4,
-        "expectedStages": 4,
+        "stagesPassed": 5,
+        "expectedStages": 5,
     }
     assert len(evidence["replayPack"]) == 6
     assert {row["scenarioCode"] for row in evidence["replayPack"]} == {
@@ -36,6 +37,9 @@ def test_phase3_tracking_proof_command_creates_repeatable_replay_evidence():
         "stale_signal",
     }.issubset(set(evidence["telemetrySummary"]["alertTypes"]))
     assert evidence["rerun"]["status"] == TelemetryReplayRun.Status.COMPLETED
+    assert evidence["scenarioHandoff"]["sourceKind"] == SimulationScenario.SourceKind.TRACKING_ALERT
+    assert evidence["scenarioHandoff"]["delayMinutes"] == 45
+    assert evidence["scenarioHandoff"]["runStatus"] == "succeeded"
     assert TelemetryReplayRun.objects.count() == 6
     assert TrackingAlert.objects.filter(
         alert_type=TrackingAlert.AlertType.DELAY,
@@ -44,4 +48,8 @@ def test_phase3_tracking_proof_command_creates_repeatable_replay_evidence():
     assert AuditEvent.objects.filter(
         metadata__runId=evidence["runId"],
         action="phase3.proof.rerun_verified",
+    ).exists()
+    assert AuditEvent.objects.filter(
+        metadata__runId=evidence["runId"],
+        action="phase3.proof.scenario_handoff_verified",
     ).exists()
