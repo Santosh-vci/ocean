@@ -5,6 +5,7 @@ import type { NextActionResponse } from "../types/assistant";
 import { useAssistantMode } from "./useAssistantMode";
 
 type UseNextActionsOptions = {
+  enabled?: boolean;
   objectType?: string;
   objectId?: string | number;
 };
@@ -14,10 +15,18 @@ export function useNextActions(route: string, options: UseNextActionsOptions = {
   const [data, setData] = useState<NextActionResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(false);
+  const enabled = options.enabled ?? true;
   const objectType = options.objectType;
   const objectId = options.objectId;
 
   useEffect(() => {
+    if (!enabled) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (mode === "off") {
       setData(null);
       setError(null);
@@ -47,7 +56,7 @@ export function useNextActions(route: string, options: UseNextActionsOptions = {
     return () => {
       cancelled = true;
     };
-  }, [mode, objectId, objectType, route]);
+  }, [enabled, mode, objectId, objectType, route]);
 
   return { mode, setMode, data, error, loading };
 }

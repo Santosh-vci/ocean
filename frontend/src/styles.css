@@ -600,7 +600,7 @@ tbody tr:hover,
   grid-row: 1;
   min-height: 2.75rem;
   display: grid;
-  grid-template-columns: auto minmax(16rem, 28rem) minmax(8rem, 12rem) minmax(8rem, 12rem) auto;
+  grid-template-columns: auto minmax(14rem, 26rem) minmax(8rem, 12rem) minmax(8rem, 12rem) minmax(18rem, 26rem) auto;
   align-items: center;
   gap: 0.75rem;
   border-bottom: 1px solid var(--border-subtle);
@@ -704,6 +704,277 @@ tbody tr:hover,
   color: var(--primary);
   font-size: 0.65rem;
   font-weight: 800;
+}
+
+.topbar-assistant {
+  min-width: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.assistant-mode-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(4, minmax(2.3rem, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: var(--surface-lowest);
+}
+
+.assistant-mode-toggle button {
+  min-width: 0;
+  height: 1.65rem;
+  border: 0;
+  border-right: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--on-surface-variant);
+  padding: 0 0.35rem;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-mode-toggle button:last-child {
+  border-right: 0;
+}
+
+.assistant-mode-toggle button.active {
+  background: rgba(14, 165, 233, 0.18);
+  color: var(--primary);
+}
+
+.next-action-pill {
+  min-width: 0;
+  max-width: 14rem;
+  min-height: 1.75rem;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(137, 206, 255, 0.38);
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.13);
+  color: var(--primary);
+  padding: 0 0.55rem;
+  text-align: left;
+}
+
+.next-action-pill:hover:not(:disabled) {
+  border-color: rgba(137, 206, 255, 0.62);
+}
+
+.next-action-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.next-action-pill span,
+.assistant-action-inbox span,
+.assistant-card-primary span {
+  color: var(--on-surface-variant);
+  font-size: 0.54rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.next-action-pill strong {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-action-pill.critical,
+.assistant-recommendation-card.critical,
+.assistant-inbox-list button.critical {
+  border-color: rgba(239, 68, 68, 0.52);
+  color: var(--status-critical);
+}
+
+.next-action-pill.warning,
+.assistant-recommendation-card.warning,
+.assistant-inbox-list button.warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--status-warning);
+}
+
+.next-action-pill.normal,
+.next-action-pill.info,
+.assistant-recommendation-card.normal,
+.assistant-recommendation-card.info,
+.assistant-inbox-list button.normal,
+.assistant-inbox-list button.info {
+  border-color: rgba(137, 206, 255, 0.42);
+  color: var(--primary);
+}
+
+.assistant-action-inbox {
+  display: grid;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.assistant-action-inbox .grid-header {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.7);
+}
+
+.assistant-inbox-list {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.65rem;
+}
+
+.assistant-inbox-list button,
+.assistant-inbox-blocked {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 0.5rem 0.55rem;
+  text-align: left;
+}
+
+.assistant-inbox-list button:hover:not(:disabled) {
+  background: rgba(137, 206, 255, 0.08);
+}
+
+.assistant-inbox-list button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.assistant-inbox-list strong,
+.assistant-inbox-blocked strong {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-inbox-list em,
+.assistant-inbox-blocked em,
+.assistant-card-secondary em {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.6rem;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-inbox-blocked {
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--on-surface-variant);
+}
+
+.assistant-recommendation-card {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(137, 206, 255, 0.35);
+  background: rgba(15, 23, 42, 0.82);
+  padding: 0.65rem;
+}
+
+.assistant-card-primary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.assistant-card-primary div {
+  min-width: 0;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.assistant-card-primary h2,
+.assistant-card-primary p {
+  margin: 0;
+}
+
+.assistant-card-primary h2 {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-card-primary p {
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.assistant-card-primary button,
+.assistant-card-secondary button {
+  min-height: 1.9rem;
+  border: 1px solid currentColor;
+  background: rgba(14, 165, 233, 0.12);
+  color: inherit;
+  padding: 0 0.65rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.assistant-card-primary button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.assistant-card-secondary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.45rem;
+}
+
+.assistant-card-secondary button,
+.assistant-blocked-action,
+.assistant-checklist-item {
+  min-width: 0;
+  display: grid;
+  gap: 0.08rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-lowest);
+  padding: 0.45rem 0.5rem;
+}
+
+.assistant-card-secondary button {
+  color: var(--on-surface);
+  text-align: left;
+}
+
+.assistant-card-secondary button:hover {
+  border-color: rgba(137, 206, 255, 0.45);
+  color: var(--primary);
+}
+
+.assistant-card-secondary strong {
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.assistant-card-secondary span {
+  overflow: hidden;
+  color: var(--on-surface-variant);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar {

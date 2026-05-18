@@ -1,5 +1,6 @@
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import { ActionInboxPanel } from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import type {
   AuditEvent,
@@ -11,8 +12,13 @@ import type {
   TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
+import type { ActionRecommendation, AssistantMode } from "../types/assistant";
 
 type DashboardPageProps = {
+  assistantBlockedActions?: ActionRecommendation[];
+  assistantGlobalAction?: ActionRecommendation | null;
+  assistantMode?: AssistantMode;
+  assistantPageActions?: ActionRecommendation[];
   auditEvents: AuditEvent[];
   currentUser: CurrentUser;
   dashboard: DashboardReadModel | null;
@@ -45,6 +51,10 @@ function timeLabel(value: string) {
 }
 
 export function DashboardPage({
+  assistantBlockedActions = [],
+  assistantGlobalAction = null,
+  assistantMode = "assisted",
+  assistantPageActions = [],
   auditEvents,
   currentUser,
   dashboard,
@@ -207,6 +217,15 @@ export function DashboardPage({
         </section>
 
         <aside className="board-surface situation-action-rail">
+          {assistantMode !== "off" ? (
+            <ActionInboxPanel
+              blockedActions={assistantBlockedActions}
+              globalAction={assistantGlobalAction}
+              onNavigate={onNavigate}
+              pageActions={assistantPageActions}
+            />
+          ) : null}
+
           <div className="grid-header">
             <div>
               <SvgIcon name="dashboard" />

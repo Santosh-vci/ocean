@@ -1,8 +1,14 @@
-﻿import type { CurrentUser } from "../types";
+import type { CurrentUser } from "../types";
+import type { ActionRecommendation, AssistantMode } from "../types/assistant";
+import { AssistantModeToggle, NextActionPill } from "./assistant";
 import { SvgIcon } from "./SvgIcon";
 
 type TopbarProps = {
+  assistantAction: ActionRecommendation | null;
+  assistantMode: AssistantMode;
   currentUser: CurrentUser;
+  onAssistantModeChange: (mode: AssistantMode) => void;
+  onAssistantNavigate: (path: string) => void;
   onOpenApps: () => void;
   onOpenNotifications: () => void;
   onLogout: () => void;
@@ -10,7 +16,11 @@ type TopbarProps = {
 };
 
 export function Topbar({
+  assistantAction,
+  assistantMode,
   currentUser,
+  onAssistantModeChange,
+  onAssistantNavigate,
   onOpenApps,
   onOpenNotifications,
   onLogout,
@@ -44,6 +54,11 @@ export function Topbar({
       <div className="topbar-scope">
         <span>Authority</span>
         <strong>{currentRole}</strong>
+      </div>
+
+      <div className="topbar-assistant">
+        <NextActionPill action={assistantAction} onNavigate={onAssistantNavigate} />
+        <AssistantModeToggle mode={assistantMode} onChange={onAssistantModeChange} />
       </div>
 
       <div className="topbar-actions">

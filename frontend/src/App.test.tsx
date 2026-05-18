@@ -21,6 +21,7 @@ import type {
 } from "./types";
 
 beforeEach(() => {
+  window.localStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn().mockImplementation((input: string) => {

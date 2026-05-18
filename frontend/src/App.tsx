@@ -3,6 +3,7 @@
 import { AuditStrip } from "./components/AuditStrip";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
+import { useNextActions } from "./hooks/useNextActions";
 import { apiFetch, getCsrfToken, login, logout } from "./lib/api";
 import { canAccess, visibleNavItems, visibleNavModules } from "./lib/navigation";
 import { AuditPage } from "./pages/AuditPage";
@@ -215,6 +216,10 @@ function App() {
   const canRunSimulation = currentUser
     ? canEditSchedule && canAccess(currentUser.permissions, "simulation.run")
     : false;
+  const firstAccessiblePath = navItems[0]?.path ?? "/dashboard/situation";
+  const routeIsAllowed = navItems.some((item) => item.path === activePath);
+  const route = routeIsAllowed ? activePath : firstAccessiblePath;
+  const assistant = useNextActions(route, { enabled: Boolean(currentUser) });
 
   const refreshWorkspaceData = useCallback(async () => {
     if (!currentUser) {
@@ -1015,19 +1020,27 @@ function App() {
     return <LoginPage onSubmit={handleLogin} />;
   }
 
-  const firstAccessiblePath = navItems[0]?.path ?? "/dashboard/situation";
-  const routeIsAllowed = navItems.some((item) => item.path === activePath);
-  const route = routeIsAllowed ? activePath : firstAccessiblePath;
   const activePlanStatus = schedulingOverview?.activePlanVersion?.status;
   const activePlanIsEditable = Boolean(
     activePlanStatus && !["published", "superseded"].includes(activePlanStatus),
   );
   const isWorkspaceActionRunning = Boolean(actionInFlight);
+  const assistantPageProps = {
+    assistantBlockedActions: assistant.data?.blockedActions ?? [],
+    assistantChecklist: assistant.data?.checklist ?? [],
+    assistantPageActions: assistant.data?.pageActions ?? [],
+    assistantRowActions: assistant.data?.rowActions ?? [],
+    onAssistantNavigate: handleNavigate,
+  };
 
   return (
     <main className={sidebarCollapsed ? "operations-shell sidebar-is-collapsed" : "operations-shell"}>
       <Topbar
+        assistantAction={assistant.data?.globalNextAction ?? null}
+        assistantMode={assistant.mode}
         currentUser={currentUser}
+        onAssistantModeChange={assistant.setMode}
+        onAssistantNavigate={handleNavigate}
         onLogout={handleLogout}
         onOpenApps={handleOpenApps}
         onOpenNotifications={handleOpenNotifications}
@@ -1061,6 +1074,7 @@ function App() {
         {route === "/admin/audit-logs" && canViewAudit ? <AuditPage events={auditEvents} /> : null}
         {route === "/admin/export-handoff" && canViewExports ? (
           <ExportHandoffPage
+            {...assistantPageProps}
             canGenerate={canGenerateExports}
             error={exportError}
             isGenerating={isExportGenerating}
@@ -1090,6 +1104,7 @@ function App() {
         ) : null}
         {route === "/constraints/tide-bridge" && canViewSchedule ? (
           <TideBridgePage
+            {...assistantPageProps}
             canEdit={canEditSchedule}
             confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
@@ -1101,6 +1116,7 @@ function App() {
         ) : null}
         {route === "/operations/tug-barge-assignment" && canViewSchedule ? (
           <TugBargeAssignmentPage
+            {...assistantPageProps}
             canEdit={canEditSchedule}
             canExport={canGenerateExports}
             isActionRunning={isWorkspaceActionRunning}
@@ -1141,6 +1157,7 @@ function App() {
         ) : null}
         {route === "/schedule/published-plan" && canViewSchedule ? (
           <PublishedPlanPage
+            {...assistantPageProps}
             canCreateDraft={canEditSchedule}
             isActionRunning={isWorkspaceActionRunning}
             onCreateDraft={handleCreateDraft}
@@ -1150,6 +1167,7 @@ function App() {
         ) : null}
         {route === "/exceptions/center" && canViewSchedule ? (
           <ExceptionCenterPage
+            {...assistantPageProps}
             canEdit={canEditSchedule && activePlanIsEditable}
             confirmedOperationalEvents={confirmedOperationalEvents}
             isActionRunning={isWorkspaceActionRunning}
@@ -1164,6 +1182,7 @@ function App() {
         ) : null}
         {route === "/recovery/recommendations" && canViewSchedule ? (
           <RecommendationConsolePage
+            {...assistantPageProps}
             canEdit={canEditSchedule && activePlanIsEditable}
             isActionRunning={isWorkspaceActionRunning}
             onMaterializeRecommendation={handleMaterializeRecommendation}
@@ -1173,6 +1192,7 @@ function App() {
         ) : null}
         {route === "/simulation/workspace" && canEditSchedule ? (
           <SimulationWorkspacePage
+            {...assistantPageProps}
             canEdit={canEditSchedule && activePlanIsEditable}
             isActionRunning={isWorkspaceActionRunning}
             onCreateAssumption={handleCreateAssumption}
@@ -1186,6 +1206,7 @@ function App() {
         ) : null}
         {route === "/approvals/publishing" && canApproveSchedule ? (
           <ApprovalsPublishingPage
+            {...assistantPageProps}
             canEdit={canApproveSchedule}
             canPublish={canPublishSchedule}
             isActionRunning={isWorkspaceActionRunning}
@@ -1216,6 +1237,7 @@ function App() {
         ) : null}
         {route === "/operations/event-confirmation" && canViewOperations ? (
           <OperationsEventConsolePage
+            {...assistantPageProps}
             candidates={operationCandidates}
             confirmedEvents={confirmedOperationalEvents}
             devices={operationDevices}
@@ -1228,6 +1250,10 @@ function App() {
         ) : null}
         {route === "/dashboard/situation" ? (
           <DashboardPage
+            assistantBlockedActions={assistant.data?.blockedActions ?? []}
+            assistantGlobalAction={assistant.data?.globalNextAction ?? null}
+            assistantMode={assistant.mode}
+            assistantPageActions={assistant.data?.pageActions ?? []}
             auditEvents={auditEvents}
             currentUser={currentUser}
             dashboard={dashboardReadModel}

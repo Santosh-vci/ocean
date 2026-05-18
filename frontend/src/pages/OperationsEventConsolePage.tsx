@@ -2,6 +2,10 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type {
   ConfirmedOperationalEventRecord,
   DeviceEndpointRecord,
@@ -11,7 +15,7 @@ import type {
 
 type CandidateStatusFilter = "pending" | "confirmed" | "rejected" | "all";
 
-type OperationsEventConsolePageProps = {
+type OperationsEventConsolePageProps = AssistantRecommendationSurfaceProps & {
   candidates: OperationalEventCandidateRecord[];
   confirmedEvents: ConfirmedOperationalEventRecord[];
   devices: DeviceEndpointRecord[];
@@ -86,12 +90,17 @@ function payloadSummary(payload: Record<string, unknown>) {
 }
 
 export function OperationsEventConsolePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   candidates,
   confirmedEvents,
   devices,
   overview,
   permissions,
   isActionRunning = false,
+  onAssistantNavigate,
   onConfirm,
   onReject,
 }: OperationsEventConsolePageProps) {
@@ -167,6 +176,13 @@ export function OperationsEventConsolePage({
           <span className="phase-chip">Actualization desk</span>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip six-up event-kpis">
         <div><span>Pending</span><strong className={overview?.candidates.pending ? "warning-text" : ""}>{overview?.candidates.pending ?? 0}</strong></div>

@@ -3,6 +3,10 @@ import { useMemo } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
+import {
   BRIDGE_EVENT_KINDS,
   latestCandidate,
   latestConfirmedEvent,
@@ -21,7 +25,7 @@ import type {
   TideWindowRecord,
 } from "../types";
 
-type TideBridgePageProps = {
+type TideBridgePageProps = AssistantRecommendationSurfaceProps & {
   overview: PlanningOverview | null;
   canEdit: boolean;
   isActionRunning: boolean;
@@ -179,9 +183,14 @@ function observedStateLabel(
 }
 
 export function TideBridgePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit,
   isActionRunning,
+  onAssistantNavigate,
   onEnterOperatingWindows,
   operationCandidates = EMPTY_CANDIDATES,
   confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
@@ -256,6 +265,13 @@ export function TideBridgePage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up planning-kpis">
         <div>

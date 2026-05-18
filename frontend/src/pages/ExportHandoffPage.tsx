@@ -2,6 +2,10 @@ import { useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { ExportFormat, ExportJobRecord, ExportOverview, ExportType } from "../types";
 
 type ExportCommand = {
@@ -9,7 +13,7 @@ type ExportCommand = {
   exportFormat: ExportFormat;
 };
 
-type ExportHandoffPageProps = {
+type ExportHandoffPageProps = AssistantRecommendationSurfaceProps & {
   overview: ExportOverview | null;
   canGenerate: boolean;
   isLoading: boolean;
@@ -71,11 +75,16 @@ function sizeLabel(bytes: number) {
 }
 
 export function ExportHandoffPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canGenerate,
   isLoading,
   isGenerating,
   error,
+  onAssistantNavigate,
   onGenerate,
 }: ExportHandoffPageProps) {
   const exports = overview?.exports ?? EMPTY_EXPORTS;
@@ -103,6 +112,13 @@ export function ExportHandoffPage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up export-kpis">
         <div>

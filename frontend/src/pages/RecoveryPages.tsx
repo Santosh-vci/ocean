@@ -2,6 +2,10 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import {
   deriveOperationalExceptions,
@@ -53,7 +57,7 @@ export type ScenarioAssumptionDraft = {
   effective_to?: string | null;
 };
 
-type RecoveryPageProps = {
+type RecoveryPageProps = AssistantRecommendationSurfaceProps & {
   overview: SchedulingOverview | null;
   canEdit?: boolean;
   isActionRunning?: boolean;
@@ -435,9 +439,14 @@ function assumptionSummary(assumption: ScenarioAssumptionRecord) {
 }
 
 export function ExceptionCenterPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onCreateScenario,
   onGenerateRecoveryOptions,
   onPublishTriage,
@@ -592,6 +601,13 @@ export function ExceptionCenterPage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip seven-up recovery-kpis">
         <div><span>Active</span><strong>{activeQueueCount}</strong></div>
@@ -912,9 +928,14 @@ export function ExceptionCenterPage({
 }
 
 export function RecommendationConsolePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onMaterializeRecommendation,
   onNavigate,
 }: RecoveryPageProps) {
@@ -997,6 +1018,13 @@ export function RecommendationConsolePage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip six-up recovery-kpis">
         <div><span>Latest run</span><strong>{selectedRun?.run_id ?? "NONE"}</strong></div>
@@ -1172,9 +1200,14 @@ export function RecommendationConsolePage({
 }
 
 export function SimulationWorkspacePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onCreateAssumption,
   onCreateScenario,
   onPromoteScenario,
@@ -1439,6 +1472,13 @@ export function SimulationWorkspacePage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip five-up recovery-kpis">
         <div><span>Active scenario</span><strong>{scenario?.scenario_id ?? "NONE"}</strong></div>
@@ -1958,9 +1998,14 @@ export function SimulationWorkspacePage({
 }
 
 export function ApprovalsPublishingPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onApprove,
   onPublish,
   onReject,
@@ -1993,8 +2038,15 @@ export function ApprovalsPublishingPage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
-        <div className="metric-strip seven-up recovery-kpis">
+      <div className="metric-strip seven-up recovery-kpis">
         <div><span>Pending approvals</span><strong>{requests.filter((item) => item.status === "pending").length}</strong></div>
         <div><span>Critical</span><strong className="critical-text">{overview?.validation.criticalConflictCount ?? 0}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overview?.validation.overrideCount ?? 0}</strong></div>

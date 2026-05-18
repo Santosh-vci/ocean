@@ -3,6 +3,10 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
+import {
   confirmedEventForCandidate,
   CTS_EVENT_KINDS,
   JETTY_EVENT_KINDS,
@@ -22,7 +26,7 @@ import type {
   TripRecord,
 } from "../types";
 
-type LogisticsPageProps = {
+type LogisticsPageProps = AssistantRecommendationSurfaceProps & {
   overview: SchedulingOverview | null;
   canEdit?: boolean;
   canCreateDraft?: boolean;
@@ -234,10 +238,15 @@ function CandidateReviewPanel({
 }
 
 export function TugBargeAssignmentPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   canExport = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onExport,
   onRegenerate,
 }: LogisticsPageProps) {
@@ -278,6 +287,13 @@ export function TugBargeAssignmentPage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up planning-kpis">
         <div><span>Operational</span><strong className="success-text">{operationalCount}</strong></div>
@@ -743,9 +759,14 @@ export function CtsOperationsPage({
 }
 
 export function PublishedPlanPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canCreateDraft = false,
   isActionRunning = false,
+  onAssistantNavigate,
   onCreateDraft,
   onSubmitApproval,
 }: LogisticsPageProps) {
@@ -784,6 +805,13 @@ export function PublishedPlanPage({
           </button>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="published-layout">
         <section className="board-surface schedule-gantt-panel">
