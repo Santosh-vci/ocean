@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from django.utils import timezone
+
 from .permissions import has_permission
 from .registry import get_action_definition, get_route_action_ids
 
@@ -38,6 +40,9 @@ class ShapedRecommendations:
     page_actions: list[ActionRecommendation]
     row_actions: list[ActionRecommendation]
     blocked_actions: list[ActionRecommendation]
+
+
+VALID_ASSISTANT_MODES = {"off", "assisted", "guided", "supervisor"}
 
 
 def build_recommendation(
@@ -162,13 +167,9 @@ def shape_recommendations(
         item
         for item in sorted_enabled
         if item.target_object_type
-        and (
-            ctx.object_type is None
-            or (
-                item.target_object_type == ctx.object_type
-                and item.target_object_id == ctx.object_id
-            )
-        )
+        and ctx.object_type is not None
+        and item.target_object_type == ctx.object_type
+        and item.target_object_id == ctx.object_id
     ]
     page_actions = [
         item
@@ -184,6 +185,34 @@ def shape_recommendations(
         row_actions=row_actions[:limit],
         blocked_actions=sorted_blocked[:limit],
     )
+
+
+def get_next_actions(
+    user,
+    route: str | None = None,
+    object_type: str | None = None,
+    object_id: str | int | None = None,
+    mode: str = "assisted",
+    limit: int = 10,
+) -> dict[str, Any]:
+    from .rules import evaluate_rules
+    from .selectors import build_assistant_context
+
+    resolved_mode = mode if mode in VALID_ASSISTANT_MODES else "assisted"
+    bounded_limit = max(1, min(limit, 50))
+    ctx = build_assistant_context(
+        user=user,
+        route=route,
+        object_type=object_type,
+        object_id=object_id,
+        mode=resolved_mode,
+    )
+    if resolved_mode == "off":
+        return _response_payload(ctx, ShapedRecommendations(None, [], [], []))
+
+    recommendations = evaluate_rules(ctx)
+    shaped = shape_recommendations(ctx, recommendations, limit=bounded_limit)
+    return _response_payload(ctx, shaped)
 
 
 def _blocked_copy(
@@ -248,3 +277,28 @@ def _action_affects_current_route(
     if item.route == route:
         return True
     return item.action_id in get_route_action_ids(route)
+
+
+def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
+    return {
+        "generated_at": timezone.now(),
+        "mode": ctx.mode,
+        "context": {
+            "route": ctx.route,
+            "object_type": ctx.object_type,
+            "object_id": ctx.object_id,
+            "active_plan_version_id": ctx.active_plan_version_id,
+            "active_plan_status": ctx.active_plan_status,
+            "validation_status": ctx.validation_status,
+            "role_codes": sorted(ctx.role_codes),
+            "demand_count": ctx.demand_count,
+            "blocking_conflict_count": ctx.blocking_conflict_count,
+            "latest_optimizer_run_id": ctx.latest_optimizer_run_id,
+            "top_recovery_recommendation_id": ctx.top_recovery_recommendation_id,
+        },
+        "global_next_action": shaped.global_next_action,
+        "page_actions": shaped.page_actions,
+        "row_actions": shaped.row_actions,
+        "blocked_actions": shaped.blocked_actions,
+        "checklist": [],
+    }

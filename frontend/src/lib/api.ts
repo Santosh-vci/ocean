@@ -1,4 +1,6 @@
 import type { CurrentUser } from "../types";
+import type { AssistantMode, NextActionResponse } from "../types/assistant";
+import { normalizeNextActionResponse } from "../types/assistant";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -51,4 +53,27 @@ export async function logout(): Promise<void> {
       "X-CSRFToken": csrfToken,
     },
   });
+}
+
+export type NextActionParams = {
+  route?: string;
+  objectType?: string;
+  objectId?: string | number;
+  mode?: AssistantMode;
+  limit?: number;
+};
+
+export async function fetchNextActions(
+  params: NextActionParams = {},
+): Promise<NextActionResponse> {
+  const query = new URLSearchParams();
+  if (params.route) query.set("route", params.route);
+  if (params.objectType) query.set("object_type", params.objectType);
+  if (params.objectId !== undefined) query.set("object_id", String(params.objectId));
+  if (params.mode) query.set("mode", params.mode);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const raw = await apiFetch<unknown>(`/assistant/next-actions/${suffix}`);
+  return normalizeNextActionResponse(raw);
 }
