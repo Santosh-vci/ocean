@@ -118,6 +118,13 @@ export const NAV_MODULES: NavModule[] = [
         icon: "operations",
       },
       {
+        path: "/operations/event-confirmation",
+        label: "Event Confirmation",
+        module: "Operations",
+        requiredPermission: "operations.view",
+        icon: "audit",
+      },
+      {
         path: "/schedule/published-plan",
         label: "Published Plan & Schedule",
         module: "Operations",

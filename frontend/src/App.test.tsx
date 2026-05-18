@@ -5,6 +5,7 @@ import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
 import { JettyLoadingPage } from "./pages/LogisticsPages";
 import { LiveResourceMapPage } from "./pages/MapPage";
+import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import { ExceptionCenterPage, SimulationWorkspacePage } from "./pages/RecoveryPages";
 import type { SchedulingOverview } from "./types";
 
@@ -58,6 +59,12 @@ test("shows implemented admin submodules without exposing future locked routes",
     "Exception Center",
     "Master Data Console",
   ]);
+});
+
+test("exposes event confirmation through operations visibility", () => {
+  expect(visibleNavItems(["dashboard.view", "operations.view"]).map((item) => item.label)).toContain(
+    "Event Confirmation",
+  );
 });
 
 test("exposes recovery routes by workflow permission", () => {
@@ -196,6 +203,56 @@ test("force-start jetty captures an effective start time", () => {
   fireEvent.click(screen.getByRole("button", { name: "Apply governed override" }));
 
   expect(onForceStartJetty).toHaveBeenCalledWith(101, expect.stringContaining("T"));
+});
+
+test("operations event console confirms pending evidence with reason capture", () => {
+  const onConfirm = vi.fn();
+  render(
+    <OperationsEventConsolePage
+      candidates={[{
+        id: 1,
+        candidate_id: "OEC-001",
+        feed: 1,
+        feed_ref: "SYN-OPS-PHASE4",
+        device: 1,
+        device_ref: "JETTY-JTY-SUARAN-OPS",
+        source_kind: "synthetic",
+        event_kind: "jetty_loading_started",
+        asset_type: "jetty",
+        asset_code: "JTY-SUARAN",
+        trip: 201,
+        trip_ref: "PI-PLAN-UI-0001",
+        assignment: 101,
+        assignment_ref: "PI-PLAN-UI-0001",
+        schedule_event: 301,
+        schedule_event_type: "load_start",
+        schedule_event_planned_at: "2026-05-17T01:30:00.000Z",
+        schedule_event_actual_at: null,
+        event_at: "2026-05-17T01:42:00.000Z",
+        received_at: "2026-05-17T01:43:00.000Z",
+        confidence_score: "94.00",
+        dedupe_key: "phase4-event-1",
+        status: "pending",
+        payload: { source_event_id: "PLC-LOAD-START-1" },
+        raw_payload_ref: "",
+        metadata: {},
+        confirmed_event_ref: null,
+        created_at: "2026-05-17T01:43:00.000Z",
+        updated_at: "2026-05-17T01:43:00.000Z",
+      }]}
+      confirmedEvents={[]}
+      devices={[]}
+      onConfirm={onConfirm}
+      overview={null}
+      permissions={["operations.confirm_jetty"]}
+    />,
+  );
+
+  expect(screen.getByText("Operations Event Console")).toBeInTheDocument();
+  expect(screen.getAllByText("+12m").length).toBeGreaterThan(0);
+  expect(screen.getByLabelText("Confirmation reason")).toHaveValue("operator_verified");
+  fireEvent.click(screen.getByRole("button", { name: "Confirm event" }));
+  expect(onConfirm).toHaveBeenCalledWith(1, expect.stringContaining("T"), "operator_verified");
 });
 
 test("exception center renders calculated impact chain nodes", () => {

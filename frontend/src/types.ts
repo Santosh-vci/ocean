@@ -1023,6 +1023,123 @@ export type OperationsHealthSummary = {
   calculatedAt: string;
 };
 
+export type DeviceEndpointRecord = {
+  id: number;
+  device_id: string;
+  feed: number;
+  feed_ref: string;
+  device_type: string;
+  asset_type: string;
+  asset_code: string;
+  location: number | null;
+  location_code: string | null;
+  geofence: number | null;
+  geofence_ref: string | null;
+  status: string;
+  last_seen_at: string | null;
+  latest_health: {
+    snapshotId: string;
+    healthStatus: string;
+    observedAt: string;
+    receivedAt: string;
+    ageSeconds: number;
+    gapSeconds: number | null;
+    batteryLevel: number | null;
+    networkStatus: string;
+    powerStatus: string;
+  } | null;
+  firmware_version: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OperationalEventCandidateRecord = {
+  id: number;
+  candidate_id: string;
+  feed: number;
+  feed_ref: string;
+  device: number | null;
+  device_ref: string | null;
+  source_kind: string;
+  event_kind: string;
+  asset_type: string;
+  asset_code: string;
+  trip: number | null;
+  trip_ref: string | null;
+  assignment: number | null;
+  assignment_ref: string | null;
+  schedule_event: number | null;
+  schedule_event_type: string | null;
+  schedule_event_planned_at: string | null;
+  schedule_event_actual_at: string | null;
+  event_at: string;
+  received_at: string;
+  confidence_score: string;
+  dedupe_key: string;
+  status: string;
+  payload: Record<string, unknown>;
+  raw_payload_ref: string;
+  metadata: Record<string, unknown>;
+  confirmed_event_ref: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConfirmedOperationalEventRecord = {
+  id: number;
+  event_id: string;
+  candidate: number | null;
+  candidate_ref: string | null;
+  event_kind: string;
+  plan_version: number | null;
+  plan_version_ref: string | null;
+  trip: number | null;
+  trip_ref: string | null;
+  assignment: number | null;
+  assignment_ref: string | null;
+  schedule_event: number | null;
+  schedule_event_type: string | null;
+  schedule_event_planned_at: string | null;
+  schedule_event_actual_at: string | null;
+  actual_at: string;
+  confirmed_quantity_mt: string | null;
+  confirmed_rate_tph: string | null;
+  confirmed_grade_code: string;
+  confirmed_by: number | null;
+  confirmed_by_email: string | null;
+  confirmed_at: string;
+  confirmation_mode: string;
+  reason_code: string;
+  before_state: Record<string, unknown>;
+  after_state: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type OperationsOverviewRecord = {
+  feeds: {
+    total: number;
+    active: number;
+    degraded: number;
+  };
+  devices: {
+    total: number;
+    active: number;
+    offline: number;
+  };
+  candidates: {
+    pending: number;
+    confirmed: number;
+    rejected: number;
+    duplicates: number;
+  };
+  confirmedEvents: number;
+  actualizations: number;
+  edgeBatches: number;
+  health: OperationsHealthSummary;
+};
+
 export type SchedulingOverview = {
   plans: PlanRecord[];
   planVersions: PlanVersionRecord[];

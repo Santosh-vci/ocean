@@ -424,6 +424,7 @@ def _execution_messages(
             asset_type=OperationsAssetType.JETTY,
             asset_code=assignment.jetty.code,
             dedupe_key="phase4-load-complete",
+            confidence_score=Decimal("65.00"),
             confirmed_quantity_mt=Decimal("12650.00"),
             payload={"operator": "jetty.operator.synthetic"},
         ),

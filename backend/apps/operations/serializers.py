@@ -172,6 +172,14 @@ class OperationalEventCandidateSerializer(serializers.ModelSerializer):
     trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
     assignment_ref = serializers.CharField(source="assignment.trip.trip_id", read_only=True)
     schedule_event_type = serializers.CharField(source="schedule_event.event_type", read_only=True)
+    schedule_event_planned_at = serializers.DateTimeField(
+        source="schedule_event.planned_at",
+        read_only=True,
+    )
+    schedule_event_actual_at = serializers.DateTimeField(
+        source="schedule_event.actual_at",
+        read_only=True,
+    )
     confirmed_event_ref = serializers.SerializerMethodField()
 
     class Meta:
@@ -193,6 +201,8 @@ class OperationalEventCandidateSerializer(serializers.ModelSerializer):
             "assignment_ref",
             "schedule_event",
             "schedule_event_type",
+            "schedule_event_planned_at",
+            "schedule_event_actual_at",
             "event_at",
             "received_at",
             "confidence_score",
@@ -213,6 +223,8 @@ class OperationalEventCandidateSerializer(serializers.ModelSerializer):
             "trip_ref",
             "assignment_ref",
             "schedule_event_type",
+            "schedule_event_planned_at",
+            "schedule_event_actual_at",
             "status",
             "metadata",
             "confirmed_event_ref",
@@ -299,6 +311,14 @@ class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
     trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
     assignment_ref = serializers.CharField(source="assignment.trip.trip_id", read_only=True)
     schedule_event_type = serializers.CharField(source="schedule_event.event_type", read_only=True)
+    schedule_event_planned_at = serializers.DateTimeField(
+        source="schedule_event.planned_at",
+        read_only=True,
+    )
+    schedule_event_actual_at = serializers.DateTimeField(
+        source="schedule_event.actual_at",
+        read_only=True,
+    )
     confirmed_by_email = serializers.EmailField(source="confirmed_by.email", read_only=True)
 
     class Meta:
@@ -317,6 +337,8 @@ class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
             "assignment_ref",
             "schedule_event",
             "schedule_event_type",
+            "schedule_event_planned_at",
+            "schedule_event_actual_at",
             "actual_at",
             "confirmed_quantity_mt",
             "confirmed_rate_tph",
@@ -339,6 +361,8 @@ class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):
             "trip_ref",
             "assignment_ref",
             "schedule_event_type",
+            "schedule_event_planned_at",
+            "schedule_event_actual_at",
             "confirmed_by",
             "confirmed_by_email",
             "confirmed_at",

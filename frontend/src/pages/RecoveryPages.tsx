@@ -397,7 +397,6 @@ export function ExceptionCenterPage({
   const critical = conflicts.filter((conflict) => conflict.severity === "critical").length;
   const warning = conflicts.filter((conflict) => conflict.severity === "warning").length;
   const pending = conflicts.filter((conflict) => conflict.is_blocking).length;
-  const resolved = conflicts.filter((conflict) => conflict.resolved_at).length;
   const trackingCritical = openTrackingAlerts.filter((alert) => alert.severity === "critical").length;
   const trackingWarning = openTrackingAlerts.filter((alert) => alert.severity === "warning").length;
   const healthCritical = healthRisks.filter((risk) => risk.severity === "critical").length;

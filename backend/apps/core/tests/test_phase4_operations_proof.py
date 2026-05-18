@@ -31,6 +31,7 @@ def test_phase4_operations_proof_command_creates_repeatable_batch_evidence():
     assert evidence["operationsSummary"]["pendingCandidateCount"] >= 1
     assert evidence["operationsSummary"]["deviceOfflineRiskCount"] >= 1
     assert evidence["rerun"]["idempotent"] is True
+    assert "/operations/event-confirmation" in evidence["browserEvidenceTargets"]
     assert EdgeEventBatch.objects.count() == 2
     assert OperationalEventCandidate.objects.filter(
         event_kind=OperationalEventKind.DEVICE_OFFLINE

@@ -85,6 +85,7 @@ class Phase4OperationsProofRunner:
             "audit": audit,
             "browserEvidenceTargets": [
                 "/dashboard/situation",
+                "/operations/event-confirmation",
                 "/exceptions/center",
                 "/admin/audit-logs",
             ],

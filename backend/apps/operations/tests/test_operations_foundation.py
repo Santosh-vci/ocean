@@ -361,6 +361,9 @@ def test_low_confidence_trusted_ingest_remains_pending_without_actualization():
     assert response.status_code == 201
     assert response.data["auto_confirmed"] is False
     assert "confidence_below_threshold" in response.data["trust_evaluation"]["reasons"]
+    assert response.data["candidate"]["schedule_event_type"] == ScheduleEvent.EventType.LOAD_START
+    assert response.data["candidate"]["schedule_event_planned_at"] is not None
+    assert response.data["candidate"]["schedule_event_actual_at"] is None
     assert candidate.status == OperationalEventCandidate.Status.PENDING
     assert load_start.actual_at is None
     assert ConfirmedOperationalEvent.objects.filter(candidate=candidate).count() == 0

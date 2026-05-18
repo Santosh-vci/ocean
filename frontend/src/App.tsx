@@ -19,6 +19,7 @@ import {
 import { LiveResourceMapPage } from "./pages/MapPage";
 import { MasterDataPage } from "./pages/MasterDataPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
+import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import { RbacPage } from "./pages/RbacPage";
 import {
   ApprovalsPublishingPage,
@@ -32,6 +33,7 @@ import type {
   AuditEvent,
   CurrentUser,
   DashboardReadModel,
+  DeviceEndpointRecord,
   ExportFormat,
   ExportJobRecord,
   ExportOverview,
@@ -44,6 +46,9 @@ import type {
   MasterDataRecord,
   MasterDataOverview,
   MovementEventRecord,
+  OperationalEventCandidateRecord,
+  ConfirmedOperationalEventRecord,
+  OperationsOverviewRecord,
   ApprovalRequestRecord,
   OverrideRequestRecord,
   PlanRecord,
@@ -122,6 +127,10 @@ function App() {
   const [latestAssetStates, setLatestAssetStates] = useState<LatestAssetStateRecord[]>([]);
   const [geofenceZones, setGeofenceZones] = useState<GeofenceZoneRecord[]>([]);
   const [movementEvents, setMovementEvents] = useState<MovementEventRecord[]>([]);
+  const [operationsOverview, setOperationsOverview] = useState<OperationsOverviewRecord | null>(null);
+  const [operationCandidates, setOperationCandidates] = useState<OperationalEventCandidateRecord[]>([]);
+  const [confirmedOperationalEvents, setConfirmedOperationalEvents] = useState<ConfirmedOperationalEventRecord[]>([]);
+  const [operationDevices, setOperationDevices] = useState<DeviceEndpointRecord[]>([]);
   const [etaProjections, setEtaProjections] = useState<LiveEtaProjectionRecord[]>([]);
   const [trackingAlerts, setTrackingAlerts] = useState<TrackingAlertRecord[]>([]);
   const [telemetryReplayRuns, setTelemetryReplayRuns] = useState<TelemetryReplayRunRecord[]>([]);
@@ -170,6 +179,9 @@ function App() {
   const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
   const canViewTelemetry = currentUser
     ? canAccess(currentUser.permissions, "telemetry.view")
+    : false;
+  const canViewOperations = currentUser
+    ? canAccess(currentUser.permissions, "operations.view")
     : false;
   const canRunTelemetryReplay = currentUser
     ? canAccess(currentUser.permissions, "telemetry.ingest")
@@ -276,6 +288,26 @@ function App() {
       setTelemetryReplayRuns([]);
     }
 
+    if (canViewOperations) {
+      refreshes.push(apiFetch<OperationsOverviewRecord>("/operations/overview/")
+        .then(setOperationsOverview)
+        .catch(() => setOperationsOverview(null)));
+      refreshes.push(apiFetch<OperationalEventCandidateRecord[]>("/operations/event-candidates/")
+        .then(setOperationCandidates)
+        .catch(() => setOperationCandidates([])));
+      refreshes.push(apiFetch<ConfirmedOperationalEventRecord[]>("/operations/confirmed-events/")
+        .then(setConfirmedOperationalEvents)
+        .catch(() => setConfirmedOperationalEvents([])));
+      refreshes.push(apiFetch<DeviceEndpointRecord[]>("/operations/devices/")
+        .then(setOperationDevices)
+        .catch(() => setOperationDevices([])));
+    } else {
+      setOperationsOverview(null);
+      setOperationCandidates([]);
+      setConfirmedOperationalEvents([]);
+      setOperationDevices([]);
+    }
+
     await Promise.all(refreshes);
   }, [
     canViewAdmin,
@@ -284,6 +316,7 @@ function App() {
     canViewExports,
     canViewMasterData,
     canViewSchedule,
+    canViewOperations,
     canViewTelemetry,
     currentUser,
   ]);
@@ -327,6 +360,10 @@ function App() {
     setLatestAssetStates([]);
     setGeofenceZones([]);
     setMovementEvents([]);
+    setOperationsOverview(null);
+    setOperationCandidates([]);
+    setConfirmedOperationalEvents([]);
+    setOperationDevices([]);
     setEtaProjections([]);
     setTrackingAlerts([]);
     setTelemetryReplayRuns([]);
@@ -607,6 +644,54 @@ function App() {
       return `Governed jetty override applied: ${override.reason_code.replaceAll("_", " ")}${
         typeof delay === "number" ? ` (${delay}m impact)` : ""
       }`;
+    });
+  }
+
+  async function handleConfirmOperationalEvent(
+    candidateId: number,
+    actualAt: string,
+    reasonCode: string,
+  ) {
+    await runWorkspaceAction("Confirm operational event", async () => {
+      const csrfToken = await getCsrfToken();
+      const event = await apiFetch<ConfirmedOperationalEventRecord>(
+        `/operations/event-candidates/${candidateId}/confirm/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            actual_at: actualAt,
+            reason_code: reasonCode,
+          }),
+        },
+      );
+      return `Operational event confirmed: ${event.event_id}`;
+    });
+  }
+
+  async function handleRejectOperationalEvent(
+    candidateId: number,
+    reasonCode: string,
+    notes: string,
+  ) {
+    await runWorkspaceAction("Reject operational event", async () => {
+      const csrfToken = await getCsrfToken();
+      const candidate = await apiFetch<OperationalEventCandidateRecord>(
+        `/operations/event-candidates/${candidateId}/reject/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            reason_code: reasonCode,
+            notes,
+          }),
+        },
+      );
+      return `Operational event rejected: ${candidate.candidate_id}`;
     });
   }
 
@@ -1027,6 +1112,18 @@ function App() {
             overview={schedulingOverview}
             replayRuns={telemetryReplayRuns}
             trackingAlerts={trackingAlerts}
+          />
+        ) : null}
+        {route === "/operations/event-confirmation" && canViewOperations ? (
+          <OperationsEventConsolePage
+            candidates={operationCandidates}
+            confirmedEvents={confirmedOperationalEvents}
+            devices={operationDevices}
+            isActionRunning={isWorkspaceActionRunning}
+            onConfirm={handleConfirmOperationalEvent}
+            onReject={handleRejectOperationalEvent}
+            overview={operationsOverview}
+            permissions={currentUser.permissions}
           />
         ) : null}
         {route === "/dashboard/situation" ? (
