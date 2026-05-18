@@ -446,6 +446,14 @@ class RecoveryRecommendationSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class OptimizerRunGenerateSerializer(serializers.Serializer):
+    input_snapshot = serializers.PrimaryKeyRelatedField(
+        queryset=RecoveryInputSnapshot.objects.all(),
+    )
+    objective_weights = serializers.JSONField(required=False, default=dict)
+    max_candidates = serializers.IntegerField(required=False, min_value=1, max_value=10, default=5)
+
+
 class OptimizerRunSerializer(serializers.ModelSerializer):
     input_snapshot_ref = serializers.CharField(source="input_snapshot.snapshot_id", read_only=True)
     plan_version_ref = serializers.CharField(source="plan_version", read_only=True)

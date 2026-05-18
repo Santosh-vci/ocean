@@ -52,6 +52,7 @@ router.register(
     basename="recovery-input-snapshot",
 )
 router.register("scheduling/optimizer-runs", OptimizerRunViewSet, basename="optimizer-run")
+router.register("scheduling/recovery-runs", OptimizerRunViewSet, basename="recovery-run")
 router.register(
     "scheduling/recovery-recommendations",
     RecoveryRecommendationViewSet,

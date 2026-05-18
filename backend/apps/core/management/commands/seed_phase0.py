@@ -74,7 +74,10 @@ from apps.scheduling.services import (
     generate_plan_version,
     simulate_scenario,
 )
-from apps.scheduling.recovery_services import build_recovery_input_snapshot
+from apps.scheduling.recovery_services import (
+    build_recovery_input_snapshot,
+    generate_recovery_recommendations,
+)
 from apps.telemetry.models import (
     AssetIdentity,
     GeofenceZone,
@@ -2347,8 +2350,6 @@ class Command(BaseCommand):
             .order_by("-created_at")
             .first()
         )
-        first_assignment = assignments[0]
-        second_assignment = assignments[1] if len(assignments) > 1 else first_assignment
         snapshot = build_recovery_input_snapshot(
             plan_version=version,
             source_conflict=source_conflict,
@@ -2360,178 +2361,14 @@ class Command(BaseCommand):
                 "seed": "phase5_recovery_foundation",
                 "scope": "input_snapshot_builder",
                 "notes": (
-                    "Deterministic recommendation fixture backed by the Chunk 5.1 "
-                    "runtime input snapshot builder."
+                    "Deterministic recommendation fixture backed by the Chunk 5.2 "
+                    "runtime repair engine."
                 ),
             },
         )
-        source_ref = snapshot.source_ref
-
-        optimizer_run, _ = OptimizerRun.objects.update_or_create(
+        generate_recovery_recommendations(
+            snapshot=snapshot,
+            actor=created_by,
             run_id="OPT-PHASE5-SEED",
-            defaults={
-                "input_snapshot": snapshot,
-                "plan_version": version,
-                "status": OptimizerRun.Status.SUCCEEDED,
-                "algorithm_version": "phase5.0-foundation",
-                "objective_weights": {
-                    "delayMinutes": 0.45,
-                    "missedWindows": 0.25,
-                    "resourceConflicts": 0.2,
-                    "changeComplexity": 0.1,
-                },
-                "summary": {
-                    "recommendationCount": 2,
-                    "bestRecommendation": "REC-PHASE5-SEED-01",
-                    "sourceRef": source_ref,
-                    "mode": "seeded_foundation",
-                },
-                "started_by": created_by,
-                "started_at": timezone.now(),
-                "completed_at": timezone.now(),
-            },
-        )
-        optimizer_run.recommendations.all().delete()
-
-        first_recommendation = RecoveryRecommendation.objects.create(
-            recommendation_id="REC-PHASE5-SEED-01",
-            optimizer_run=optimizer_run,
-            rank=1,
-            status=RecoveryRecommendation.Status.CANDIDATE,
-            risk_level=RecoveryRecommendation.RiskLevel.MEDIUM,
-            score="82.500",
-            summary="Hold the disrupted chain and move the next dispatch to the first feasible tide/bridge slot.",
-            explanation=[
-                {
-                    "kind": "source",
-                    "label": "Source disruption",
-                    "value": source_ref,
-                },
-                {
-                    "kind": "constraint",
-                    "label": "Feasibility",
-                    "value": "Preserves confirmed actuals and avoids duplicate tug/barge assignment.",
-                },
-                {
-                    "kind": "governance",
-                    "label": "Next step",
-                    "value": "Materialize as scenario before approval.",
-                },
-            ],
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-        RecoveryAction.objects.create(
-            action_id="RAC-PHASE5-SEED-01A",
-            recommendation=first_recommendation,
-            sequence=1,
-            action_type=RecoveryAction.ActionType.HOLD_AT_ANCHORAGE,
-            target_trip=first_assignment.trip,
-            target_assignment=first_assignment,
-            before_state={
-                "tripId": first_assignment.trip.trip_id,
-                "status": first_assignment.status,
-                "nextAction": first_assignment.next_action,
-            },
-            after_state={
-                "tripId": first_assignment.trip.trip_id,
-                "status": "waiting_tide",
-                "nextAction": "Hold until next feasible gate window, then dispatch.",
-            },
-            constraints_checked=[
-                "confirmed_actuals_frozen",
-                "tide_window_available",
-                "bridge_clearance_available",
-            ],
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-        RecoveryAction.objects.create(
-            action_id="RAC-PHASE5-SEED-01B",
-            recommendation=first_recommendation,
-            sequence=2,
-            action_type=RecoveryAction.ActionType.RESEQUENCE_TRIP,
-            target_trip=second_assignment.trip,
-            target_assignment=second_assignment,
-            before_state={"sequence": second_assignment.trip.sequence},
-            after_state={"sequence": second_assignment.trip.sequence + 1},
-            constraints_checked=["resource_conflict_repair", "ogv_laycan_guardrail"],
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-        RecommendationEvaluation.objects.create(
-            evaluation_id="REV-PHASE5-SEED-01",
-            recommendation=first_recommendation,
-            delay_minutes=90,
-            missed_windows=0,
-            resource_conflicts=0,
-            utilization_delta_pct="4.50",
-            confidence_score="78.00",
-            hard_constraints_passed=True,
-            score_breakdown={
-                "delayScore": 37.5,
-                "windowScore": 25,
-                "resourceScore": 20,
-                "complexityScore": 0,
-            },
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-
-        second_recommendation = RecoveryRecommendation.objects.create(
-            recommendation_id="REC-PHASE5-SEED-02",
-            optimizer_run=optimizer_run,
-            rank=2,
-            status=RecoveryRecommendation.Status.CANDIDATE,
-            risk_level=RecoveryRecommendation.RiskLevel.HIGH,
-            score="68.000",
-            summary="Swap tug assignment to recover dispatch timing with higher execution complexity.",
-            explanation=[
-                {
-                    "kind": "resource",
-                    "label": "Repair",
-                    "value": "Reassign available tug and preserve barge pairing.",
-                },
-                {
-                    "kind": "risk",
-                    "label": "Risk",
-                    "value": "Higher manual coordination and compatibility review required.",
-                },
-            ],
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-        RecoveryAction.objects.create(
-            action_id="RAC-PHASE5-SEED-02A",
-            recommendation=second_recommendation,
-            sequence=1,
-            action_type=RecoveryAction.ActionType.REASSIGN_TUG,
-            target_trip=first_assignment.trip,
-            target_assignment=first_assignment,
-            before_state={
-                "tug": first_assignment.tug.code if first_assignment.tug else "",
-                "tripId": first_assignment.trip.trip_id,
-            },
-            after_state={
-                "tug": "next_available",
-                "tripId": first_assignment.trip.trip_id,
-            },
-            constraints_checked=[
-                "tug_barge_compatibility",
-                "resource_availability",
-                "crew_handover_required",
-            ],
-            metadata={"seed": "phase5_recovery_foundation"},
-        )
-        RecommendationEvaluation.objects.create(
-            evaluation_id="REV-PHASE5-SEED-02",
-            recommendation=second_recommendation,
-            delay_minutes=45,
-            missed_windows=1,
-            resource_conflicts=1,
-            utilization_delta_pct="-2.00",
-            confidence_score="62.00",
-            hard_constraints_passed=False,
-            score_breakdown={
-                "delayScore": 45,
-                "windowScore": 0,
-                "resourceScore": 10,
-                "complexityScore": 13,
-            },
-            metadata={"seed": "phase5_recovery_foundation"},
+            replace_existing=True,
         )

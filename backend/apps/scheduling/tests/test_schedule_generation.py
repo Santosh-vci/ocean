@@ -50,7 +50,9 @@ from apps.scheduling.services import (
 )
 from apps.scheduling.recovery_services import (
     RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
+    RECOVERY_REPAIR_ALGORITHM_VERSION,
     build_recovery_input_snapshot,
+    generate_recovery_recommendations,
 )
 
 
@@ -1442,11 +1444,17 @@ def test_phase5_seed_creates_recovery_model_foundation():
     assert snapshot.constraint_state["hardConstraints"]["confirmedActualsFrozen"] is True
     assert optimizer_run.input_snapshot == snapshot
     assert optimizer_run.status == OptimizerRun.Status.SUCCEEDED
-    assert recommendations.count() == 2
-    assert RecoveryAction.objects.filter(recommendation__optimizer_run=optimizer_run).count() == 3
+    assert optimizer_run.algorithm_version == RECOVERY_REPAIR_ALGORITHM_VERSION
+    assert recommendations.count() >= 4
+    assert set(optimizer_run.summary["candidateStrategies"]) >= {
+        "delay_trip",
+        "next_window_repair",
+        "resequence_trip",
+    }
+    assert RecoveryAction.objects.filter(recommendation__optimizer_run=optimizer_run).count() >= 4
     assert RecommendationEvaluation.objects.filter(
         recommendation__optimizer_run=optimizer_run,
-    ).count() == 2
+    ).count() == recommendations.count()
     assert recommendations.order_by("rank").first().evaluation.hard_constraints_passed is True
 
 
@@ -1526,6 +1534,77 @@ def test_phase5_input_snapshot_build_api_creates_governed_snapshot():
 
 
 @pytest.mark.django_db
+def test_phase5_deterministic_repair_engine_persists_candidate_set():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    snapshot = RecoveryInputSnapshot.objects.get(snapshot_id="RIS-PHASE5-SEED")
+
+    optimizer_run = generate_recovery_recommendations(
+        snapshot=snapshot,
+        run_id="OPT-PHASE5-TEST",
+        replace_existing=True,
+        max_candidates=5,
+    )
+    recommendations = list(optimizer_run.recommendations.prefetch_related("actions"))
+    strategies = {item.metadata["strategy"] for item in recommendations}
+    action_types = {
+        action.action_type
+        for recommendation in recommendations
+        for action in recommendation.actions.all()
+    }
+
+    assert optimizer_run.status == OptimizerRun.Status.SUCCEEDED
+    assert optimizer_run.algorithm_version == RECOVERY_REPAIR_ALGORITHM_VERSION
+    assert strategies >= {
+        "delay_trip",
+        "next_window_repair",
+        "resequence_trip",
+        "tug_barge_swap",
+    }
+    assert RecoveryAction.ActionType.DELAY_TRIP in action_types
+    assert RecoveryAction.ActionType.SHIFT_WINDOW in action_types
+    assert RecoveryAction.ActionType.RESEQUENCE_TRIP in action_types
+    assert {
+        RecoveryAction.ActionType.REASSIGN_TUG,
+        RecoveryAction.ActionType.REASSIGN_BARGE,
+    } & action_types
+    evaluations = RecommendationEvaluation.objects.filter(
+        recommendation__optimizer_run=optimizer_run,
+    )
+    assert evaluations.count() == len(recommendations)
+    assert all("totalScore" in item.score_breakdown for item in evaluations)
+    assert optimizer_run.summary["mode"] == "deterministic_repair"
+
+
+@pytest.mark.django_db
+def test_phase5_recovery_run_api_generates_governed_optimizer_run():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    snapshot = RecoveryInputSnapshot.objects.get(snapshot_id="RIS-PHASE5-SEED")
+    user = User.objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        "/api/scheduling/recovery-runs/",
+        {
+            "input_snapshot": snapshot.id,
+            "max_candidates": 5,
+            "objective_weights": {"delayMinutes": 0.5},
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.data["algorithm_version"] == RECOVERY_REPAIR_ALGORITHM_VERSION
+    assert response.data["status"] == OptimizerRun.Status.SUCCEEDED
+    assert response.data["recommendations"]
+    assert response.data["summary"]["candidateStrategies"]
+    assert AuditEvent.objects.filter(
+        action="recovery.optimizer.run",
+        object_repr=response.data["run_id"],
+    ).exists()
+
+
+@pytest.mark.django_db
 def test_phase5_recovery_foundation_read_apis_and_overview_contract():
     call_command("seed_phase0", reset_operational_data=True, verbosity=0)
     user = User.objects.get(username="admin@coalflow.local")
@@ -1551,5 +1630,7 @@ def test_phase5_recovery_foundation_read_apis_and_overview_contract():
     assert evaluations.data[0]["score_breakdown"]
     assert overview.status_code == 200
     assert overview.data["validation"]["optimizerRunCount"] == 1
-    assert overview.data["validation"]["recoveryRecommendationCount"] == 2
+    assert overview.data["validation"]["recoveryRecommendationCount"] == (
+        OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED").recommendations.count()
+    )
     assert overview.data["optimizerRuns"][0]["run_id"] == "OPT-PHASE5-SEED"

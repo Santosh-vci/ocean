@@ -1,12 +1,14 @@
 import hashlib
 import json
+from datetime import timedelta
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.masters.models import AssetCompatibilityRule
+from apps.masters.models import AssetCompatibilityRule, Barge, CTSAsset, Tug
 from apps.operations.models import (
     ConfirmedOperationalEvent,
     DeviceEndpoint,
@@ -26,14 +28,26 @@ from .models import (
     Assignment,
     Conflict,
     OverrideRequest,
+    OptimizerRun,
     PlanVersion,
+    RecommendationEvaluation,
+    RecoveryAction,
     RecoveryInputSnapshot,
+    RecoveryRecommendation,
     ScheduleEvent,
     SimulationScenario,
     Trip,
 )
 
 RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION = "phase5.1-input-snapshot-builder"
+RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.2-deterministic-repair-engine"
+DEFAULT_REPAIR_OBJECTIVE_WEIGHTS = {
+    "delayMinutes": 0.4,
+    "missedWindows": 0.25,
+    "resourceConflicts": 0.2,
+    "manualChanges": 0.1,
+    "healthRisk": 0.05,
+}
 
 
 def active_recovery_plan_version() -> PlanVersion | None:
@@ -175,6 +189,1093 @@ def build_recovery_input_snapshot(
     if snapshot_id:
         defaults["snapshot_id"] = snapshot_id
     return RecoveryInputSnapshot.objects.create(**defaults)
+
+
+def generate_recovery_recommendations(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    objective_weights: dict | None = None,
+    actor=None,
+    run_id: str | None = None,
+    replace_existing: bool = False,
+    max_candidates: int = 5,
+) -> OptimizerRun:
+    weights = {
+        **DEFAULT_REPAIR_OBJECTIVE_WEIGHTS,
+        **(objective_weights or {}),
+    }
+    max_candidates = max(1, min(int(max_candidates or 5), 10))
+    started_at = timezone.now()
+    with transaction.atomic():
+        if run_id and replace_existing:
+            optimizer_run, _ = OptimizerRun.objects.update_or_create(
+                run_id=run_id,
+                defaults={
+                    "input_snapshot": snapshot,
+                    "plan_version": snapshot.plan_version,
+                    "status": OptimizerRun.Status.RUNNING,
+                    "algorithm_version": RECOVERY_REPAIR_ALGORITHM_VERSION,
+                    "objective_weights": weights,
+                    "summary": {},
+                    "error_message": "",
+                    "started_by": actor
+                    if actor is not None and getattr(actor, "is_authenticated", True)
+                    else None,
+                    "started_at": started_at,
+                    "completed_at": None,
+                },
+            )
+            optimizer_run.recommendations.all().delete()
+        else:
+            create_defaults = {
+                "input_snapshot": snapshot,
+                "plan_version": snapshot.plan_version,
+                "status": OptimizerRun.Status.RUNNING,
+                "algorithm_version": RECOVERY_REPAIR_ALGORITHM_VERSION,
+                "objective_weights": weights,
+                "started_by": actor
+                if actor is not None and getattr(actor, "is_authenticated", True)
+                else None,
+                "started_at": started_at,
+            }
+            if run_id:
+                create_defaults["run_id"] = run_id
+            optimizer_run = OptimizerRun.objects.create(**create_defaults)
+
+        candidates = _deterministic_repair_candidates(
+            snapshot=snapshot,
+            objective_weights=weights,
+        )
+        candidates = sorted(
+            candidates,
+            key=lambda item: (-item["score"], item["strategy"]),
+        )[:max_candidates]
+
+        recommendations = []
+        for rank, candidate in enumerate(candidates, start=1):
+            recommendation = RecoveryRecommendation.objects.create(
+                optimizer_run=optimizer_run,
+                rank=rank,
+                status=RecoveryRecommendation.Status.CANDIDATE,
+                risk_level=candidate["risk_level"],
+                score=_decimal_score(candidate["score"], places="0.001"),
+                summary=candidate["summary"],
+                explanation=candidate["explanation"],
+                metadata={
+                    "strategy": candidate["strategy"],
+                    "algorithmVersion": RECOVERY_REPAIR_ALGORITHM_VERSION,
+                    **candidate.get("metadata", {}),
+                },
+            )
+            for sequence, action in enumerate(candidate["actions"], start=1):
+                RecoveryAction.objects.create(
+                    recommendation=recommendation,
+                    sequence=sequence,
+                    action_type=action["action_type"],
+                    target_trip=action.get("target_trip"),
+                    target_assignment=action.get("target_assignment"),
+                    before_state=action.get("before_state", {}),
+                    after_state=action.get("after_state", {}),
+                    constraints_checked=action.get("constraints_checked", []),
+                    metadata={
+                        "strategy": candidate["strategy"],
+                        **action.get("metadata", {}),
+                    },
+                )
+            RecommendationEvaluation.objects.create(
+                recommendation=recommendation,
+                delay_minutes=candidate["delay_minutes"],
+                missed_windows=candidate["missed_windows"],
+                resource_conflicts=candidate["resource_conflicts"],
+                utilization_delta_pct=_decimal_score(
+                    candidate["utilization_delta_pct"],
+                    places="0.01",
+                ),
+                confidence_score=_decimal_score(
+                    candidate["confidence_score"],
+                    places="0.01",
+                ),
+                hard_constraints_passed=candidate["hard_constraints_passed"],
+                score_breakdown=candidate["score_breakdown"],
+                metadata={
+                    "strategy": candidate["strategy"],
+                    "hardConstraintEvidence": candidate["hard_constraint_evidence"],
+                },
+            )
+            recommendations.append(recommendation)
+
+        optimizer_run.status = OptimizerRun.Status.SUCCEEDED
+        optimizer_run.completed_at = timezone.now()
+        optimizer_run.summary = _optimizer_summary(
+            snapshot=snapshot,
+            candidates=candidates,
+            recommendations=recommendations,
+        )
+        optimizer_run.save(
+            update_fields=[
+                "status",
+                "completed_at",
+                "summary",
+                "updated_at",
+            ]
+        )
+        return optimizer_run
+
+
+def _deterministic_repair_candidates(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    objective_weights: dict,
+) -> list[dict]:
+    assignment = _target_assignment_for_snapshot(snapshot)
+    if assignment is None:
+        return [_noop_candidate(snapshot=snapshot)]
+
+    delay_minutes = _source_delay_minutes(snapshot=snapshot, assignment=assignment)
+    candidates = [
+        _delay_trip_candidate(
+            snapshot=snapshot,
+            assignment=assignment,
+            delay_minutes=delay_minutes,
+            objective_weights=objective_weights,
+        ),
+        _next_window_candidate(
+            snapshot=snapshot,
+            assignment=assignment,
+            delay_minutes=delay_minutes,
+            objective_weights=objective_weights,
+        ),
+    ]
+    resequence = _resequence_candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        delay_minutes=delay_minutes,
+        objective_weights=objective_weights,
+    )
+    if resequence:
+        candidates.append(resequence)
+    tug_barge = _tug_barge_swap_candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        delay_minutes=delay_minutes,
+        objective_weights=objective_weights,
+    )
+    if tug_barge:
+        candidates.append(tug_barge)
+    cts = _cts_reassignment_candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        delay_minutes=delay_minutes,
+        objective_weights=objective_weights,
+    )
+    if cts:
+        candidates.append(cts)
+    return candidates
+
+
+def _delay_trip_candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    delay_minutes: int,
+    objective_weights: dict,
+) -> dict:
+    projected_departure = assignment.planned_departure + timedelta(minutes=delay_minutes)
+    projected_arrival = assignment.planned_arrival + timedelta(minutes=delay_minutes)
+    constraint_evidence = [
+        "confirmed_actuals_frozen",
+        "active_schedule_events_projected_only",
+        "no_resource_reassignment",
+    ]
+    return _candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy="delay_trip",
+        summary=(
+            f"Delay {assignment.trip.trip_id} by {delay_minutes} minutes without changing "
+            "assigned resources."
+        ),
+        delay_minutes=delay_minutes,
+        missed_windows=_missed_windows_for_shift(
+            assignment=assignment,
+            shift_minutes=delay_minutes,
+        ),
+        resource_conflicts=0,
+        manual_changes=1,
+        hard_constraints_passed=True,
+        hard_constraint_evidence=constraint_evidence,
+        objective_weights=objective_weights,
+        actions=[
+            {
+                "action_type": RecoveryAction.ActionType.DELAY_TRIP,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": _assignment_schedule_state(assignment),
+                "after_state": {
+                    **_assignment_schedule_state(assignment),
+                    "plannedDeparture": _iso(projected_departure),
+                    "plannedArrival": _iso(projected_arrival),
+                    "delayMinutes": delay_minutes,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {
+                    "sourceDelayMinutes": delay_minutes,
+                    "mutatesActivePlan": False,
+                },
+            }
+        ],
+        explanation=[
+            _explanation_node(
+                kind="source",
+                label="Source disruption",
+                value=snapshot.source_ref,
+            ),
+            _explanation_node(
+                kind="repair",
+                label="Repair action",
+                value=f"Project the disrupted trip {delay_minutes} minutes later.",
+            ),
+            _explanation_node(
+                kind="governance",
+                label="Plan safety",
+                value="No schedule rows are changed; this is a recommendation only.",
+            ),
+        ],
+    )
+
+
+def _next_window_candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    delay_minutes: int,
+    objective_weights: dict,
+) -> dict:
+    projection = _next_window_projection(assignment=assignment, delay_minutes=delay_minutes)
+    shift_minutes = projection["shift_minutes"]
+    projected_departure = assignment.planned_departure + timedelta(minutes=shift_minutes)
+    projected_arrival = assignment.planned_arrival + timedelta(minutes=shift_minutes)
+    hard_passed = projection["hard_constraints_passed"]
+    constraint_evidence = [
+        "confirmed_actuals_frozen",
+        "tide_window_evaluated",
+        "bridge_window_evaluated",
+        *projection["evidence"],
+    ]
+    return _candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy="next_window_repair",
+        summary=(
+            f"Move {assignment.trip.trip_id} to the next feasible tide/bridge gate "
+            "window."
+        ),
+        delay_minutes=shift_minutes,
+        missed_windows=projection["missed_windows"],
+        resource_conflicts=0,
+        manual_changes=1,
+        hard_constraints_passed=hard_passed,
+        hard_constraint_evidence=constraint_evidence,
+        objective_weights=objective_weights,
+        actions=[
+            {
+                "action_type": RecoveryAction.ActionType.SHIFT_WINDOW,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": {
+                    **_assignment_schedule_state(assignment),
+                    "bridgeGate": projection["bridge_before"],
+                    "tideGate": projection["tide_before"],
+                },
+                "after_state": {
+                    **_assignment_schedule_state(assignment),
+                    "plannedDeparture": _iso(projected_departure),
+                    "plannedArrival": _iso(projected_arrival),
+                    "bridgeGate": projection["bridge_after"],
+                    "tideGate": projection["tide_after"],
+                    "shiftMinutes": shift_minutes,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {
+                    "windowCodes": projection["window_codes"],
+                    "mutatesActivePlan": False,
+                },
+            }
+        ],
+        explanation=[
+            _explanation_node(
+                kind="constraint",
+                label="Gate repair",
+                value=(
+                    "Projected bridge and tide gate times are aligned to the next "
+                    "available governed windows."
+                ),
+            ),
+            _explanation_node(
+                kind="risk",
+                label="Window misses",
+                value=f"{projection['missed_windows']} miss risk(s) detected.",
+            ),
+        ],
+    )
+
+
+def _resequence_candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    delay_minutes: int,
+    objective_weights: dict,
+) -> dict | None:
+    neighbor = (
+        Assignment.objects.select_related("trip", "trip__voyage", "tug", "barge", "jetty", "cts")
+        .filter(
+            trip__plan_version=snapshot.plan_version,
+            trip__sequence__gt=assignment.trip.sequence,
+        )
+        .order_by("trip__sequence")
+        .first()
+    )
+    if neighbor is None:
+        return None
+    resequence_delay = max(30, int(delay_minutes * 0.5))
+    constraint_evidence = [
+        "confirmed_actuals_frozen",
+        "ogv_laycan_guardrail",
+        "resource_overlap_review_required",
+    ]
+    return _candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy="resequence_trip",
+        summary=(
+            f"Resequence {neighbor.trip.trip_id} around disrupted trip "
+            f"{assignment.trip.trip_id}."
+        ),
+        delay_minutes=resequence_delay,
+        missed_windows=_missed_windows_for_shift(
+            assignment=neighbor,
+            shift_minutes=resequence_delay,
+        ),
+        resource_conflicts=0,
+        manual_changes=2,
+        hard_constraints_passed=True,
+        hard_constraint_evidence=constraint_evidence,
+        objective_weights=objective_weights,
+        actions=[
+            {
+                "action_type": RecoveryAction.ActionType.RESEQUENCE_TRIP,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "sequence": assignment.trip.sequence,
+                },
+                "after_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "sequence": neighbor.trip.sequence,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {"pairedTripId": neighbor.trip.trip_id},
+            },
+            {
+                "action_type": RecoveryAction.ActionType.RESEQUENCE_TRIP,
+                "target_trip": neighbor.trip,
+                "target_assignment": neighbor,
+                "before_state": {
+                    "tripId": neighbor.trip.trip_id,
+                    "sequence": neighbor.trip.sequence,
+                },
+                "after_state": {
+                    "tripId": neighbor.trip.trip_id,
+                    "sequence": assignment.trip.sequence,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {"pairedTripId": assignment.trip.trip_id},
+            },
+        ],
+        explanation=[
+            _explanation_node(
+                kind="repair",
+                label="Sequence repair",
+                value="Swap the disrupted trip with the next planned chain candidate.",
+            ),
+        ],
+    )
+
+
+def _tug_barge_swap_candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    delay_minutes: int,
+    objective_weights: dict,
+) -> dict | None:
+    replacement_tug = _replacement_tug(assignment=assignment, snapshot=snapshot)
+    replacement_barge = _replacement_barge(assignment=assignment, snapshot=snapshot)
+    if replacement_tug is None and replacement_barge is None:
+        return None
+
+    tug_code = replacement_tug.code if replacement_tug else assignment.tug.code if assignment.tug else ""
+    barge_code = (
+        replacement_barge.code
+        if replacement_barge
+        else assignment.barge.code
+        if assignment.barge
+        else ""
+    )
+    compatible = _tug_barge_compatible(tug_code=tug_code, barge_code=barge_code)
+    resource_conflicts = _replacement_resource_conflicts(
+        assignment=assignment,
+        tug_code=tug_code if replacement_tug else "",
+        barge_code=barge_code if replacement_barge else "",
+    )
+    hard_passed = compatible and resource_conflicts == 0
+    constraint_evidence = [
+        "confirmed_actuals_frozen",
+        "tug_barge_compatibility",
+        "resource_availability",
+        "no_duplicate_assignment",
+    ]
+    actions = []
+    if replacement_tug:
+        actions.append(
+            {
+                "action_type": RecoveryAction.ActionType.REASSIGN_TUG,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "tug": assignment.tug.code if assignment.tug else "",
+                },
+                "after_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "tug": replacement_tug.code,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {"resourceConflictCount": resource_conflicts},
+            }
+        )
+    if replacement_barge:
+        actions.append(
+            {
+                "action_type": RecoveryAction.ActionType.REASSIGN_BARGE,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "barge": assignment.barge.code if assignment.barge else "",
+                },
+                "after_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "barge": replacement_barge.code,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {"resourceConflictCount": resource_conflicts},
+            }
+        )
+    return _candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy="tug_barge_swap",
+        summary=(
+            f"Swap tug/barge resources for {assignment.trip.trip_id} to reduce the "
+            "disruption exposure."
+        ),
+        delay_minutes=max(15, int(delay_minutes * 0.35)),
+        missed_windows=_missed_windows_for_shift(
+            assignment=assignment,
+            shift_minutes=max(15, int(delay_minutes * 0.35)),
+        ),
+        resource_conflicts=resource_conflicts,
+        manual_changes=len(actions),
+        hard_constraints_passed=hard_passed,
+        hard_constraint_evidence=constraint_evidence,
+        objective_weights=objective_weights,
+        actions=actions,
+        explanation=[
+            _explanation_node(
+                kind="resource",
+                label="Resource repair",
+                value=(
+                    f"Candidate tug {tug_code or 'unchanged'} with barge "
+                    f"{barge_code or 'unchanged'}."
+                ),
+            ),
+            _explanation_node(
+                kind="constraint",
+                label="Compatibility",
+                value="Compatible" if compatible else "Compatibility review failed.",
+            ),
+        ],
+    )
+
+
+def _cts_reassignment_candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    delay_minutes: int,
+    objective_weights: dict,
+) -> dict | None:
+    replacement_cts = _replacement_cts(assignment=assignment, snapshot=snapshot)
+    if replacement_cts is None:
+        return None
+
+    resource_conflicts = _replacement_resource_conflicts(
+        assignment=assignment,
+        cts_code=replacement_cts.code,
+    )
+    constraint_evidence = [
+        "confirmed_actuals_frozen",
+        "cts_available",
+        "cts_queue_overlap_review",
+    ]
+    cts_delay = max(20, int(delay_minutes * 0.45))
+    return _candidate(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy="cts_reassignment",
+        summary=(
+            f"Reassign {assignment.trip.trip_id} discharge handling to "
+            f"{replacement_cts.code}."
+        ),
+        delay_minutes=cts_delay,
+        missed_windows=0,
+        resource_conflicts=resource_conflicts,
+        manual_changes=1,
+        hard_constraints_passed=resource_conflicts == 0,
+        hard_constraint_evidence=constraint_evidence,
+        objective_weights=objective_weights,
+        actions=[
+            {
+                "action_type": RecoveryAction.ActionType.REASSIGN_CTS,
+                "target_trip": assignment.trip,
+                "target_assignment": assignment,
+                "before_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "cts": assignment.cts.code if assignment.cts else "",
+                },
+                "after_state": {
+                    "tripId": assignment.trip.trip_id,
+                    "cts": replacement_cts.code,
+                },
+                "constraints_checked": constraint_evidence,
+                "metadata": {"resourceConflictCount": resource_conflicts},
+            }
+        ],
+        explanation=[
+            _explanation_node(
+                kind="resource",
+                label="CTS repair",
+                value=f"Use {replacement_cts.code} as the discharge recovery resource.",
+            ),
+        ],
+    )
+
+
+def _candidate(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    strategy: str,
+    summary: str,
+    delay_minutes: int,
+    missed_windows: int,
+    resource_conflicts: int,
+    manual_changes: int,
+    hard_constraints_passed: bool,
+    hard_constraint_evidence: list[str],
+    objective_weights: dict,
+    actions: list[dict],
+    explanation: list[dict],
+) -> dict:
+    health_risk_count = len(snapshot.resource_state.get("healthRisks", []))
+    score_breakdown = _score_breakdown(
+        delay_minutes=delay_minutes,
+        missed_windows=missed_windows,
+        resource_conflicts=resource_conflicts,
+        manual_changes=manual_changes,
+        health_risk_count=health_risk_count,
+        hard_constraints_passed=hard_constraints_passed,
+        objective_weights=objective_weights,
+    )
+    score = score_breakdown["totalScore"]
+    risk_level = _risk_level(
+        delay_minutes=delay_minutes,
+        missed_windows=missed_windows,
+        resource_conflicts=resource_conflicts,
+        hard_constraints_passed=hard_constraints_passed,
+    )
+    return {
+        "strategy": strategy,
+        "summary": summary,
+        "delay_minutes": delay_minutes,
+        "missed_windows": missed_windows,
+        "resource_conflicts": resource_conflicts,
+        "manual_changes": manual_changes,
+        "hard_constraints_passed": hard_constraints_passed,
+        "hard_constraint_evidence": hard_constraint_evidence,
+        "score_breakdown": score_breakdown,
+        "score": score,
+        "risk_level": risk_level,
+        "confidence_score": _confidence_score(
+            hard_constraints_passed=hard_constraints_passed,
+            health_risk_count=health_risk_count,
+            resource_conflicts=resource_conflicts,
+        ),
+        "utilization_delta_pct": _utilization_delta_pct(
+            delay_minutes=delay_minutes,
+            manual_changes=manual_changes,
+        ),
+        "actions": actions,
+        "explanation": [
+            _explanation_node(
+                kind="source",
+                label="Input snapshot",
+                value=f"{snapshot.snapshot_id} / {snapshot.source_ref}",
+            ),
+            *explanation,
+            _explanation_node(
+                kind="constraint",
+                label="Hard constraints",
+                value="Passed" if hard_constraints_passed else "Review required",
+            ),
+        ],
+        "metadata": {
+            "targetTripId": assignment.trip.trip_id,
+            "targetAssignmentId": assignment.id,
+            "manualChanges": manual_changes,
+            "healthRiskCount": health_risk_count,
+        },
+    }
+
+
+def _noop_candidate(*, snapshot: RecoveryInputSnapshot) -> dict:
+    return {
+        "strategy": "noop",
+        "summary": "No disrupted assignment could be resolved from the input snapshot.",
+        "delay_minutes": 0,
+        "missed_windows": 0,
+        "resource_conflicts": 0,
+        "manual_changes": 0,
+        "hard_constraints_passed": False,
+        "hard_constraint_evidence": ["no_target_assignment"],
+        "score_breakdown": {"totalScore": 0},
+        "score": 0,
+        "risk_level": RecoveryRecommendation.RiskLevel.CRITICAL,
+        "confidence_score": 0,
+        "utilization_delta_pct": 0,
+        "actions": [
+            {
+                "action_type": RecoveryAction.ActionType.NOOP,
+                "before_state": {},
+                "after_state": {},
+                "constraints_checked": ["no_target_assignment"],
+            }
+        ],
+        "explanation": [
+            _explanation_node(
+                kind="risk",
+                label="No target",
+                value="Snapshot has no resolvable trip or assignment for repair.",
+            )
+        ],
+        "metadata": {},
+    }
+
+
+def _target_assignment_for_snapshot(snapshot: RecoveryInputSnapshot) -> Assignment | None:
+    if snapshot.source_override_id and snapshot.source_override.assignment_id:
+        return _assignment_by_id(snapshot.source_override.assignment_id)
+    if snapshot.source_override_id and snapshot.source_override.trip_id:
+        return _assignment_for_trip(snapshot.source_override.trip)
+    if snapshot.source_conflict_id and snapshot.source_conflict.trip_id:
+        return _assignment_for_trip(snapshot.source_conflict.trip)
+    if snapshot.source_tracking_alert_id and snapshot.source_tracking_alert.trip_id:
+        return _assignment_for_trip(snapshot.source_tracking_alert.trip)
+    if snapshot.source_operational_event_id:
+        if snapshot.source_operational_event.assignment_id:
+            return _assignment_by_id(snapshot.source_operational_event.assignment_id)
+        if snapshot.source_operational_event.trip_id:
+            return _assignment_for_trip(snapshot.source_operational_event.trip)
+    assignment_id = snapshot.resource_state.get("assignments", [{}])[0].get("assignmentId")
+    if assignment_id:
+        assignment = _assignment_by_id(assignment_id)
+        if assignment:
+            return assignment
+    return (
+        Assignment.objects.select_related(
+            "trip",
+            "trip__voyage",
+            "tug",
+            "barge",
+            "jetty",
+            "cts",
+            "route_segment",
+            "route_segment__route",
+        )
+        .prefetch_related("trip__events")
+        .filter(trip__plan_version=snapshot.plan_version)
+        .order_by("trip__sequence")
+        .first()
+    )
+
+
+def _assignment_by_id(assignment_id: int) -> Assignment | None:
+    return (
+        Assignment.objects.select_related(
+            "trip",
+            "trip__voyage",
+            "tug",
+            "barge",
+            "jetty",
+            "cts",
+            "route_segment",
+            "route_segment__route",
+        )
+        .prefetch_related("trip__events")
+        .filter(pk=assignment_id)
+        .first()
+    )
+
+
+def _assignment_for_trip(trip: Trip) -> Assignment | None:
+    return _assignment_by_id(trip.assignment.id) if hasattr(trip, "assignment") else None
+
+
+def _source_delay_minutes(*, snapshot: RecoveryInputSnapshot, assignment: Assignment) -> int:
+    if snapshot.source_override_id and hasattr(snapshot.source_override, "impact_assessment"):
+        delay_minutes = snapshot.source_override.impact_assessment.delay_minutes
+        if delay_minutes:
+            return max(0, delay_minutes)
+    if (
+        snapshot.source_tracking_alert_id
+        and snapshot.source_tracking_alert.eta_projection_id
+        and snapshot.source_tracking_alert.eta_projection.variance_minutes is not None
+    ):
+        return max(15, snapshot.source_tracking_alert.eta_projection.variance_minutes)
+    if snapshot.source_operational_event_id and snapshot.source_operational_event.schedule_event_id:
+        planned_at = snapshot.source_operational_event.schedule_event.planned_at
+        actual_at = snapshot.source_operational_event.actual_at
+        return max(0, _ceil_minutes(actual_at - planned_at))
+    variance_minutes = [
+        projection.get("varianceMinutes")
+        for projection in snapshot.event_state.get("etaProjections", [])
+        if projection.get("tripId") == assignment.trip.trip_id
+        and projection.get("varianceMinutes") is not None
+    ]
+    if variance_minutes:
+        return max(15, max(variance_minutes))
+    if snapshot.source_override_id and snapshot.source_override.reason_code == OverrideRequest.ReasonCode.JETTY_DELAY:
+        return 120
+    if snapshot.source_kind in {
+        RecoveryInputSnapshot.SourceKind.CONFLICT,
+        RecoveryInputSnapshot.SourceKind.TRACKING_ALERT,
+        RecoveryInputSnapshot.SourceKind.OPERATIONAL_EVENT,
+    }:
+        return 90
+    return 60
+
+
+def _next_window_projection(*, assignment: Assignment, delay_minutes: int) -> dict:
+    events = _events_by_type(assignment.trip)
+    bridge_event = events.get(ScheduleEvent.EventType.BRIDGE_CROSS)
+    tide_event = events.get(ScheduleEvent.EventType.TIDE_GATE)
+    bridge_windows = list(
+        BridgeWindow.objects.filter(is_active=True)
+        .exclude(status=BridgeWindow.Status.CLOSED)
+        .order_by("window_start", "code")
+    )
+    tide_windows = TideWindow.objects.filter(is_active=True).exclude(
+        risk_level=TideWindow.RiskLevel.CLOSED,
+    )
+    route_segment_ids = _route_segment_ids_for_assignment(assignment)
+    if route_segment_ids:
+        tide_windows = tide_windows.filter(
+            Q(applicable_route_segment_id__in=route_segment_ids)
+            | Q(applicable_route_segment__isnull=True)
+        )
+    tide_windows = list(tide_windows.order_by("window_start", "code"))
+
+    bridge_plan = bridge_event.planned_at if bridge_event else assignment.planned_departure
+    tide_plan = tide_event.planned_at if tide_event else assignment.planned_departure
+    bridge_projected = bridge_plan + timedelta(minutes=delay_minutes)
+    tide_projected = tide_plan + timedelta(minutes=delay_minutes)
+    bridge_eval = _window_repair_eval(projected_at=bridge_projected, windows=bridge_windows)
+    tide_eval = _window_repair_eval(projected_at=tide_projected, windows=tide_windows)
+    added_shift = max(bridge_eval["additional_shift"], tide_eval["additional_shift"])
+    shift_minutes = delay_minutes + added_shift
+    return {
+        "shift_minutes": shift_minutes,
+        "missed_windows": int(bridge_eval["missed"]) + int(tide_eval["missed"]),
+        "hard_constraints_passed": bridge_eval["window"] is not None and tide_eval["window"] is not None,
+        "evidence": [
+            bridge_eval["evidence"],
+            tide_eval["evidence"],
+        ],
+        "window_codes": [
+            item.code
+            for item in [bridge_eval["window"], tide_eval["window"]]
+            if item is not None
+        ],
+        "bridge_before": _iso(bridge_projected),
+        "tide_before": _iso(tide_projected),
+        "bridge_after": _iso(bridge_plan + timedelta(minutes=shift_minutes)),
+        "tide_after": _iso(tide_plan + timedelta(minutes=shift_minutes)),
+    }
+
+
+def _window_repair_eval(*, projected_at, windows: list) -> dict:
+    if not windows:
+        return {
+            "additional_shift": 0,
+            "missed": True,
+            "window": None,
+            "evidence": "no_active_window",
+        }
+    for window in windows:
+        if window.window_start <= projected_at <= window.window_end:
+            return {
+                "additional_shift": 0,
+                "missed": False,
+                "window": window,
+                "evidence": f"inside_{window.code}",
+            }
+    next_window = next((window for window in windows if window.window_start > projected_at), None)
+    if next_window:
+        return {
+            "additional_shift": _ceil_minutes(next_window.window_start - projected_at),
+            "missed": True,
+            "window": next_window,
+            "evidence": f"shift_to_{next_window.code}",
+        }
+    return {
+        "additional_shift": 0,
+        "missed": True,
+        "window": None,
+        "evidence": "no_future_window",
+    }
+
+
+def _missed_windows_for_shift(*, assignment: Assignment, shift_minutes: int) -> int:
+    projection = _next_window_projection(assignment=assignment, delay_minutes=shift_minutes)
+    return projection["missed_windows"]
+
+
+def _replacement_tug(*, assignment: Assignment, snapshot: RecoveryInputSnapshot) -> Tug | None:
+    current_code = assignment.tug.code if assignment.tug else ""
+    candidates = list(Tug.objects.filter(is_active=True).exclude(code=current_code))
+    candidates.sort(
+        key=lambda item: (
+            item.status != Tug.Status.AVAILABLE,
+            _replacement_resource_conflicts(assignment=assignment, tug_code=item.code),
+            item.code,
+        )
+    )
+    for candidate in candidates:
+        barge_code = assignment.barge.code if assignment.barge else ""
+        if _tug_barge_compatible(tug_code=candidate.code, barge_code=barge_code):
+            return candidate
+    return candidates[0] if candidates else None
+
+
+def _replacement_barge(*, assignment: Assignment, snapshot: RecoveryInputSnapshot) -> Barge | None:
+    current_code = assignment.barge.code if assignment.barge else ""
+    tug_code = assignment.tug.code if assignment.tug else ""
+    candidates = list(Barge.objects.filter(is_active=True).exclude(code=current_code))
+    candidates.sort(
+        key=lambda item: (
+            item.status != Barge.Status.AVAILABLE,
+            _replacement_resource_conflicts(assignment=assignment, barge_code=item.code),
+            item.code,
+        )
+    )
+    for candidate in candidates:
+        if _tug_barge_compatible(tug_code=tug_code, barge_code=candidate.code):
+            return candidate
+    return candidates[0] if candidates else None
+
+
+def _replacement_cts(*, assignment: Assignment, snapshot: RecoveryInputSnapshot) -> CTSAsset | None:
+    current_code = assignment.cts.code if assignment.cts else ""
+    candidates = list(CTSAsset.objects.filter(is_active=True, is_available=True).exclude(
+        code=current_code
+    ))
+    candidates.sort(
+        key=lambda item: (
+            _replacement_resource_conflicts(assignment=assignment, cts_code=item.code),
+            item.code,
+        )
+    )
+    return candidates[0] if candidates else None
+
+
+def _replacement_resource_conflicts(
+    *,
+    assignment: Assignment,
+    tug_code: str = "",
+    barge_code: str = "",
+    cts_code: str = "",
+) -> int:
+    query = Assignment.objects.select_related("trip", "tug", "barge", "cts").filter(
+        trip__plan_version=assignment.trip.plan_version,
+        planned_departure__lt=assignment.planned_arrival,
+        planned_arrival__gt=assignment.planned_departure,
+    ).exclude(pk=assignment.pk)
+    conflicts = 0
+    if tug_code:
+        conflicts += query.filter(tug__code=tug_code).count()
+    if barge_code:
+        conflicts += query.filter(barge__code=barge_code).count()
+    if cts_code:
+        conflicts += query.filter(cts__code=cts_code).count()
+    return conflicts
+
+
+def _tug_barge_compatible(*, tug_code: str, barge_code: str) -> bool:
+    if not tug_code or not barge_code:
+        return True
+    return not AssetCompatibilityRule.objects.filter(
+        rule_type=AssetCompatibilityRule.RuleType.TUG_BARGE,
+        left_code=tug_code,
+        right_code=barge_code,
+        is_active=True,
+        is_compatible=False,
+    ).exists()
+
+
+def _events_by_type(trip: Trip) -> dict[str, ScheduleEvent]:
+    return {event.event_type: event for event in trip.events.all()}
+
+
+def _route_segment_ids_for_assignment(assignment: Assignment) -> list[int]:
+    if not assignment.route_segment_id:
+        return []
+    route = assignment.route_segment.route
+    route_segment_ids = set(
+        route.segments.filter(requires_tide_window=True).values_list("id", flat=True)
+    )
+    route_segment_ids.add(assignment.route_segment_id)
+    return list(route_segment_ids)
+
+
+def _assignment_schedule_state(assignment: Assignment) -> dict:
+    return {
+        "tripId": assignment.trip.trip_id,
+        "status": assignment.status,
+        "plannedDeparture": _iso(assignment.planned_departure),
+        "plannedArrival": _iso(assignment.planned_arrival),
+        "tug": assignment.tug.code if assignment.tug else "",
+        "barge": assignment.barge.code if assignment.barge else "",
+        "jetty": assignment.jetty.code if assignment.jetty else "",
+        "cts": assignment.cts.code if assignment.cts else "",
+    }
+
+
+def _score_breakdown(
+    *,
+    delay_minutes: int,
+    missed_windows: int,
+    resource_conflicts: int,
+    manual_changes: int,
+    health_risk_count: int,
+    hard_constraints_passed: bool,
+    objective_weights: dict,
+) -> dict:
+    delay_penalty = delay_minutes * 0.25 * float(objective_weights["delayMinutes"])
+    window_penalty = missed_windows * 30 * float(objective_weights["missedWindows"])
+    resource_penalty = resource_conflicts * 35 * float(objective_weights["resourceConflicts"])
+    manual_penalty = manual_changes * 10 * float(objective_weights["manualChanges"])
+    health_penalty = min(20, health_risk_count * 3) * float(objective_weights["healthRisk"])
+    hard_penalty = 30 if not hard_constraints_passed else 0
+    total = max(
+        0,
+        100
+        - delay_penalty
+        - window_penalty
+        - resource_penalty
+        - manual_penalty
+        - health_penalty
+        - hard_penalty,
+    )
+    return {
+        "delayPenalty": round(delay_penalty, 3),
+        "windowPenalty": round(window_penalty, 3),
+        "resourcePenalty": round(resource_penalty, 3),
+        "manualPenalty": round(manual_penalty, 3),
+        "healthPenalty": round(health_penalty, 3),
+        "hardConstraintPenalty": hard_penalty,
+        "totalScore": round(total, 3),
+    }
+
+
+def _risk_level(
+    *,
+    delay_minutes: int,
+    missed_windows: int,
+    resource_conflicts: int,
+    hard_constraints_passed: bool,
+) -> str:
+    if not hard_constraints_passed:
+        return RecoveryRecommendation.RiskLevel.HIGH
+    if resource_conflicts or missed_windows > 1 or delay_minutes >= 180:
+        return RecoveryRecommendation.RiskLevel.HIGH
+    if missed_windows or delay_minutes >= 90:
+        return RecoveryRecommendation.RiskLevel.MEDIUM
+    return RecoveryRecommendation.RiskLevel.LOW
+
+
+def _confidence_score(
+    *,
+    hard_constraints_passed: bool,
+    health_risk_count: int,
+    resource_conflicts: int,
+) -> float:
+    score = 86
+    if not hard_constraints_passed:
+        score -= 24
+    score -= min(18, health_risk_count * 4)
+    score -= min(20, resource_conflicts * 10)
+    return max(0, score)
+
+
+def _utilization_delta_pct(*, delay_minutes: int, manual_changes: int) -> float:
+    return round(min(12, (delay_minutes / 60) * 1.5 + manual_changes * 0.75), 2)
+
+
+def _optimizer_summary(
+    *,
+    snapshot: RecoveryInputSnapshot,
+    candidates: list[dict],
+    recommendations: list[RecoveryRecommendation],
+) -> dict:
+    best = recommendations[0] if recommendations else None
+    return {
+        "sourceRef": snapshot.source_ref,
+        "sourceKind": snapshot.source_kind,
+        "recommendationCount": len(recommendations),
+        "candidateStrategies": [candidate["strategy"] for candidate in candidates],
+        "bestRecommendation": best.recommendation_id if best else "",
+        "bestStrategy": candidates[0]["strategy"] if candidates else "",
+        "hardConstraintPassCount": len(
+            [candidate for candidate in candidates if candidate["hard_constraints_passed"]]
+        ),
+        "algorithmVersion": RECOVERY_REPAIR_ALGORITHM_VERSION,
+        "mode": "deterministic_repair",
+    }
+
+
+def _explanation_node(*, kind: str, label: str, value: str) -> dict:
+    return {"kind": kind, "label": label, "value": value}
+
+
+def _decimal_score(value, *, places: str) -> Decimal:
+    return Decimal(str(value)).quantize(Decimal(places))
+
+
+def _ceil_minutes(delta) -> int:
+    return max(0, int((delta.total_seconds() + 59) // 60))
 
 
 def _resolve_plan_version(

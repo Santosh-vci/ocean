@@ -41,13 +41,17 @@ from .models import (
     Trip,
 )
 from .read_models import build_dashboard_read_model
-from .recovery_services import build_recovery_input_snapshot
+from .recovery_services import (
+    build_recovery_input_snapshot,
+    generate_recovery_recommendations,
+)
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
     AssignmentSerializer,
     ConflictSerializer,
     ExportJobSerializer,
+    OptimizerRunGenerateSerializer,
     OptimizerRunSerializer,
     OverrideRequestSerializer,
     PlanSerializer,
@@ -582,7 +586,12 @@ class RecoveryInputSnapshotViewSet(ReadOnlyModelViewSet):
 
 class OptimizerRunViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
-    action_permission_map = {"list": "schedule.view", "retrieve": "schedule.view"}
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "create": "schedule.edit",
+        "generate": "schedule.edit",
+    }
     queryset = OptimizerRun.objects.select_related(
         "input_snapshot",
         "plan_version",
@@ -594,6 +603,44 @@ class OptimizerRunViewSet(ReadOnlyModelViewSet):
         "recommendations__evaluation",
     )
     serializer_class = OptimizerRunSerializer
+
+    def create(self, request):
+        return self._generate_recovery_run(request)
+
+    @action(detail=False, methods=["post"], url_path="generate")
+    def generate(self, request):
+        return self._generate_recovery_run(request)
+
+    def _generate_recovery_run(self, request):
+        generate_serializer = OptimizerRunGenerateSerializer(data=request.data)
+        generate_serializer.is_valid(raise_exception=True)
+        optimizer_run = generate_recovery_recommendations(
+            snapshot=generate_serializer.validated_data["input_snapshot"],
+            objective_weights=generate_serializer.validated_data.get("objective_weights", {}),
+            max_candidates=generate_serializer.validated_data.get("max_candidates", 5),
+            actor=request.user,
+        )
+        optimizer_run = self.get_queryset().get(pk=optimizer_run.pk)
+        record_audit_event(
+            actor=request.user,
+            organization=optimizer_run.organization,
+            action="recovery.optimizer.run",
+            object_type="optimizer_run",
+            object_id=str(optimizer_run.pk),
+            object_repr=optimizer_run.run_id,
+            metadata={
+                "input_snapshot": optimizer_run.input_snapshot.snapshot_id,
+                "plan_version": str(optimizer_run.plan_version),
+                "algorithm_version": optimizer_run.algorithm_version,
+                "recommendation_count": optimizer_run.recommendations.count(),
+                "best_strategy": optimizer_run.summary.get("bestStrategy", ""),
+            },
+            request=request,
+        )
+        return Response(
+            OptimizerRunSerializer(optimizer_run).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
