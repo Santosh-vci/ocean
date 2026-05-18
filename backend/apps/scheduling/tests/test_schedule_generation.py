@@ -51,6 +51,7 @@ from apps.scheduling.services import (
 from apps.scheduling.recovery_services import (
     RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION,
     RECOVERY_REPAIR_ALGORITHM_VERSION,
+    RECOVERY_SCORING_ALGORITHM_VERSION,
     build_recovery_input_snapshot,
     generate_recovery_recommendations,
 )
@@ -1451,6 +1452,8 @@ def test_phase5_seed_creates_recovery_model_foundation():
         "next_window_repair",
         "resequence_trip",
     }
+    assert optimizer_run.summary["scoringVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION
+    assert optimizer_run.summary["bestRiskLabel"]
     assert RecoveryAction.objects.filter(recommendation__optimizer_run=optimizer_run).count() >= 4
     assert RecommendationEvaluation.objects.filter(
         recommendation__optimizer_run=optimizer_run,
@@ -1571,8 +1574,46 @@ def test_phase5_deterministic_repair_engine_persists_candidate_set():
         recommendation__optimizer_run=optimizer_run,
     )
     assert evaluations.count() == len(recommendations)
-    assert all("totalScore" in item.score_breakdown for item in evaluations)
+    assert all(item.score_breakdown["algorithmVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION for item in evaluations)
+    assert all("components" in item.score_breakdown for item in evaluations)
+    assert all("risk" in item.score_breakdown for item in evaluations)
     assert optimizer_run.summary["mode"] == "deterministic_repair"
+    assert optimizer_run.summary["bestScore"] == max(
+        float(item.score) for item in recommendations
+    )
+
+
+@pytest.mark.django_db
+def test_phase5_scoring_and_explanation_contract_is_operator_readable():
+    call_command("seed_phase0", reset_operational_data=True, verbosity=0)
+    optimizer_run = OptimizerRun.objects.get(run_id="OPT-PHASE5-SEED")
+    recommendation = optimizer_run.recommendations.select_related("evaluation").order_by(
+        "rank",
+    ).first()
+    explanation_kinds = {node["kind"] for node in recommendation.explanation}
+    score_breakdown = recommendation.evaluation.score_breakdown
+
+    assert recommendation.metadata["scoringVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION
+    assert recommendation.metadata["riskLabel"] == recommendation.evaluation.metadata["risk"][
+        "label"
+    ]
+    assert score_breakdown["algorithmVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION
+    assert set(score_breakdown["weights"]) >= {
+        "delayMinutes",
+        "missedWindows",
+        "resourceConflicts",
+        "manualChanges",
+        "healthRisk",
+        "ogvCompletionRisk",
+        "demurrageProxy",
+    }
+    assert score_breakdown["components"]
+    assert all("weightedPenalty" in component for component in score_breakdown["components"])
+    assert {"source", "score", "risk", "constraint", "next_step"} <= explanation_kinds
+    assert all("title" in node and "detail" in node for node in recommendation.explanation)
+    assert [node["sortOrder"] for node in recommendation.explanation] == list(
+        range(1, len(recommendation.explanation) + 1)
+    )
 
 
 @pytest.mark.django_db
@@ -1598,6 +1639,9 @@ def test_phase5_recovery_run_api_generates_governed_optimizer_run():
     assert response.data["status"] == OptimizerRun.Status.SUCCEEDED
     assert response.data["recommendations"]
     assert response.data["summary"]["candidateStrategies"]
+    assert response.data["summary"]["scoringVersion"] == RECOVERY_SCORING_ALGORITHM_VERSION
+    assert response.data["recommendations"][0]["metadata"]["riskLabel"]
+    assert response.data["recommendations"][0]["evaluation"]["score_breakdown"]["components"]
     assert AuditEvent.objects.filter(
         action="recovery.optimizer.run",
         object_repr=response.data["run_id"],

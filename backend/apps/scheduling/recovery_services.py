@@ -40,13 +40,16 @@ from .models import (
 )
 
 RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION = "phase5.1-input-snapshot-builder"
-RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.2-deterministic-repair-engine"
+RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.3-scored-deterministic-repair"
+RECOVERY_SCORING_ALGORITHM_VERSION = "phase5.3-scoring-explanation"
 DEFAULT_REPAIR_OBJECTIVE_WEIGHTS = {
-    "delayMinutes": 0.4,
-    "missedWindows": 0.25,
-    "resourceConflicts": 0.2,
-    "manualChanges": 0.1,
-    "healthRisk": 0.05,
+    "delayMinutes": 0.30,
+    "missedWindows": 0.22,
+    "resourceConflicts": 0.18,
+    "manualChanges": 0.10,
+    "healthRisk": 0.08,
+    "ogvCompletionRisk": 0.07,
+    "demurrageProxy": 0.05,
 }
 
 
@@ -200,10 +203,7 @@ def generate_recovery_recommendations(
     replace_existing: bool = False,
     max_candidates: int = 5,
 ) -> OptimizerRun:
-    weights = {
-        **DEFAULT_REPAIR_OBJECTIVE_WEIGHTS,
-        **(objective_weights or {}),
-    }
+    weights = _normalized_objective_weights(objective_weights or {})
     max_candidates = max(1, min(int(max_candidates or 5), 10))
     started_at = timezone.now()
     with transaction.atomic():
@@ -264,6 +264,9 @@ def generate_recovery_recommendations(
                 metadata={
                     "strategy": candidate["strategy"],
                     "algorithmVersion": RECOVERY_REPAIR_ALGORITHM_VERSION,
+                    "scoringVersion": RECOVERY_SCORING_ALGORITHM_VERSION,
+                    "riskLabel": candidate["risk_label"],
+                    "scoreSummary": candidate["score_summary"],
                     **candidate.get("metadata", {}),
                 },
             )
@@ -300,6 +303,9 @@ def generate_recovery_recommendations(
                 metadata={
                     "strategy": candidate["strategy"],
                     "hardConstraintEvidence": candidate["hard_constraint_evidence"],
+                    "risk": candidate["risk"],
+                    "scoreSummary": candidate["score_summary"],
+                    "scoringVersion": RECOVERY_SCORING_ALGORITHM_VERSION,
                 },
             )
             recommendations.append(recommendation)
@@ -791,7 +797,9 @@ def _candidate(
     explanation: list[dict],
 ) -> dict:
     health_risk_count = len(snapshot.resource_state.get("healthRisks", []))
-    score_breakdown = _score_breakdown(
+    scoring = score_recommendation(
+        assignment=assignment,
+        strategy=strategy,
         delay_minutes=delay_minutes,
         missed_windows=missed_windows,
         resource_conflicts=resource_conflicts,
@@ -800,12 +808,17 @@ def _candidate(
         hard_constraints_passed=hard_constraints_passed,
         objective_weights=objective_weights,
     )
+    score_breakdown = scoring["score_breakdown"]
     score = score_breakdown["totalScore"]
-    risk_level = _risk_level(
-        delay_minutes=delay_minutes,
-        missed_windows=missed_windows,
-        resource_conflicts=resource_conflicts,
+    risk = scoring["risk"]
+    explanation_nodes = explain_recommendation(
+        snapshot=snapshot,
+        assignment=assignment,
+        strategy=strategy,
+        base_nodes=explanation,
+        scoring=scoring,
         hard_constraints_passed=hard_constraints_passed,
+        hard_constraint_evidence=hard_constraint_evidence,
     )
     return {
         "strategy": strategy,
@@ -818,35 +831,24 @@ def _candidate(
         "hard_constraint_evidence": hard_constraint_evidence,
         "score_breakdown": score_breakdown,
         "score": score,
-        "risk_level": risk_level,
-        "confidence_score": _confidence_score(
-            hard_constraints_passed=hard_constraints_passed,
-            health_risk_count=health_risk_count,
-            resource_conflicts=resource_conflicts,
-        ),
+        "risk_level": risk["level"],
+        "risk_label": risk["label"],
+        "risk": risk,
+        "score_summary": scoring["score_summary"],
+        "confidence_score": scoring["confidence_score"],
         "utilization_delta_pct": _utilization_delta_pct(
             delay_minutes=delay_minutes,
             manual_changes=manual_changes,
         ),
         "actions": actions,
-        "explanation": [
-            _explanation_node(
-                kind="source",
-                label="Input snapshot",
-                value=f"{snapshot.snapshot_id} / {snapshot.source_ref}",
-            ),
-            *explanation,
-            _explanation_node(
-                kind="constraint",
-                label="Hard constraints",
-                value="Passed" if hard_constraints_passed else "Review required",
-            ),
-        ],
+        "explanation": explanation_nodes,
         "metadata": {
             "targetTripId": assignment.trip.trip_id,
             "targetAssignmentId": assignment.id,
             "manualChanges": manual_changes,
             "healthRiskCount": health_risk_count,
+            "riskLabel": risk["label"],
+            "scoreSummary": scoring["score_summary"],
         },
     }
 
@@ -861,9 +863,21 @@ def _noop_candidate(*, snapshot: RecoveryInputSnapshot) -> dict:
         "manual_changes": 0,
         "hard_constraints_passed": False,
         "hard_constraint_evidence": ["no_target_assignment"],
-        "score_breakdown": {"totalScore": 0},
+        "score_breakdown": {
+            "algorithmVersion": RECOVERY_SCORING_ALGORITHM_VERSION,
+            "totalScore": 0,
+            "components": [],
+            "weights": DEFAULT_REPAIR_OBJECTIVE_WEIGHTS,
+        },
         "score": 0,
         "risk_level": RecoveryRecommendation.RiskLevel.CRITICAL,
+        "risk_label": "Critical - no repair target",
+        "risk": {
+            "level": RecoveryRecommendation.RiskLevel.CRITICAL,
+            "label": "Critical - no repair target",
+            "reasons": ["No disrupted assignment could be resolved."],
+        },
+        "score_summary": "0.0 / 100.0 because no repair target was resolved.",
         "confidence_score": 0,
         "utilization_delta_pct": 0,
         "actions": [
@@ -874,13 +888,18 @@ def _noop_candidate(*, snapshot: RecoveryInputSnapshot) -> dict:
                 "constraints_checked": ["no_target_assignment"],
             }
         ],
-        "explanation": [
+        "explanation": _sequence_explanation_nodes([
             _explanation_node(
                 kind="risk",
                 label="No target",
                 value="Snapshot has no resolvable trip or assignment for repair.",
+                severity="critical",
+                detail=(
+                    "The input snapshot did not resolve to a trip or assignment, so the "
+                    "engine cannot calculate operational repair options."
+                ),
             )
-        ],
+        ]),
         "metadata": {},
     }
 
@@ -1173,8 +1192,25 @@ def _assignment_schedule_state(assignment: Assignment) -> dict:
     }
 
 
-def _score_breakdown(
+def _normalized_objective_weights(overrides: dict) -> dict:
+    cleaned = {}
+    for key, default in DEFAULT_REPAIR_OBJECTIVE_WEIGHTS.items():
+        raw_value = overrides.get(key, default)
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            value = float(default)
+        cleaned[key] = max(0, value)
+    total = sum(cleaned.values())
+    if total <= 0:
+        return DEFAULT_REPAIR_OBJECTIVE_WEIGHTS.copy()
+    return {key: round(value / total, 4) for key, value in cleaned.items()}
+
+
+def score_recommendation(
     *,
+    assignment: Assignment,
+    strategy: str,
     delay_minutes: int,
     missed_windows: int,
     resource_conflicts: int,
@@ -1183,47 +1219,361 @@ def _score_breakdown(
     hard_constraints_passed: bool,
     objective_weights: dict,
 ) -> dict:
-    delay_penalty = delay_minutes * 0.25 * float(objective_weights["delayMinutes"])
-    window_penalty = missed_windows * 30 * float(objective_weights["missedWindows"])
-    resource_penalty = resource_conflicts * 35 * float(objective_weights["resourceConflicts"])
-    manual_penalty = manual_changes * 10 * float(objective_weights["manualChanges"])
-    health_penalty = min(20, health_risk_count * 3) * float(objective_weights["healthRisk"])
-    hard_penalty = 30 if not hard_constraints_passed else 0
-    total = max(
-        0,
-        100
-        - delay_penalty
-        - window_penalty
-        - resource_penalty
-        - manual_penalty
-        - health_penalty
-        - hard_penalty,
+    normalized_weights = _normalized_objective_weights(objective_weights)
+    raw_metrics = {
+        "delayMinutes": delay_minutes,
+        "missedWindows": missed_windows,
+        "resourceConflicts": resource_conflicts,
+        "manualChanges": manual_changes,
+        "healthRiskCount": health_risk_count,
+        "ogvCompletionRiskMinutes": _ogv_completion_risk_minutes(
+            assignment=assignment,
+            delay_minutes=delay_minutes,
+        ),
+        "demurrageProxyUsd": _demurrage_proxy_usd(
+            assignment=assignment,
+            delay_minutes=delay_minutes,
+        ),
+        "operationalComplexity": _operational_complexity_score(
+            strategy=strategy,
+            manual_changes=manual_changes,
+        ),
+    }
+    components = [
+        _score_component(
+            key="delayMinutes",
+            label="Delay exposure",
+            weight=normalized_weights["delayMinutes"],
+            raw_value=delay_minutes,
+            penalty=_bounded_score(delay_minutes, full_penalty_at=240),
+            unit="minutes",
+        ),
+        _score_component(
+            key="missedWindows",
+            label="Missed tide/bridge windows",
+            weight=normalized_weights["missedWindows"],
+            raw_value=missed_windows,
+            penalty=_bounded_score(missed_windows, full_penalty_at=3),
+            unit="count",
+        ),
+        _score_component(
+            key="resourceConflicts",
+            label="Resource conflict exposure",
+            weight=normalized_weights["resourceConflicts"],
+            raw_value=resource_conflicts,
+            penalty=_bounded_score(resource_conflicts, full_penalty_at=3),
+            unit="count",
+        ),
+        _score_component(
+            key="manualChanges",
+            label="Manual coordination load",
+            weight=normalized_weights["manualChanges"],
+            raw_value=manual_changes,
+            penalty=_bounded_score(raw_metrics["operationalComplexity"], full_penalty_at=5),
+            unit="changes",
+        ),
+        _score_component(
+            key="healthRisk",
+            label="Device/feed confidence",
+            weight=normalized_weights["healthRisk"],
+            raw_value=health_risk_count,
+            penalty=_bounded_score(health_risk_count, full_penalty_at=5),
+            unit="risks",
+        ),
+        _score_component(
+            key="ogvCompletionRisk",
+            label="OGV completion risk",
+            weight=normalized_weights["ogvCompletionRisk"],
+            raw_value=raw_metrics["ogvCompletionRiskMinutes"],
+            penalty=_bounded_score(raw_metrics["ogvCompletionRiskMinutes"], full_penalty_at=360),
+            unit="minutes",
+        ),
+        _score_component(
+            key="demurrageProxy",
+            label="Demurrage proxy",
+            weight=normalized_weights["demurrageProxy"],
+            raw_value=raw_metrics["demurrageProxyUsd"],
+            penalty=_bounded_score(raw_metrics["demurrageProxyUsd"], full_penalty_at=250000),
+            unit="usd",
+        ),
+    ]
+    hard_constraint_penalty = 35 if not hard_constraints_passed else 0
+    weighted_penalty = sum(component["weightedPenalty"] for component in components)
+    total_score = max(0, 100 - weighted_penalty - hard_constraint_penalty)
+    risk = _risk_profile(
+        score=total_score,
+        delay_minutes=delay_minutes,
+        missed_windows=missed_windows,
+        resource_conflicts=resource_conflicts,
+        ogv_completion_risk_minutes=raw_metrics["ogvCompletionRiskMinutes"],
+        hard_constraints_passed=hard_constraints_passed,
+    )
+    confidence_score = _confidence_score(
+        hard_constraints_passed=hard_constraints_passed,
+        health_risk_count=health_risk_count,
+        resource_conflicts=resource_conflicts,
+        missed_windows=missed_windows,
     )
     return {
-        "delayPenalty": round(delay_penalty, 3),
-        "windowPenalty": round(window_penalty, 3),
-        "resourcePenalty": round(resource_penalty, 3),
-        "manualPenalty": round(manual_penalty, 3),
-        "healthPenalty": round(health_penalty, 3),
-        "hardConstraintPenalty": hard_penalty,
-        "totalScore": round(total, 3),
+        "score_breakdown": {
+            "algorithmVersion": RECOVERY_SCORING_ALGORITHM_VERSION,
+            "totalScore": round(total_score, 3),
+            "weightedPenalty": round(weighted_penalty, 3),
+            "hardConstraintPenalty": hard_constraint_penalty,
+            "weights": normalized_weights,
+            "rawMetrics": raw_metrics,
+            "components": components,
+            "risk": risk,
+        },
+        "risk": risk,
+        "confidence_score": confidence_score,
+        "score_summary": _score_summary(
+            score=total_score,
+            risk=risk,
+            components=components,
+            hard_constraint_penalty=hard_constraint_penalty,
+        ),
     }
 
 
-def _risk_level(
+def explain_recommendation(
     *,
+    snapshot: RecoveryInputSnapshot,
+    assignment: Assignment,
+    strategy: str,
+    base_nodes: list[dict],
+    scoring: dict,
+    hard_constraints_passed: bool,
+    hard_constraint_evidence: list[str],
+) -> list[dict]:
+    risk = scoring["risk"]
+    score_breakdown = scoring["score_breakdown"]
+    nodes = [
+        _explanation_node(
+            kind="source",
+            label="Input snapshot",
+            value=f"{snapshot.snapshot_id} / {snapshot.source_ref}",
+            severity="info",
+            detail=(
+                f"Recommendation is calculated from {snapshot.source_kind} source "
+                f"{snapshot.source_ref} for {assignment.trip.trip_id}."
+            ),
+            evidence={
+                "snapshotId": snapshot.snapshot_id,
+                "inputHash": snapshot.input_hash,
+                "targetTripId": assignment.trip.trip_id,
+            },
+        ),
+        _explanation_node(
+            kind="score",
+            label="Recommendation score",
+            value=f"{score_breakdown['totalScore']:.1f} / 100",
+            severity=_severity_from_risk(risk["level"]),
+            detail=scoring["score_summary"],
+            evidence={
+                "components": score_breakdown["components"],
+                "weights": score_breakdown["weights"],
+            },
+            metric={
+                "value": score_breakdown["totalScore"],
+                "unit": "score",
+            },
+        ),
+        _explanation_node(
+            kind="risk",
+            label="Risk label",
+            value=risk["label"],
+            severity=_severity_from_risk(risk["level"]),
+            detail="; ".join(risk["reasons"]),
+            evidence={"riskReasons": risk["reasons"]},
+        ),
+        *base_nodes,
+        _explanation_node(
+            kind="constraint",
+            label="Hard constraints",
+            value="Passed" if hard_constraints_passed else "Review required",
+            severity="ok" if hard_constraints_passed else "warning",
+            detail=(
+                "Confirmed actuals remain frozen and the active plan is not mutated."
+                if hard_constraints_passed
+                else "At least one hard-constraint check needs planner review before use."
+            ),
+            evidence={"checks": hard_constraint_evidence},
+        ),
+        _explanation_node(
+            kind="next_step",
+            label="Governed next step",
+            value="Create scenario before plan change",
+            severity="info",
+            detail=(
+                "This recommendation is advisory. It must be materialized as a scenario "
+                "and promoted through approval before publication."
+            ),
+            evidence={"strategy": strategy},
+        ),
+    ]
+    return _sequence_explanation_nodes(nodes)
+
+
+def _score_component(
+    *,
+    key: str,
+    label: str,
+    weight: float,
+    raw_value,
+    penalty: float,
+    unit: str,
+) -> dict:
+    weighted_penalty = penalty * weight
+    contribution = max(0, weight * 100 - weighted_penalty)
+    return {
+        "key": key,
+        "label": label,
+        "weight": weight,
+        "rawValue": raw_value,
+        "unit": unit,
+        "penalty": round(penalty, 3),
+        "weightedPenalty": round(weighted_penalty, 3),
+        "contribution": round(contribution, 3),
+    }
+
+
+def _bounded_score(value, *, full_penalty_at: float) -> float:
+    try:
+        numeric = max(0, float(value))
+    except (TypeError, ValueError):
+        numeric = 0
+    if full_penalty_at <= 0:
+        return 0
+    return min(100, (numeric / full_penalty_at) * 100)
+
+
+def _ogv_completion_risk_minutes(*, assignment: Assignment, delay_minutes: int) -> int:
+    voyage = assignment.trip.voyage
+    projected_end = assignment.trip.planned_end + timedelta(minutes=delay_minutes)
+    if projected_end <= voyage.laycan_end:
+        return 0
+    return _ceil_minutes(projected_end - voyage.laycan_end)
+
+
+def _demurrage_proxy_usd(*, assignment: Assignment, delay_minutes: int) -> float:
+    voyage = assignment.trip.voyage
+    risk_minutes = _ogv_completion_risk_minutes(
+        assignment=assignment,
+        delay_minutes=delay_minutes,
+    )
+    billable_minutes = risk_minutes or max(0, delay_minutes - 120)
+    if billable_minutes <= 0:
+        return 0
+    return float(
+        (
+            Decimal(billable_minutes)
+            / Decimal(1440)
+            * voyage.demurrage_rate_usd_per_day
+        ).quantize(Decimal("0.01"))
+    )
+
+
+def _operational_complexity_score(*, strategy: str, manual_changes: int) -> float:
+    strategy_weight = {
+        "delay_trip": 1.0,
+        "next_window_repair": 1.5,
+        "resequence_trip": 2.5,
+        "cts_reassignment": 2.0,
+        "tug_barge_swap": 3.0,
+        "noop": 5.0,
+    }.get(strategy, 2.0)
+    return manual_changes + strategy_weight
+
+
+def _risk_profile(
+    *,
+    score: float,
     delay_minutes: int,
     missed_windows: int,
     resource_conflicts: int,
+    ogv_completion_risk_minutes: int,
     hard_constraints_passed: bool,
-) -> str:
+) -> dict:
+    reasons = []
     if not hard_constraints_passed:
-        return RecoveryRecommendation.RiskLevel.HIGH
-    if resource_conflicts or missed_windows > 1 or delay_minutes >= 180:
-        return RecoveryRecommendation.RiskLevel.HIGH
-    if missed_windows or delay_minutes >= 90:
-        return RecoveryRecommendation.RiskLevel.MEDIUM
-    return RecoveryRecommendation.RiskLevel.LOW
+        reasons.append("One or more hard constraints require review.")
+    if resource_conflicts:
+        reasons.append(f"{resource_conflicts} resource conflict exposure(s).")
+    if missed_windows:
+        reasons.append(f"{missed_windows} tide/bridge window miss risk(s).")
+    if delay_minutes:
+        reasons.append(f"{delay_minutes} minutes projected delay.")
+    if ogv_completion_risk_minutes:
+        reasons.append(
+            f"{ogv_completion_risk_minutes} minutes beyond OGV laycan completion guardrail."
+        )
+
+    if not hard_constraints_passed or score < 45:
+        level = RecoveryRecommendation.RiskLevel.HIGH
+        label = "High risk - planner review required"
+    elif resource_conflicts or missed_windows > 1 or ogv_completion_risk_minutes:
+        level = RecoveryRecommendation.RiskLevel.HIGH
+        label = "High risk - constraint exposure"
+    elif missed_windows or delay_minutes >= 90 or score < 70:
+        level = RecoveryRecommendation.RiskLevel.MEDIUM
+        label = "Medium risk - operational coordination required"
+    else:
+        level = RecoveryRecommendation.RiskLevel.LOW
+        label = "Low risk - candidate feasible"
+
+    if not reasons:
+        reasons.append("No hard constraint exposure detected.")
+    return {"level": level, "label": label, "reasons": reasons}
+
+
+def _score_summary(
+    *,
+    score: float,
+    risk: dict,
+    components: list[dict],
+    hard_constraint_penalty: float,
+) -> str:
+    sorted_components = sorted(
+        components,
+        key=lambda item: item["weightedPenalty"],
+        reverse=True,
+    )
+    leading = sorted_components[0] if sorted_components else None
+    leading_text = (
+        f"largest penalty is {leading['label']} ({leading['weightedPenalty']:.1f})"
+        if leading
+        else "no weighted penalty"
+    )
+    hard_text = (
+        f" and hard-constraint penalty {hard_constraint_penalty:.1f}"
+        if hard_constraint_penalty
+        else ""
+    )
+    return f"{score:.1f} / 100, {risk['label']}; {leading_text}{hard_text}."
+
+
+def _severity_from_risk(risk_level: str) -> str:
+    if risk_level == RecoveryRecommendation.RiskLevel.HIGH:
+        return "warning"
+    if risk_level == RecoveryRecommendation.RiskLevel.CRITICAL:
+        return "critical"
+    if risk_level == RecoveryRecommendation.RiskLevel.MEDIUM:
+        return "warning"
+    return "ok"
+
+
+def _sequence_explanation_nodes(nodes: list[dict]) -> list[dict]:
+    sequenced = []
+    for index, node in enumerate(nodes, start=1):
+        sequenced.append(
+            {
+                "id": node.get("id") or f"EXP-{index:02d}",
+                "sortOrder": index,
+                **node,
+            }
+        )
+    return sequenced
 
 
 def _confidence_score(
@@ -1231,12 +1581,14 @@ def _confidence_score(
     hard_constraints_passed: bool,
     health_risk_count: int,
     resource_conflicts: int,
+    missed_windows: int = 0,
 ) -> float:
     score = 86
     if not hard_constraints_passed:
         score -= 24
     score -= min(18, health_risk_count * 4)
     score -= min(20, resource_conflicts * 10)
+    score -= min(14, missed_windows * 7)
     return max(0, score)
 
 
@@ -1251,23 +1603,50 @@ def _optimizer_summary(
     recommendations: list[RecoveryRecommendation],
 ) -> dict:
     best = recommendations[0] if recommendations else None
+    best_candidate = candidates[0] if candidates else None
+    risk_counts = {}
+    for candidate in candidates:
+        risk_counts[candidate["risk_level"]] = risk_counts.get(candidate["risk_level"], 0) + 1
     return {
         "sourceRef": snapshot.source_ref,
         "sourceKind": snapshot.source_kind,
         "recommendationCount": len(recommendations),
         "candidateStrategies": [candidate["strategy"] for candidate in candidates],
         "bestRecommendation": best.recommendation_id if best else "",
-        "bestStrategy": candidates[0]["strategy"] if candidates else "",
+        "bestStrategy": best_candidate["strategy"] if best_candidate else "",
+        "bestScore": best_candidate["score"] if best_candidate else 0,
+        "bestRiskLabel": best_candidate["risk_label"] if best_candidate else "",
+        "riskCounts": risk_counts,
         "hardConstraintPassCount": len(
             [candidate for candidate in candidates if candidate["hard_constraints_passed"]]
         ),
         "algorithmVersion": RECOVERY_REPAIR_ALGORITHM_VERSION,
+        "scoringVersion": RECOVERY_SCORING_ALGORITHM_VERSION,
         "mode": "deterministic_repair",
     }
 
 
-def _explanation_node(*, kind: str, label: str, value: str) -> dict:
-    return {"kind": kind, "label": label, "value": value}
+def _explanation_node(
+    *,
+    kind: str,
+    label: str,
+    value: str,
+    severity: str = "info",
+    detail: str = "",
+    evidence: dict | None = None,
+    metric: dict | None = None,
+) -> dict:
+    return {
+        "kind": kind,
+        "category": kind,
+        "severity": severity,
+        "label": label,
+        "title": label,
+        "value": value,
+        "detail": detail or value,
+        "evidence": evidence or {},
+        "metric": metric or {},
+    }
 
 
 def _decimal_score(value, *, places: str) -> Decimal:
