@@ -3,7 +3,10 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  DisabledReasonTooltip,
   RecommendationCard,
+  RowActionHint,
+  type ActionRecommendation,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
 import {
@@ -142,17 +145,21 @@ function operationalTone(status: string | null | undefined) {
 }
 
 function CandidateReviewPanel({
+  assistantActions = [],
   candidate,
   confirmedEvent,
   canConfirm,
   isActionRunning,
+  onAssistantNavigate,
   onConfirm,
   onReject,
 }: {
+  assistantActions?: ActionRecommendation[];
   candidate: OperationalEventCandidateRecord | null;
   confirmedEvent: ConfirmedOperationalEventRecord | null;
   canConfirm: boolean;
   isActionRunning: boolean;
+  onAssistantNavigate?: LogisticsPageProps["onAssistantNavigate"];
   onConfirm?: LogisticsPageProps["onConfirmOperationalEvent"];
   onReject?: LogisticsPageProps["onRejectOperationalEvent"];
 }) {
@@ -187,6 +194,12 @@ function CandidateReviewPanel({
         {shortOperationalLabel(candidate.status)}
       </span>
       <p>{shortOperationalLabel(candidate.event_kind)} / {candidate.candidate_id}</p>
+      <RowActionHint
+        actions={assistantActions}
+        objectId={candidate.id}
+        objectType="operational_event_candidate"
+        onNavigate={onAssistantNavigate}
+      />
       <dl>
         <div><dt>Evidence</dt><dd>{candidate.feed_ref}</dd></div>
         <div><dt>Confidence</dt><dd>{Math.round(Number(candidate.confidence_score))}%</dd></div>
@@ -203,13 +216,15 @@ function CandidateReviewPanel({
               value={confirmReason}
             />
           </label>
-          <button
-            disabled={!canConfirm || !onConfirm || !confirmReason.trim() || isActionRunning}
-            onClick={() => onConfirm?.(candidate.id, candidate.event_at, confirmReason.trim())}
-            type="button"
-          >
-            Confirm
-          </button>
+          <DisabledReasonTooltip actionId="CONFIRM_EVENT" actions={assistantActions}>
+            <button
+              disabled={!canConfirm || !onConfirm || !confirmReason.trim() || isActionRunning}
+              onClick={() => onConfirm?.(candidate.id, candidate.event_at, confirmReason.trim())}
+              type="button"
+            >
+              Confirm
+            </button>
+          </DisabledReasonTooltip>
           <label>
             Reject reason
             <input
@@ -224,13 +239,15 @@ function CandidateReviewPanel({
               value={rejectNotes}
             />
           </label>
-          <button
-            disabled={!canConfirm || !onReject || !rejectReason.trim() || isActionRunning}
-            onClick={() => onReject?.(candidate.id, rejectReason.trim(), rejectNotes.trim())}
-            type="button"
-          >
-            Reject
-          </button>
+          <DisabledReasonTooltip actionId="REJECT_EVENT" actions={assistantActions}>
+            <button
+              disabled={!canConfirm || !onReject || !rejectReason.trim() || isActionRunning}
+              onClick={() => onReject?.(candidate.id, rejectReason.trim(), rejectNotes.trim())}
+              type="button"
+            >
+              Reject
+            </button>
+          </DisabledReasonTooltip>
         </div>
       ) : null}
     </section>
@@ -258,6 +275,11 @@ export function TugBargeAssignmentPage({
   );
   const selectedTrip = selectedTripFor(trips, assignments, selectedAssignmentId);
   const selectedConflict = conflictForTrip(conflicts, selectedTrip?.id);
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
   const operationalCount = assignments.filter((item) => statusTone(item.status) === "ok").length;
   const delayedCount = assignments.filter((item) => statusTone(item.status) === "pending").length;
   const blockedCount = assignments.filter((item) => statusTone(item.status) === "critical").length;
@@ -271,20 +293,24 @@ export function TugBargeAssignmentPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Fleet feasibility</span>
-          <button
-            disabled={!canEdit || !onRegenerate || isActionRunning}
-            onClick={onRegenerate}
-            type="button"
-          >
-            Regenerate plan
-          </button>
-          <button
-            disabled={!canExport || !onExport || isActionRunning}
-            onClick={onExport}
-            type="button"
-          >
-            Export chain
-          </button>
+          <DisabledReasonTooltip actionId="REGENERATE_PLAN" actions={assistantActions}>
+            <button
+              disabled={!canEdit || !onRegenerate || isActionRunning}
+              onClick={onRegenerate}
+              type="button"
+            >
+              Regenerate plan
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip actionId="GENERATE_EXPORT" actions={assistantActions}>
+            <button
+              disabled={!canExport || !onExport || isActionRunning}
+              onClick={onExport}
+              type="button"
+            >
+              Export chain
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard
@@ -320,6 +346,7 @@ export function TugBargeAssignmentPage({
                   <th>Next Avail PLN</th>
                   <th>Next Avail PRD</th>
                   <th>Delay Reason</th>
+                  <th>Hint</th>
                 </tr>
               </thead>
               <tbody>
@@ -340,6 +367,14 @@ export function TugBargeAssignmentPage({
                       <td>{dt(assignment.planned_arrival)}</td>
                       <td>{dt(trip?.planned_end)}</td>
                       <td>{conflict?.message || assignment.next_constraint || "—"}</td>
+                      <td>
+                        <RowActionHint
+                          actions={assistantActions}
+                          objectId={assignment.id}
+                          objectType="assignment"
+                          onNavigate={onAssistantNavigate}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -397,6 +432,10 @@ export function TugBargeAssignmentPage({
 }
 
 export function JettyLoadingPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit = false,
   canConfirmJetty = false,
@@ -405,6 +444,7 @@ export function JettyLoadingPage({
   operationCandidates = EMPTY_CANDIDATES,
   confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
   operationDevices = EMPTY_DEVICES,
+  onAssistantNavigate,
   onExport,
   onForceStartJetty,
   onConfirmOperationalEvent,
@@ -451,6 +491,11 @@ export function JettyLoadingPage({
   const confirmedJettyCount = confirmedOperationalEvents.filter((event) => (
     event.asset_type === "jetty"
   )).length;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   useEffect(() => {
     if (!selectedAssignmentId && assignments.length) {
@@ -480,23 +525,34 @@ export function JettyLoadingPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Source-side queue</span>
-          <button
-            disabled={!canEdit || !onForceStartJetty || !selectedAssignment || isActionRunning}
-            onClick={openOverridePanel}
-            title={!canEdit ? "Your role cannot force-start jetty queues." : undefined}
-            type="button"
-          >
-            Force start jetty
-          </button>
-          <button
-            disabled={!canExport || !onExport || isActionRunning}
-            onClick={onExport}
-            type="button"
-          >
-            Export loading plan
-          </button>
+          <DisabledReasonTooltip actionId="FORCE_START_JETTY" actions={assistantActions}>
+            <button
+              disabled={!canEdit || !onForceStartJetty || !selectedAssignment || isActionRunning}
+              onClick={openOverridePanel}
+              title={!canEdit ? "Your role cannot force-start jetty queues." : undefined}
+              type="button"
+            >
+              Force start jetty
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip actionId="GENERATE_EXPORT" actions={assistantActions}>
+            <button
+              disabled={!canExport || !onExport || isActionRunning}
+              onClick={onExport}
+              type="button"
+            >
+              Export loading plan
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip five-up planning-kpis">
         <div><span>Confirmed jetty events</span><strong className="success-text">{confirmedJettyCount}</strong></div>
@@ -584,9 +640,11 @@ export function JettyLoadingPage({
                   />
                 </label>
                 <div className="override-form-actions">
-                  <button disabled={!effectiveStart || isActionRunning} type="submit">
-                    Apply governed override
-                  </button>
+                  <DisabledReasonTooltip actionId="FORCE_START_JETTY" actions={assistantActions}>
+                    <button disabled={!effectiveStart || isActionRunning} type="submit">
+                      Apply governed override
+                    </button>
+                  </DisabledReasonTooltip>
                   <button onClick={() => setIsOverridePanelOpen(false)} type="button">
                     Cancel
                   </button>
@@ -599,10 +657,12 @@ export function JettyLoadingPage({
                   <p>Force start captures the effective start time and calculates current-trip tide and bridge risk.</p>
                 </section>
                 <CandidateReviewPanel
+                  assistantActions={assistantActions}
                   candidate={selectedJettyCandidate}
                   canConfirm={canConfirmJetty}
                   confirmedEvent={selectedJettyConfirmedEvent}
                   isActionRunning={isActionRunning}
+                  onAssistantNavigate={onAssistantNavigate}
                   onConfirm={onConfirmOperationalEvent}
                   onReject={onRejectOperationalEvent}
                 />
@@ -616,6 +676,10 @@ export function JettyLoadingPage({
 }
 
 export function CtsOperationsPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canConfirmCts = false,
   canExport = false,
@@ -623,6 +687,7 @@ export function CtsOperationsPage({
   operationCandidates = EMPTY_CANDIDATES,
   confirmedOperationalEvents = EMPTY_CONFIRMED_EVENTS,
   operationDevices = EMPTY_DEVICES,
+  onAssistantNavigate,
   onExport,
   onConfirmOperationalEvent,
   onRejectOperationalEvent,
@@ -653,6 +718,11 @@ export function CtsOperationsPage({
     candidate.event_kind === "cts_rate_updated"
     && candidate.status === "pending"
   ));
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page logistics-board">
@@ -663,15 +733,24 @@ export function CtsOperationsPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Transshipment capacity</span>
-          <button
-            disabled={!canExport || !onExport || isActionRunning}
-            onClick={onExport}
-            type="button"
-          >
-            Export CTS queue
-          </button>
+          <DisabledReasonTooltip actionId="GENERATE_EXPORT" actions={assistantActions}>
+            <button
+              disabled={!canExport || !onExport || isActionRunning}
+              onClick={onExport}
+              type="button"
+            >
+              Export CTS queue
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up planning-kpis">
         <div><span>Active CTS</span><strong>{activeCts}</strong></div>
@@ -744,10 +823,12 @@ export function CtsOperationsPage({
               <div><dt>Queue impact</dt><dd>{selectedCtsCandidate ? "Review before downstream release" : "No active signal"}</dd></div>
             </dl>
             <CandidateReviewPanel
+              assistantActions={assistantActions}
               candidate={selectedCtsCandidate}
               canConfirm={canConfirmCts}
               confirmedEvent={selectedCtsConfirmedEvent}
               isActionRunning={isActionRunning}
+              onAssistantNavigate={onAssistantNavigate}
               onConfirm={onConfirmOperationalEvent}
               onReject={onRejectOperationalEvent}
             />
@@ -777,6 +858,11 @@ export function PublishedPlanPage({
   const scenarioDiff = activeVersion?.scenario_diff_summary;
   const selectedTrip = trips.find((trip) => conflictForTrip(conflicts, trip.id)?.is_blocking) ?? trips[0];
   const selectedConflict = conflictForTrip(conflicts, selectedTrip?.id);
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page logistics-board published-board">
@@ -789,20 +875,24 @@ export function PublishedPlanPage({
           <span className={`phase-chip ${activeVersion?.validation_status === "feasible" ? "secure" : ""}`}>
             {activeVersion?.plan_code ?? "No version"} · V{activeVersion?.version_no ?? "—"}
           </span>
-          <button
-            disabled={!canCreateDraft || !onCreateDraft || isActionRunning}
-            onClick={onCreateDraft}
-            type="button"
-          >
-            Create draft
-          </button>
-          <button
-            disabled={!canCreateDraft || !onSubmitApproval || isActionRunning}
-            onClick={onSubmitApproval}
-            type="button"
-          >
-            Submit approval
-          </button>
+          <DisabledReasonTooltip actionId="CREATE_DRAFT" actions={assistantActions}>
+            <button
+              disabled={!canCreateDraft || !onCreateDraft || isActionRunning}
+              onClick={onCreateDraft}
+              type="button"
+            >
+              Create draft
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip actionId="SUBMIT_APPROVAL" actions={assistantActions}>
+            <button
+              disabled={!canCreateDraft || !onSubmitApproval || isActionRunning}
+              onClick={onSubmitApproval}
+              type="button"
+            >
+              Submit approval
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard

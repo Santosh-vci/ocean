@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  DisabledReasonTooltip,
   RecommendationCard,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
@@ -94,6 +95,11 @@ export function ExportHandoffPage({
     [exports, selectedExportId],
   );
   const latestPlanExport = exports.find((item) => item.export_type === "plan");
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page export-handoff-board">
@@ -104,12 +110,18 @@ export function ExportHandoffPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip secure">Governed exports</span>
-          <button disabled={!canGenerate || isGenerating} onClick={() => onGenerate({
-            exportType: "plan",
-            exportFormat: "print",
-          })} type="button">
-            Generate schedule
-          </button>
+          <DisabledReasonTooltip
+            actionId="GENERATE_EXPORT"
+            actions={assistantActions}
+            fallback={!canGenerate ? "Export generation requires export.generate permission." : ""}
+          >
+            <button disabled={!canGenerate || isGenerating} onClick={() => onGenerate({
+              exportType: "plan",
+              exportFormat: "print",
+            })} type="button">
+              Generate schedule
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard
@@ -157,16 +169,22 @@ export function ExportHandoffPage({
           </div>
           <div className="export-command-list">
             {COMMANDS.map((command) => (
-              <button
-                disabled={!canGenerate || isGenerating || isLoading}
+              <DisabledReasonTooltip
+                actionId="GENERATE_EXPORT"
+                actions={assistantActions}
+                fallback={!canGenerate ? "Export generation requires export.generate permission." : ""}
                 key={`${command.exportType}-${command.exportFormat}`}
-                onClick={() => onGenerate(command)}
-                type="button"
               >
-                <span>{formatType(command.exportType)} · {command.exportFormat.toUpperCase()}</span>
-                <strong>{command.title}</strong>
-                <em>{command.detail}</em>
-              </button>
+                <button
+                  disabled={!canGenerate || isGenerating || isLoading}
+                  onClick={() => onGenerate(command)}
+                  type="button"
+                >
+                  <span>{formatType(command.exportType)} · {command.exportFormat.toUpperCase()}</span>
+                  <strong>{command.title}</strong>
+                  <em>{command.detail}</em>
+                </button>
+              </DisabledReasonTooltip>
             ))}
           </div>
         </section>

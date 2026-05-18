@@ -3,7 +3,9 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  DisabledReasonTooltip,
   RecommendationCard,
+  RowActionHint,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
 import type {
@@ -136,6 +138,11 @@ export function OperationsEventConsolePage({
     ? canConfirmCandidate(permissions, selectedCandidate.event_kind)
     : false;
   const health = overview?.health ?? null;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   useEffect(() => {
     if (
@@ -284,6 +291,7 @@ export function OperationsEventConsolePage({
                   <th>Candidate</th>
                   <th>Trip</th>
                   <th>Conf.</th>
+                  <th>Hint</th>
                 </tr>
               </thead>
               <tbody>
@@ -306,6 +314,14 @@ export function OperationsEventConsolePage({
                       <td><GridDate value={candidate.event_at} /></td>
                       <td>{candidate.trip_ref ?? "-"}</td>
                       <td>{Math.round(Number(candidate.confidence_score))}%</td>
+                      <td>
+                        <RowActionHint
+                          actions={assistantActions}
+                          objectId={candidate.id}
+                          objectType="operational_event_candidate"
+                          onNavigate={onAssistantNavigate}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
@@ -347,6 +363,12 @@ export function OperationsEventConsolePage({
                   <em>{short(selectedConfirmedEvent.confirmation_mode)} by {selectedConfirmedEvent.confirmed_by_email ?? "system"}</em>
                 </section>
               ) : null}
+              <RowActionHint
+                actions={assistantActions}
+                objectId={selectedCandidate.id}
+                objectType="operational_event_candidate"
+                onNavigate={onAssistantNavigate}
+              />
               {selectedCandidate.status === "pending" ? (
                 <div className="event-action-stack">
                   <form onSubmit={submitConfirm}>
@@ -367,13 +389,19 @@ export function OperationsEventConsolePage({
                         value={confirmReason}
                       />
                     </label>
-                    <button
-                      disabled={!selectedCanConfirm || !onConfirm || !actualAt || !confirmReason.trim() || isActionRunning}
-                      title={!selectedCanConfirm ? "Your role cannot confirm this event type." : undefined}
-                      type="submit"
+                    <DisabledReasonTooltip
+                      actionId="CONFIRM_EVENT"
+                      actions={assistantActions}
+                      fallback={!selectedCanConfirm ? "Your role cannot confirm this event type." : ""}
                     >
-                      Confirm event
-                    </button>
+                      <button
+                        disabled={!selectedCanConfirm || !onConfirm || !actualAt || !confirmReason.trim() || isActionRunning}
+                        title={!selectedCanConfirm ? "Your role cannot confirm this event type." : undefined}
+                        type="submit"
+                      >
+                        Confirm event
+                      </button>
+                    </DisabledReasonTooltip>
                   </form>
                   <form onSubmit={submitReject}>
                     <label>
@@ -391,13 +419,19 @@ export function OperationsEventConsolePage({
                         value={rejectNotes}
                       />
                     </label>
-                    <button
-                      disabled={!selectedCanConfirm || !onReject || !rejectReason.trim() || isActionRunning}
-                      title={!selectedCanConfirm ? "Your role cannot reject this event type." : undefined}
-                      type="submit"
+                    <DisabledReasonTooltip
+                      actionId="REJECT_EVENT"
+                      actions={assistantActions}
+                      fallback={!selectedCanConfirm ? "Your role cannot reject this event type." : ""}
                     >
-                      Reject event
-                    </button>
+                      <button
+                        disabled={!selectedCanConfirm || !onReject || !rejectReason.trim() || isActionRunning}
+                        title={!selectedCanConfirm ? "Your role cannot reject this event type." : undefined}
+                        type="submit"
+                      >
+                        Reject event
+                      </button>
+                    </DisabledReasonTooltip>
                   </form>
                 </div>
               ) : null}

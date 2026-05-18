@@ -1071,7 +1071,9 @@ function App() {
           />
         ) : null}
         {route === "/admin/users-rbac" && overview ? <RbacPage overview={overview} /> : null}
-        {route === "/admin/audit-logs" && canViewAudit ? <AuditPage events={auditEvents} /> : null}
+        {route === "/admin/audit-logs" && canViewAudit ? (
+          <AuditPage {...assistantPageProps} events={auditEvents} />
+        ) : null}
         {route === "/admin/export-handoff" && canViewExports ? (
           <ExportHandoffPage
             {...assistantPageProps}
@@ -1127,6 +1129,7 @@ function App() {
         ) : null}
         {route === "/operations/jetty-loading" && canViewSchedule ? (
           <JettyLoadingPage
+            {...assistantPageProps}
             canEdit={canEditSchedule && activePlanIsEditable}
             canExport={canGenerateExports}
             canConfirmJetty={canConfirmJetty}
@@ -1143,6 +1146,7 @@ function App() {
         ) : null}
         {route === "/operations/cts-floating-crane" && canViewSchedule ? (
           <CtsOperationsPage
+            {...assistantPageProps}
             canExport={canGenerateExports}
             canConfirmCts={canConfirmCts}
             confirmedOperationalEvents={confirmedOperationalEvents}

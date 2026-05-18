@@ -310,9 +310,20 @@ def select_simulation_counts(
     }
 
 
+def _int_object_id(object_id: str | int | None) -> int | None:
+    if object_id is None:
+        return None
+    try:
+        return int(object_id)
+    except (TypeError, ValueError):
+        return None
+
+
 def select_phase5_recovery_status(
     user: AbstractBaseUser | None,
     active_plan_version: PlanVersion | None,
+    object_type: str | None = None,
+    object_id: str | int | None = None,
 ) -> dict[str, Any]:
     if active_plan_version is None:
         return {
@@ -335,26 +346,95 @@ def select_phase5_recovery_status(
     if active_plan_version.source_version_id:
         recovery_plan_versions.append(active_plan_version.source_version_id)
 
-    latest_snapshot = (
+    selected_id = _int_object_id(object_id)
+    recommendations = RecoveryRecommendation.objects.filter(
+        optimizer_run__plan_version_id__in=recovery_plan_versions,
+    ).select_related("scenario", "optimizer_run", "optimizer_run__input_snapshot")
+
+    selected_snapshot = None
+    selected_run = None
+    selected_recommendation = None
+    selected_scenario = None
+
+    if selected_id is not None and object_type == "recovery_input_snapshot":
+        selected_snapshot = (
+            RecoveryInputSnapshot.objects.filter(
+                id=selected_id,
+                plan_version_id__in=recovery_plan_versions,
+            )
+            .order_by("-generated_at", "-id")
+            .first()
+        )
+    elif selected_id is not None and object_type == "optimizer_run":
+        selected_run = (
+            OptimizerRun.objects.filter(
+                id=selected_id,
+                plan_version_id__in=recovery_plan_versions,
+            )
+            .select_related("input_snapshot")
+            .first()
+        )
+    elif selected_id is not None and object_type == "recovery_recommendation":
+        selected_recommendation = recommendations.filter(id=selected_id).first()
+    elif selected_id is not None and object_type == "simulation_scenario":
+        selected_scenario = (
+            SimulationScenario.objects.filter(
+                Q(baseline_version_id__in=recovery_plan_versions)
+                | Q(scenario_version_id__in=recovery_plan_versions),
+                id=selected_id,
+            )
+            .order_by("-created_at", "-id")
+            .first()
+        )
+        if selected_scenario:
+            selected_recommendation = recommendations.filter(
+                scenario=selected_scenario,
+            ).first()
+
+    if selected_recommendation:
+        selected_run = selected_recommendation.optimizer_run
+        selected_snapshot = selected_run.input_snapshot
+    elif selected_run:
+        selected_snapshot = selected_run.input_snapshot
+    elif selected_snapshot:
+        selected_run = (
+            OptimizerRun.objects.filter(
+                input_snapshot=selected_snapshot,
+                plan_version_id__in=recovery_plan_versions,
+            )
+            .order_by("-created_at", "-id")
+            .first()
+        )
+
+    latest_snapshot = selected_snapshot or (
         RecoveryInputSnapshot.objects.filter(plan_version_id__in=recovery_plan_versions)
         .order_by("-generated_at", "-id")
         .first()
     )
-    latest_run = (
+    latest_run = selected_run or (
         OptimizerRun.objects.filter(plan_version_id__in=recovery_plan_versions)
+        .select_related("input_snapshot")
         .order_by("-created_at", "-id")
         .first()
     )
-    recommendations = RecoveryRecommendation.objects.filter(
-        optimizer_run__plan_version_id__in=recovery_plan_versions,
-    )
-    top_recommendation = (
-        recommendations.exclude(status=RecoveryRecommendation.Status.DISMISSED)
-        .select_related("scenario")
-        .order_by("-optimizer_run__created_at", "rank", "id")
-        .first()
-    )
-    recommendation_scenario = None
+
+    if selected_recommendation:
+        top_recommendation = selected_recommendation
+    elif latest_run:
+        top_recommendation = (
+            recommendations.filter(optimizer_run=latest_run)
+            .exclude(status=RecoveryRecommendation.Status.DISMISSED)
+            .order_by("rank", "id")
+            .first()
+        )
+    else:
+        top_recommendation = (
+            recommendations.exclude(status=RecoveryRecommendation.Status.DISMISSED)
+            .order_by("-optimizer_run__created_at", "rank", "id")
+            .first()
+        )
+
+    recommendation_scenario = selected_scenario if selected_recommendation else None
     if top_recommendation and top_recommendation.scenario_id:
         recommendation_scenario = top_recommendation.scenario
 
@@ -447,7 +527,12 @@ def build_assistant_context(
     event_counts = select_event_candidate_counts(user)
     tracking_counts = select_tracking_alert_counts(user)
     simulation_counts = select_simulation_counts(user, active_plan_version)
-    phase5_status = select_phase5_recovery_status(user, active_plan_version)
+    phase5_status = select_phase5_recovery_status(
+        user,
+        active_plan_version,
+        object_type=object_type,
+        object_id=object_id,
+    )
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
 

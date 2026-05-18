@@ -458,6 +458,67 @@ def rule_recovery_recommendation_dismiss_available(
     return []
 
 
+def rule_recovery_recommendation_blocked_state(
+    ctx: AssistantContext,
+) -> list[ActionRecommendation]:
+    if ctx.route != "/recovery/recommendations" or not ctx.top_recovery_recommendation_id:
+        return []
+
+    blocked: list[ActionRecommendation] = []
+    target = {
+        "target_object_type": "recovery_recommendation",
+        "target_object_id": ctx.top_recovery_recommendation_id,
+    }
+    if ctx.top_recovery_recommendation_status == RecoveryRecommendation.Status.DISMISSED:
+        blocked.append(
+            build_recommendation(
+                "MATERIALIZE_RECOVERY_RECOMMENDATION",
+                priority="info",
+                rank_score=330,
+                enabled=False,
+                reason="The selected recovery recommendation was dismissed.",
+                blocked_reason=(
+                    "Dismissed recommendations cannot be materialized. Select an "
+                    "actionable candidate or generate new recovery options."
+                ),
+                source="recovery.recommendation_dismissed",
+                **target,
+            )
+        )
+    if (
+        ctx.top_recovery_recommendation_status == RecoveryRecommendation.Status.MATERIALIZED
+        or ctx.top_recovery_recommendation_scenario_id
+    ):
+        blocked.append(
+            build_recommendation(
+                "MATERIALIZE_RECOVERY_RECOMMENDATION",
+                priority="info",
+                rank_score=330,
+                enabled=False,
+                reason="The selected recovery recommendation is already materialized.",
+                blocked_reason=(
+                    "This recommendation is already a governed scenario. Continue in "
+                    "Simulation Workspace."
+                ),
+                source="recovery.recommendation_materialized",
+                **target,
+            )
+        )
+        blocked.append(
+            build_recommendation(
+                "DISMISS_RECOVERY_RECOMMENDATION",
+                priority="info",
+                rank_score=320,
+                enabled=False,
+                reason="The selected recovery recommendation is already materialized.",
+                blocked_reason="Materialized recommendations cannot be dismissed.",
+                source="recovery.recommendation_materialized",
+                **target,
+            )
+        )
+    return blocked
+
+
 def rule_recovery_recommendation_already_materialized(
     ctx: AssistantContext,
 ) -> list[ActionRecommendation]:
@@ -554,6 +615,7 @@ RULES: tuple[Rule, ...] = (
     rule_recovery_optimizer_run_succeeded,
     rule_recovery_recommendation_ready_to_materialize,
     rule_recovery_recommendation_dismiss_available,
+    rule_recovery_recommendation_blocked_state,
     rule_recovery_recommendation_already_materialized,
     rule_scenario_ready_to_run,
     rule_scenario_promotable,

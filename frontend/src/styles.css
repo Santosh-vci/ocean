@@ -977,6 +977,110 @@ tbody tr:hover,
   white-space: nowrap;
 }
 
+.disabled-reason-tooltip {
+  min-width: 0;
+  display: inline-grid;
+  gap: 0.2rem;
+  align-items: center;
+  justify-items: start;
+}
+
+.disabled-reason-tooltip > button {
+  width: 100%;
+}
+
+.disabled-reason-badge {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 0.25rem;
+  background: rgba(245, 158, 11, 0.09);
+  color: var(--status-warning);
+  padding: 0.08rem 0.32rem;
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.row-action-hint {
+  max-width: 11rem;
+  min-width: 7.5rem;
+  min-height: 1.85rem;
+  display: inline-grid;
+  gap: 0.04rem;
+  align-content: center;
+  border: 1px solid rgba(137, 206, 255, 0.34);
+  border-radius: 0.25rem;
+  background: rgba(14, 165, 233, 0.08);
+  color: var(--primary);
+  padding: 0.24rem 0.42rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+button.row-action-hint {
+  cursor: pointer;
+}
+
+button.row-action-hint:hover {
+  border-color: rgba(137, 206, 255, 0.58);
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.row-action-hint.warning {
+  border-color: rgba(245, 158, 11, 0.42);
+  color: var(--status-warning);
+}
+
+.row-action-hint.critical {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--status-critical);
+}
+
+.row-action-hint.blocked {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(148, 163, 184, 0.06);
+  color: var(--on-surface-variant);
+  cursor: help;
+}
+
+.row-action-hint strong,
+.row-action-hint em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-action-hint strong {
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.row-action-hint em {
+  color: var(--on-surface-variant);
+  font-size: 0.54rem;
+  font-style: normal;
+}
+
+.planning-actions .disabled-reason-tooltip {
+  align-self: stretch;
+}
+
+.approval-actions .disabled-reason-tooltip,
+.board-event-actions .disabled-reason-tooltip,
+.event-action-stack .disabled-reason-tooltip,
+.export-command-list .disabled-reason-tooltip,
+.override-form-actions .disabled-reason-tooltip {
+  width: 100%;
+}
+
 .sidebar {
   grid-column: 1;
   grid-row: 2 / 4;

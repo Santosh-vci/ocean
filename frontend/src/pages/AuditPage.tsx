@@ -1,13 +1,24 @@
 import { useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
+import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { AuditEvent } from "../types";
 
-type AuditPageProps = {
+type AuditPageProps = AssistantRecommendationSurfaceProps & {
   events: AuditEvent[];
 };
 
-export function AuditPage({ events }: AuditPageProps) {
+export function AuditPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
+  events,
+  onAssistantNavigate,
+}: AuditPageProps) {
   const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id ?? 0);
   const selectedEvent = events.find((event) => event.id === selectedEventId) ?? events[0];
   const actorCount = useMemo(
@@ -25,6 +36,13 @@ export function AuditPage({ events }: AuditPageProps) {
         </div>
         <span className="phase-chip secure">Audit write · Secure</span>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up">
         <div>

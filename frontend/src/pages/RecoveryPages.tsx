@@ -3,8 +3,12 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
+  DisabledReasonTooltip,
   RecommendationCard,
+  RowActionHint,
+  actionsForObject,
   type AssistantRecommendationSurfaceProps,
+  useNextActions,
 } from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import {
@@ -543,6 +547,21 @@ export function ExceptionCenterPage({
     + openTrackingAlerts.length
     + healthRisks.length
     + operationalExceptions.length;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
+  const rowHintOrLabel = (objectType: string, objectId: number | string, label: string) => (
+    actionsForObject(assistantActions, objectType, objectId).length ? (
+      <RowActionHint
+        actions={assistantActions}
+        objectId={objectId}
+        objectType={objectType}
+        onNavigate={onAssistantNavigate}
+      />
+    ) : <span>{label}</span>
+  );
 
   return (
     <section className="workspace-page recovery-board">
@@ -553,45 +572,65 @@ export function ExceptionCenterPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Active triage</span>
-          <button
-            disabled={!canEdit
-              || !onGenerateRecoveryOptions
-              || isActionRunning
-              || !selectedRecoverySource}
-            onClick={() => {
-              if (selectedRecoverySource) onGenerateRecoveryOptions?.(selectedRecoverySource);
-            }}
-            title={!selectedRecoverySource
+          <DisabledReasonTooltip
+            actionId="GENERATE_RECOVERY_OPTIONS"
+            actions={assistantActions}
+            fallback={!selectedRecoverySource
               ? "Select a governed exception, observed alert, or confirmed operational disruption."
               : !canEdit
                 ? "Your role cannot generate recovery recommendations."
-                : undefined}
-            type="button"
+                : ""}
           >
-            Generate recovery options
-          </button>
-          <button
-            disabled={!canEdit
-              || !onCreateScenario
-              || isActionRunning
-              || Boolean(selectedTrackingAlert)
-              || Boolean(selectedOperationalException)}
-            onClick={() => onCreateScenario?.(
-              selectedConflict
-                ? { kind: "conflict", id: selectedConflict.id }
-                : selectedOverride
-                  ? { kind: "override", id: selectedOverride.id }
-                  : { kind: "manual" },
-            )}
-            title={selectedTrackingAlert || selectedOperationalException
+            <button
+              disabled={!canEdit
+                || !onGenerateRecoveryOptions
+                || isActionRunning
+                || !selectedRecoverySource}
+              onClick={() => {
+                if (selectedRecoverySource) onGenerateRecoveryOptions?.(selectedRecoverySource);
+              }}
+              title={!selectedRecoverySource
+                ? "Select a governed exception, observed alert, or confirmed operational disruption."
+                : !canEdit
+                  ? "Your role cannot generate recovery recommendations."
+                  : undefined}
+              type="button"
+            >
+              Generate recovery options
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
+            actionId="CREATE_SCENARIO"
+            actions={assistantActions}
+            fallback={selectedTrackingAlert || selectedOperationalException
               ? "Use the event detail to review operational evidence before scenario creation."
               : !canEdit
                 ? "Your role cannot convert exceptions to scenarios."
-                : undefined}
-            type="button"
+                : ""}
           >
-            Convert to scenario
-          </button>
+            <button
+              disabled={!canEdit
+                || !onCreateScenario
+                || isActionRunning
+                || Boolean(selectedTrackingAlert)
+                || Boolean(selectedOperationalException)}
+              onClick={() => onCreateScenario?.(
+                selectedConflict
+                  ? { kind: "conflict", id: selectedConflict.id }
+                  : selectedOverride
+                    ? { kind: "override", id: selectedOverride.id }
+                    : { kind: "manual" },
+              )}
+              title={selectedTrackingAlert || selectedOperationalException
+                ? "Use the event detail to review operational evidence before scenario creation."
+                : !canEdit
+                  ? "Your role cannot convert exceptions to scenarios."
+                  : undefined}
+              type="button"
+            >
+              Convert to scenario
+            </button>
+          </DisabledReasonTooltip>
           <button
             disabled={!onPublishTriage || isActionRunning}
             onClick={onPublishTriage}
@@ -679,7 +718,15 @@ export function ExceptionCenterPage({
                     <td>{item.assetCode}</td>
                     <td>{operationalVarianceLabel(item.varianceMinutes)}</td>
                     <td>{shortOperationalLabel(item.eventKind)}</td>
-                    <td>{item.nextAction.toUpperCase()}</td>
+                    <td>
+                      {rowHintOrLabel(
+                        item.source === "confirmed_event"
+                          ? "operational_event"
+                          : "operational_event_candidate",
+                        item.id,
+                        item.nextAction.toUpperCase(),
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {openTrackingAlerts.map((alert) => (
@@ -700,7 +747,7 @@ export function ExceptionCenterPage({
                         : "Observed candidate"}
                     </td>
                     <td>{short(alert.status)}</td>
-                    <td>WATCH</td>
+                    <td>{rowHintOrLabel("tracking_alert", alert.id, "WATCH")}</td>
                   </tr>
                 ))}
                 {healthRisks.map((risk) => (
@@ -717,7 +764,7 @@ export function ExceptionCenterPage({
                     <td>{risk.deviceId ?? risk.assetCode}</td>
                     <td>{short(risk.healthStatus ?? risk.reason)}</td>
                     <td>{short(risk.status)}</td>
-                    <td>REVIEW</td>
+                    <td>{rowHintOrLabel("device_health_risk", risk.id, "REVIEW")}</td>
                   </tr>
                 ))}
                 {conflicts.map((conflict) => (
@@ -734,7 +781,7 @@ export function ExceptionCenterPage({
                     <td>{conflict.object_id || conflict.object_type || "N/A"}</td>
                     <td>{conflict.is_blocking ? "+5h delay risk" : "Watch"}</td>
                     <td>{conflict.resolved_at ? "RESOLVED" : "ACTIVE"}</td>
-                    <td>{conflict.is_blocking ? "SIM" : "MONITOR"}</td>
+                    <td>{rowHintOrLabel("conflict", conflict.id, conflict.is_blocking ? "SIM" : "MONITOR")}</td>
                   </tr>
                 ))}
                 {overrides.map((override) => (
@@ -751,7 +798,7 @@ export function ExceptionCenterPage({
                     <td>{override.trip_ref ?? (override.assignment ? `Assignment ${override.assignment}` : "Assignment")}</td>
                     <td>{impactSummary(override)}</td>
                     <td><span className={`status-chip ${statusTone(override.status)}`}>{short(override.status)}</span></td>
-                    <td>GOVERNED</td>
+                    <td>{rowHintOrLabel("override", override.id, "GOVERNED")}</td>
                   </tr>
                 ))}
                 {!conflicts.length && !overrides.length && !openTrackingAlerts.length && !healthRisks.length && !operationalExceptions.length ? (
@@ -841,16 +888,22 @@ export function ExceptionCenterPage({
                 <p>Tracking evidence is visible for triage, but it does not mutate the approved schedule.</p>
               </section>
               {selectedTrackingAlert.alert_type === "delay" ? (
-                <button
-                  disabled={!canEdit || !onCreateScenario || isActionRunning}
-                  onClick={() => onCreateScenario?.({
-                    kind: "tracking_alert",
-                    id: selectedTrackingAlert.id,
-                  })}
-                  type="button"
+                <DisabledReasonTooltip
+                  actionId="CREATE_SCENARIO"
+                  actions={assistantActions}
+                  fallback={!canEdit ? "Your role cannot convert alerts to scenarios." : ""}
                 >
-                  Create scenario
-                </button>
+                  <button
+                    disabled={!canEdit || !onCreateScenario || isActionRunning}
+                    onClick={() => onCreateScenario?.({
+                      kind: "tracking_alert",
+                      id: selectedTrackingAlert.id,
+                    })}
+                    type="button"
+                  >
+                    Create scenario
+                  </button>
+                </DisabledReasonTooltip>
               ) : null}
             </div>
           ) : selectedHealthRisk ? (
@@ -988,6 +1041,19 @@ export function RecommendationConsolePage({
     recommendation?.metadata.scoreSummary ?? evaluation?.metadata.scoreSummary,
     "Score explanation unavailable.",
   );
+  const selectedRecommendationAssistant = useNextActions("/recovery/recommendations", {
+    enabled: Boolean(recommendation?.id),
+    objectType: "recovery_recommendation",
+    objectId: recommendation?.id,
+  });
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+    ...(selectedRecommendationAssistant.data?.rowActions ?? []),
+    ...(selectedRecommendationAssistant.data?.pageActions ?? []),
+    ...(selectedRecommendationAssistant.data?.blockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page recovery-board recommendation-board">
@@ -1001,28 +1067,49 @@ export function RecommendationConsolePage({
           <button onClick={() => onNavigate?.("/exceptions/center")} type="button">
             Back to triage
           </button>
-          <button
-            disabled={!canEdit
-              || !recommendation
-              || materialized
-              || recommendation.status === "dismissed"
-              || !onMaterializeRecommendation
-              || isActionRunning}
-            onClick={() => {
-              if (recommendation) onMaterializeRecommendation?.(recommendation.id);
-            }}
-            title={!canEdit ? "Your role cannot create scenarios from recommendations." : undefined}
-            type="button"
+          <DisabledReasonTooltip
+            actionId="MATERIALIZE_RECOVERY_RECOMMENDATION"
+            actions={assistantActions}
+            fallback={!canEdit
+              ? "Your role cannot create scenarios from recommendations."
+              : materialized
+                ? "This recommendation is already a governed scenario."
+                : recommendation?.status === "dismissed"
+                  ? "Dismissed recommendations cannot be materialized."
+                  : ""}
           >
-            Create scenario from recommendation
-          </button>
+            <button
+              disabled={!canEdit
+                || !recommendation
+                || materialized
+                || recommendation.status === "dismissed"
+                || !onMaterializeRecommendation
+                || isActionRunning}
+              onClick={() => {
+                if (recommendation) onMaterializeRecommendation?.(recommendation.id);
+              }}
+              title={!canEdit ? "Your role cannot create scenarios from recommendations." : undefined}
+              type="button"
+            >
+              Create scenario from recommendation
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard
-        assistantBlockedActions={assistantBlockedActions}
+        assistantBlockedActions={[
+          ...(assistantBlockedActions ?? []),
+          ...(selectedRecommendationAssistant.data?.blockedActions ?? []),
+        ]}
         assistantChecklist={assistantChecklist}
-        assistantPageActions={assistantPageActions}
-        assistantRowActions={assistantRowActions}
+        assistantPageActions={[
+          ...(assistantPageActions ?? []),
+          ...(selectedRecommendationAssistant.data?.pageActions ?? []),
+        ]}
+        assistantRowActions={[
+          ...(assistantRowActions ?? []),
+          ...(selectedRecommendationAssistant.data?.rowActions ?? []),
+        ]}
         onAssistantNavigate={onAssistantNavigate}
       />
 
@@ -1053,6 +1140,11 @@ export function RecommendationConsolePage({
               >
                 <strong>{run.run_id}</strong>
                 <span>{short(run.status)} / {run.recommendations.length} options</span>
+                <RowActionHint
+                  actions={assistantActions}
+                  objectId={run.id}
+                  objectType="optimizer_run"
+                />
               </button>
             )) : <span>No recovery runs yet</span>}
           </section>
@@ -1076,7 +1168,7 @@ export function RecommendationConsolePage({
               <thead>
                 <tr>
                   <th>Rank</th><th>Recommendation</th><th>Strategy</th><th>Score</th>
-                  <th>Risk</th><th>Delay</th><th>Windows</th><th>Conflicts</th><th>Status</th>
+                  <th>Risk</th><th>Delay</th><th>Windows</th><th>Conflicts</th><th>Status</th><th>Hint</th>
                 </tr>
               </thead>
               <tbody>
@@ -1095,11 +1187,19 @@ export function RecommendationConsolePage({
                     <td>{item.evaluation?.missed_windows ?? 0}</td>
                     <td>{item.evaluation?.resource_conflicts ?? 0}</td>
                     <td><span className={`status-chip ${statusTone(item.status)}`}>{short(item.status)}</span></td>
+                    <td>
+                      <RowActionHint
+                        actions={assistantActions}
+                        objectId={item.id}
+                        objectType="recovery_recommendation"
+                        onNavigate={onAssistantNavigate}
+                      />
+                    </td>
                   </tr>
                 ))}
                 {!recommendations.length ? (
                   <tr>
-                    <td colSpan={9}>No ranked recommendations have been generated for the active plan.</td>
+                    <td colSpan={10}>No ranked recommendations have been generated for the active plan.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -1119,6 +1219,12 @@ export function RecommendationConsolePage({
               </span>
               <h2>{strategyLabel(recommendation)}</h2>
               <p>{recommendation.summary}</p>
+              <RowActionHint
+                actions={assistantActions}
+                objectId={recommendation.id}
+                objectType="recovery_recommendation"
+                onNavigate={onAssistantNavigate}
+              />
               <dl>
                 <div><dt>Rank</dt><dd>#{recommendation.rank}</dd></div>
                 <div><dt>Score</dt><dd>{valueNum(recommendation.score, 0).toFixed(1)} / 100</dd></div>
@@ -1238,6 +1344,11 @@ export function SimulationWorkspacePage({
     () => scenarios.find((item) => item.id === selectedScenarioId) ?? scenarios[0],
     [scenarios, selectedScenarioId],
   );
+  const selectedScenarioAssistant = useNextActions("/simulation/workspace", {
+    enabled: Boolean(scenario?.id),
+    objectType: "simulation_scenario",
+    objectId: scenario?.id,
+  });
   const assumptions = scenario?.assumptions ?? EMPTY_ASSUMPTIONS;
   const latestRun = useMemo(
     () => scenario?.runs.find((item) => item.id === selectedRunId) ?? scenario?.runs[0],
@@ -1351,6 +1462,14 @@ export function SimulationWorkspacePage({
         )
         : "Manual";
   const scenarioLocked = scenario?.status === "proposed" || scenario?.status === "canceled";
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+    ...(selectedScenarioAssistant.data?.rowActions ?? []),
+    ...(selectedScenarioAssistant.data?.pageActions ?? []),
+    ...(selectedScenarioAssistant.data?.blockedActions ?? []),
+  ];
 
   useEffect(() => {
     if (!scenario || scenario.id === hydratedScenarioId) return;
@@ -1446,37 +1565,58 @@ export function SimulationWorkspacePage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Scenario delta</span>
-          <button
-            disabled={!canEdit || !scenario || scenarioLocked || !onRunSimulation || isActionRunning}
-            onClick={() => onRunSimulation?.(scenario?.id)}
-            title={!canEdit ? "Your role cannot run simulations." : undefined}
-            type="button"
+          <DisabledReasonTooltip
+            actionId="RUN_SIMULATION"
+            actions={assistantActions}
+            fallback={!canEdit ? "Your role cannot run simulations." : ""}
           >
-            Run simulation
-          </button>
-          <button
-            disabled={
-              !canEdit
-              || !scenario
-              || scenarioLocked
-              || !latestRun
-              || latestRun.status !== "succeeded"
-              || !onPromoteScenario
-              || isActionRunning
-            }
-            onClick={() => onPromoteScenario?.(scenario?.id, latestRun?.id)}
-            title={!canEdit ? "Your role cannot promote scenarios." : undefined}
-            type="button"
+            <button
+              disabled={!canEdit || !scenario || scenarioLocked || !onRunSimulation || isActionRunning}
+              onClick={() => onRunSimulation?.(scenario?.id)}
+              title={!canEdit ? "Your role cannot run simulations." : undefined}
+              type="button"
+            >
+              Run simulation
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
+            actionId="PROMOTE_SCENARIO"
+            actions={assistantActions}
+            fallback={!canEdit ? "Your role cannot promote scenarios." : ""}
           >
-            Promote to proposed
-          </button>
+            <button
+              disabled={
+                !canEdit
+                || !scenario
+                || scenarioLocked
+                || !latestRun
+                || latestRun.status !== "succeeded"
+                || !onPromoteScenario
+                || isActionRunning
+              }
+              onClick={() => onPromoteScenario?.(scenario?.id, latestRun?.id)}
+              title={!canEdit ? "Your role cannot promote scenarios." : undefined}
+              type="button"
+            >
+              Promote to proposed
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard
-        assistantBlockedActions={assistantBlockedActions}
+        assistantBlockedActions={[
+          ...(assistantBlockedActions ?? []),
+          ...(selectedScenarioAssistant.data?.blockedActions ?? []),
+        ]}
         assistantChecklist={assistantChecklist}
-        assistantPageActions={assistantPageActions}
-        assistantRowActions={assistantRowActions}
+        assistantPageActions={[
+          ...(assistantPageActions ?? []),
+          ...(selectedScenarioAssistant.data?.pageActions ?? []),
+        ]}
+        assistantRowActions={[
+          ...(assistantRowActions ?? []),
+          ...(selectedScenarioAssistant.data?.rowActions ?? []),
+        ]}
         onAssistantNavigate={onAssistantNavigate}
       />
 
@@ -1529,6 +1669,11 @@ export function SimulationWorkspacePage({
               >
                 <strong>{item.scenario_id}</strong>
                 <span>{short(item.source_kind)} / {short(item.status)}</span>
+                <RowActionHint
+                  actions={assistantActions}
+                  objectId={item.id}
+                  objectType="simulation_scenario"
+                />
               </button>
             )) : <span>No scenarios yet</span>}
           </section>
@@ -1978,13 +2123,19 @@ export function SimulationWorkspacePage({
                   : "Promote to proposed plan, then request dual-party approval."}
               </p>
             </section>
-            <button
-              disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}
-              onClick={onSubmitApproval}
-              type="button"
+            <DisabledReasonTooltip
+              actionId="SUBMIT_APPROVAL"
+              actions={assistantActions}
+              fallback={!canEdit ? "Your role cannot submit approval requests." : ""}
             >
-              Submit approval request
-            </button>
+              <button
+                disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}
+                onClick={onSubmitApproval}
+                type="button"
+              >
+                Submit approval request
+              </button>
+            </DisabledReasonTooltip>
             {latestRun ? (
               <p className="scenario-run-note">
                 Latest run {latestRun.run_id} used input hash {latestRun.input_hash.slice(0, 12)}.
@@ -2017,6 +2168,11 @@ export function ApprovalsPublishingPage({
   const request = requests[0];
   const readyToPublish =
     request?.status === "approved" && (overview?.validation.blockingConflictCount ?? 0) === 0;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page recovery-board approvals-board">
@@ -2029,13 +2185,19 @@ export function ApprovalsPublishingPage({
           <span className={`phase-chip ${readyToPublish ? "secure" : ""}`}>
             {readyToPublish ? "Ready to publish" : "Publish blocked"}
           </span>
-          <button
-            disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
-            onClick={onPublish}
-            type="button"
+          <DisabledReasonTooltip
+            actionId="PUBLISH_PLAN"
+            actions={assistantActions}
+            fallback={!readyToPublish ? "Publishing requires approved plan state and no blocking conflicts." : ""}
           >
-            Publish plan
-          </button>
+            <button
+              disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
+              onClick={onPublish}
+              type="button"
+            >
+              Publish plan
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
       <RecommendationCard
@@ -2133,27 +2295,37 @@ export function ApprovalsPublishingPage({
                 })}
               </section>
               <div className="approval-actions">
-                <button
-                  disabled={!canEdit || request.status !== "pending" || !onApprove || isActionRunning}
-                  onClick={onApprove}
-                  type="button"
+                <DisabledReasonTooltip actionId="APPROVE_PLAN" actions={assistantActions}>
+                  <button
+                    disabled={!canEdit || request.status !== "pending" || !onApprove || isActionRunning}
+                    onClick={onApprove}
+                    type="button"
+                  >
+                    Approve
+                  </button>
+                </DisabledReasonTooltip>
+                <DisabledReasonTooltip actionId="REJECT_PLAN" actions={assistantActions}>
+                  <button
+                    disabled={!canEdit || request.status !== "pending" || !onReject || isActionRunning}
+                    onClick={onReject}
+                    type="button"
+                  >
+                    Reject
+                  </button>
+                </DisabledReasonTooltip>
+                <DisabledReasonTooltip
+                  actionId="PUBLISH_PLAN"
+                  actions={assistantActions}
+                  fallback={!readyToPublish ? "Publishing requires approved plan state and no blocking conflicts." : ""}
                 >
-                  Approve
-                </button>
-                <button
-                  disabled={!canEdit || request.status !== "pending" || !onReject || isActionRunning}
-                  onClick={onReject}
-                  type="button"
-                >
-                  Reject
-                </button>
-                <button
-                  disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
-                  onClick={onPublish}
-                  type="button"
-                >
-                  Publish
-                </button>
+                  <button
+                    disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
+                    onClick={onPublish}
+                    type="button"
+                  >
+                    Publish
+                  </button>
+                </DisabledReasonTooltip>
               </div>
             </div>
           ) : null}
