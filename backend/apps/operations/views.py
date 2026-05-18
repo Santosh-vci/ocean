@@ -23,9 +23,12 @@ from .serializers import (
     IntegrationFeedSerializer,
     OperationalActualizationSerializer,
     OperationalEventCandidateSerializer,
+    OperationalEventIngestSerializer,
 )
 from .services import (
+    apply_confirmed_event,
     confirm_operational_event,
+    ingest_operational_event,
     reject_operational_event,
     require_confirmation_authority,
 )
@@ -87,9 +90,36 @@ class OperationalEventCandidateViewSet(OperationsViewSet):
     serializer_class = OperationalEventCandidateSerializer
     action_permission_map = {
         **OperationsViewSet.action_permission_map,
+        "ingest": "operations.ingest",
         "confirm": "operations.view",
         "reject": "operations.view",
     }
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = ingest_operational_event(
+            payload=serializer.validated_data,
+            actor=request.user,
+            request=request,
+        )
+        response_status = status.HTTP_200_OK if result.duplicate else status.HTTP_201_CREATED
+        return Response(
+            OperationalEventCandidateSerializer(result.candidate).data,
+            status=response_status,
+        )
+
+    @action(detail=False, methods=["post"], url_path="ingest")
+    def ingest(self, request):
+        serializer = OperationalEventIngestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = ingest_operational_event(
+            payload=serializer.validated_data,
+            actor=request.user,
+            request=request,
+        )
+        response_status = status.HTTP_200_OK if result.duplicate else status.HTTP_201_CREATED
+        return Response(_ingest_response(result), status=response_status)
 
     @action(detail=True, methods=["post"], url_path="confirm")
     def confirm(self, request, pk=None):
@@ -151,6 +181,12 @@ class ConfirmedOperationalEventViewSet(OperationsViewSet):
         if event.candidate_id:
             event.candidate.status = OperationalEventCandidate.Status.CONFIRMED
             event.candidate.save(update_fields=["status", "updated_at"])
+        actualization_summary = apply_confirmed_event(event=event)
+        event.after_state = {
+            **event.after_state,
+            "actualization": actualization_summary,
+        }
+        event.save(update_fields=["after_state"])
         record_audit_event(
             actor=self.request.user,
             organization=event.plan_version.plan.organization if event.plan_version_id else None,
@@ -215,10 +251,16 @@ class OperationsOverviewViewSet(ViewSet):
                         status=OperationalEventCandidate.Status.PENDING
                     ).count(),
                     "confirmed": OperationalEventCandidate.objects.filter(
-                        status=OperationalEventCandidate.Status.CONFIRMED
+                        status__in=[
+                            OperationalEventCandidate.Status.CONFIRMED,
+                            OperationalEventCandidate.Status.AUTO_CONFIRMED,
+                        ]
                     ).count(),
                     "rejected": OperationalEventCandidate.objects.filter(
                         status=OperationalEventCandidate.Status.REJECTED
+                    ).count(),
+                    "duplicates": OperationalEventCandidate.objects.filter(
+                        status=OperationalEventCandidate.Status.DUPLICATE
                     ).count(),
                 },
                 "confirmedEvents": ConfirmedOperationalEvent.objects.count(),
@@ -226,3 +268,18 @@ class OperationsOverviewViewSet(ViewSet):
                 "edgeBatches": EdgeEventBatch.objects.count(),
             }
         )
+
+
+def _ingest_response(result):
+    return {
+        "candidate": OperationalEventCandidateSerializer(result.candidate).data,
+        "confirmed_event": (
+            ConfirmedOperationalEventSerializer(result.confirmed_event).data
+            if result.confirmed_event
+            else None
+        ),
+        "created": result.created,
+        "duplicate": result.duplicate,
+        "auto_confirmed": result.auto_confirmed,
+        "trust_evaluation": result.trust_evaluation,
+    }

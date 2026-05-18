@@ -8,6 +8,8 @@ from .models import (
     IntegrationFeed,
     OperationalActualization,
     OperationalEventCandidate,
+    OperationalEventKind,
+    OperationsAssetType,
 )
 
 
@@ -148,6 +150,55 @@ class OperationalEventCandidateSerializer(serializers.ModelSerializer):
             return obj.confirmed_event.event_id
         except Exception:
             return None
+
+
+class OperationalEventIngestSerializer(serializers.Serializer):
+    feed_id = serializers.CharField(max_length=96, required=False)
+    feed = serializers.PrimaryKeyRelatedField(
+        queryset=IntegrationFeed.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    device_id = serializers.CharField(max_length=96, required=False, allow_blank=True)
+    device = serializers.PrimaryKeyRelatedField(
+        queryset=DeviceEndpoint.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    source_kind = serializers.ChoiceField(
+        choices=OperationalEventCandidate.SourceKind.choices,
+        required=False,
+        default=OperationalEventCandidate.SourceKind.SYNTHETIC,
+    )
+    event_kind = serializers.ChoiceField(choices=OperationalEventKind.choices)
+    asset_type = serializers.ChoiceField(
+        choices=OperationsAssetType.choices,
+        required=False,
+        allow_blank=True,
+    )
+    asset_code = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    trip_id = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    assignment_id = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    schedule_event_id = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    event_at = serializers.DateTimeField()
+    received_at = serializers.DateTimeField(required=False, allow_null=True)
+    confidence_score = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        default=0,
+    )
+    dedupe_key = serializers.CharField(max_length=180, required=False, allow_blank=True)
+    payload = serializers.JSONField(required=False, default=dict)
+    raw_payload_ref = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    metadata = serializers.JSONField(required=False, default=dict)
+
+    def validate(self, attrs):
+        if not attrs.get("feed") and not attrs.get("feed_id"):
+            raise serializers.ValidationError("Either feed or feed_id is required.")
+        if attrs.get("device") and attrs.get("device_id"):
+            raise serializers.ValidationError("Use either device or device_id, not both.")
+        return attrs
 
 
 class ConfirmedOperationalEventSerializer(serializers.ModelSerializer):

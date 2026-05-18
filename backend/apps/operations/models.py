@@ -301,18 +301,12 @@ class OperationalEventCandidate(models.Model):
 
     class Meta:
         ordering = ["-event_at", "-id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=("feed", "dedupe_key"),
-                condition=~models.Q(dedupe_key=""),
-                name="unique_operational_candidate_dedupe_key",
-            )
-        ]
         indexes = [
             models.Index(fields=("status", "event_kind", "event_at")),
             models.Index(fields=("asset_type", "asset_code", "event_at")),
             models.Index(fields=("trip", "event_kind")),
             models.Index(fields=("schedule_event", "event_kind")),
+            models.Index(fields=("feed", "dedupe_key")),
         ]
 
     def __str__(self) -> str:
