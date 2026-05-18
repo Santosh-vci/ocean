@@ -65,6 +65,9 @@ The pack is based on:
 19. `19_Phase_3_Completion_Evidence.md`
     Runtime closure evidence for Phase 3, including the five-stage proof command, browser evidence, screenshots, audit evidence, and remaining deferred scope.
 
+20. `20_Phase_4_Implementation_Spec.md`
+    Product Phase 4 implementation specification for IoT/event-driven operations: event candidates, trusted confirmations, device/feed health, edge replay, actualization, board integration, and closure evidence.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.
