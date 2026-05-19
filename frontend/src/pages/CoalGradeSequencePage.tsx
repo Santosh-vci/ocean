@@ -2,9 +2,14 @@ import { useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  DisabledReasonTooltip,
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { CargoLayerStepRecord, PlanningOverview } from "../types";
 
-type CoalGradeSequencePageProps = {
+type CoalGradeSequencePageProps = AssistantRecommendationSurfaceProps & {
   overview: PlanningOverview | null;
   canEdit: boolean;
   canExport: boolean;
@@ -29,10 +34,15 @@ function severity(step: CargoLayerStepRecord) {
 }
 
 export function CoalGradeSequencePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit,
   canExport,
   isActionRunning,
+  onAssistantNavigate,
   onExport,
 }: CoalGradeSequencePageProps) {
   const steps = overview?.cargoLayerSteps ?? EMPTY_STEPS;
@@ -49,6 +59,11 @@ export function CoalGradeSequencePage({
   const gradeConflicts = steps.filter((step) => step.sequence_violation).length;
   const atRiskBarges = steps.filter((step) => step.status === "blocked").length;
   const reworkRisk = gradeConflicts + atRiskBarges;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page planning-board">
@@ -59,20 +74,41 @@ export function CoalGradeSequencePage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Grade layering</span>
-          <button
-            disabled
-            title={canEdit
+          <DisabledReasonTooltip
+            actionId="REVIEW_COAL_SEQUENCE"
+            actions={assistantActions}
+            fallback={canEdit
               ? "Direct sequence editing is locked for Phase 1 governed planning."
               : "Your role cannot edit coal grade sequence."}
-            type="button"
           >
-            Edit sequence locked
-          </button>
-          <button disabled={!canExport || isActionRunning} onClick={onExport} type="button">
-            Export QC view
-          </button>
+            <button
+              disabled
+              title={canEdit
+                ? "Direct sequence editing is locked for Phase 1 governed planning."
+                : "Your role cannot edit coal grade sequence."}
+              type="button"
+            >
+              Edit sequence locked
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
+            actionId="GENERATE_EXPORT"
+            actions={assistantActions}
+            fallback={!canExport ? "Your role cannot generate exports." : ""}
+          >
+            <button disabled={!canExport || isActionRunning} onClick={onExport} type="button">
+              Export QC view
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip six-up planning-kpis">
         <div>

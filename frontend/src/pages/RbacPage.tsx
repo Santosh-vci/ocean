@@ -1,8 +1,12 @@
 import { useState } from "react";
 
+import {
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { AccessPermission, RbacOverview, UserSummary } from "../types";
 
-type RbacPageProps = {
+type RbacPageProps = AssistantRecommendationSurfaceProps & {
   overview: RbacOverview;
 };
 
@@ -22,7 +26,14 @@ function selectedPermissions(user: UserSummary): AccessPermission[] {
   return [...seen.values()];
 }
 
-export function RbacPage({ overview }: RbacPageProps) {
+export function RbacPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
+  onAssistantNavigate,
+  overview,
+}: RbacPageProps) {
   const [selectedUserId, setSelectedUserId] = useState<number>(overview.users[0]?.id ?? 0);
   const selectedUser =
     overview.users.find((user) => user.id === selectedUserId) ?? overview.users[0];
@@ -44,6 +55,13 @@ export function RbacPage({ overview }: RbacPageProps) {
         </div>
         <span className="phase-chip">Hardened governance cockpit</span>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip four-up">
         <div>

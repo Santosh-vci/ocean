@@ -874,6 +874,112 @@ tbody tr:hover,
   color: var(--on-surface-variant);
 }
 
+.guided-checklist {
+  display: grid;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.65rem;
+}
+
+.guided-checklist-header {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.guided-checklist-header span {
+  color: var(--on-surface-variant);
+  font-size: 0.54rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.guided-checklist-header strong {
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guided-checklist ol {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guided-checklist li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 0.65rem minmax(0, 1fr) max-content;
+  gap: 0.4rem;
+  align-items: start;
+  border: 1px solid rgba(51, 65, 85, 0.62);
+  background: var(--surface-lowest);
+  padding: 0.42rem 0.48rem;
+}
+
+.guided-checklist-dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  margin-top: 0.13rem;
+  border-radius: 999px;
+  background: var(--on-surface-variant);
+}
+
+.guided-checklist li.complete .guided-checklist-dot {
+  background: var(--status-success);
+}
+
+.guided-checklist li.current .guided-checklist-dot {
+  background: var(--primary);
+}
+
+.guided-checklist li.blocked .guided-checklist-dot {
+  background: var(--status-critical);
+}
+
+.guided-checklist li.pending .guided-checklist-dot {
+  background: var(--status-warning);
+}
+
+.guided-checklist li div {
+  min-width: 0;
+  display: grid;
+  gap: 0.06rem;
+}
+
+.guided-checklist li strong,
+.guided-checklist li em {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guided-checklist li strong {
+  color: var(--on-surface);
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.guided-checklist li em {
+  color: var(--on-surface-variant);
+  font-size: 0.56rem;
+  font-style: normal;
+}
+
+.guided-checklist li small {
+  color: var(--on-surface-variant);
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .assistant-recommendation-card {
   display: grid;
   gap: 0.55rem;
@@ -1069,12 +1175,14 @@ button.row-action-hint:hover {
   font-style: normal;
 }
 
+.master-actions .disabled-reason-tooltip,
 .planning-actions .disabled-reason-tooltip {
   align-self: stretch;
 }
 
 .approval-actions .disabled-reason-tooltip,
 .board-event-actions .disabled-reason-tooltip,
+.drawer-actions .disabled-reason-tooltip,
 .event-action-stack .disabled-reason-tooltip,
 .export-command-list .disabled-reason-tooltip,
 .override-form-actions .disabled-reason-tooltip {

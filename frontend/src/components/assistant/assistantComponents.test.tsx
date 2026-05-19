@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 
 import { DashboardPage } from "../../pages/DashboardPage";
 import type { CurrentUser } from "../../types";
-import type { ActionRecommendation } from "../../types/assistant";
+import type { ActionRecommendation, AssistantChecklistItem } from "../../types/assistant";
 import { ActionInboxPanel } from "./ActionInboxPanel";
 import { DisabledReasonTooltip } from "./DisabledReasonTooltip";
 import { NextActionPill } from "./NextActionPill";
@@ -45,6 +45,23 @@ const currentUser: CurrentUser = {
   assignments: [],
   permissions: ["dashboard.view"],
 };
+
+const checklist: AssistantChecklistItem[] = [
+  {
+    key: "demand_imported",
+    label: "Demand imported",
+    status: "complete",
+    reason: "Demand exists.",
+  },
+  {
+    key: "recovery_recommendation_reviewed",
+    label: "Recovery recommendation reviewed",
+    status: "current",
+    actionId: "OPEN_RECOMMENDATION_CONSOLE",
+    route: "/recovery/recommendations",
+    reason: "Ranked recovery recommendations are ready.",
+  },
+];
 
 test("next action pill is hidden when no action exists", () => {
   const { container } = render(<NextActionPill action={null} onNavigate={vi.fn()} />);
@@ -303,4 +320,26 @@ test("dashboard assistant UI follows assisted and off modes", () => {
   );
 
   expect(screen.queryByText("Assistant action inbox")).not.toBeInTheDocument();
+});
+
+test("dashboard guided mode renders preview lifecycle checklist", () => {
+  render(
+    <DashboardPage
+      assistantChecklist={checklist}
+      assistantGlobalAction={action()}
+      assistantMode="guided"
+      auditEvents={[]}
+      currentUser={currentUser}
+      dashboard={null}
+      etaProjections={[]}
+      onNavigate={vi.fn()}
+      operationsHealth={null}
+      replayRuns={[]}
+      trackingAlerts={[]}
+    />,
+  );
+
+  expect(screen.getByText("Guided checklist preview")).toBeInTheDocument();
+  expect(screen.getAllByText("Recovery recommendation reviewed").length).toBeGreaterThan(0);
+  expect(screen.getByText("Now")).toBeInTheDocument();
 });

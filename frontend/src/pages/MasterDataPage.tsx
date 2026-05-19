@@ -1,6 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  DisabledReasonTooltip,
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { IconName } from "../lib/navigation";
 import type {
   MasterDataCatalogs,
@@ -209,7 +214,7 @@ function routeSegments(record: MasterDataRecord): RouteSegmentRecord[] {
   return Array.isArray(segments) ? segments as RouteSegmentRecord[] : [];
 }
 
-type MasterDataPageProps = {
+type MasterDataPageProps = AssistantRecommendationSurfaceProps & {
   overview: MasterDataOverview;
   canManage: boolean;
   isActionRunning: boolean;
@@ -219,9 +224,14 @@ type MasterDataPageProps = {
 };
 
 export function MasterDataPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canManage,
   isActionRunning,
+  onAssistantNavigate,
   onExportCatalog,
   onImportCatalog,
   onValidateCatalog,
@@ -248,6 +258,11 @@ export function MasterDataPage({
     (sum, catalog) => sum + catalog.filter((record) => record.is_active).length,
     0,
   );
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   useEffect(() => {
     setSelectedRecordId(filteredRecords[0]?.id ?? null);
@@ -270,22 +285,37 @@ export function MasterDataPage({
               value={query}
             />
           </label>
-          <button
-            disabled={!canManage || !selectedRecord || isActionRunning}
-            onClick={() => onImportCatalog(activeCatalog.key, selectedRecord)}
-            type="button"
+          <DisabledReasonTooltip
+            actionId="REVIEW_MASTER_DATA"
+            actions={assistantActions}
+            fallback={!canManage ? "Your role cannot import master data." : ""}
           >
-            Import
-          </button>
-          <button
-            disabled={isActionRunning}
-            onClick={() => onExportCatalog(activeCatalog.key)}
-            type="button"
-          >
-            Export
-          </button>
+            <button
+              disabled={!canManage || !selectedRecord || isActionRunning}
+              onClick={() => onImportCatalog(activeCatalog.key, selectedRecord)}
+              type="button"
+            >
+              Import
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip actionId="GENERATE_EXPORT" actions={assistantActions}>
+            <button
+              disabled={isActionRunning}
+              onClick={() => onExportCatalog(activeCatalog.key)}
+              type="button"
+            >
+              Export
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip master-kpis">
         <div>
@@ -483,9 +513,15 @@ export function MasterDataPage({
             </section>
 
             <div className="drawer-actions">
-              <button disabled={isActionRunning} onClick={() => onValidateCatalog(activeCatalog.key)} type="button">
-                Validate
-              </button>
+              <DisabledReasonTooltip actionId="REVIEW_MASTER_DATA" actions={assistantActions}>
+                <button
+                  disabled={isActionRunning}
+                  onClick={() => onValidateCatalog(activeCatalog.key)}
+                  type="button"
+                >
+                  Validate
+                </button>
+              </DisabledReasonTooltip>
               <button
                 disabled
                 title={canManage

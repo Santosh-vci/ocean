@@ -142,6 +142,8 @@ def test_authenticated_next_actions_returns_contract_shape():
     assert isinstance(payload["row_actions"], list)
     assert isinstance(payload["blocked_actions"], list)
     assert isinstance(payload["checklist"], list)
+    assert payload["checklist"][0]["key"] == "demand_imported"
+    assert payload["checklist"][0]["action_id"] == "IMPORT_OGV_DEMAND"
 
 
 @pytest.mark.django_db
@@ -160,6 +162,27 @@ def test_mode_off_returns_empty_recommendations():
     assert payload["page_actions"] == []
     assert payload["row_actions"] == []
     assert payload["blocked_actions"] == []
+    assert payload["checklist"] == []
+
+
+@pytest.mark.django_db
+def test_guided_mode_returns_checklist_without_requiring_guided_ui():
+    user, _org = make_user("assistant-api-guided")
+
+    response = client_for(user).get(
+        NEXT_ACTIONS_URL,
+        {"route": "/dashboard/situation", "mode": "guided"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mode"] == "guided"
+    assert [item["key"] for item in payload["checklist"][:4]] == [
+        "demand_imported",
+        "cargo_sequence_reviewed",
+        "operating_windows_entered",
+        "plan_generated",
+    ]
 
 
 @pytest.mark.django_db

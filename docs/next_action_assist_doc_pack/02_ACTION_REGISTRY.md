@@ -43,6 +43,7 @@ Each action entry must define:
 | `REVIEW_COAL_SEQUENCE` | Review coal grade sequence | `/schedule/coal-grade-sequence` | schedule view | no | Demand exists and cargo/layer sequence needs review | no demand exists | Dashboard, Coal Sequence page, checklist |
 | `ENTER_OPERATING_WINDOWS` | Enter tide/bridge windows | `/constraints/tide-bridge` | schedule edit | yes | Demand exists and operating windows missing/incomplete | user lacks edit permission | Dashboard, Tide/Bridge page, checklist |
 | `REVIEW_MASTER_DATA` | Review master data readiness | `/admin/master-data` | master data view | no | Master data dependency is missing/inactive | user lacks view permission | Dashboard, Master Data page, disabled reason |
+| `REVIEW_RBAC` | Review RBAC coverage | `/admin/users-rbac` | admin view | no | Role, permission, and scope coverage needs governance review | user lacks admin visibility | Users & RBAC page |
 
 ### 3.2 Plan generation actions
 
@@ -108,6 +109,7 @@ Each action entry must define:
 | `/operations/event-confirmation` | `CONFIRM_EVENT`, `REJECT_EVENT`, `OPEN_EXCEPTION_CENTER` |
 | `/admin/export-handoff` | `GENERATE_EXPORT`, `REVIEW_AUDIT` |
 | `/admin/master-data` | `REVIEW_MASTER_DATA` |
+| `/admin/users-rbac` | `REVIEW_RBAC` |
 | `/admin/audit-logs` | `REVIEW_AUDIT` |
 
 ---

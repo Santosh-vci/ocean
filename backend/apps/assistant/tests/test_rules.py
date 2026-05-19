@@ -1,6 +1,6 @@
 from apps.assistant.rules import evaluate_rules
 from apps.assistant.selectors import AssistantContext
-from apps.assistant.services import build_recommendation, shape_recommendations
+from apps.assistant.services import build_checklist, build_recommendation, shape_recommendations
 from apps.scheduling.models import OptimizerRun, PlanVersion, RecoveryRecommendation
 
 
@@ -16,6 +16,10 @@ def context(**overrides):
 
 def action_ids(items):
     return [item.action_id for item in items]
+
+
+def checklist_by_key(items):
+    return {item["key"]: item for item in items}
 
 
 def test_no_demand_recommends_import_demand():
@@ -43,6 +47,95 @@ def test_ready_planning_state_recommends_generate_plan():
     )
 
     assert "GENERATE_PLAN" in action_ids(recommendations)
+
+
+def test_checklist_marks_completed_stages_correctly():
+    ctx = context(
+        demand_count=2,
+        cargo_layer_issue_count=0,
+        tide_window_count=1,
+        bridge_window_count=1,
+        active_plan_version_id=7,
+        active_plan_trip_count=4,
+        active_plan_status=PlanVersion.Status.GENERATED,
+        blocking_conflict_count=0,
+    )
+
+    checklist = checklist_by_key(build_checklist(ctx, shape_recommendations(ctx, [])))
+
+    assert checklist["demand_imported"]["status"] == "complete"
+    assert checklist["cargo_sequence_reviewed"]["status"] == "complete"
+    assert checklist["operating_windows_entered"]["status"] == "complete"
+    assert checklist["plan_generated"]["status"] == "complete"
+    assert checklist["exceptions_resolved"]["status"] == "complete"
+    assert checklist["approval_submitted"]["status"] == "current"
+    assert checklist["approval_submitted"]["action_id"] == "SUBMIT_APPROVAL"
+
+
+def test_checklist_marks_blocked_current_stage_with_action_id():
+    ctx = context(permissions={"schedule.view"}, route="/dashboard/situation", demand_count=0)
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    checklist = checklist_by_key(build_checklist(ctx, shaped))
+
+    assert checklist["demand_imported"]["status"] == "blocked"
+    assert checklist["demand_imported"]["action_id"] == "IMPORT_OGV_DEMAND"
+    assert "schedule.edit" in checklist["demand_imported"]["reason"]
+
+
+def test_phase5_checklist_advances_from_run_to_scenario_handoff():
+    base = {
+        "demand_count": 2,
+        "cargo_layer_issue_count": 0,
+        "tide_window_count": 1,
+        "bridge_window_count": 1,
+        "active_plan_version_id": 7,
+        "active_plan_trip_count": 4,
+        "active_plan_status": PlanVersion.Status.GENERATED,
+        "latest_optimizer_run_id": 12,
+        "latest_optimizer_run_status": OptimizerRun.Status.SUCCEEDED,
+        "latest_optimizer_run_candidate_count": 3,
+    }
+    optimizer_ctx = context(**base)
+    optimizer_checklist = checklist_by_key(
+        build_checklist(optimizer_ctx, shape_recommendations(optimizer_ctx, [])),
+    )
+
+    assert optimizer_checklist["recovery_options_generated"]["status"] == "complete"
+    assert optimizer_checklist["recovery_recommendation_reviewed"]["status"] == "current"
+    assert (
+        optimizer_checklist["recovery_recommendation_reviewed"]["action_id"]
+        == "OPEN_RECOMMENDATION_CONSOLE"
+    )
+    assert optimizer_checklist["recommendation_materialized"]["status"] == "pending"
+
+    candidate_ctx = context(
+        **base,
+        top_recovery_recommendation_id=44,
+        top_recovery_recommendation_status=RecoveryRecommendation.Status.CANDIDATE,
+    )
+    candidate_checklist = checklist_by_key(
+        build_checklist(candidate_ctx, shape_recommendations(candidate_ctx, [])),
+    )
+
+    assert candidate_checklist["recommendation_materialized"]["status"] == "current"
+    assert (
+        candidate_checklist["recommendation_materialized"]["action_id"]
+        == "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    )
+
+    materialized_ctx = context(
+        **base,
+        top_recovery_recommendation_id=44,
+        top_recovery_recommendation_status=RecoveryRecommendation.Status.MATERIALIZED,
+        top_recovery_recommendation_scenario_id=91,
+    )
+    materialized_checklist = checklist_by_key(
+        build_checklist(materialized_ctx, shape_recommendations(materialized_ctx, [])),
+    )
+
+    assert materialized_checklist["recovery_recommendation_reviewed"]["status"] == "complete"
+    assert materialized_checklist["recommendation_materialized"]["status"] == "complete"
 
 
 def test_blocking_conflict_outranks_submit_approval():
@@ -167,6 +260,22 @@ def test_permission_shaping_omits_unrelated_action_without_permission():
 
     assert shaped.global_next_action is None
     assert shaped.blocked_actions == []
+
+
+def test_master_data_route_has_explicit_read_only_guidance():
+    ctx = context(route="/admin/master-data", permissions={"masterdata.view"})
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert [item.action_id for item in shaped.page_actions] == ["REVIEW_MASTER_DATA"]
+    assert shaped.page_actions[0].enabled is True
+
+
+def test_rbac_route_has_explicit_read_only_guidance():
+    ctx = context(route="/admin/users-rbac", permissions={"admin.view"})
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert [item.action_id for item in shaped.page_actions] == ["REVIEW_RBAC"]
+    assert shaped.page_actions[0].enabled is True
 
 
 def test_dedupe_keeps_highest_ranked_recommendation():

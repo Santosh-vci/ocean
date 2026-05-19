@@ -105,6 +105,19 @@ _ACTION_DEFINITIONS: Final[tuple[AssistantActionDefinition, ...]] = (
         "Master data readiness requires master data view permission.",
     ),
     _action(
+        "REVIEW_RBAC",
+        "Review RBAC coverage",
+        "Review role, permission, and data-scope coverage for governed workflows.",
+        "/admin/users-rbac",
+        "Review RBAC",
+        ("admin",),
+        "admin.view",
+        False,
+        True,
+        ("page_card",),
+        "RBAC coverage review requires admin visibility.",
+    ),
+    _action(
         "GENERATE_PLAN",
         "Generate plan",
         "Generate a deterministic draft plan from ready demand, cargo, and constraints.",
@@ -447,6 +460,7 @@ ROUTE_ACTIONS: Final[dict[str, tuple[str, ...]]] = {
     "/operations/event-confirmation": ("CONFIRM_EVENT", "REJECT_EVENT", "OPEN_EXCEPTION_CENTER"),
     "/admin/export-handoff": ("GENERATE_EXPORT", "REVIEW_AUDIT"),
     "/admin/master-data": ("REVIEW_MASTER_DATA",),
+    "/admin/users-rbac": ("REVIEW_RBAC",),
     "/admin/audit-logs": ("REVIEW_AUDIT", "REVIEW_RECOMMENDATION_PROOF_PACK"),
 }
 

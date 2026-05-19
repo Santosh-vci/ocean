@@ -6,6 +6,8 @@ from typing import Any
 
 from django.utils import timezone
 
+from apps.scheduling.models import OptimizerRun, PlanVersion, RecoveryRecommendation
+
 from .permissions import has_permission
 from .registry import get_action_definition, get_route_action_ids
 
@@ -40,6 +42,16 @@ class ShapedRecommendations:
     page_actions: list[ActionRecommendation]
     row_actions: list[ActionRecommendation]
     blocked_actions: list[ActionRecommendation]
+
+
+@dataclass(slots=True)
+class AssistantChecklistItem:
+    key: str
+    label: str
+    status: str
+    action_id: str | None = None
+    route: str | None = None
+    reason: str = ""
 
 
 VALID_ASSISTANT_MODES = {"off", "assisted", "guided", "supervisor"}
@@ -187,6 +199,33 @@ def shape_recommendations(
     )
 
 
+def build_checklist(ctx, shaped: ShapedRecommendations) -> list[dict[str, Any]]:
+    if ctx.mode == "off":
+        return []
+
+    blocked_by_action = {action.action_id: action for action in shaped.blocked_actions}
+    stages = [
+        _stage_demand_imported(ctx),
+        _stage_cargo_sequence_reviewed(ctx),
+        _stage_operating_windows_entered(ctx),
+        _stage_plan_generated(ctx),
+        _stage_exceptions_resolved(ctx),
+        _stage_recovery_options_generated(ctx),
+        _stage_recovery_recommendation_reviewed(ctx),
+        _stage_recommendation_materialized(ctx),
+        _stage_approval_submitted(ctx),
+        _stage_approval_completed(ctx),
+        _stage_plan_published(ctx),
+        _stage_export_generated(ctx),
+        _stage_proof_pack_review(ctx),
+    ]
+
+    return [
+        _checklist_item_dict(_apply_blocked_stage(stage, blocked_by_action))
+        for stage in stages
+    ]
+
+
 def get_next_actions(
     user,
     route: str | None = None,
@@ -279,6 +318,440 @@ def _action_affects_current_route(
     return item.action_id in get_route_action_ids(route)
 
 
+def _stage(
+    key: str,
+    label: str,
+    status: str,
+    *,
+    action_id: str | None = None,
+    reason: str = "",
+) -> AssistantChecklistItem:
+    route = get_action_definition(action_id).route if action_id else None
+    return AssistantChecklistItem(
+        key=key,
+        label=label,
+        status=status,
+        action_id=action_id,
+        route=route,
+        reason=reason,
+    )
+
+
+def _stage_demand_imported(ctx) -> AssistantChecklistItem:
+    if ctx.demand_count > 0:
+        return _stage(
+            "demand_imported",
+            "Demand imported",
+            "complete",
+            reason=f"{ctx.demand_count} active demand row(s) are available.",
+        )
+    return _stage(
+        "demand_imported",
+        "Demand imported",
+        "current",
+        action_id="IMPORT_OGV_DEMAND",
+        reason="No active OGV demand is available for planning.",
+    )
+
+
+def _stage_cargo_sequence_reviewed(ctx) -> AssistantChecklistItem:
+    if ctx.demand_count == 0:
+        return _stage(
+            "cargo_sequence_reviewed",
+            "Cargo sequence reviewed",
+            "pending",
+            reason="Import demand before reviewing cargo sequence readiness.",
+        )
+    if ctx.cargo_layer_issue_count > 0:
+        return _stage(
+            "cargo_sequence_reviewed",
+            "Cargo sequence reviewed",
+            "current",
+            action_id="REVIEW_COAL_SEQUENCE",
+            reason=f"{ctx.cargo_layer_issue_count} cargo layer issue(s) need review.",
+        )
+    return _stage(
+        "cargo_sequence_reviewed",
+        "Cargo sequence reviewed",
+        "complete",
+        reason="No open cargo sequence issue is blocking planning.",
+    )
+
+
+def _stage_operating_windows_entered(ctx) -> AssistantChecklistItem:
+    if ctx.demand_count == 0:
+        return _stage(
+            "operating_windows_entered",
+            "Operating windows entered",
+            "pending",
+            reason="Demand intake must exist before operating windows can be checked.",
+        )
+    if ctx.tide_window_count > 0 and ctx.bridge_window_count > 0:
+        return _stage(
+            "operating_windows_entered",
+            "Operating windows entered",
+            "complete",
+            reason="Active tide and bridge windows are available.",
+        )
+    return _stage(
+        "operating_windows_entered",
+        "Operating windows entered",
+        "current",
+        action_id="ENTER_OPERATING_WINDOWS",
+        reason="Tide or bridge operating windows are missing.",
+    )
+
+
+def _stage_plan_generated(ctx) -> AssistantChecklistItem:
+    if (
+        ctx.active_plan_version_id
+        and ctx.active_plan_trip_count > 0
+        and ctx.active_plan_status != PlanVersion.Status.DRAFT
+    ):
+        return _stage(
+            "plan_generated",
+            "Plan generated",
+            "complete",
+            reason=f"Active plan version {ctx.active_plan_version_id} has generated trips.",
+        )
+    if ctx.demand_count > 0 and ctx.tide_window_count > 0 and ctx.bridge_window_count > 0:
+        return _stage(
+            "plan_generated",
+            "Plan generated",
+            "current",
+            action_id="GENERATE_PLAN",
+            reason="Demand and operating windows are ready for plan generation.",
+        )
+    return _stage(
+        "plan_generated",
+        "Plan generated",
+        "pending",
+        reason="Complete demand and operating-window readiness first.",
+    )
+
+
+def _stage_exceptions_resolved(ctx) -> AssistantChecklistItem:
+    if not ctx.active_plan_version_id:
+        return _stage(
+            "exceptions_resolved",
+            "Exceptions resolved",
+            "pending",
+            reason="Generate a plan before exception readiness can be evaluated.",
+        )
+    if ctx.blocking_conflict_count > 0:
+        return _stage(
+            "exceptions_resolved",
+            "Exceptions resolved",
+            "current",
+            action_id="OPEN_EXCEPTION_CENTER",
+            reason=f"{ctx.blocking_conflict_count} unresolved blocking conflict(s) remain.",
+        )
+    return _stage(
+        "exceptions_resolved",
+        "Exceptions resolved",
+        "complete",
+        reason="No unresolved blocking conflicts are open.",
+    )
+
+
+def _stage_recovery_options_generated(ctx) -> AssistantChecklistItem:
+    if (
+        ctx.latest_optimizer_run_id
+        and ctx.latest_optimizer_run_status == OptimizerRun.Status.SUCCEEDED
+    ):
+        return _stage(
+            "recovery_options_generated",
+            "Recovery options generated",
+            "complete",
+            reason=f"Optimizer run {ctx.latest_optimizer_run_id} produced candidate options.",
+        )
+    if ctx.latest_optimizer_run_id:
+        return _stage(
+            "recovery_options_generated",
+            "Recovery options generated",
+            "pending",
+            reason="A recovery optimizer run exists but has not produced successful options.",
+        )
+    if _disruption_count(ctx) > 0:
+        return _stage(
+            "recovery_options_generated",
+            "Recovery options generated",
+            "current",
+            action_id="GENERATE_RECOVERY_OPTIONS",
+            reason="A governed disruption is ready for Phase 5 recovery options.",
+        )
+    return _stage(
+        "recovery_options_generated",
+        "Recovery options generated",
+        "pending",
+        reason="No governed disruption is waiting for recovery options.",
+    )
+
+
+def _stage_recovery_recommendation_reviewed(ctx) -> AssistantChecklistItem:
+    if (
+        ctx.top_recovery_recommendation_scenario_id
+        or ctx.materialized_recovery_recommendation_count
+    ):
+        return _stage(
+            "recovery_recommendation_reviewed",
+            "Recovery recommendation reviewed",
+            "complete",
+            reason="A recommendation has already moved into governed scenario handoff.",
+        )
+    if (
+        ctx.latest_optimizer_run_status == OptimizerRun.Status.SUCCEEDED
+        and ctx.latest_optimizer_run_candidate_count > 0
+    ):
+        return _stage(
+            "recovery_recommendation_reviewed",
+            "Recovery recommendation reviewed",
+            "current",
+            action_id="OPEN_RECOMMENDATION_CONSOLE",
+            reason="Ranked recovery recommendations are ready for operator review.",
+        )
+    return _stage(
+        "recovery_recommendation_reviewed",
+        "Recovery recommendation reviewed",
+        "pending",
+        reason="Generate recovery options before recommendation review.",
+    )
+
+
+def _stage_recommendation_materialized(ctx) -> AssistantChecklistItem:
+    if (
+        ctx.top_recovery_recommendation_scenario_id
+        or ctx.materialized_recovery_recommendation_count
+    ):
+        return _stage(
+            "recommendation_materialized",
+            "Recommendation materialized as scenario",
+            "complete",
+            reason="The selected recommendation has a governed scenario handoff.",
+        )
+    if (
+        ctx.top_recovery_recommendation_status == RecoveryRecommendation.Status.DISMISSED
+        and ctx.top_recovery_recommendation_id
+    ):
+        return _stage(
+            "recommendation_materialized",
+            "Recommendation materialized as scenario",
+            "blocked",
+            action_id="MATERIALIZE_RECOVERY_RECOMMENDATION",
+            reason="The selected recommendation was dismissed.",
+        )
+    if (
+        ctx.top_recovery_recommendation_id
+        and ctx.top_recovery_recommendation_status != RecoveryRecommendation.Status.MATERIALIZED
+    ):
+        return _stage(
+            "recommendation_materialized",
+            "Recommendation materialized as scenario",
+            "current",
+            action_id="MATERIALIZE_RECOVERY_RECOMMENDATION",
+            reason="The top recovery recommendation is ready for scenario handoff.",
+        )
+    return _stage(
+        "recommendation_materialized",
+        "Recommendation materialized as scenario",
+        "pending",
+        reason="Review a recovery recommendation before scenario materialization.",
+    )
+
+
+def _stage_approval_submitted(ctx) -> AssistantChecklistItem:
+    if (
+        ctx.pending_approval_count > 0
+        or ctx.all_required_approvals_complete
+        or ctx.active_plan_status in {
+            PlanVersion.Status.PROPOSED,
+            PlanVersion.Status.APPROVED,
+            PlanVersion.Status.PUBLISHED,
+        }
+    ):
+        return _stage(
+            "approval_submitted",
+            "Approval submitted",
+            "complete",
+            reason="The active plan has entered approval governance.",
+        )
+    if (
+        ctx.active_plan_status
+        in {
+            PlanVersion.Status.DRAFT,
+            PlanVersion.Status.GENERATED,
+            PlanVersion.Status.VALIDATED,
+        }
+        and ctx.active_plan_trip_count > 0
+        and ctx.blocking_conflict_count == 0
+    ):
+        return _stage(
+            "approval_submitted",
+            "Approval submitted",
+            "current",
+            action_id="SUBMIT_APPROVAL",
+            reason="The active plan is ready for approval submission.",
+        )
+    return _stage(
+        "approval_submitted",
+        "Approval submitted",
+        "pending",
+        reason="Resolve plan generation and blocking exceptions before approval.",
+    )
+
+
+def _stage_approval_completed(ctx) -> AssistantChecklistItem:
+    if ctx.all_required_approvals_complete or ctx.active_plan_status in {
+        PlanVersion.Status.APPROVED,
+        PlanVersion.Status.PUBLISHED,
+    }:
+        return _stage(
+            "approval_completed",
+            "Approval completed",
+            "complete",
+            reason="Required approval authorities are complete.",
+        )
+    if ctx.current_user_pending_approval_count > 0:
+        return _stage(
+            "approval_completed",
+            "Approval completed",
+            "current",
+            action_id="APPROVE_PLAN",
+            reason="An approval decision is waiting for your authority.",
+        )
+    if ctx.pending_approval_count > 0:
+        return _stage(
+            "approval_completed",
+            "Approval completed",
+            "current",
+            action_id="APPROVE_PLAN",
+            reason="Approval decisions are still pending.",
+        )
+    return _stage(
+        "approval_completed",
+        "Approval completed",
+        "pending",
+        reason="Submit approval before completing authority decisions.",
+    )
+
+
+def _stage_plan_published(ctx) -> AssistantChecklistItem:
+    if ctx.published_snapshot_exists or ctx.active_plan_status == PlanVersion.Status.PUBLISHED:
+        return _stage(
+            "plan_published",
+            "Plan published",
+            "complete",
+            reason="An active published snapshot exists.",
+        )
+    if ctx.all_required_approvals_complete and ctx.blocking_conflict_count == 0:
+        return _stage(
+            "plan_published",
+            "Plan published",
+            "current",
+            action_id="PUBLISH_PLAN",
+            reason="Approvals are complete and the plan is ready to publish.",
+        )
+    if ctx.all_required_approvals_complete and ctx.blocking_conflict_count > 0:
+        return _stage(
+            "plan_published",
+            "Plan published",
+            "blocked",
+            action_id="OPEN_EXCEPTION_CENTER",
+            reason="Publication is blocked until unresolved conflicts are cleared.",
+        )
+    return _stage(
+        "plan_published",
+        "Plan published",
+        "pending",
+        reason="Complete approval governance before publishing.",
+    )
+
+
+def _stage_export_generated(ctx) -> AssistantChecklistItem:
+    if ctx.latest_export_for_published_plan_exists:
+        return _stage(
+            "export_generated",
+            "Export generated",
+            "complete",
+            reason="The published plan has a governed export artifact.",
+        )
+    if ctx.active_plan_status == PlanVersion.Status.PUBLISHED or ctx.published_snapshot_exists:
+        return _stage(
+            "export_generated",
+            "Export generated",
+            "current",
+            action_id="GENERATE_EXPORT",
+            reason="Generate the governed export artifact for handoff.",
+        )
+    return _stage(
+        "export_generated",
+        "Export generated",
+        "pending",
+        reason="Publish a plan before generating final handoff exports.",
+    )
+
+
+def _stage_proof_pack_review(ctx) -> AssistantChecklistItem:
+    if ctx.proof_pack_available:
+        return _stage(
+            "recommendation_proof_pack_reviewed",
+            "Recommendation proof pack reviewed",
+            "current",
+            action_id="REVIEW_RECOMMENDATION_PROOF_PACK",
+            reason="Phase 5 recommendation proof evidence is available for review.",
+        )
+    return _stage(
+        "recommendation_proof_pack_reviewed",
+        "Recommendation proof pack reviewed",
+        "pending",
+        reason="Proof evidence appears after recommendation scenario handoff.",
+    )
+
+
+def _disruption_count(ctx) -> int:
+    return (
+        ctx.blocking_conflict_count
+        + ctx.critical_conflict_count
+        + ctx.open_tracking_alert_count
+        + ctx.pending_event_candidate_count
+        + ctx.active_override_risk_count
+    )
+
+
+def _apply_blocked_stage(
+    item: AssistantChecklistItem,
+    blocked_by_action: dict[str, ActionRecommendation],
+) -> AssistantChecklistItem:
+    if item.status not in {"current", "blocked"} or not item.action_id:
+        return item
+    blocked_action = blocked_by_action.get(item.action_id)
+    if not blocked_action:
+        return item
+    return AssistantChecklistItem(
+        key=item.key,
+        label=item.label,
+        status="blocked",
+        action_id=item.action_id,
+        route=item.route,
+        reason=blocked_action.blocked_reason or item.reason,
+    )
+
+
+def _checklist_item_dict(item: AssistantChecklistItem) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "key": item.key,
+        "label": item.label,
+        "status": item.status,
+    }
+    if item.action_id:
+        payload["action_id"] = item.action_id
+    if item.route:
+        payload["route"] = item.route
+    if item.reason:
+        payload["reason"] = item.reason
+    return payload
+
+
 def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
     return {
         "generated_at": timezone.now(),
@@ -300,5 +773,5 @@ def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
         "page_actions": shaped.page_actions,
         "row_actions": shaped.row_actions,
         "blocked_actions": shaped.blocked_actions,
-        "checklist": [],
+        "checklist": build_checklist(ctx, shaped),
     }

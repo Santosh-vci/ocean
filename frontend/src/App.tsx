@@ -1028,6 +1028,7 @@ function App() {
   const assistantPageProps = {
     assistantBlockedActions: assistant.data?.blockedActions ?? [],
     assistantChecklist: assistant.data?.checklist ?? [],
+    assistantMode: assistant.mode,
     assistantPageActions: assistant.data?.pageActions ?? [],
     assistantRowActions: assistant.data?.rowActions ?? [],
     onAssistantNavigate: handleNavigate,
@@ -1062,6 +1063,7 @@ function App() {
         {actionError ? <div className="workspace-action-banner critical">{actionError}</div> : null}
         {route === "/admin/master-data" && masterDataOverview ? (
           <MasterDataPage
+            {...assistantPageProps}
             canManage={canManageMasterData}
             isActionRunning={isWorkspaceActionRunning}
             onExportCatalog={handleMasterDataExport}
@@ -1070,7 +1072,9 @@ function App() {
             overview={masterDataOverview}
           />
         ) : null}
-        {route === "/admin/users-rbac" && overview ? <RbacPage overview={overview} /> : null}
+        {route === "/admin/users-rbac" && overview ? (
+          <RbacPage {...assistantPageProps} overview={overview} />
+        ) : null}
         {route === "/admin/audit-logs" && canViewAudit ? (
           <AuditPage {...assistantPageProps} events={auditEvents} />
         ) : null}
@@ -1087,6 +1091,7 @@ function App() {
         ) : null}
         {route === "/schedule/ogv-demand" && canViewSchedule ? (
           <OgvDemandPage
+            {...assistantPageProps}
             canEdit={canEditSchedule}
             canExport={canGenerateExports}
             isActionRunning={isWorkspaceActionRunning}
@@ -1097,6 +1102,7 @@ function App() {
         ) : null}
         {route === "/schedule/coal-grade-sequence" && canViewSchedule ? (
           <CoalGradeSequencePage
+            {...assistantPageProps}
             canEdit={canEditSchedule}
             canExport={canGenerateExports}
             isActionRunning={isWorkspaceActionRunning}
@@ -1222,6 +1228,7 @@ function App() {
         ) : null}
         {route === "/map/live" && canViewFleet ? (
           <LiveResourceMapPage
+            {...assistantPageProps}
             canRunReplay={canRunTelemetryReplay}
             canRunSimulation={canRunSimulation}
             etaProjections={etaProjections}
@@ -1255,6 +1262,7 @@ function App() {
         {route === "/dashboard/situation" ? (
           <DashboardPage
             assistantBlockedActions={assistant.data?.blockedActions ?? []}
+            assistantChecklist={assistant.data?.checklist ?? []}
             assistantGlobalAction={assistant.data?.globalNextAction ?? null}
             assistantMode={assistant.mode}
             assistantPageActions={assistant.data?.pageActions ?? []}

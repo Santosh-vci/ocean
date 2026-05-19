@@ -1,6 +1,6 @@
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
-import { ActionInboxPanel } from "../components/assistant";
+import { ActionInboxPanel, GuidedChecklist } from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import type {
   AuditEvent,
@@ -12,10 +12,15 @@ import type {
   TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
-import type { ActionRecommendation, AssistantMode } from "../types/assistant";
+import type {
+  ActionRecommendation,
+  AssistantChecklistItem,
+  AssistantMode,
+} from "../types/assistant";
 
 type DashboardPageProps = {
   assistantBlockedActions?: ActionRecommendation[];
+  assistantChecklist?: AssistantChecklistItem[];
   assistantGlobalAction?: ActionRecommendation | null;
   assistantMode?: AssistantMode;
   assistantPageActions?: ActionRecommendation[];
@@ -52,6 +57,7 @@ function timeLabel(value: string) {
 
 export function DashboardPage({
   assistantBlockedActions = [],
+  assistantChecklist = [],
   assistantGlobalAction = null,
   assistantMode = "assisted",
   assistantPageActions = [],
@@ -224,6 +230,9 @@ export function DashboardPage({
               onNavigate={onNavigate}
               pageActions={assistantPageActions}
             />
+          ) : null}
+          {assistantMode === "guided" || assistantMode === "supervisor" ? (
+            <GuidedChecklist items={assistantChecklist} mode={assistantMode} />
           ) : null}
 
           <div className="grid-header">

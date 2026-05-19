@@ -12,6 +12,11 @@ const MODES: Array<{ value: AssistantMode; label: string }> = [
   { value: "off", label: "Off" },
 ];
 
+function modeTitle(mode: AssistantMode) {
+  if (mode === "guided") return "Assistant mode: guided preview";
+  return `Assistant mode: ${mode}`;
+}
+
 export function AssistantModeToggle({ mode, onChange }: AssistantModeToggleProps) {
   return (
     <div aria-label="Assistant mode" className="assistant-mode-toggle" role="group">
@@ -21,7 +26,7 @@ export function AssistantModeToggle({ mode, onChange }: AssistantModeToggleProps
           className={mode === item.value ? "active" : ""}
           key={item.value}
           onClick={() => onChange(item.value)}
-          title={`Assistant mode: ${item.value}`}
+          title={modeTitle(item.value)}
           type="button"
         >
           {item.label}

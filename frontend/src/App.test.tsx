@@ -3,8 +3,10 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
+import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
 import { CtsOperationsPage, JettyLoadingPage } from "./pages/LogisticsPages";
 import { LiveResourceMapPage } from "./pages/MapPage";
+import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import {
   ExceptionCenterPage,
@@ -12,6 +14,7 @@ import {
   SimulationWorkspacePage,
 } from "./pages/RecoveryPages";
 import { TideBridgePage } from "./pages/TideBridgePage";
+import type { ActionRecommendation } from "./types/assistant";
 import type {
   ConfirmedOperationalEventRecord,
   DeviceEndpointRecord,
@@ -47,6 +50,32 @@ beforeEach(() => {
     }),
   );
 });
+
+function assistantAction(overrides: Partial<ActionRecommendation> = {}): ActionRecommendation {
+  return {
+    actionId: "IMPORT_OGV_DEMAND",
+    label: "Import OGV demand",
+    priority: "warning",
+    rankScore: 760,
+    enabled: true,
+    route: "/schedule/ogv-demand",
+    ctaLabel: "Import demand",
+    reason: "No active OGV demand is available for planning.",
+    hoverHint: "",
+    detailText: "",
+    impactIfIgnored: "",
+    ownerRole: "berau-scheduler",
+    requiredPermission: "schedule.edit",
+    auditRequired: true,
+    targetObjectType: null,
+    targetObjectId: null,
+    blockedReason: "",
+    source: "planning.no_demand",
+    expiresAt: null,
+    metadata: {},
+    ...overrides,
+  };
+}
 
 test("filters navigation by permission", () => {
   expect(visibleNavItems(["dashboard.view"]).map((item) => item.label)).toEqual([
@@ -117,6 +146,61 @@ test("exposes governed exports through export visibility", () => {
   expect(visibleNavItems(["dashboard.view", "export.view"]).map((item) => item.label)).toContain(
     "Exports & Handoff",
   );
+});
+
+test("OGV demand page renders route-specific assistant guidance", () => {
+  render(
+    <OgvDemandPage
+      assistantPageActions={[assistantAction()]}
+      canEdit
+      canExport={false}
+      isActionRunning={false}
+      onExportBoard={vi.fn()}
+      onImportDemand={vi.fn()}
+      overview={null}
+    />,
+  );
+
+  expect(screen.getByText("Assistant guidance")).toBeInTheDocument();
+  expect(screen.getByText("Import OGV demand")).toBeInTheDocument();
+});
+
+test("coal sequence page renders with assistant data absent and present", () => {
+  const { rerender } = render(
+    <CoalGradeSequencePage
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExport={vi.fn()}
+      overview={null}
+    />,
+  );
+
+  expect(screen.getByRole("heading", { name: "Coal Grade Sequence" })).toBeInTheDocument();
+  expect(screen.queryByText("Assistant guidance")).not.toBeInTheDocument();
+
+  rerender(
+    <CoalGradeSequencePage
+      assistantPageActions={[
+        assistantAction({
+          actionId: "REVIEW_COAL_SEQUENCE",
+          label: "Review coal grade sequence",
+          route: "/schedule/coal-grade-sequence",
+          ctaLabel: "Review sequence",
+          reason: "Cargo layer sequence issues need review.",
+          requiredPermission: "schedule.view",
+          auditRequired: false,
+        }),
+      ]}
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExport={vi.fn()}
+      overview={null}
+    />,
+  );
+
+  expect(screen.getByText("Review coal grade sequence")).toBeInTheDocument();
 });
 
 test("live map exposes seeded replay controls", () => {

@@ -9,6 +9,7 @@ export { actionsForObject, blockedReasonFor } from "./actionMatching";
 export { ActionInboxPanel } from "./ActionInboxPanel";
 export { AssistantModeToggle } from "./AssistantModeToggle";
 export { DisabledReasonTooltip } from "./DisabledReasonTooltip";
+export { GuidedChecklist } from "./GuidedChecklist";
 export { NextActionPill } from "./NextActionPill";
 export {
   RecommendationCard,

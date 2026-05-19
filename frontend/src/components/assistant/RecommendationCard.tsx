@@ -1,6 +1,11 @@
-import type { ActionRecommendation, AssistantChecklistItem } from "../../types/assistant";
+import type {
+  ActionRecommendation,
+  AssistantChecklistItem,
+  AssistantMode,
+} from "../../types/assistant";
 
 export type AssistantRecommendationSurfaceProps = {
+  assistantMode?: AssistantMode;
   assistantPageActions?: ActionRecommendation[];
   assistantRowActions?: ActionRecommendation[];
   assistantBlockedActions?: ActionRecommendation[];

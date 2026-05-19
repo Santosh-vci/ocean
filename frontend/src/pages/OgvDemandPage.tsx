@@ -2,9 +2,14 @@ import { useMemo, useState } from "react";
 
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  DisabledReasonTooltip,
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import type { CargoLayerStepRecord, OGVVoyageRecord, PlanningOverview } from "../types";
 
-type OgvDemandPageProps = {
+type OgvDemandPageProps = AssistantRecommendationSurfaceProps & {
   overview: PlanningOverview | null;
   canEdit: boolean;
   canExport: boolean;
@@ -29,10 +34,15 @@ function stageLabel(step: CargoLayerStepRecord) {
 }
 
 export function OgvDemandPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   overview,
   canEdit,
   canExport,
   isActionRunning,
+  onAssistantNavigate,
   onExportBoard,
   onImportDemand,
 }: OgvDemandPageProps) {
@@ -54,6 +64,11 @@ export function OgvDemandPage({
   const totalRemaining = overview?.validation.remainingDemandMt ?? 0;
   const highRiskCount = overview?.validation.highRiskVoyages ?? 0;
   const readyCount = voyages.filter((voyage) => voyage.risk_status === "low").length;
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page planning-board">
@@ -64,14 +79,33 @@ export function OgvDemandPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Demand intake</span>
-          <button disabled={!canEdit || isActionRunning} onClick={onImportDemand} type="button">
-            Import demand
-          </button>
-          <button disabled={!canExport || isActionRunning} onClick={onExportBoard} type="button">
-            Export board
-          </button>
+          <DisabledReasonTooltip
+            actionId="IMPORT_OGV_DEMAND"
+            actions={assistantActions}
+            fallback={!canEdit ? "Your role cannot import OGV demand." : ""}
+          >
+            <button disabled={!canEdit || isActionRunning} onClick={onImportDemand} type="button">
+              Import demand
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
+            actionId="GENERATE_EXPORT"
+            actions={assistantActions}
+            fallback={!canExport ? "Your role cannot generate exports." : ""}
+          >
+            <button disabled={!canExport || isActionRunning} onClick={onExportBoard} type="button">
+              Export board
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+      />
 
       <div className="metric-strip six-up planning-kpis">
         <div>

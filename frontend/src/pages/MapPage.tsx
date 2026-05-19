@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { SvgIcon } from "../components/SvgIcon";
+import {
+  DisabledReasonTooltip,
+  RecommendationCard,
+  type AssistantRecommendationSurfaceProps,
+} from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import { shortOperationalLabel } from "../lib/operations";
 import type {
@@ -16,7 +21,7 @@ import type {
   TrackingAlertRecord,
 } from "../types";
 
-type LiveResourceMapPageProps = {
+type LiveResourceMapPageProps = AssistantRecommendationSurfaceProps & {
   canRunReplay: boolean;
   etaProjections: LiveEtaProjectionRecord[];
   geofenceZones: GeofenceZoneRecord[];
@@ -125,6 +130,10 @@ function operationalEventTone(status: string | null | undefined) {
 }
 
 export function LiveResourceMapPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
   canRunReplay,
   etaProjections,
   geofenceZones,
@@ -136,6 +145,7 @@ export function LiveResourceMapPage({
   operationDevices = EMPTY_DEVICES,
   overview,
   canRunSimulation,
+  onAssistantNavigate,
   onNavigate,
   onStartReplay,
   replayRuns,
@@ -348,6 +358,11 @@ export function LiveResourceMapPage({
       projectPoint,
     ],
   );
+  const assistantActions = [
+    ...(assistantRowActions ?? []),
+    ...(assistantPageActions ?? []),
+    ...(assistantBlockedActions ?? []),
+  ];
 
   return (
     <section className="workspace-page live-map-board">
@@ -368,11 +383,20 @@ export function LiveResourceMapPage({
           <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">
             Open assignment board
           </button>
-          <button onClick={() => onNavigate("/exceptions/center")} type="button">
-            Open exceptions
-          </button>
+          <DisabledReasonTooltip actionId="OPEN_EXCEPTION_CENTER" actions={assistantActions}>
+            <button onClick={() => onNavigate("/exceptions/center")} type="button">
+              Open exceptions
+            </button>
+          </DisabledReasonTooltip>
         </div>
       </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate ?? onNavigate}
+      />
 
       <div className="metric-strip nine-up map-kpis">
         <div><span>Assets tracked</span><strong>{latestAssetStates.length}</strong></div>

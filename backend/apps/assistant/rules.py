@@ -560,6 +560,38 @@ def rule_recovery_proof_pack_available(ctx: AssistantContext) -> list[ActionReco
     return []
 
 
+def rule_master_data_route_review(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if ctx.route == "/admin/master-data":
+        return [
+            build_recommendation(
+                "REVIEW_MASTER_DATA",
+                priority="info",
+                rank_score=310,
+                enabled=True,
+                reason="Master data catalogs are ready for readiness and dependency review.",
+                source="admin.master_data_route_review",
+                impact_if_ignored="Planning blockers from catalog drift may go unnoticed.",
+            )
+        ]
+    return []
+
+
+def rule_rbac_route_review(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if ctx.route == "/admin/users-rbac":
+        return [
+            build_recommendation(
+                "REVIEW_RBAC",
+                priority="info",
+                rank_score=300,
+                enabled=True,
+                reason="Role assignments and data scopes are ready for governance review.",
+                source="admin.rbac_route_review",
+                impact_if_ignored="Access governance drift may go unnoticed.",
+            )
+        ]
+    return []
+
+
 def rule_recovery_approved_candidate_publish_blocked(
     ctx: AssistantContext,
 ) -> list[ActionRecommendation]:
@@ -628,6 +660,8 @@ RULES: tuple[Rule, ...] = (
     rule_override_risk,
     rule_stale_signal,
     rule_recovery_proof_pack_available,
+    rule_master_data_route_review,
+    rule_rbac_route_review,
     rule_audit_after_governed_mutation,
 )
 
