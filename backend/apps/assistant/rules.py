@@ -92,13 +92,10 @@ def rule_ready_to_generate(ctx: AssistantContext) -> list[ActionRecommendation]:
 
 
 def rule_published_needs_draft(ctx: AssistantContext) -> list[ActionRecommendation]:
-    if ctx.active_plan_status in {
+    if ctx.source_inputs_changed and ctx.active_plan_status in {
         PlanVersion.Status.PUBLISHED,
         PlanVersion.Status.SUPERSEDED,
-    } or (
-        ctx.route == "/schedule/published-plan"
-        and ctx.active_plan_status == PlanVersion.Status.PUBLISHED
-    ):
+    }:
         return [
             build_recommendation(
                 "CREATE_DRAFT",

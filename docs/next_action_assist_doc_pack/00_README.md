@@ -56,7 +56,9 @@ frontend/src/types.ts
 | `04_FRONTEND_INTEGRATION_SPEC.md` | Detailed React integration plan: assisted mode state, components, page embedding, and API usage. |
 | `05_GOVERNANCE_AND_CHANGE_CONTROL.md` | Governance rules so future features keep assistant recommendations aligned. |
 | `06_TESTING_AND_ACCEPTANCE_PLAN.md` | Unit, API, frontend, e2e, regression, and UAT acceptance criteria. |
-| `07_CODEX_AGENT_BUILD_PROMPT.md` | Ready-to-use Codex implementation prompt for applying this pack to the repo. |
+| `07_CHUNKED_IMPLEMENTATION_PLAN.md` | Chunked implementation methodology, acceptance criteria, and Phase 5 recovery scope. |
+| `08_CHUNK_0_1_ALIGNMENT_NOTES.md` | Baseline alignment notes from the initial assistant skeleton and registry build. |
+| `09_RELEASE_HARDENING_NOTES.md` | Governance, UAT, proof, and release-readiness notes for the completed assistant rollout. |
 
 ## Implementation principle
 

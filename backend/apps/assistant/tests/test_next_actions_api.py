@@ -286,6 +286,19 @@ def test_next_actions_endpoint_does_not_mutate_business_tables():
     assert _business_counts() == before
 
 
+@pytest.mark.django_db
+def test_next_actions_endpoint_rejects_mutating_methods():
+    user, _org = make_user("assistant-api-method-guard")
+
+    response = client_for(user).post(
+        NEXT_ACTIONS_URL,
+        {"route": "/recovery/recommendations"},
+        format="json",
+    )
+
+    assert response.status_code == 405
+
+
 def _business_counts():
     return {
         "plan_versions": PlanVersion.objects.count(),

@@ -180,7 +180,7 @@ Specific hard rules:
 - `APPROVE_PLAN` outranks `PUBLISH_PLAN` until all approvals are complete.
 - `PUBLISH_PLAN` outranks `GENERATE_EXPORT` until published.
 - `CONFIRM_EVENT` outranks low-priority audit review when event is high confidence.
-- `CREATE_DRAFT` must be recommended before regeneration if current plan is published.
+- `CREATE_DRAFT` must be recommended before regeneration if current plan is published and source inputs changed.
 - Final schedule export must not be recommended before publish unless explicitly internal/draft export.
 
 ---
@@ -313,6 +313,18 @@ Optional static frontend pattern:
 ```
 
 Then CI can scan for new `data-action-id` values and compare registry.
+
+Implemented Chunk 11 guardrails:
+
+- `test_action_registry.py` verifies registry uniqueness, required fields, mutating action audit flags, and route ownership references.
+- `test_governance.py` verifies emitted rule action IDs are registered, every action has non-dashboard route ownership, top recommendations are enabled, blocking risk prevents publish/export top actions, Phase 5 recommendation actions stay inside scenario/approval/proof governance, and any frontend `data-action-id` values map to the registry.
+- `test_next_actions_api.py` verifies the assistant endpoint is read-only and rejects mutating HTTP methods.
+
+Current route/action exemptions:
+
+- `/dashboard/situation` intentionally owns the complete action registry as a cross-workflow inbox, but each action must still be owned by its default workflow route outside that catch-all.
+- Frontend components do not currently render `data-action-id` attributes. The static check is present and will validate IDs automatically if such attributes are introduced.
+- The assistant endpoint returns recommendation metadata only. It does not execute Phase 5 optimizer runs, recommendation materialization, proof-pack writes, approval decisions, publication, or export.
 
 ---
 

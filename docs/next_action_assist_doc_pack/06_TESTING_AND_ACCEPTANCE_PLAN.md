@@ -311,6 +311,24 @@ Error behavior:
 5. Regenerate draft if needed.
 6. Continue approval/publish lifecycle.
 
+### 9.5 Product Phase 5 recovery path
+
+1. Seed a governed exception, alert, event, or override.
+2. Exception Center recommends `GENERATE_RECOVERY_OPTIONS`.
+3. A successful optimizer run recommends `OPEN_RECOMMENDATION_CONSOLE`.
+4. A selected candidate exposes row-level `MATERIALIZE_RECOVERY_RECOMMENDATION` and dismissal guidance.
+5. Materialization hands off to Simulation Workspace; assistant recommends simulation and then promotion.
+6. Approval, publish, and export remain governed by existing gates.
+7. If unresolved critical risk remains, assistant keeps `OPEN_EXCEPTION_CENTER` above publish/export.
+8. `REVIEW_RECOMMENDATION_PROOF_PACK` appears as low-priority evidence review, not as a bypass action.
+
+The backend UAT coverage lives in:
+
+```text
+backend/apps/assistant/tests/test_uat_flows.py
+backend/apps/assistant/tests/test_governance.py
+```
+
 ---
 
 ## 10. Acceptance definition

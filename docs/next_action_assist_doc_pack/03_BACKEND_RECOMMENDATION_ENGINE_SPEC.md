@@ -284,7 +284,7 @@ PRIORITY normal
 
 ```text
 IF active_plan_status IN published/superseded
-AND source demand/constraints changed OR user is on published plan page
+AND source demand/constraints changed
 THEN recommend CREATE_DRAFT
 PRIORITY normal
 ```
