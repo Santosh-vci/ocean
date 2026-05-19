@@ -2166,6 +2166,7 @@ export function ApprovalsPublishingPage({
   const snapshots = overview?.publishedSnapshots ?? [];
   const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const request = requests[0];
+  const published = request?.status === "published" || overview?.activePlanVersion?.status === "published";
   const readyToPublish =
     request?.status === "approved" && (overview?.validation.blockingConflictCount ?? 0) === 0;
   const assistantActions = [
@@ -2182,8 +2183,8 @@ export function ApprovalsPublishingPage({
           <h1>Plan Approvals & Publishing</h1>
         </div>
         <div className="planning-actions">
-          <span className={`phase-chip ${readyToPublish ? "secure" : ""}`}>
-            {readyToPublish ? "Ready to publish" : "Publish blocked"}
+          <span className={`phase-chip ${readyToPublish || published ? "secure" : ""}`}>
+            {published ? "Published" : readyToPublish ? "Ready to publish" : "Publish blocked"}
           </span>
           <DisabledReasonTooltip
             actionId="PUBLISH_PLAN"
@@ -2213,7 +2214,12 @@ export function ApprovalsPublishingPage({
         <div><span>Critical</span><strong className="critical-text">{overview?.validation.criticalConflictCount ?? 0}</strong></div>
         <div><span>Overrides</span><strong className="warning-text">{overview?.validation.overrideCount ?? 0}</strong></div>
         <div><span>Simulation promos</span><strong>{overview?.validation.scenarioCount ?? 0}</strong></div>
-        <div><span>Ready to publish</span><strong className={readyToPublish ? "success-text" : "critical-text"}>{readyToPublish ? "YES" : "BLOCKED"}</strong></div>
+        <div>
+          <span>{published ? "Published" : "Ready to publish"}</span>
+          <strong className={readyToPublish || published ? "success-text" : "critical-text"}>
+            {published ? "YES" : readyToPublish ? "YES" : "BLOCKED"}
+          </strong>
+        </div>
         <div><span>Published version</span><strong>{snapshots[0]?.snapshot_id ?? "NONE"}</strong></div>
         <div><span>Plan state</span><strong>{short(overview?.activePlanVersion?.status)}</strong></div>
       </div>

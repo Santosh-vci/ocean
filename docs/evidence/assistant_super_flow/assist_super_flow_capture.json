@@ -1,0 +1,1590 @@
+[
+  {
+    "step": "click",
+    "title": "Set Assist to Super mode",
+    "target": "Super",
+    "matchedText": "SUPER",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "01",
+    "title": "Blank dashboard after master-only reseed",
+    "route": "/dashboard/situation",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/01_blank_dashboard_after_master_only_reseed.png",
+    "expectedNext": "IMPORT_OGV_DEMAND",
+    "actualGlobalNext": "IMPORT_OGV_DEMAND",
+    "actualGlobalLabel": "Import OGV demand",
+    "pageActions": [
+      "IMPORT_OGV_DEMAND"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "current",
+        "action_id": "IMPORT_OGV_DEMAND",
+        "route": "/schedule/ogv-demand",
+        "reason": "No active OGV demand is available for planning."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "pending",
+        "reason": "Import demand before reviewing cargo sequence readiness."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "pending",
+        "reason": "Demand intake must exist before operating windows can be checked."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "pending",
+        "reason": "Complete demand and operating-window readiness first."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Import OGV demand",
+      "No active plan version",
+      "No active conflicts"
+    ],
+    "url": "http://localhost:8080/#/dashboard/situation",
+    "note": "No OGV demand, plan, conflicts, approvals, published snapshot, or export exists yet.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to the demand board",
+    "target": "Import OGV demand",
+    "matchedText": "WARNING Import OGV demand",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "02",
+    "title": "Demand board reached from Assist",
+    "route": "/schedule/ogv-demand",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/02_demand_board_reached_from_assist.png",
+    "expectedNext": "IMPORT_OGV_DEMAND",
+    "actualGlobalNext": "IMPORT_OGV_DEMAND",
+    "actualGlobalLabel": "Import OGV demand",
+    "pageActions": [
+      "IMPORT_OGV_DEMAND"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "current",
+        "action_id": "IMPORT_OGV_DEMAND",
+        "route": "/schedule/ogv-demand",
+        "reason": "No active OGV demand is available for planning."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "pending",
+        "reason": "Import demand before reviewing cargo sequence readiness."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "pending",
+        "reason": "Demand intake must exist before operating windows can be checked."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "pending",
+        "reason": "Complete demand and operating-window readiness first."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Import OGV demand"
+    ],
+    "url": "http://localhost:8080/#/schedule/ogv-demand",
+    "note": "Assist has navigated to the right page; the page CTA performs the import.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA imports one operator demand row and default cargo layers",
+    "target": "Import demand",
+    "matchedText": "IMPORT DEMAND",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "03",
+    "title": "Demand imported",
+    "route": "/schedule/ogv-demand",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/03_demand_imported.png",
+    "expectedNext": "ENTER_OPERATING_WINDOWS",
+    "actualGlobalNext": "ENTER_OPERATING_WINDOWS",
+    "actualGlobalLabel": "Enter tide/bridge windows",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "current",
+        "action_id": "ENTER_OPERATING_WINDOWS",
+        "route": "/constraints/tide-bridge",
+        "reason": "Tide or bridge operating windows are missing."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "pending",
+        "reason": "Complete demand and operating-window readiness first."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [],
+    "url": "http://localhost:8080/#/schedule/ogv-demand",
+    "note": "The transaction now has OGV demand and cargo layers but no navigation windows.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to constraints",
+    "target": "Enter tide/bridge windows",
+    "matchedText": "WARNING Enter tide/bridge windows",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "04",
+    "title": "Tide and bridge page reached from Assist",
+    "route": "/constraints/tide-bridge",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/04_tide_and_bridge_page_reached_from_assist.png",
+    "expectedNext": "ENTER_OPERATING_WINDOWS",
+    "actualGlobalNext": "ENTER_OPERATING_WINDOWS",
+    "actualGlobalLabel": "Enter tide/bridge windows",
+    "pageActions": [
+      "ENTER_OPERATING_WINDOWS"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "current",
+        "action_id": "ENTER_OPERATING_WINDOWS",
+        "route": "/constraints/tide-bridge",
+        "reason": "Tide or bridge operating windows are missing."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "pending",
+        "reason": "Complete demand and operating-window readiness first."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [],
+    "url": "http://localhost:8080/#/constraints/tide-bridge",
+    "note": "Assist has navigated to the constraint entry page.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA creates tide, bridge, asset, jetty, and navigation checks",
+    "target": "Enter operating windows",
+    "matchedText": "ENTER OPERATING WINDOWS",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "05",
+    "title": "Operating windows entered",
+    "route": "/constraints/tide-bridge",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/05_operating_windows_entered.png",
+    "expectedNext": "GENERATE_PLAN",
+    "actualGlobalNext": "GENERATE_PLAN",
+    "actualGlobalLabel": "Generate plan",
+    "pageActions": [
+      "GENERATE_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "current",
+        "action_id": "GENERATE_PLAN",
+        "route": "/operations/tug-barge-assignment",
+        "reason": "Demand and operating windows are ready for plan generation."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Generate plan"
+    ],
+    "url": "http://localhost:8080/#/constraints/tide-bridge",
+    "note": "The transaction now has constraint windows and feasibility checks.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to assignment board",
+    "target": "Generate plan",
+    "matchedText": "NORMAL Generate plan",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "06",
+    "title": "Assignment page reached from Assist",
+    "route": "/operations/tug-barge-assignment",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/06_assignment_page_reached_from_assist.png",
+    "expectedNext": "GENERATE_PLAN",
+    "actualGlobalNext": "GENERATE_PLAN",
+    "actualGlobalLabel": "Generate plan",
+    "pageActions": [
+      "GENERATE_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "current",
+        "action_id": "GENERATE_PLAN",
+        "route": "/operations/tug-barge-assignment",
+        "reason": "Demand and operating windows are ready for plan generation."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "pending",
+        "reason": "Generate a plan before exception readiness can be evaluated."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Generate plan"
+    ],
+    "url": "http://localhost:8080/#/operations/tug-barge-assignment",
+    "note": "Assist has navigated to the page where schedule generation is available.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA creates the initial operator plan and generated assignments",
+    "target": "Regenerate plan",
+    "matchedText": "REGENERATE PLAN",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "07",
+    "title": "Plan generated",
+    "route": "/operations/tug-barge-assignment",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/07_plan_generated.png",
+    "expectedNext": "SUBMIT_APPROVAL",
+    "actualGlobalNext": "SUBMIT_APPROVAL",
+    "actualGlobalLabel": "Submit approval",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "current",
+        "action_id": "SUBMIT_APPROVAL",
+        "route": "/schedule/published-plan",
+        "reason": "The active plan is ready for approval submission."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Submit approval"
+    ],
+    "url": "http://localhost:8080/#/operations/tug-barge-assignment",
+    "note": "The generated plan is feasible, so Assist moves the operator to approval submission.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to the publishing plan page",
+    "target": "Submit approval",
+    "matchedText": "NORMAL Submit approval",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "08",
+    "title": "Published-plan page reached from Assist",
+    "route": "/schedule/published-plan",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/08_published_plan_page_reached_from_assist.png",
+    "expectedNext": "SUBMIT_APPROVAL",
+    "actualGlobalNext": "SUBMIT_APPROVAL",
+    "actualGlobalLabel": "Submit approval",
+    "pageActions": [
+      "SUBMIT_APPROVAL"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "current",
+        "action_id": "SUBMIT_APPROVAL",
+        "route": "/schedule/published-plan",
+        "reason": "The active plan is ready for approval submission."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Submit approval"
+    ],
+    "url": "http://localhost:8080/#/schedule/published-plan",
+    "note": "Assist has navigated to the plan governance page; the page CTA submits the request.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA creates the dual-authority approval request",
+    "target": "Submit approval",
+    "matchedText": "SUBMIT APPROVAL",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "09",
+    "title": "Approval request submitted",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/09_approval_request_submitted.png",
+    "expectedNext": "APPROVE_PLAN",
+    "actualGlobalNext": "APPROVE_PLAN",
+    "actualGlobalLabel": "Approve plan",
+    "pageActions": [
+      "APPROVE_PLAN",
+      "REJECT_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "current",
+        "action_id": "APPROVE_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "An approval decision is waiting for your authority."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Approve"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "The plan is now waiting for required authority decisions.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "First authority approval",
+    "target": "Approve",
+    "matchedText": "Approve",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "10",
+    "title": "First approval recorded",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/10_first_approval_recorded.png",
+    "expectedNext": "APPROVE_PLAN",
+    "actualGlobalNext": "APPROVE_PLAN",
+    "actualGlobalLabel": "Approve plan",
+    "pageActions": [
+      "APPROVE_PLAN",
+      "REJECT_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "current",
+        "action_id": "APPROVE_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "An approval decision is waiting for your authority."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Approve"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "One required approval is complete; Assist still asks for the remaining decision.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Second authority approval",
+    "target": "Approve",
+    "matchedText": "Approve",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "11",
+    "title": "All approvals recorded",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/11_all_approvals_recorded.png",
+    "expectedNext": "PUBLISH_PLAN",
+    "actualGlobalNext": "PUBLISH_PLAN",
+    "actualGlobalLabel": "Publish plan",
+    "pageActions": [
+      "PUBLISH_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "current",
+        "action_id": "PUBLISH_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "Approvals are complete and the plan is ready to publish."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Approve",
+      "Publish plan"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "Both required approvals are complete, so Assist moves the operator to publication.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA publishes immutable snapshot",
+    "target": "Publish plan",
+    "matchedText": "PUBLISH PLAN",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "12",
+    "title": "Plan published",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/12_plan_published.png",
+    "expectedNext": "GENERATE_EXPORT",
+    "actualGlobalNext": "GENERATE_EXPORT",
+    "actualGlobalLabel": "Generate governed export",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "current",
+        "action_id": "GENERATE_EXPORT",
+        "route": "/admin/export-handoff",
+        "reason": "Generate the governed export artifact for handoff."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Approve"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "The plan is published and still needs a governed handoff export.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to export handoff",
+    "target": "Generate governed export",
+    "matchedText": "NORMAL Generate governed export",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "13",
+    "title": "Export page reached from Assist",
+    "route": "/admin/export-handoff",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/13_export_page_reached_from_assist.png",
+    "expectedNext": "GENERATE_EXPORT",
+    "actualGlobalNext": "GENERATE_EXPORT",
+    "actualGlobalLabel": "Generate governed export",
+    "pageActions": [
+      "GENERATE_EXPORT",
+      "REVIEW_AUDIT"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "current",
+        "action_id": "GENERATE_EXPORT",
+        "route": "/admin/export-handoff",
+        "reason": "Generate the governed export artifact for handoff."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [],
+    "url": "http://localhost:8080/#/admin/export-handoff",
+    "note": "Assist has navigated to the export handoff page.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA creates governed plan export",
+    "target": "Printable schedule",
+    "matchedText": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "14",
+    "title": "Governed export generated",
+    "route": "/admin/export-handoff",
+    "screenshot": "F:/ocean/docs/evidence/assistant_super_flow/screenshots/14_governed_export_generated.png",
+    "expectedNext": null,
+    "actualGlobalNext": "REVIEW_AUDIT",
+    "actualGlobalLabel": "Review audit trail",
+    "pageActions": [
+      "REVIEW_AUDIT"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "1 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 90 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "pending",
+        "reason": "No governed disruption is waiting for recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "complete",
+        "reason": "The published plan has a governed export artifact."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Export generated"
+    ],
+    "url": "http://localhost:8080/#/admin/export-handoff",
+    "note": "The transaction has reached the export handoff endpoint.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    }
+  }
+]

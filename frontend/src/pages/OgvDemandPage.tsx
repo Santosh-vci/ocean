@@ -7,6 +7,7 @@ import {
   RecommendationCard,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
+import { cargoLayerChainStatusLabel } from "../lib/cargoLayer";
 import type { CargoLayerStepRecord, OGVVoyageRecord, PlanningOverview } from "../types";
 
 type OgvDemandPageProps = AssistantRecommendationSurfaceProps & {
@@ -269,7 +270,7 @@ export function OgvDemandPage({
                   <li className={step.sequence_violation ? "violated" : step.status} key={step.id}>
                     <span>{step.required_sequence_no}</span>
                     <strong>{stageLabel(step)}</strong>
-                    <em>{step.chain_status || step.status}</em>
+                    <em>{cargoLayerChainStatusLabel(step)}</em>
                   </li>
                 ))}
               </ol>

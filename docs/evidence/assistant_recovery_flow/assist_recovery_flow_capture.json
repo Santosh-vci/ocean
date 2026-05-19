@@ -1,0 +1,2847 @@
+[
+  {
+    "step": "click",
+    "title": "Set Assist to Super mode",
+    "target": "Super",
+    "matchedText": "SUPER",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "01",
+    "title": "Recovery practice dashboard",
+    "route": "/dashboard/situation",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/01_recovery_practice_dashboard.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_EXCEPTION_CENTER",
+      "GENERATE_RECOVERY_OPTIONS",
+      "CREATE_SCENARIO",
+      "REVIEW_COAL_SEQUENCE"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "current",
+        "action_id": "GENERATE_RECOVERY_OPTIONS",
+        "route": "/exceptions/center",
+        "reason": "A governed disruption is ready for Phase 5 recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "TIDE_WINDOW_MISSED",
+      "BRIDGE_WINDOW_MISSED",
+      "Generate recovery options",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/dashboard/situation",
+    "note": "The practice case starts with multiple OGV demands, a generated blocked plan, and open tide/bridge conflicts.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 0,
+      "recommendations": 0,
+      "scenarios": 0,
+      "approvalsPending": 0,
+      "recoverySnapshots": 0,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator opens the demand board to inspect multiple OGVs",
+    "target": "OGV Demand & Laycan",
+    "matchedText": "OGV Demand & Laycan",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "02",
+    "title": "Multiple OGV demand board",
+    "route": "/schedule/ogv-demand",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/02_multiple_ogv_demand_board.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "REVIEW_COAL_SEQUENCE"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "current",
+        "action_id": "GENERATE_RECOVERY_OPTIONS",
+        "route": "/exceptions/center",
+        "reason": "A governed disruption is ready for Phase 5 recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/schedule/ogv-demand",
+    "note": "The operator confirms the training case has three OGV demands and six cargo layers before recovery work.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 0,
+      "recommendations": 0,
+      "scenarios": 0,
+      "approvalsPending": 0,
+      "recoverySnapshots": 0,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator opens the constraint board to inspect missed gate evidence",
+    "target": "Tide & Bridge Window",
+    "matchedText": "Tide & Bridge Window",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "03",
+    "title": "Tide and bridge missed events",
+    "route": "/constraints/tide-bridge",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/03_tide_and_bridge_missed_events.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_EXCEPTION_CENTER"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "current",
+        "action_id": "GENERATE_RECOVERY_OPTIONS",
+        "route": "/exceptions/center",
+        "reason": "A governed disruption is ready for Phase 5 recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/constraints/tide-bridge",
+    "note": "The operator sees missed tide/bridge checks before entering the recovery loop.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 0,
+      "recommendations": 0,
+      "scenarios": 0,
+      "approvalsPending": 0,
+      "recoverySnapshots": 0,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant global CTA navigates operator to exception triage",
+    "target": "Open Exception Center",
+    "matchedText": "CRITICAL Open Exception Center",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "04",
+    "title": "Exception Center triage",
+    "route": "/exceptions/center",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/04_exception_center_triage.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_EXCEPTION_CENTER",
+      "GENERATE_RECOVERY_OPTIONS",
+      "CREATE_SCENARIO"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "current",
+        "action_id": "GENERATE_RECOVERY_OPTIONS",
+        "route": "/exceptions/center",
+        "reason": "A governed disruption is ready for Phase 5 recovery options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "pending",
+        "reason": "Generate recovery options before recommendation review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "pending",
+        "reason": "Review a recovery recommendation before scenario materialization."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "TIDE_WINDOW_MISSED",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Run simulation",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/exceptions/center",
+    "note": "The first blocking conflict is selected and can be used as recovery input.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 0,
+      "recommendations": 0,
+      "scenarios": 0,
+      "approvalsPending": 0,
+      "recoverySnapshots": 0,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA builds the recovery input snapshot and optimizer run",
+    "target": "Generate recovery options",
+    "matchedText": "GENERATE RECOVERY OPTIONS",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "05",
+    "title": "Recommendation Console ranked options",
+    "route": "/recovery/recommendations",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/05_recommendation_console_ranked_options.png",
+    "expectedNext": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_RECOMMENDATION_CONSOLE",
+      "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      "DISMISS_RECOVERY_RECOMMENDATION"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "current",
+        "action_id": "OPEN_RECOMMENDATION_CONSOLE",
+        "route": "/recovery/recommendations",
+        "reason": "Ranked recovery recommendations are ready for operator review."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "current",
+        "action_id": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+        "route": "/recovery/recommendations",
+        "reason": "The top recovery recommendation is ready for scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "pending",
+        "reason": "Proof evidence appears after recommendation scenario handoff."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Create scenario from recommendation",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/recovery/recommendations",
+    "note": "The recovery loop ranks candidate actions and explains score, risk, delay, missed windows, and hard constraints.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 0,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Recommendation CTA materializes the selected recommendation as a scenario",
+    "target": "Create scenario from recommendation",
+    "matchedText": "CREATE SCENARIO FROM RECOMMENDATION",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "06",
+    "title": "Simulation workspace handoff",
+    "route": "/simulation/workspace",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/06_simulation_workspace_handoff.png",
+    "expectedNext": "PROMOTE_SCENARIO",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "PROMOTE_SCENARIO"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Submit approval",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/simulation/workspace",
+    "note": "The materialized recommendation opens in Simulation Workspace with a completed scenario run.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA reruns the scenario so the operator can practice simulation execution",
+    "target": "Run simulation",
+    "matchedText": "RUN SIMULATION",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "07",
+    "title": "Simulation rerun completed",
+    "route": "/simulation/workspace",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/07_simulation_rerun_completed.png",
+    "expectedNext": "PROMOTE_SCENARIO",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "PROMOTE_SCENARIO"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 121 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "4 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Submit approval",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/simulation/workspace",
+    "note": "The operator can compare baseline versus projected timings, resource changes, and risk flags.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanStatus": "generated",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 6,
+      "blockingConflicts": 4,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA promotes the scenario output to a proposed plan candidate",
+    "target": "Promote to proposed",
+    "matchedText": "PROMOTE TO PROPOSED",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "08",
+    "title": "Scenario promoted with remaining blockers",
+    "route": "/simulation/workspace",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/08_scenario_promoted_with_remaining_blockers.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "6 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Scenario promoted",
+      "Published Plan & Schedule",
+      "Submit approval",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/simulation/workspace",
+    "note": "The candidate is promoted for governance, but remaining critical constraints keep publication blocked.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "proposed",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 12,
+      "blockingConflicts": 6,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Assistant routes the operator back to unresolved blockers",
+    "target": "Open Exception Center",
+    "matchedText": "CRITICAL Open Exception Center",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "09",
+    "title": "Recovery loop returns to unresolved constraints",
+    "route": "/exceptions/center",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/09_recovery_loop_returns_to_unresolved_constraints.png",
+    "expectedNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_EXCEPTION_CENTER",
+      "CREATE_SCENARIO"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "6 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "TIDE_WINDOW_MISSED",
+      "BRIDGE_WINDOW_MISSED",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Run simulation",
+      "Scenario promoted",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/exceptions/center",
+    "note": "The operator learns that a promoted scenario is not automatically publishable when hard constraints remain.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 2,
+      "bridgeWindows": 2,
+      "constraintChecks": 4,
+      "missedWindows": 2,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "proposed",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 12,
+      "blockingConflicts": 6,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator returns to the constraint board to implement corrected recovery windows",
+    "target": "Tide & Bridge Window",
+    "matchedText": "Tide & Bridge Window",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "click",
+    "title": "Page CTA applies corrected tide and bridge operating windows",
+    "target": "Enter operating windows",
+    "matchedText": "ENTER OPERATING WINDOWS",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "10",
+    "title": "Recovery windows implemented",
+    "route": "/constraints/tide-bridge",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/10_recovery_windows_implemented.png",
+    "expectedNext": "REGENERATE_PLAN",
+    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
+    "actualGlobalLabel": "Open Exception Center",
+    "pageActions": [
+      "OPEN_EXCEPTION_CENTER"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "current",
+        "action_id": "OPEN_EXCEPTION_CENTER",
+        "route": "/exceptions/center",
+        "reason": "6 unresolved blocking conflict(s) remain."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "Open Exception Center",
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/constraints/tide-bridge",
+    "note": "The corrected operating windows replace the missed gate checks and clear the missed-window count.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "proposed",
+      "activePlanValidation": "blocked",
+      "trips": 6,
+      "conflicts": 12,
+      "blockingConflicts": 6,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator moves to the assignment board to regenerate the recovery candidate",
+    "target": "Tug/Barge Assignment",
+    "matchedText": "Tug/Barge Assignment",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "click",
+    "title": "Page CTA regenerates the proposed recovery plan against corrected constraints",
+    "target": "Regenerate plan",
+    "matchedText": "REGENERATE PLAN",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "11",
+    "title": "Recovery plan regenerated feasible",
+    "route": "/operations/tug-barge-assignment",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/11_recovery_plan_regenerated_feasible.png",
+    "expectedNext": "SUBMIT_APPROVAL",
+    "actualGlobalNext": "SUBMIT_APPROVAL",
+    "actualGlobalLabel": "Submit approval",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "current",
+        "action_id": "SUBMIT_APPROVAL",
+        "route": "/schedule/published-plan",
+        "reason": "The active plan is ready for approval submission."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Submit approval",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/operations/tug-barge-assignment",
+    "note": "The recovery candidate has been regenerated and now has no blocking conflicts.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "validated",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator reviews the feasible recovery candidate before approval",
+    "target": "Published Plan & Schedule",
+    "matchedText": "Published Plan & Schedule",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "12",
+    "title": "Feasible recovery candidate ready for approval",
+    "route": "/schedule/published-plan",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/12_feasible_recovery_candidate_ready_for_approval.png",
+    "expectedNext": "SUBMIT_APPROVAL",
+    "actualGlobalNext": "SUBMIT_APPROVAL",
+    "actualGlobalLabel": "Submit approval",
+    "pageActions": [
+      "SUBMIT_APPROVAL"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "current",
+        "action_id": "SUBMIT_APPROVAL",
+        "route": "/schedule/published-plan",
+        "reason": "The active plan is ready for approval submission."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "pending",
+        "reason": "Submit approval before completing authority decisions."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Submit approval",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/schedule/published-plan",
+    "note": "The active recovery plan is feasible, so Assist can move the operator into approval governance.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "validated",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Page CTA submits the feasible recovery plan for dual-party approval",
+    "target": "Submit approval",
+    "matchedText": "SUBMIT APPROVAL",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "13",
+    "title": "Approval request submitted",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/13_approval_request_submitted.png",
+    "expectedNext": "APPROVE_PLAN",
+    "actualGlobalNext": "APPROVE_PLAN",
+    "actualGlobalLabel": "Approve plan",
+    "pageActions": [
+      "APPROVE_PLAN",
+      "REJECT_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "current",
+        "action_id": "APPROVE_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "An approval decision is waiting for your authority."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Plan Approvals & Publishing",
+      "Approve",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "A governed approval request is open and awaiting the first authority decision.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "proposed",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 1,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "First authority approves the recovery plan",
+    "target": "Approve",
+    "matchedText": "Approve",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "14",
+    "title": "First approval recorded",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/14_first_approval_recorded.png",
+    "expectedNext": "APPROVE_PLAN",
+    "actualGlobalNext": "APPROVE_PLAN",
+    "actualGlobalLabel": "Approve plan",
+    "pageActions": [
+      "APPROVE_PLAN",
+      "REJECT_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "current",
+        "action_id": "APPROVE_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "An approval decision is waiting for your authority."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "pending",
+        "reason": "Complete approval governance before publishing."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Plan Approvals & Publishing",
+      "Approve",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "One approval is recorded; the second authority must still approve before publishing.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "proposed",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 1,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Second authority approves the recovery plan",
+    "target": "Approve",
+    "matchedText": "Approve",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "15",
+    "title": "Dual approval complete",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/15_dual_approval_complete.png",
+    "expectedNext": "PUBLISH_PLAN",
+    "actualGlobalNext": "PUBLISH_PLAN",
+    "actualGlobalLabel": "Publish plan",
+    "pageActions": [
+      "PUBLISH_PLAN"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "current",
+        "action_id": "PUBLISH_PLAN",
+        "route": "/approvals/publishing",
+        "reason": "Approvals are complete and the plan is ready to publish."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "pending",
+        "reason": "Publish a plan before generating final handoff exports."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Plan Approvals & Publishing",
+      "Approve",
+      "Publish plan",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "Both required authorities have approved the feasible recovery candidate.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "approved",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 0
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Header CTA publishes the approved recovery plan",
+    "target": "Publish plan",
+    "matchedText": "PUBLISH PLAN",
+    "matchCount": 2,
+    "result": "clicked"
+  },
+  {
+    "step": "16",
+    "title": "Recovery plan published",
+    "route": "/approvals/publishing",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/16_recovery_plan_published.png",
+    "expectedNext": "GENERATE_EXPORT",
+    "actualGlobalNext": "GENERATE_EXPORT",
+    "actualGlobalLabel": "Generate governed export",
+    "pageActions": [],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "current",
+        "action_id": "GENERATE_EXPORT",
+        "route": "/admin/export-handoff",
+        "reason": "Generate the governed export artifact for handoff."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Plan Approvals & Publishing",
+      "Approve",
+      "LIVE-",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/approvals/publishing",
+    "note": "The approved recovery plan is now the live published plan.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "published",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 1
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Operator opens export handoff for the published recovery plan",
+    "target": "Exports & Handoff",
+    "matchedText": "Exports & Handoff",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "navigation",
+    "title": "Fallback route to export handoff",
+    "target": "/admin/export-handoff",
+    "result": "navigated",
+    "note": "The sidebar item was off-screen in headless capture, so the route was opened directly after the click attempt."
+  },
+  {
+    "step": "17",
+    "title": "Published recovery plan ready for handoff",
+    "route": "/admin/export-handoff",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/17_published_recovery_plan_ready_for_handoff.png",
+    "expectedNext": "GENERATE_EXPORT",
+    "actualGlobalNext": "GENERATE_EXPORT",
+    "actualGlobalLabel": "Generate governed export",
+    "pageActions": [
+      "GENERATE_EXPORT",
+      "REVIEW_AUDIT"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "current",
+        "action_id": "GENERATE_EXPORT",
+        "route": "/admin/export-handoff",
+        "reason": "Generate the governed export artifact for handoff."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Exports & Operational Handoff",
+      "LIVE-",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/admin/export-handoff",
+    "note": "The published plan is ready for a governed handoff artifact.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "published",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 1
+    },
+    "exportCounts": {
+      "total": 0,
+      "plan": 0,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 0,
+      "latestPlanExport": null
+    }
+  },
+  {
+    "step": "click",
+    "title": "Visible export command generates the operator handoff schedule",
+    "target": "Printable schedule",
+    "matchedText": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
+    "matchCount": 1,
+    "result": "clicked"
+  },
+  {
+    "step": "18",
+    "title": "Successful recovery handoff export generated",
+    "route": "/admin/export-handoff",
+    "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/18_successful_recovery_handoff_export_generated.png",
+    "expectedNext": "REVIEW_RECOMMENDATION_PROOF_PACK",
+    "actualGlobalNext": "REVIEW_RECOMMENDATION_PROOF_PACK",
+    "actualGlobalLabel": "Review recommendation proof pack",
+    "pageActions": [
+      "REVIEW_AUDIT"
+    ],
+    "blockedActions": [],
+    "checklist": [
+      {
+        "key": "demand_imported",
+        "label": "Demand imported",
+        "status": "complete",
+        "reason": "3 active demand row(s) are available."
+      },
+      {
+        "key": "cargo_sequence_reviewed",
+        "label": "Cargo sequence reviewed",
+        "status": "current",
+        "action_id": "REVIEW_COAL_SEQUENCE",
+        "route": "/schedule/coal-grade-sequence",
+        "reason": "2 cargo layer issue(s) need review."
+      },
+      {
+        "key": "operating_windows_entered",
+        "label": "Operating windows entered",
+        "status": "complete",
+        "reason": "Active tide and bridge windows are available."
+      },
+      {
+        "key": "plan_generated",
+        "label": "Plan generated",
+        "status": "complete",
+        "reason": "Active plan version 122 has generated trips."
+      },
+      {
+        "key": "exceptions_resolved",
+        "label": "Exceptions resolved",
+        "status": "complete",
+        "reason": "No unresolved blocking conflicts are open."
+      },
+      {
+        "key": "recovery_options_generated",
+        "label": "Recovery options generated",
+        "status": "complete",
+        "reason": "Optimizer run 27 produced candidate options."
+      },
+      {
+        "key": "recovery_recommendation_reviewed",
+        "label": "Recovery recommendation reviewed",
+        "status": "complete",
+        "reason": "A recommendation has already moved into governed scenario handoff."
+      },
+      {
+        "key": "recommendation_materialized",
+        "label": "Recommendation materialized as scenario",
+        "status": "complete",
+        "reason": "The selected recommendation has a governed scenario handoff."
+      },
+      {
+        "key": "approval_submitted",
+        "label": "Approval submitted",
+        "status": "complete",
+        "reason": "The active plan has entered approval governance."
+      },
+      {
+        "key": "approval_completed",
+        "label": "Approval completed",
+        "status": "complete",
+        "reason": "Required approval authorities are complete."
+      },
+      {
+        "key": "plan_published",
+        "label": "Plan published",
+        "status": "complete",
+        "reason": "An active published snapshot exists."
+      },
+      {
+        "key": "export_generated",
+        "label": "Export generated",
+        "status": "complete",
+        "reason": "The published plan has a governed export artifact."
+      },
+      {
+        "key": "recommendation_proof_pack_reviewed",
+        "label": "Recommendation proof pack reviewed",
+        "status": "current",
+        "action_id": "REVIEW_RECOMMENDATION_PROOF_PACK",
+        "route": "/recovery/recommendations",
+        "reason": "Phase 5 recommendation proof evidence is available for review."
+      }
+    ],
+    "visibleHighlights": [
+      "OGV Demand",
+      "Tide & Bridge Window",
+      "Recommendation Console",
+      "Simulation Workspace",
+      "Published Plan & Schedule",
+      "Exports & Operational Handoff",
+      "LIVE-",
+      "Published"
+    ],
+    "url": "http://localhost:8080/#/admin/export-handoff",
+    "note": "The flow ends with a published recovery plan and a generated handoff artifact.",
+    "dashboardCounts": {
+      "activePlanVersion": null,
+      "conflictSummary": null,
+      "approvalQueue": null,
+      "publishedSnapshot": null
+    },
+    "planningCounts": {
+      "voyages": 3,
+      "cargoLayers": 6,
+      "tideWindows": 4,
+      "bridgeWindows": 4,
+      "constraintChecks": 10,
+      "missedWindows": 0,
+      "highRiskVoyages": 3
+    },
+    "schedulingCounts": {
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanStatus": "published",
+      "activePlanValidation": "feasible",
+      "trips": 6,
+      "conflicts": 0,
+      "blockingConflicts": 0,
+      "optimizerRuns": 1,
+      "recommendations": 5,
+      "scenarios": 1,
+      "approvalsPending": 0,
+      "recoverySnapshots": 1,
+      "publishedSnapshots": 1
+    },
+    "exportCounts": {
+      "total": 1,
+      "plan": 1,
+      "conflict": 0,
+      "scenarioDiff": 0,
+      "visibleExports": 1,
+      "latestPlanExport": "coalflow-plan-plan-recovery-practice-20260519-v2-all-network-20260519150819.txt"
+    }
+  }
+]

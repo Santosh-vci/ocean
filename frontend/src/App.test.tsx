@@ -4,7 +4,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import App from "./App";
 import { visibleNavItems } from "./lib/navigation";
 import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
-import { CtsOperationsPage, JettyLoadingPage } from "./pages/LogisticsPages";
+import { CtsOperationsPage, JettyLoadingPage, PublishedPlanPage } from "./pages/LogisticsPages";
 import { LiveResourceMapPage } from "./pages/MapPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
@@ -203,6 +203,106 @@ test("coal sequence page renders with assistant data absent and present", () => 
   expect(screen.getByText("Review coal grade sequence")).toBeInTheDocument();
 });
 
+test("coal sequence page does not show recovery state for clear layers", () => {
+  const now = "2026-05-19T00:00:00.000Z";
+  const baseMaster = {
+    id: 1,
+    code: "BASE",
+    name: "Base",
+    organization: null,
+    is_active: true,
+    effective_from: null,
+    effective_to: null,
+    created_at: now,
+    updated_at: now,
+  };
+  const overview = {
+    voyages: [],
+    cargoRequirements: [],
+    cargoLayerSteps: [{
+      id: 10,
+      voyage: 20,
+      voyage_ref: "VOY-CLEAR",
+      vessel_name: "MV Clear Layer",
+      cargo_requirement: null,
+      hatch_no: 1,
+      layer_no: 1,
+      required_sequence_no: 1,
+      coal_grade: {
+        ...baseMaster,
+        code: "SUNGKAI",
+        brand_family: "Thermal",
+        typical_cv_kcal: 4200,
+        sulfur_pct: null,
+        ash_pct: null,
+        sequence_priority: 1,
+      },
+      required_mt: 31000,
+      remaining_mt: 31000,
+      planned_barge: {
+        ...baseMaster,
+        code: "BRG-NUS-17",
+        capacity_mt: 31000,
+        barge_class: "standard",
+        max_draft_m: null,
+        status: "available",
+      },
+      planned_jetty: {
+        ...baseMaster,
+        code: "JTY-LATI",
+        location_name: "Lati",
+        loading_rate_tph: 2000,
+        max_barge_draft_m: null,
+        status: "available",
+      },
+      planned_cts: {
+        ...baseMaster,
+        code: "CTS-JAVA",
+        cts_type: "floating_crane",
+        daily_capacity_mt: 25000,
+        operating_area: "Delta",
+        is_available: true,
+      },
+      status: "planned",
+      blocking_reason: "",
+      chain_status: "WAITING RECOVERY",
+      sequence_violation: false,
+      planned_start: null,
+      planned_end: null,
+      created_at: now,
+      updated_at: now,
+    }],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 31000,
+      remainingDemandMt: 31000,
+    },
+  } as PlanningOverview;
+
+  render(
+    <CoalGradeSequencePage
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExport={vi.fn()}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getByRole("columnheader", { name: "Severity" })).toBeInTheDocument();
+  expect(screen.queryByText("WAITING RECOVERY")).not.toBeInTheDocument();
+  expect(screen.getAllByText("PLANNED").length).toBeGreaterThan(0);
+  expect(screen.getByText("No recovery needed for this layer.")).toBeInTheDocument();
+});
+
 test("live map exposes seeded replay controls", () => {
   const onStartReplay = vi.fn();
   render(
@@ -292,6 +392,20 @@ function stageSevenOverview(): SchedulingOverview {
     validation: { tripCount: 1, assignmentCount: 1, eventCount: 1 },
   } as unknown as SchedulingOverview;
 }
+
+test("published plan gantt uses planned trip dates for its axis", () => {
+  render(
+    <PublishedPlanPage
+      canCreateDraft={false}
+      isActionRunning={false}
+      overview={stageSevenOverview()}
+    />,
+  );
+
+  expect(screen.getByText("Operating schedule gantt")).toBeInTheDocument();
+  expect(screen.queryByText("24 OCT 04:00")).not.toBeInTheDocument();
+  expect(screen.getAllByText(/MAY/).length).toBeGreaterThan(0);
+});
 
 function phaseFiveOverview(): SchedulingOverview {
   const overview = stageSevenOverview();

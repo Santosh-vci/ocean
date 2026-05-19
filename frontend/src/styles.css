@@ -3077,17 +3077,14 @@ button.row-action-hint:hover {
 .gantt-canvas {
   position: relative;
   min-width: 58rem;
-  background:
-    linear-gradient(90deg, rgba(137, 206, 255, 0.08) 1px, transparent 1px) 0 0 / 10% 100%,
-    var(--surface-graphite);
+  background: var(--surface-graphite);
 }
 
 .gantt-time-header {
   position: sticky;
   top: 0;
-  z-index: 5;
-  display: grid;
-  grid-template-columns: repeat(6, 10rem);
+  z-index: 7;
+  display: block;
   min-height: 2rem;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--surface-charcoal);
@@ -3097,24 +3094,55 @@ button.row-action-hint:hover {
 }
 
 .gantt-time-header span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: grid;
   place-items: center;
-  border-right: 1px solid rgba(51, 65, 85, 0.7);
+  min-width: 5.4rem;
+  border-left: 1px solid rgba(51, 65, 85, 0.7);
+  padding-inline: 0.35rem;
+  transform: translateX(-50%);
+  text-align: center;
+  white-space: nowrap;
 }
 
-.now-marker {
+.gantt-time-header span:first-child {
+  justify-items: start;
+  transform: none;
+}
+
+.gantt-time-header span:last-child {
+  justify-items: end;
+  transform: translateX(-100%);
+}
+
+.gantt-gridlines {
   position: absolute;
   top: 2rem;
   bottom: 0;
-  left: 32%;
-  z-index: 4;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.gantt-gridlines i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 2px;
-  background: var(--status-critical);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  background: rgba(137, 206, 255, 0.08);
+}
+
+.gantt-gridlines i:first-child,
+.gantt-gridlines i:last-child {
+  background: rgba(137, 206, 255, 0.18);
 }
 
 .gantt-resource-row {
   position: relative;
+  z-index: 2;
   min-height: 2rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.55);
 }
@@ -3132,6 +3160,8 @@ button.row-action-hint:hover {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 0.56rem;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gantt-resource-row em {

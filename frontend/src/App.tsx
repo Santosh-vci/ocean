@@ -353,6 +353,7 @@ function App() {
       const message = await action();
       setActionMessage(message);
       await refreshWorkspaceData();
+      assistant.refresh();
     } catch (error) {
       const detail = error instanceof Error ? error.message : "unknown error";
       setActionError(`${label} failed (${detail}). Check permissions, active plan state, and backend logs.`);

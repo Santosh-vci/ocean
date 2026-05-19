@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { fetchNextActions } from "../lib/api";
 import type { NextActionResponse } from "../types/assistant";
@@ -15,9 +15,13 @@ export function useNextActions(route: string, options: UseNextActionsOptions = {
   const [data, setData] = useState<NextActionResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshIndex, setRefreshIndex] = useState(0);
   const enabled = options.enabled ?? true;
   const objectType = options.objectType;
   const objectId = options.objectId;
+  const refresh = useCallback(() => {
+    setRefreshIndex((value) => value + 1);
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
@@ -56,7 +60,7 @@ export function useNextActions(route: string, options: UseNextActionsOptions = {
     return () => {
       cancelled = true;
     };
-  }, [enabled, mode, objectId, objectType, route]);
+  }, [enabled, mode, objectId, objectType, refreshIndex, route]);
 
-  return { mode, setMode, data, error, loading };
+  return { mode, setMode, data, error, loading, refresh };
 }

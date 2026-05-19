@@ -32,7 +32,17 @@ def rule_import_demand(ctx: AssistantContext) -> list[ActionRecommendation]:
 
 
 def rule_sequence_review_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
-    if ctx.demand_count > 0 and ctx.cargo_layer_issue_count > 0:
+    if (
+        ctx.demand_count > 0
+        and ctx.cargo_layer_issue_count > 0
+        and ctx.validation_status != PlanVersion.ValidationStatus.FEASIBLE
+        and ctx.active_plan_status
+        not in {
+            PlanVersion.Status.APPROVED,
+            PlanVersion.Status.PUBLISHED,
+            PlanVersion.Status.SUPERSEDED,
+        }
+    ):
         return [
             build_recommendation(
                 "REVIEW_COAL_SEQUENCE",
@@ -95,7 +105,7 @@ def rule_published_needs_draft(ctx: AssistantContext) -> list[ActionRecommendati
     if ctx.source_inputs_changed and ctx.active_plan_status in {
         PlanVersion.Status.PUBLISHED,
         PlanVersion.Status.SUPERSEDED,
-    }:
+    } and ctx.latest_export_for_published_plan_exists:
         return [
             build_recommendation(
                 "CREATE_DRAFT",
@@ -383,6 +393,7 @@ def rule_recovery_optimizer_run_succeeded(ctx: AssistantContext) -> list[ActionR
     if (
         ctx.latest_optimizer_run_status == OptimizerRun.Status.SUCCEEDED
         and ctx.latest_optimizer_run_candidate_count > 0
+        and ctx.materialized_recovery_recommendation_count == 0
     ):
         return [
             build_recommendation(

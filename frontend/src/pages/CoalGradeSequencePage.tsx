@@ -7,6 +7,12 @@ import {
   RecommendationCard,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
+import {
+  cargoLayerChainStatusLabel,
+  cargoLayerNeedsRecovery,
+  cargoLayerRecoveryMessage,
+  cargoLayerSeverity,
+} from "../lib/cargoLayer";
 import type { CargoLayerStepRecord, PlanningOverview } from "../types";
 
 type CoalGradeSequencePageProps = AssistantRecommendationSurfaceProps & {
@@ -25,12 +31,6 @@ function mt(value: number) {
 
 function time(value: string | null) {
   return <GridDate value={value} />;
-}
-
-function severity(step: CargoLayerStepRecord) {
-  if (step.sequence_violation) return "critical";
-  if (step.status === "blocked" || step.status === "qc_hold") return "pending";
-  return "ok";
 }
 
 export function CoalGradeSequencePage({
@@ -150,7 +150,7 @@ export function CoalGradeSequencePage({
             <table className="planning-table sequence-table">
               <thead>
                 <tr>
-                  <th>Sev</th>
+                  <th>Severity</th>
                   <th>OGV</th>
                   <th>Hatch/L</th>
                   <th>Grade</th>
@@ -170,7 +170,11 @@ export function CoalGradeSequencePage({
                     key={step.id}
                     onClick={() => setSelectedStepId(step.id)}
                   >
-                    <td><span className={`status-chip ${severity(step)}`}>{severity(step)}</span></td>
+                    <td>
+                      <span className={`status-chip ${cargoLayerSeverity(step)}`}>
+                        {cargoLayerSeverity(step)}
+                      </span>
+                    </td>
                     <td><strong>{step.vessel_name}</strong></td>
                     <td>H{step.hatch_no}/L{step.layer_no}</td>
                     <td>{step.coal_grade.code}</td>
@@ -179,7 +183,7 @@ export function CoalGradeSequencePage({
                     <td>{step.blocking_reason || "Clear"}</td>
                     <td>{step.planned_jetty?.code ?? "-"}</td>
                     <td>{step.planned_cts?.code ?? "-"}</td>
-                    <td>{step.chain_status || step.status.toUpperCase()}</td>
+                    <td>{cargoLayerChainStatusLabel(step)}</td>
                     <td>
                       <span className="grid-date-pair">
                         {time(step.planned_start)}
@@ -198,14 +202,20 @@ export function CoalGradeSequencePage({
           <div className="grid-header">
             <div>
               <SvgIcon name="rule" />
-              <strong>Sequence violation</strong>
+              <strong>
+                {selectedStep && cargoLayerNeedsRecovery(selectedStep)
+                  ? "Sequence review"
+                  : "Layer clear"}
+              </strong>
             </div>
-            <span>Recommended recovery and approvals</span>
+            <span>Layer status and operator guidance</span>
           </div>
           {selectedStep ? (
             <div className="inspector-body">
-              <span className={`status-chip ${severity(selectedStep)}`}>
-                {selectedStep.sequence_violation ? "Violation" : selectedStep.status}
+              <span className={`status-chip ${cargoLayerSeverity(selectedStep)}`}>
+                {selectedStep.sequence_violation
+                  ? "Violation"
+                  : cargoLayerChainStatusLabel(selectedStep)}
               </span>
               <h2>{selectedStep.vessel_name} · H{selectedStep.hatch_no}/L{selectedStep.layer_no}</h2>
               <p>{selectedStep.blocking_reason || "No blocking reason recorded for this layer."}</p>
@@ -228,11 +238,10 @@ export function CoalGradeSequencePage({
                 </div>
               </dl>
               <section className="recovery-box">
-                <strong>Recommended recovery</strong>
-                <p>
-                  Hold publication until the grade sequence is confirmed against hatch layering
-                  and bridge/tide availability.
-                </p>
+                <strong>
+                  {cargoLayerNeedsRecovery(selectedStep) ? "Recommended recovery" : "Layer status"}
+                </strong>
+                <p>{cargoLayerRecoveryMessage(selectedStep)}</p>
               </section>
             </div>
           ) : null}
@@ -249,7 +258,7 @@ export function CoalGradeSequencePage({
         </div>
         <ol className="sequence-strip">
           {selectedVoyageSteps.map((step) => (
-            <li className={severity(step)} key={step.id}>
+            <li className={cargoLayerSeverity(step)} key={step.id}>
               <span>{step.required_sequence_no}</span>
               <strong>H{step.hatch_no}/L{step.layer_no}</strong>
               <em>{step.coal_grade.code}</em>

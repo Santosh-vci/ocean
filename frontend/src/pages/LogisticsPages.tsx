@@ -9,6 +9,7 @@ import {
   type ActionRecommendation,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
+import { formatGridDateLabel } from "../lib/gridDate";
 import {
   confirmedEventForCandidate,
   CTS_EVENT_KINDS,
@@ -63,6 +64,7 @@ const EMPTY_CONFLICTS: ConflictRecord[] = [];
 const EMPTY_CANDIDATES: OperationalEventCandidateRecord[] = [];
 const EMPTY_CONFIRMED_EVENTS: ConfirmedOperationalEventRecord[] = [];
 const EMPTY_DEVICES: DeviceEndpointRecord[] = [];
+const GANTT_TICK_COUNT = 6;
 
 function mt(value: number) {
   return `${Math.round(value).toLocaleString()} MT`;
@@ -70,6 +72,10 @@ function mt(value: number) {
 
 function dt(value: string | null | undefined) {
   return <GridDate value={value} />;
+}
+
+function dtText(value: string | null | undefined) {
+  return formatGridDateLabel(value);
 }
 
 function datetimeLocalValue(value: string | null | undefined, offsetMinutes = 0) {
@@ -107,6 +113,54 @@ function shortStatus(status: string) {
 function progressFor(trip: TripRecord) {
   if (!trip.planned_quantity_mt) return 0;
   return Math.min(100, Math.round((trip.loaded_quantity_mt / trip.planned_quantity_mt) * 100));
+}
+
+function validTime(value: string) {
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function ganttRange(trips: TripRecord[]) {
+  const times = trips.flatMap((trip) => [
+    validTime(trip.planned_start),
+    validTime(trip.planned_end),
+  ]).filter((value): value is number => value !== null);
+  const start = times.length ? Math.min(...times) : Date.now();
+  const end = Math.max(times.length ? Math.max(...times) : start + 60 * 60 * 1000, start + 60 * 60 * 1000);
+  const span = end - start;
+  const ticks = Array.from({ length: GANTT_TICK_COUNT }, (_, index) => (
+    start + (span * index) / (GANTT_TICK_COUNT - 1)
+  ));
+
+  return { start, end, span, ticks };
+}
+
+function ganttTickLabel(timestamp: number, index: number, ticks: number[]) {
+  const date = new Date(timestamp);
+  const previous = index > 0 ? new Date(ticks[index - 1]) : null;
+  const showDate = !previous
+    || date.getDate() !== previous.getDate()
+    || date.getMonth() !== previous.getMonth()
+    || date.getFullYear() !== previous.getFullYear();
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-US", { month: "short" }).toUpperCase();
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+
+  return showDate ? `${day} ${month} ${hour}:${minute}` : `${hour}:${minute}`;
+}
+
+function ganttPosition(timestamp: number, range: ReturnType<typeof ganttRange>) {
+  return Math.max(0, Math.min(100, ((timestamp - range.start) / range.span) * 100));
+}
+
+function ganttBlockStyle(trip: TripRecord, range: ReturnType<typeof ganttRange>) {
+  const start = validTime(trip.planned_start) ?? range.start;
+  const end = validTime(trip.planned_end) ?? start;
+  const left = ganttPosition(start, range);
+  const width = Math.max(2, Math.min(100 - left, ((Math.max(end, start) - start) / range.span) * 100));
+
+  return { left: `${left}%`, width: `${width}%` };
 }
 
 function conflictForTrip(conflicts: ConflictRecord[], tripId: number | null | undefined) {
@@ -858,6 +912,7 @@ export function PublishedPlanPage({
   const scenarioDiff = activeVersion?.scenario_diff_summary;
   const selectedTrip = trips.find((trip) => conflictForTrip(conflicts, trip.id)?.is_blocking) ?? trips[0];
   const selectedConflict = conflictForTrip(conflicts, selectedTrip?.id);
+  const range = useMemo(() => ganttRange(trips), [trips]);
   const assistantActions = [
     ...(assistantRowActions ?? []),
     ...(assistantPageActions ?? []),
@@ -923,17 +978,28 @@ export function PublishedPlanPage({
             </aside>
             <div className="gantt-canvas">
               <div className="gantt-time-header">
-                <span>24 OCT 04:00</span><span>08:00</span><span>12:00</span>
-                <span>16:00</span><span>20:00</span><span>25 OCT 00:00</span>
+                {range.ticks.map((tick, index) => (
+                  <span
+                    key={tick}
+                    style={{ left: `${ganttPosition(tick, range)}%` }}
+                  >
+                    {ganttTickLabel(tick, index, range.ticks)}
+                  </span>
+                ))}
               </div>
-              <div className="now-marker" />
-              {trips.map((trip, index) => {
+              <div aria-hidden="true" className="gantt-gridlines">
+                {range.ticks.map((tick) => (
+                  <i key={tick} style={{ left: `${ganttPosition(tick, range)}%` }} />
+                ))}
+              </div>
+              {trips.map((trip) => {
                 const conflict = conflictForTrip(conflicts, trip.id);
                 return (
                   <div className="gantt-resource-row" key={trip.id}>
                     <span
                       className={`gantt-block ${statusTone(trip.status, conflict?.is_blocking)}`}
-                      style={{ left: `${10 + (index % 5) * 12}%`, width: `${18 + progressFor(trip) / 4}%` }}
+                      style={ganttBlockStyle(trip, range)}
+                      title={`${dtText(trip.planned_start)} - ${dtText(trip.planned_end)}`}
                     >
                       {trip.trip_id}: {shortStatus(trip.status)}
                     </span>
@@ -962,6 +1028,8 @@ export function PublishedPlanPage({
                 <div><dt>Tug</dt><dd>{selectedTrip.assignment?.tug?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Barge</dt><dd>{selectedTrip.assignment?.barge?.code ?? "Unassigned"}</dd></div>
                 <div><dt>CTS</dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
+                <div><dt>Planned start</dt><dd>{dt(selectedTrip.planned_start)}</dd></div>
+                <div><dt>Planned end</dt><dd>{dt(selectedTrip.planned_end)}</dd></div>
               </dl>
               {lineage ? (
                 <section className="recovery-box">

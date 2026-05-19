@@ -1,0 +1,209 @@
+{
+  "generatedAt": "2026-05-19T04:43:50.823Z",
+  "clickEvidence": [
+    {
+      "step": "Dashboard topbar: Open Exception Center",
+      "label": "CRITICAL / Open Exception Center",
+      "start": "#/dashboard/situation",
+      "expected": "#/exceptions/center",
+      "after": "#/exceptions/center",
+      "result": "navigated"
+    },
+    {
+      "step": "Dashboard inbox: Open Recommendation Console",
+      "label": "WARNING / Open Recommendation Console / recovery.optimizer_run_succeeded",
+      "start": "#/dashboard/situation",
+      "expected": "#/recovery/recommendations",
+      "after": "#/recovery/recommendations",
+      "result": "navigated"
+    },
+    {
+      "step": "Dashboard inbox: Promote scenario",
+      "label": "NORMAL / Promote scenario / scenario.promotable",
+      "start": "#/dashboard/situation",
+      "expected": "#/simulation/workspace",
+      "after": "#/simulation/workspace",
+      "result": "navigated"
+    },
+    {
+      "step": "Dashboard inbox: Review audit trail",
+      "label": "INFO / Review audit trail / audit.after_governed_mutation",
+      "start": "#/dashboard/situation",
+      "expected": "#/admin/audit-logs",
+      "after": "#/admin/audit-logs",
+      "result": "navigated"
+    },
+    {
+      "step": "Exception card: Open recommendations",
+      "label": "OPEN RECOMMENDATIONS / OPEN RECOMMENDATION CONSOLE",
+      "start": "#/exceptions/center",
+      "expected": "#/recovery/recommendations",
+      "after": "#/recovery/recommendations",
+      "result": "navigated"
+    },
+    {
+      "step": "Exception card: Open exceptions",
+      "label": "OPEN EXCEPTIONS",
+      "start": "#/exceptions/center",
+      "expected": "#/exceptions/center",
+      "after": "#/exceptions/center",
+      "result": "navigated"
+    },
+    {
+      "step": "Recommendation header: Create scenario from recommendation",
+      "label": "CREATE SCENARIO FROM RECOMMENDATION",
+      "route": "#/recovery/recommendations",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Recommendation detail: Open simulation workspace",
+      "label": "Open simulation workspace",
+      "start": "#/recovery/recommendations",
+      "expected": "#/simulation/workspace",
+      "after": "#/simulation/workspace",
+      "result": "navigated"
+    },
+    {
+      "step": "Simulation header: Run simulation",
+      "label": "RUN SIMULATION",
+      "route": "#/simulation/workspace",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Simulation header: Promote to proposed",
+      "label": "PROMOTE TO PROPOSED",
+      "route": "#/simulation/workspace",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Simulation editor: Add assumption",
+      "label": "ADD ASSUMPTION",
+      "route": "#/simulation/workspace",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Simulation detail: Submit approval request",
+      "label": "Submit approval request",
+      "route": "#/simulation/workspace",
+      "result": "available_not_clicked",
+      "reason": "state-changing CTA; not executed during evidence pass",
+      "title": ""
+    },
+    {
+      "step": "Simulation assistant card: Promote scenario",
+      "label": "PROMOTE SCENARIO",
+      "start": "#/simulation/workspace",
+      "expected": "#/simulation/workspace",
+      "after": "#/simulation/workspace",
+      "result": "navigated"
+    },
+    {
+      "step": "Approvals header: Publish plan",
+      "label": "PUBLISH PLAN",
+      "route": "#/approvals/publishing",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Approvals detail: Approve",
+      "label": "Approve",
+      "route": "#/approvals/publishing",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Approvals detail: Reject",
+      "label": "Reject",
+      "route": "#/approvals/publishing",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "title": ""
+    },
+    {
+      "step": "Approvals detail: Publish",
+      "result": "blocked",
+      "reason": "button is disabled",
+      "label": "Publish",
+      "route": "#/approvals/publishing"
+    },
+    {
+      "step": "Event Console assistant card: Open exceptions",
+      "label": "OPEN EXCEPTIONS",
+      "start": "#/operations/event-confirmation",
+      "expected": "#/exceptions/center",
+      "after": "#/exceptions/center",
+      "result": "navigated"
+    },
+    {
+      "step": "Export page header: Generate schedule",
+      "label": "GENERATE SCHEDULE",
+      "route": "#/admin/export-handoff",
+      "result": "available_not_clicked",
+      "reason": "state-changing CTA; not executed during evidence pass",
+      "title": ""
+    },
+    {
+      "step": "Export assistant card: Review audit",
+      "label": "REVIEW AUDIT",
+      "start": "#/admin/export-handoff",
+      "expected": "#/admin/audit-logs",
+      "after": "#/admin/audit-logs",
+      "result": "navigated"
+    },
+    {
+      "step": "Audit assistant card: Review proof pack",
+      "label": "REVIEW PROOF PACK",
+      "start": "#/admin/audit-logs",
+      "expected": "#/recovery/recommendations",
+      "after": "#/recovery/recommendations",
+      "result": "navigated"
+    },
+    {
+      "step": "Exception header: Generate recovery options",
+      "label": "GENERATE RECOVERY OPTIONS",
+      "route": "#/exceptions/center",
+      "result": "available_not_clicked",
+      "reason": "state-changing CTA; not executed during evidence pass"
+    },
+    {
+      "step": "Exception header: Convert to scenario",
+      "label": "CONVERT TO SCENARIO",
+      "route": "#/exceptions/center",
+      "result": "available_not_clicked",
+      "reason": "state-changing CTA; not executed during evidence pass"
+    },
+    {
+      "step": "Exception header: Publish triage view",
+      "label": "PUBLISH TRIAGE VIEW",
+      "route": "#/exceptions/center",
+      "result": "available_not_clicked",
+      "reason": "export/report CTA; not executed during evidence pass"
+    }
+  ],
+  "modeEvidence": {
+    "offScreenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\dashboard_assist_off.png",
+    "offState": {
+      "actionInboxVisible": false,
+      "cardVisible": false,
+      "checklistVisible": false,
+      "hash": "#/dashboard/situation",
+      "topbarAssistant": "ASSIST\nGUIDE\nSUPER\nOFF"
+    },
+    "guideState": {
+      "actionInboxVisible": true,
+      "checklistVisible": true,
+      "hash": "#/dashboard/situation",
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF"
+    }
+  }
+}

@@ -242,6 +242,49 @@ def test_uat_phase5_recovery_recommendation_path():
         "PROMOTE_SCENARIO"
     )
     assert top_action_id() == "SUBMIT_APPROVAL"
+    assert top_action_id(
+        active_plan_status=PlanVersion.Status.VALIDATED,
+        validation_status=PlanVersion.ValidationStatus.FEASIBLE,
+        cargo_layer_issue_count=2,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        materialized_recovery_recommendation_count=1,
+    ) == "SUBMIT_APPROVAL"
+    assert top_action_id(
+        active_plan_status=PlanVersion.Status.PROPOSED,
+        validation_status=PlanVersion.ValidationStatus.FEASIBLE,
+        cargo_layer_issue_count=2,
+        pending_approval_count=1,
+        current_user_pending_approval_count=1,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        materialized_recovery_recommendation_count=1,
+    ) == "APPROVE_PLAN"
+    assert top_action_id(
+        active_plan_status=PlanVersion.Status.APPROVED,
+        active_plan_is_editable=False,
+        validation_status=PlanVersion.ValidationStatus.FEASIBLE,
+        cargo_layer_issue_count=2,
+        all_required_approvals_complete=True,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        materialized_recovery_recommendation_count=1,
+    ) == "PUBLISH_PLAN"
+    assert top_action_id(
+        active_plan_status=PlanVersion.Status.PUBLISHED,
+        active_plan_is_editable=False,
+        validation_status=PlanVersion.ValidationStatus.FEASIBLE,
+        cargo_layer_issue_count=2,
+        published_snapshot_exists=True,
+        latest_export_for_published_plan_exists=False,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        materialized_recovery_recommendation_count=1,
+    ) == "GENERATE_EXPORT"
 
     blocked_publish = shaped_for(
         active_plan_status=PlanVersion.Status.APPROVED,

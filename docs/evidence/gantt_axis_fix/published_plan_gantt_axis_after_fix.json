@@ -1,0 +1,66 @@
+{
+  "capturedAt": "2026-05-19T16:12:27.993Z",
+  "url": "http://localhost:8080/#/schedule/published-plan",
+  "canvasWidth": 1062,
+  "labels": [
+    {
+      "text": "20 MAY 07:00",
+      "left": 0,
+      "right": 86,
+      "center": 43
+    },
+    {
+      "text": "09:12",
+      "left": 169,
+      "right": 256,
+      "center": 212
+    },
+    {
+      "text": "11:24",
+      "left": 381,
+      "right": 468,
+      "center": 425
+    },
+    {
+      "text": "13:36",
+      "left": 594,
+      "right": 680,
+      "center": 637
+    },
+    {
+      "text": "15:48",
+      "left": 806,
+      "right": 892,
+      "center": 849
+    },
+    {
+      "text": "18:00",
+      "left": 975,
+      "right": 1062,
+      "center": 1018
+    }
+  ],
+  "gridlines": [
+    0,
+    212,
+    425,
+    637,
+    849,
+    1062
+  ],
+  "blocks": [
+    {
+      "text": "PI-PLAN-UI-06001471-0001: PLANNED",
+      "title": "20 May'26 Wed 07:00 - 20 May'26 Wed 17:00",
+      "left": 0,
+      "width": 965
+    },
+    {
+      "text": "PI-PLAN-UI-06001471-0002: PLANNED",
+      "title": "20 May'26 Wed 08:00 - 20 May'26 Wed 18:00",
+      "left": 97,
+      "width": 965
+    }
+  ],
+  "hasHardCodedOldAxis": false
+}

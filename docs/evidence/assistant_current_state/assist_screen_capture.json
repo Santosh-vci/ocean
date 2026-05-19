@@ -1,0 +1,997 @@
+{
+  "generatedAt": "2026-05-19T04:41:24.547Z",
+  "captures": [
+    {
+      "key": "dashboard",
+      "name": "Dashboard / Network Situation",
+      "hash": "#/dashboard/situation",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\dashboard.png",
+      "actionInbox": "ASSISTANT ACTION INBOX\n6 ACTIVE\nCRITICAL\nOpen Exception Center\nrecovery.approved_candidate_publish_blocked\nWARNING\nOpen Recommendation Console\nrecovery.optimizer_run_succeeded\nWARNING\nReview coal grade sequence\nplanning.sequence_review_needed\nNORMAL\nPromote scenario\nscenario.promotable\nINFO\nReview recommendation proof pack\nrecovery.proof_pack_available\nINFO\nReview audit trail\naudit.after_governed_mutation",
+      "blockedReasons": [],
+      "bodyExcerpt": "CONTROL TOWER / NETWORK SITUATION\n\nNetwork Situation\nLIVE READ MODEL - PLAN-2026-05-20 V1\nOPEN PLAN\nOPEN EXCEPTIONS\nHIGHEST-RISK OGV\nMV PACIFIC PRIDE\nBRG-KAL-22 is unavailable inside the trip window.\nCARGO REMAINING\n144,500 MT\n53,500 MT loaded of 198,000 MT planned\nQUEUE PRESSURE\nJTY-SUARAN\n4 jetty moves / 3 CTS moves\nLIVE / LATEST VERSION\nPLAN-2026-05-20 V1\nLatest proposed\nOPEN BLOCKERS\n3\n3 critical / 2 warning\nGOVERNANCE QUEUE\n1\n8 scenario(s), 2 override(s)\nEXCEPTION QUEUE\n3 blockers active\nSEVERITY: CRITICAL\nBARGE_UNAVAILABLE\n1 BLOCKING / 1 TOTAL ? BARGE\nSEVERITY: CRITICAL\nBRIDGE_WINDOW_MISSED\n1 BLOCKING / 1 TOTAL ? BRIDGE\nSEVERITY: CRITICAL\nLAYER_SEQUENCE_VIOLATION\n1 BLOCKING / 1 TOTAL ? PLAN\nSEVERITY: WARNING\nJETTY_OVERLAP\n0 BLOCKING / 1 TOTAL ? JETTY\nSEVERITY: WARNING\nTIDE_WINDOW_MISSED\n0 BLOCKING / 1 TOTAL ? TIDE\nPRIORITY ACTIONS\nCRITICAL\nSimulate recovery\nBRG-KAL-22 IS UNAVAILABLE INSIDE THE TRIP WINDOW.\nWARNING\nComplete approval chain\n1 APPROVAL REQUEST(S) PENDING\nCRITICAL\nClear publish blockers\n3 UNRESOLVED BLOCKING CONFLICT(S)\nNETWORK RESOURCE TIMELINE\nRead model ? OGV ? jetty ? tug/barge ? CTS\nASSET RESOURCE\n08:00\n10:00\n12:00\n14:00\n16:00 now\n18:00\nOGV\nMV PACIFIC PRIDE\nPI-PLAN-2026-05-20-0001 ? COMPLETED\nMV PACIFIC PRIDE\nPI-PLAN-2026-05-20-0002 ? LOADING\nMV TRITON STAR\nPI-PLAN-2026-05-20-0004 ? PLANNED\nMV PACIFIC PRIDE\nPI-PLAN-2026-05-20-0003 ? BLOCKED\nMV NORTH STAR\nPI-PLAN-2026-05-20-0005 ? BLOCKED\nMV GOLDEN ORIOLE\nPI-PLAN-2026-05-20-0006 ? PLANNED\nJETTY\nJTY-SUARAN\nPI-PLAN-2026-05-20-0001 ? AT CTS\nJTY-LATI\nPI-PLAN-2026-05-20-0002 ? LOADING\nJTY-SUARAN\nPI-PLAN-2026-05-20-0004 ? ASSIGNED\nJTY-SUARAN\nPI-PLAN-2026-05-20-0003 ? WAITING TIDE\nJTY-LATI\nPI-PLAN-2026-05-20-0005 ? BLOCKED\nJTY-SUARAN\nPI-PLAN-2026-05-20-0006 ? ASSIGNED\nTUG/BARGE\nBER-TUG-08 / BRG-VAL-08\nPI-PLAN-2026-05-20-0001 ? AT CTS\nBER-TUG-08 / BRG-NUS-17\nPI-PLAN-2026-05-20-0002 ? LOADING\nBER-TUG-09 / BRG-VAL-08\nPI-PLAN-2026-05-20-0004 ? ASSIGNED\nBER-TUG-08 / BRG-KAL-22\nPI-PLAN-2026-05-20-0003 ? WAITING TIDE\nBER-TUG-08 / BRG-NUS-17\nPI-PLAN-2026-05-20-0005 ? BLOCKED\nBER-TUG-08 / BRG-KAL-22\nPI-PLAN-2026-05-20-0006 ? ASSIGNED\nCTS\nCTS-BORNEO\nPI-PLAN-2026-05-20-0001 ? AT CTS\nCTS-JAVA\nPI-PLAN-2026-05-",
+      "heading": "Network Situation",
+      "recommendationCards": [],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "OPEN PLAN",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "OPEN EXCEPTIONS",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "OPEN BLOCKERS\n3\n3 critical / 2 warning",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "CRITICAL\nClear publish blockers\n3 UNRESOLVED BLOCKING CONFLICT(S)",
+          "title": ""
+        },
+        {
+          "className": "timeline-block critical",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PI-PLAN-2026-05-20-0003 ? BLOCKED",
+          "title": "PI-PLAN-2026-05-20-0003: 21 May'26 Thu 03:30 - 21 May'26 Thu 14:30"
+        },
+        {
+          "className": "timeline-block critical",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PI-PLAN-2026-05-20-0005 ? BLOCKED",
+          "title": "PI-PLAN-2026-05-20-0005: 21 May'26 Thu 06:30 - 21 May'26 Thu 14:30"
+        },
+        {
+          "className": "timeline-block critical",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PI-PLAN-2026-05-20-0005 ? BLOCKED",
+          "title": "PI-PLAN-2026-05-20-0005: 21 May'26 Thu 08:30 - 21 May'26 Thu 12:30"
+        },
+        {
+          "className": "timeline-block critical",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PI-PLAN-2026-05-20-0005 ? BLOCKED",
+          "title": "PI-PLAN-2026-05-20-0005: 21 May'26 Thu 08:30 - 21 May'26 Thu 12:30"
+        },
+        {
+          "className": "timeline-block critical",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PI-PLAN-2026-05-20-0005 ? BLOCKED",
+          "title": "PI-PLAN-2026-05-20-0005: 21 May'26 Thu 08:30 - 21 May'26 Thu 12:30"
+        },
+        {
+          "className": "critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center\nrecovery.approved_candidate_publish_blocked",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "warning",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "WARNING\nOpen Recommendation Console\nrecovery.optimizer_run_succeeded",
+          "title": "A successful recovery optimizer run has ranked candidate options."
+        },
+        {
+          "className": "warning",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "WARNING\nReview coal grade sequence\nplanning.sequence_review_needed",
+          "title": "2 cargo layer sequence issue(s) need review."
+        },
+        {
+          "className": "normal",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "NORMAL\nPromote scenario\nscenario.promotable",
+          "title": "A simulated recovery scenario is ready for governed promotion."
+        },
+        {
+          "className": "info",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "INFO\nReview recommendation proof pack\nrecovery.proof_pack_available",
+          "title": "A Phase 5 recommendation proof pack is available for review."
+        },
+        {
+          "className": "info",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "INFO\nReview audit trail\naudit.after_governed_mutation",
+          "title": "Recent governed workflow activity is available in the audit trail."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Open demand board\nMV PACIFIC PRIDE",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Review constraints\nHIGH",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Open plan contract\n3 BLOCKER(S)",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "exceptions",
+      "name": "Exception Center",
+      "hash": "#/exceptions/center",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\exceptions.png",
+      "actionInbox": "",
+      "blockedReasons": [],
+      "bodyExcerpt": "RECOVERY LOOP / EXCEPTION CENTER\n\nException Center\nACTIVE TRIAGE\nGENERATE RECOVERY OPTIONS\nCONVERT TO SCENARIO\nPUBLISH TRIAGE VIEW\nASSISTANT GUIDANCE\nOpen Exception Center\n\nThe recommendation-origin candidate is approved but still has blocking risk.\n\nOPEN EXCEPTIONS\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nACTIVE\n14\nCRITICAL\n9\nWARNING\n5\nOBSERVED\n0\nPENDING\n9\nOVERRIDES\n0\nHEALTH\n0\nTRIAGE FILTERS\nSEVERITY\nCritical (9)\nWarning (5)\nBlocking (9)\nObserved (0)\nHealth (0)\nOperations (0)\nOGV FOCUS\nMV PACIFIC PRIDE\nMV PACIFIC PRIDE\nMV PACIFIC PRIDE\nMV TRITON STAR\nACTIVE EXCEPTION QUEUE\nSeverity · source · owner · impact · next governed action\nSEVERITY\tRAISED\tID\tTYPE\tAFFECTED OGV\tRESOURCE\tIMPACT\tSTATUS\tNEXT\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1011\tASSET_DOUBLE_BOOKED\tMV NORTH STAR\tBER-TUG-08\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1012\tBRIDGE_WINDOW_MISSED\tMV PACIFIC PRIDE\t2026-05-19T22:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1016\tBRIDGE_WINDOW_MISSED\tMV GOLDEN ORIOLE\t2026-05-20T20:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1015\tBRIDGE_WINDOW_MISSED\tMV NORTH STAR\t2026-05-20T20:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1014\tBRIDGE_WINDOW_MISSED\tMV TRITON STAR\t2026-05-20T20:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1013\tBRIDGE_WINDOW_MISSED\tMV PACIFIC PRIDE\t2026-05-20T20:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1019\tTIDE_WINDOW_MISSED\tMV GOLDEN ORIOLE\t2026-05-21T10:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1017\tTIDE_WINDOW_MISSED\tMV PACIFIC PRIDE\t2026-05-19T23:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nCRITICAL\t\n19 May'26\nTue 10:01\n\tEX-1018\tTIDE_WINDOW_MISSED\tMV PACIFIC PRIDE\t2026-05-21T00:00:00+00:00\t+5h delay risk\tACTIVE\tSIM\nWARNING\t\n19 May'26\nTue 10:01\n\tEX-1006\tBRIDGE_WINDOW_WAIT\tMV PACIFIC PRIDE\t2026-05-20T20:00:00+00:00\tWatch\tACTIVE",
+      "heading": "Exception Center",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nOpen Exception Center\n\nThe recommendation-origin candidate is approved but still has blocking risk.\n\nOPEN EXCEPTIONS\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item active",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "GENERATE RECOVERY OPTIONS",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PUBLISH TRIAGE VIEW",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OPEN EXCEPTIONS",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "warning",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "recommendations",
+      "name": "Recommendation Console",
+      "hash": "#/recovery/recommendations",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\recommendations.png",
+      "actionInbox": "",
+      "blockedReasons": [
+        "CREATE SCENARIO FROM RECOMMENDATION\nBLOCKED",
+        "CREATE SCENARIO FROM RECOMMENDATION\nThis recommendation is already a governed scenario. Continue in Simulation Workspace.",
+        "DISMISS RECOVERY RECOMMENDATION\nMaterialized recommendations cannot be dismissed."
+      ],
+      "bodyExcerpt": "RECOVERY LOOP / RECOMMENDATION CONSOLE\n\nRecommendation Console\nDECISION SUPPORT\nBACK TO TRIAGE\nCREATE SCENARIO FROM RECOMMENDATION\nBLOCKED\nASSISTANT GUIDANCE\nReview recommendation proof pack\n\nA Phase 5 recommendation proof pack is available for review.\n\nREVIEW PROOF PACK\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE\nCREATE SCENARIO FROM RECOMMENDATION\nThis recommendation is already a governed scenario. Continue in Simulation Workspace.\nDISMISS RECOVERY RECOMMENDATION\nMaterialized recommendations cannot be dismissed.\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nLATEST RUN\nOPT-P5-RECOVERY-20260519043131\nCANDIDATES\n5\nBEST SCORE\n89.0\nLOW RISK\n1\nHIGH / CRITICAL\n3\nMATERIALIZED\n1\nOPTIMIZER RUNS\nOPT-P5-RECOVERY-20260519043131\nSUCCEEDED / 5 OPTIONS\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE\nOPT-PHASE5-SEED\nSUCCEEDED / 5 OPTIONS\nINPUT SNAPSHOT\nRIS-81F11F448FE8\nSOURCE\nBARGE_UNAVAILABLE\nSOURCE KIND\nCONFLICT\nCONFLICTS\n5\nCONFIRMED EVENTS\n0\nALERTS\n2\nRANKED RECOVERY OPTIONS\nRank · score · risk · delay · missed windows · resource conflicts\nRANK\tRECOMMENDATION\tSTRATEGY\tSCORE\tRISK\tDELAY\tWINDOWS\tCONFLICTS\tSTATUS\tHINT\n#1\tREC-B4783E8E30E2\tCTS REASSIGNMENT\t89.0\tLOW\t+40m\t0\t0\tMATERIALIZED\t\nREVIEW PROOF PACK\nReview recommendation proof pack\n\n#2\tREC-AA4A882C3B9E\tRESEQUENCE TRIP\t78.0\tMEDIUM\t+45m\t1\t0\tCANDIDATE\t\n#3\tREC-253298C7C1AB\tDELAY TRIP\t70.1\tHIGH\t+90m\t2\t0\tCANDIDATE\t\n#4\tREC-FF1CEFFC6553\tTUG BARGE SWAP\t24.5\tHIGH\t+31m\t2\t2\tCANDIDATE\t\n#5\tREC-B95BD2F8A5A8\tNEXT WINDOW REPAIR\t15.3\tHIGH\t+360m\t2\t0\tCANDIDATE\t\nRECOMMENDATION DETAIL\nREC-B4783E8E30E2\nLOW\nCTS REASSIGNMENT\n\nReassign PI-PLAN-2026-05-20-0003 discharge handling to CTS-JAVA.\n\nREVIEW PROOF PACK\nReview recommendation proof pack\nRank\n#1\nScore\n89.0 / 100\nDelay\n+40m\nMissed windows\n0\nResource conflicts\n0\nChanged resources\n1\nHard constraints\nPASSED\nScenario\nSIM-PLAN-2026-05-20-V1-08\nWHY IT RANKS HERE\n\n89.0 / 100, Low risk - candidate feasible; largest penalty is Manual coordination load (6.0).\n\nOpen simulation workspace\nBEFORE / AFTER ACTIO",
+      "heading": "Recommendation Console",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nReview recommendation proof pack\n\nA Phase 5 recommendation proof pack is available for review.\n\nREVIEW PROOF PACK\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE\nCREATE SCENARIO FROM RECOMMENDATION\nThis recommendation is already a governed scenario. Continue in Simulation Workspace.\nDISMISS RECOVERY RECOMMENDATION\nMaterialized recommendations cannot be dismissed.\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "BACK TO TRIAGE",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "CREATE SCENARIO FROM RECOMMENDATION",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW PROOF PACK",
+          "title": "A Phase 5 recommendation proof pack is available for review."
+        },
+        {
+          "className": "warning",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE",
+          "title": ""
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "OPT-P5-RECOVERY-20260519043131\nSUCCEEDED / 5 OPTIONS\nOPEN RECOMMENDATIONS\nOPEN RECOMMENDATION CONSOLE",
+          "title": ""
+        },
+        {
+          "className": "row-action-hint info",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW PROOF PACK\nReview recommendation proof pack",
+          "title": "A Phase 5 recommendation proof pack is available for review."
+        },
+        {
+          "className": "row-action-hint info",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW PROOF PACK\nReview recommendation proof pack",
+          "title": "A Phase 5 recommendation proof pack is available for review."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Open simulation workspace",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "simulation",
+      "name": "Simulation Workspace",
+      "hash": "#/simulation/workspace",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\simulation.png",
+      "actionInbox": "",
+      "blockedReasons": [],
+      "bodyExcerpt": "RECOVERY LOOP / SIMULATION WORKSPACE\n\nSimulation Workspace\nSCENARIO DELTA\nRUN SIMULATION\nPROMOTE TO PROPOSED\nASSISTANT GUIDANCE\nPromote scenario\n\nA simulated recovery scenario is ready for governed promotion.\n\nPROMOTE SCENARIO\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nACTIVE SCENARIO\nSIM-PLAN-2026-05-20-V1-08\nSELECTED RUN\nRUN-SIM-PLAN-2026-05-20-V1-08-01\nCHANGED TRIPS\n1\nMAX DELAY\n0m\nRISK FLAGS\n9/5\nSCENARIO CONFIGURATION\nNEW SCENARIO\nCREATE MANUAL\nSCENARIOS\nSIM-PLAN-2026-05-20-V1-08\nCONFLICT / PROPOSED\nSIM-MULTI-CANDIDATE\nMANUAL / SIMULATED\nSIM-MANUAL-REASSIGNMENT\nMANUAL / SIMULATED\nSIM-TOPUP-DEMAND\nMANUAL / SIMULATED\nSIM-CTS-RATE\nMANUAL / SIMULATED\nSIM-TIDE-RECOVERY\nMANUAL / SIMULATED\nSIM-TUG-OUTAGE\nOVERRIDE / SIMULATED\nSIM-JETTY-DELAY\nOVERRIDE / SIMULATED\nSCENARIO NAME\nPhase 5 recovery proof recommendation\nSCENARIO TYPE\nRECOVERY RECOMMENDATION\nSOURCE\nREC-B4783E8E30E2\nSTATUS\nPROPOSED\nRECOMMENDATION HANDOFF\nREC-B4783E8E30E2\nCTS_REASSIGNMENT\nRIS-81F11F448FE8\nCONFLICT\nOPEN RECOMMENDATION\nASSUMPTION EDITOR\nKIND\nTrip delay\nAsset outage\nRate change\nWindow change\nOGV ETA change\nManual reassignment\nASSIGNMENT\nPI-PLAN-2026-05-20-CLONE2-0001\nPI-PLAN-2026-05-20-CLONE2-0002\nPI-PLAN-2026-05-20-CLONE2-0003\nPI-PLAN-2026-05-20-CLONE2-0004\nPI-PLAN-2026-05-20-CLONE2-0005\nPI-PLAN-2026-05-20-CLONE2-0006\nTUG CODE\nBARGE CODE\nADD ASSUMPTION\nASSUMPTIONS\nMANUAL REASSIGNMENT\nASSIGNMENT 973\nBASELINE VS SCENARIO OUTPUT\nSelected run projection\n$0\nDEMURRAGE DELTA\n0m\nMAX TRIP DELTA\n0.00%\nAVG UTILIZATION DELTA\n14\nCONSTRAINT EVALUATIONS\n#\tOGV / GRADE-HATCH\tCHAIN\tBASELINE START\tSIM START\tBASELINE COMPLETION\tSIM COMPLETION\tDELTA\n03\tMV PACIFIC PRIDE\nEBONY\tJTY-SUARAN\nBER-TUG-08 / BRG-KAL-22 / CTS-BORNEO\n-> BER-TUG-08 / BRG-KAL-22 / CTS-JAVA\t\n21 May'26\nThu 03:30\n\t\n21 May'26\nThu 03:30\n\t\n21 May'26\nThu 14:30\n\t\n21 May'26\nThu 14:30\n\t0m\nPROJECTED EVENT TIMELINE\nBaseline lane above scenario lane\nPI-PLAN-2026-05-20-CLONE2-0003\nBASE\n0m\nCONSTRAINT EVALUATIONS\nCause, target, margin\nSEVERITY\tCODE\tTARGET\tMARGIN\nW",
+      "heading": "Simulation Workspace",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nPromote scenario\n\nA simulated recovery scenario is ready for governed promotion.\n\nPROMOTE SCENARIO\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "RUN SIMULATION",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "PROMOTE TO PROPOSED",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "PROMOTE SCENARIO",
+          "title": "A simulated recovery scenario is ready for governed promotion."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "CREATE MANUAL",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "OPEN RECOMMENDATION",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "ADD ASSUMPTION",
+          "title": ""
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "SUCCEEDED\nRUN-SIM-PLAN-2026-05-20-V1-08-01\n19 May'26 Tue 10:01",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Submit approval request",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "approvals",
+      "name": "Approvals & Publishing",
+      "hash": "#/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\approvals.png",
+      "actionInbox": "",
+      "blockedReasons": [
+        "PUBLISH PLAN\nBLOCKED",
+        "Publish\nBLOCKED"
+      ],
+      "bodyExcerpt": "SCHEDULE / PLAN APPROVALS\n\nPlan Approvals & Publishing\nPUBLISH BLOCKED\nPUBLISH PLAN\nBLOCKED\nPENDING APPROVALS\n0\nCRITICAL\n9\nOVERRIDES\n0\nSIMULATION PROMOS\n8\nREADY TO PUBLISH\nBLOCKED\nPUBLISHED VERSION\nNONE\nPLAN STATE\nPROPOSED\nPENDING APPROVAL QUEUE\nRequest · source · affected plan · impact · required authority\nSTATUS\tRAISED\tID\tSOURCE\tREQUESTED CHANGE\tIMPACT\tREQ. APPROVALS\nAPPROVED\t\n19 May'26\nTue 10:01\n\tAPR-PLAN-2026-05-20-V2\tSIM-PLAN-2026-05-20-V1-08\tPhase 5 proof recommendation promoted for governed approval.\tBlocking conflicts remain\t2/2\nAPPROVAL DETAIL\nAPR-PLAN-2026-05-20-V2\nAPPROVED\nAPR-PLAN-2026-05-20-V2\n\nPhase 5 proof recommendation promoted for governed approval.\n\nSCENARIO SOURCE\nScenario\nSIM-PLAN-2026-05-20-V1-08\nRun\nRUN-SIM-PLAN-2026-05-20-V1-08-01\nBaseline\nPLAN-2026-05-20 V1\nAssumptions\n1\nChanged trips\n1\nAggregate delay\n0m\nCONSTRAINT CHECKLIST\n! Tide window compatibility\n! Bridge clearance slot\n! No blocking conflicts\nAPPROVAL CHAIN\nBERAU SCHEDULER\nAPPROVE\nABL DISPATCHER\nAPPROVE\nApprove\nReject\nPublish\nBLOCKED",
+      "heading": "Plan Approvals & Publishing",
+      "recommendationCards": [],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item active",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "PUBLISH PLAN",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "Approve",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "Reject",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": true,
+          "inAssistant": false,
+          "label": "Publish",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "events",
+      "name": "Operations Event Console",
+      "hash": "#/operations/event-confirmation",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\events.png",
+      "actionInbox": "",
+      "blockedReasons": [],
+      "bodyExcerpt": "OPERATIONS / EVENT CONFIRMATION\n\nOperations Event Console\nACTUALIZATION DESK\nASSISTANT GUIDANCE\nOpen Exception Center\n\nThe recommendation-origin candidate is approved but still has blocking risk.\n\nOPEN EXCEPTIONS\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nPENDING\n0\nCONFIRMED\n0\nREJECTED\n0\nDUPLICATES\n0\nOFFLINE DEVICES\n0\nDEGRADED FEEDS\n0\nFEED AND DEVICE HEALTH\nSignal freshness and operator-review risk\nHEALTH STATE\nOK\nHEALTHY SNAPSHOTS\n0\nWARNING SNAPSHOTS\n0\nCRITICAL RISKS\n0\nOBSERVED LATEST\n-\nBRIDGE-GATE-B-OPS\nACTIVE\nCONTROL-TOWER-TABLET-OPS\nACTIVE\nCTS-BORNEO-OPS\nACTIVE\nJETTY-JTY-SUARAN-OPS\nACTIVE\nQUEUE FILTERS\nPENDING\n0\nCONFIRMED\n0\nREJECTED\n0\nALL\n0\nCURRENT HEALTH RISKS\nNO ACTIVE HEALTH RISKS\nCANDIDATE EVENT QUEUE\nCandidate vs plan, confidence, and review state\nSTATUS\tEVENT\tASSET\tVARIANCE\tPLANNED\tCANDIDATE\tTRIP\tCONF.\tHINT\nNo candidate events in this view\nChange the filter or replay the Phase 4 proof flow to create evidence.\nCANDIDATE DETAIL\nNo selection\nNo candidate selected\nReplay or ingest an operational event to begin review.\nCONFIRMED EVENT LEDGER\nConfirmed facts, reasons, actors, and schedule actualization\nACTUAL\tEVENT\tTRIP\tVARIANCE\tREASON\tACTOR\tMODE\nNo confirmed events yet\nConfirmed operational facts will remain here after review.",
+      "heading": "Operations Event Console",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nOpen Exception Center\n\nThe recommendation-origin candidate is approved but still has blocking risk.\n\nOPEN EXCEPTIONS\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OPEN EXCEPTIONS",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "REJECTED\n0",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "exports",
+      "name": "Export Handoff",
+      "hash": "#/admin/export-handoff",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\exports.png",
+      "actionInbox": "",
+      "blockedReasons": [],
+      "bodyExcerpt": "ADMIN / REPORTING & HANDOFF\n\nExports & Operational Handoff\nGOVERNED EXPORTS\nGENERATE SCHEDULE\nASSISTANT GUIDANCE\nReview audit trail\n\nRecent governed workflow activity is available in the audit trail.\n\nREVIEW AUDIT\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nTOTAL EXPORTS\n0\nPLAN HANDOFFS\n0\nCONFLICT PACKS\n0\nSCENARIO DIFFS\n0\nGENERATE GOVERNED ARTIFACT\nPlan · conflict · audit\nPLAN · PRINT\nPrintable schedule\nOperator-readable plan handoff for Berau/ABL coordination.\nPLAN · CSV\nPlan CSV\nTrip, tug, barge, jetty, CTS, tonnage, and timing rows.\nCONFLICT · JSON\nConflict pack\nOpen blocker register with plan version and trip context.\nSCENARIO DIFF · JSON\nScenario diff\nPromoted scenario lineage, selected run, and baseline-to-candidate deltas.\nAUDIT · JSON\nAudit evidence\nLatest governed event chain, scoped by access policy.\nIMPORT / EXPORT HISTORY\n0 visible artifacts\nNo governed exports generated\nGenerate a schedule, conflict pack, or audit evidence file when handoff is needed.\nHANDOFF INSPECTOR\nempty\nNO FILE\nAwaiting first handoff\n\nNo generated artifacts are visible for this access scope yet.",
+      "heading": "Exports & Operational Handoff",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nReview audit trail\n\nRecent governed workflow activity is available in the audit trail.\n\nREVIEW AUDIT\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item active",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "GENERATE SCHEDULE",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW AUDIT",
+          "title": "Recent governed workflow activity is available in the audit trail."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "PLAN · PRINT\nPrintable schedule\nOperator-readable plan handoff for Berau/ABL coordination.",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "CONFLICT · JSON\nConflict pack\nOpen blocker register with plan version and trip context.",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "SCENARIO DIFF · JSON\nScenario diff\nPromoted scenario lineage, selected run, and baseline-to-candidate deltas.",
+          "title": ""
+        }
+      ]
+    },
+    {
+      "key": "audit",
+      "name": "Audit Logs",
+      "hash": "#/admin/audit-logs",
+      "screenshot": "F:\\ocean\\docs\\evidence\\assistant_current_state\\screenshots\\audit.png",
+      "actionInbox": "",
+      "blockedReasons": [],
+      "bodyExcerpt": "ADMIN\n\nAudit & Logs\nAUDIT WRITE · SECURE\nASSISTANT GUIDANCE\nReview recommendation proof pack\n\nA Phase 5 recommendation proof pack is available for review.\n\nREVIEW PROOF PACK\nREVIEW AUDIT\nREVIEW AUDIT TRAIL\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips.\nEVENTS\n17\nACTORS\n3\nAUTH EVENTS\n3\nAUDIT HEALTH\nSecure\nGOVERNANCE FILTERS\nALL ACTIONS\nALL ACTORS\nNEWEST FIRST\nTIME\tACTOR\tACTION\tOBJECT\n\n19 May'26\nTue 10:10\n\tadmin@coalflow.local\tauth.login\tadmin@coalflow.local\n\n19 May'26\nTue 10:03\n\tadmin@coalflow.local\tauth.login\tadmin@coalflow.local\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tauth.login\tadmin@coalflow.local\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.audit_verified\tProof audit evidence\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.proof_pack_verified\tRecommendation proof pack\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\trecovery.recommendation.proof_pack_viewed\tREC-B4783E8E30E2\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.approval_handoff_verified\tPromotion and approval handoff\n\n19 May'26\nTue 10:01\n\tabl.dispatcher@coalflow.local\tapproval.decision\tAPR-PLAN-2026-05-20-V2 abl_dispatcher\n\n19 May'26\nTue 10:01\n\tberau.scheduler@coalflow.local\tapproval.decision\tAPR-PLAN-2026-05-20-V2 berau_scheduler\n\n19 May'26\nTue 10:01\n\tberau.scheduler@coalflow.local\tapproval.request\tAPR-PLAN-2026-05-20-V2\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.scenario_materialized\tRecommendation scenario handoff\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\trecovery.recommendation.materialize_scenario\tREC-B4783E8E30E2\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.ranking_verified\tRecommendation ranking\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.governed_run_verified\tGoverned recovery run\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\trecovery.optimizer.run\tOPT-P5-RECOVERY-20260519043131\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\trecovery.input_snapshot.build\tRIS-81F11F448FE8\n\n19 May'26\nTue 10:01\n\tadmin@coalflow.local\tphase5.proof.seed_pack_verifie",
+      "heading": "Audit & Logs",
+      "recommendationCards": [
+        "ASSISTANT GUIDANCE\nReview recommendation proof pack\n\nA Phase 5 recommendation proof pack is available for review.\n\nREVIEW PROOF PACK\nREVIEW AUDIT\nREVIEW AUDIT TRAIL\nDEMAND IMPORTED\n5 active demand row(s) are available.\nCARGO SEQUENCE REVIEWED\n2 cargo layer issue(s) need review.\nOPERATING WINDOWS ENTERED\nActive tide and bridge windows are available.\nPLAN GENERATED\nActive plan version 86 has generated trips."
+      ],
+      "topbarAssistant": "CRITICAL\nOpen Exception Center\nASSIST\nGUIDE\nSUPER\nOFF",
+      "visibleButtons": [
+        {
+          "className": "next-action-pill critical",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "CRITICAL\nOpen Exception Center",
+          "title": "The recommendation-origin candidate is approved but still has blocking risk."
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "ASSIST",
+          "title": "Assistant mode: assisted"
+        },
+        {
+          "className": "active",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "GUIDE",
+          "title": "Assistant mode: guided preview"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "SUPER",
+          "title": "Assistant mode: supervisor"
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "OFF",
+          "title": "Assistant mode: off"
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Published Plan & Schedule",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exception Center",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Approvals & Publishing",
+          "title": ""
+        },
+        {
+          "className": "nav-item",
+          "disabled": false,
+          "inAssistant": false,
+          "label": "Exports & Handoff",
+          "title": ""
+        },
+        {
+          "className": "",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW PROOF PACK",
+          "title": "A Phase 5 recommendation proof pack is available for review."
+        },
+        {
+          "className": "info",
+          "disabled": false,
+          "inAssistant": true,
+          "label": "REVIEW AUDIT\nREVIEW AUDIT TRAIL",
+          "title": ""
+        }
+      ]
+    }
+  ]
+}
