@@ -1,4 +1,5 @@
 import type { AssistantChecklistItem, AssistantMode } from "../../types/assistant";
+import { AbbrText } from "../Abbreviation";
 
 type GuidedChecklistProps = {
   items?: AssistantChecklistItem[];
@@ -34,15 +35,15 @@ export function GuidedChecklist({
     <section className={`guided-checklist ${mode}`}>
       <div className="guided-checklist-header">
         <span>{resolvedTitle}</span>
-        <strong>{activeItem.label}</strong>
+        <strong><AbbrText text={activeItem.label} /></strong>
       </div>
       <ol>
         {visibleItems.map((item) => (
           <li className={item.status} key={item.key}>
             <span className="guided-checklist-dot" aria-hidden="true" />
             <div>
-              <strong>{item.label}</strong>
-              {item.reason ? <em>{item.reason}</em> : null}
+              <strong><AbbrText text={item.label} /></strong>
+              {item.reason ? <em><AbbrText text={item.reason} /></em> : null}
             </div>
             <small>{STATUS_LABELS[item.status]}</small>
           </li>

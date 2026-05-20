@@ -89,9 +89,9 @@ def test_build_recommendation_uses_registry_defaults():
     )
 
     assert recommendation.action_id == "MATERIALIZE_RECOVERY_RECOMMENDATION"
-    assert recommendation.label == "Create scenario from recommendation"
+    assert recommendation.label == "Test recommendation as scenario"
     assert recommendation.route == "/recovery/recommendations"
-    assert recommendation.cta_label == "Create scenario"
+    assert recommendation.cta_label == "Test as scenario"
     assert recommendation.required_permission == "schedule.edit"
     assert recommendation.audit_required is True
     assert recommendation.target_object_id == "42"

@@ -3,6 +3,7 @@ import type {
   AssistantChecklistItem,
   AssistantMode,
 } from "../../types/assistant";
+import { AbbrText } from "../Abbreviation";
 
 export type AssistantRecommendationSurfaceProps = {
   assistantMode?: AssistantMode;
@@ -42,8 +43,8 @@ export function RecommendationCard({
       <div className="assistant-card-primary">
         <div>
           <span>{title}</span>
-          <h2>{primaryAction.label}</h2>
-          <p>{primaryAction.reason}</p>
+          <h2><AbbrText text={primaryAction.label} /></h2>
+          <p><AbbrText text={primaryAction.reason} /></p>
         </div>
         <button
           disabled={!primaryAction.enabled || !onAssistantNavigate}
@@ -53,7 +54,7 @@ export function RecommendationCard({
             : primaryAction.blockedReason || primaryAction.reason}
           type="button"
         >
-          {primaryAction.enabled ? primaryAction.ctaLabel : "Blocked"}
+          {primaryAction.enabled ? <AbbrText text={primaryAction.ctaLabel} /> : "Blocked"}
         </button>
       </div>
 
@@ -66,20 +67,20 @@ export function RecommendationCard({
               onClick={() => onAssistantNavigate?.(action.route)}
               type="button"
             >
-              <strong>{action.ctaLabel}</strong>
-              <span>{action.label}</span>
+              <strong><AbbrText text={action.ctaLabel} /></strong>
+              <span><AbbrText text={action.label} /></span>
             </button>
           ))}
           {blockedActions.slice(0, 2).map((action) => (
             <span className="assistant-blocked-action" key={actionKey(action)}>
-              <strong>{action.label}</strong>
-              <em>{action.blockedReason || action.reason}</em>
+              <strong><AbbrText text={action.label} /></strong>
+              <em><AbbrText text={action.blockedReason || action.reason} /></em>
             </span>
           ))}
           {checklistItems.map((item) => (
             <span className={`assistant-checklist-item ${item.status}`} key={item.key}>
-              <strong>{item.label}</strong>
-              {item.reason ? <em>{item.reason}</em> : null}
+              <strong><AbbrText text={item.label} /></strong>
+              {item.reason ? <em><AbbrText text={item.reason} /></em> : null}
             </span>
           ))}
         </div>

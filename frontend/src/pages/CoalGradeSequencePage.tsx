@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Abbr, AbbrText } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -13,10 +14,15 @@ import {
   cargoLayerRecoveryMessage,
   cargoLayerSeverity,
 } from "../lib/cargoLayer";
-import type { CargoLayerStepRecord, PlanningOverview } from "../types";
+import type {
+  CargoLayerStepRecord,
+  PlanningOverview,
+  SchedulingOverview,
+} from "../types";
 
 type CoalGradeSequencePageProps = AssistantRecommendationSurfaceProps & {
   overview: PlanningOverview | null;
+  schedulingOverview?: SchedulingOverview | null;
   canEdit: boolean;
   canExport: boolean;
   isActionRunning: boolean;
@@ -39,6 +45,7 @@ export function CoalGradeSequencePage({
   assistantPageActions,
   assistantRowActions,
   overview,
+  schedulingOverview,
   canEdit,
   canExport,
   isActionRunning,
@@ -46,8 +53,13 @@ export function CoalGradeSequencePage({
   onExport,
 }: CoalGradeSequencePageProps) {
   const steps = overview?.cargoLayerSteps ?? EMPTY_STEPS;
+  const openExceptionCount = useMemo(
+    () => (schedulingOverview?.conflicts ?? []).filter((conflict) => !conflict.resolved_at).length,
+    [schedulingOverview?.conflicts],
+  );
   const [selectedStepId, setSelectedStepId] = useState<number | null>(steps[0]?.id ?? null);
   const selectedStep = steps.find((step) => step.id === selectedStepId) ?? steps[0];
+  const selectedNeedsRecovery = selectedStep ? cargoLayerNeedsRecovery(selectedStep) : false;
   const selectedVoyageSteps = useMemo(
     () =>
       steps
@@ -57,8 +69,13 @@ export function CoalGradeSequencePage({
   );
   const voyagesInSequence = new Set(steps.map((step) => step.voyage)).size;
   const gradeConflicts = steps.filter((step) => step.sequence_violation).length;
-  const atRiskBarges = steps.filter((step) => step.status === "blocked").length;
-  const reworkRisk = gradeConflicts + atRiskBarges;
+  const layersNeedingReview = steps.filter((step) => cargoLayerNeedsRecovery(step)).length;
+  const atRiskBarges = new Set(
+    steps
+      .filter((step) => cargoLayerNeedsRecovery(step))
+      .map((step) => step.planned_barge?.code)
+      .filter(Boolean),
+  ).size;
   const assistantActions = [
     ...(assistantRowActions ?? []),
     ...(assistantPageActions ?? []),
@@ -97,7 +114,7 @@ export function CoalGradeSequencePage({
             fallback={!canExport ? "Your role cannot generate exports." : ""}
           >
             <button disabled={!canExport || isActionRunning} onClick={onExport} type="button">
-              Export QC view
+              Export <Abbr term="QC">QC</Abbr> view
             </button>
           </DisabledReasonTooltip>
         </div>
@@ -120,16 +137,20 @@ export function CoalGradeSequencePage({
           <strong className={gradeConflicts ? "critical-text" : ""}>{gradeConflicts}</strong>
         </div>
         <div>
-          <span>Layer violations</span>
-          <strong className={gradeConflicts ? "critical-text" : ""}>{gradeConflicts}</strong>
+          <span>Open exceptions</span>
+          <strong className={openExceptionCount ? "critical-text" : ""}>
+            {openExceptionCount}
+          </strong>
+        </div>
+        <div>
+          <span>Rows needing review</span>
+          <strong className={layersNeedingReview ? "warning-text" : ""}>
+            {layersNeedingReview}
+          </strong>
         </div>
         <div>
           <span>At-risk barges</span>
           <strong className={atRiskBarges ? "warning-text" : ""}>{atRiskBarges}</strong>
-        </div>
-        <div>
-          <span>Rework risk</span>
-          <strong className={reworkRisk ? "warning-text" : ""}>{reworkRisk}</strong>
         </div>
         <div>
           <span>Plan state</span>
@@ -144,35 +165,37 @@ export function CoalGradeSequencePage({
               <SvgIcon name="coal" />
               <strong>Sequence queue</strong>
             </div>
-            <span>Hatch, layer, jetty, CTS, and blocking reason in one operational grid</span>
+            <span>Hatch, layer, jetty, <Abbr term="CTS">CTS</Abbr>, and blocking reason in one operational grid</span>
           </div>
           <div className="grid-scroll">
             <table className="planning-table sequence-table">
               <thead>
                 <tr>
                   <th>Severity</th>
-                  <th>OGV</th>
+                  <th><Abbr term="OGV">OGV</Abbr></th>
                   <th>Hatch/L</th>
                   <th>Grade</th>
-                  <th>Req MT</th>
+                  <th><Abbr term="Req">Req</Abbr> <Abbr term="MT">MT</Abbr></th>
                   <th>Remain</th>
                   <th>Blocking Reason</th>
                   <th>Jetty</th>
-                  <th>CTS</th>
+                  <th><Abbr term="CTS">CTS</Abbr></th>
                   <th>Chain Status</th>
                   <th>Window</th>
                 </tr>
               </thead>
               <tbody>
-                {steps.map((step) => (
+                {steps.map((step) => {
+                  const severity = cargoLayerSeverity(step);
+                  return (
                   <tr
                     className={selectedStep?.id === step.id ? "selected-row" : ""}
                     key={step.id}
                     onClick={() => setSelectedStepId(step.id)}
                   >
                     <td>
-                      <span className={`status-chip ${cargoLayerSeverity(step)}`}>
-                        {cargoLayerSeverity(step)}
+                      <span className={`status-chip ${severity}`}>
+                        {severity}
                       </span>
                     </td>
                     <td><strong>{step.vessel_name}</strong></td>
@@ -192,7 +215,8 @@ export function CoalGradeSequencePage({
                       </span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -203,9 +227,7 @@ export function CoalGradeSequencePage({
             <div>
               <SvgIcon name="rule" />
               <strong>
-                {selectedStep && cargoLayerNeedsRecovery(selectedStep)
-                  ? "Sequence review"
-                  : "Layer clear"}
+                {selectedNeedsRecovery ? "Sequence review" : "Layer clear"}
               </strong>
             </div>
             <span>Layer status and operator guidance</span>
@@ -233,15 +255,17 @@ export function CoalGradeSequencePage({
                   <dd>{selectedStep.planned_jetty?.code ?? "Unassigned"}</dd>
                 </div>
                 <div>
-                  <dt>CTS</dt>
+                  <dt><Abbr term="CTS">CTS</Abbr></dt>
                   <dd>{selectedStep.planned_cts?.code ?? "Unassigned"}</dd>
                 </div>
               </dl>
               <section className="recovery-box">
                 <strong>
-                  {cargoLayerNeedsRecovery(selectedStep) ? "Recommended recovery" : "Layer status"}
+                  {selectedNeedsRecovery ? "Recommended recovery" : "Layer status"}
                 </strong>
-                <p>{cargoLayerRecoveryMessage(selectedStep)}</p>
+                <p>
+                  {cargoLayerRecoveryMessage(selectedStep)}
+                </p>
               </section>
             </div>
           ) : null}
@@ -252,13 +276,16 @@ export function CoalGradeSequencePage({
         <div className="grid-header">
           <div>
             <SvgIcon name="account-tree" />
-            <strong>Focus view · {selectedStep?.vessel_name ?? "No OGV selected"}</strong>
+            <strong>Focus view · {selectedStep?.vessel_name ?? <AbbrText text="No OGV selected" />}</strong>
           </div>
           <span>Sequence-strip parity with hardened frontend reference</span>
         </div>
         <ol className="sequence-strip">
           {selectedVoyageSteps.map((step) => (
-            <li className={cargoLayerSeverity(step)} key={step.id}>
+            <li
+              className={cargoLayerSeverity(step)}
+              key={step.id}
+            >
               <span>{step.required_sequence_no}</span>
               <strong>H{step.hatch_no}/L{step.layer_no}</strong>
               <em>{step.coal_grade.code}</em>

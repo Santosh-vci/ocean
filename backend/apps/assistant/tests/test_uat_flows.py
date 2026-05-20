@@ -120,9 +120,21 @@ def test_uat_blocking_conflict_recovery_path():
     assert top_action_id(route="/simulation/workspace", scenario_ready_to_run_count=1) == (
         "RUN_SIMULATION"
     )
+    assert top_action_id(
+        route="/simulation/workspace",
+        blocking_conflict_count=1,
+        open_scenario_count=1,
+        scenario_ready_to_run_count=1,
+    ) == "RUN_SIMULATION"
     assert top_action_id(route="/simulation/workspace", promotable_scenario_count=1) == (
         "PROMOTE_SCENARIO"
     )
+    assert top_action_id(
+        route="/simulation/workspace",
+        blocking_conflict_count=1,
+        open_scenario_count=1,
+        promotable_scenario_count=1,
+    ) == "PROMOTE_SCENARIO"
     assert top_action_id(route="/schedule/published-plan") == "SUBMIT_APPROVAL"
 
 

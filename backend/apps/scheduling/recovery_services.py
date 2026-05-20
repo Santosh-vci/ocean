@@ -363,10 +363,10 @@ def materialize_recommendation_as_scenario(
         )
         if recommendation.optimizer_run.status != OptimizerRun.Status.SUCCEEDED:
             raise ValidationError(
-                "Only recommendations from a successful optimizer run can be materialized."
+                "Only recommendations from a successful optimizer run can be tested as scenarios."
             )
         if recommendation.status == RecoveryRecommendation.Status.DISMISSED:
-            raise ValidationError("Dismissed recommendations cannot be materialized.")
+            raise ValidationError("Dismissed recommendations cannot be tested as scenarios.")
 
         if recommendation.scenario_id:
             scenario = recommendation.scenario
@@ -428,7 +428,7 @@ def materialize_recommendation_as_scenario(
 
         if not materialized_assumptions:
             raise ValidationError(
-                "Recommendation has no materializable action for the scenario engine."
+                "Recommendation has no action that can be tested by the scenario engine."
             )
 
         scenario.metadata = {
@@ -2019,11 +2019,11 @@ def explain_recommendation(
         _explanation_node(
             kind="next_step",
             label="Governed next step",
-            value="Create scenario before plan change",
+            value="Test as scenario before plan change",
             severity="info",
             detail=(
-                "This recommendation is advisory. It must be materialized as a scenario "
-                "and promoted through approval before publication."
+                "This recommendation is advisory. Create a governed scenario and promote "
+                "it through approval before publication."
             ),
             evidence={"strategy": strategy},
         ),
@@ -2127,16 +2127,16 @@ def _risk_profile(
 
     if not hard_constraints_passed or score < 45:
         level = RecoveryRecommendation.RiskLevel.HIGH
-        label = "High risk - planner review required"
+        label = "High option risk - planner review required"
     elif resource_conflicts or missed_windows > 1 or ogv_completion_risk_minutes:
         level = RecoveryRecommendation.RiskLevel.HIGH
-        label = "High risk - constraint exposure"
+        label = "High option risk - constraint exposure"
     elif missed_windows or delay_minutes >= 90 or score < 70:
         level = RecoveryRecommendation.RiskLevel.MEDIUM
-        label = "Medium risk - operational coordination required"
+        label = "Medium option risk - operational coordination required"
     else:
         level = RecoveryRecommendation.RiskLevel.LOW
-        label = "Low risk - candidate feasible"
+        label = "Low option risk - candidate feasible"
 
     if not reasons:
         reasons.append("No hard constraint exposure detected.")

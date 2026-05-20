@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 
+import { Abbr, AbbrText } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -17,6 +18,7 @@ import {
   type OperationalExceptionRecord,
   shortOperationalLabel,
 } from "../lib/operations";
+import { activePlanConflicts } from "../lib/planStatus";
 import type {
   ApprovalRequestRecord,
   ConflictRecord,
@@ -144,6 +146,13 @@ function statusTone(status: string | undefined, blocking = false) {
 
 function short(value: string | null | undefined) {
   return value ? value.replaceAll("_", " ").toUpperCase() : "—";
+}
+
+function optionRiskSummary(value: string) {
+  return value.replace(
+    /\b(low|medium|high|critical)\s+risk\b/gi,
+    (_match, level: string) => `${level} option risk`,
+  );
 }
 
 function dt(value: string | null | undefined) {
@@ -457,7 +466,7 @@ export function ExceptionCenterPage({
   operationCandidates = EMPTY_OPERATION_CANDIDATES,
   confirmedOperationalEvents = EMPTY_CONFIRMED_OPERATIONAL_EVENTS,
 }: RecoveryPageProps) {
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const overrides = overview?.overrideRequests ?? EMPTY_OVERRIDES;
   const trackingAlerts = overview?.trackingAlerts ?? EMPTY_TRACKING_ALERTS;
@@ -560,7 +569,7 @@ export function ExceptionCenterPage({
         objectType={objectType}
         onNavigate={onAssistantNavigate}
       />
-    ) : <span>{label}</span>
+    ) : <span><AbbrText text={label} /></span>
   );
 
   return (
@@ -673,7 +682,7 @@ export function ExceptionCenterPage({
             <span>Operations ({operationalExceptions.length})</span>
           </section>
           <section>
-            <h2>OGV focus</h2>
+            <h2><Abbr term="OGV">OGV</Abbr> focus</h2>
             {trips.slice(0, 4).map((trip) => (
               <button
                 disabled={!conflicts.some((conflict) => conflict.trip === trip.id)}
@@ -699,8 +708,8 @@ export function ExceptionCenterPage({
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
-                  <th>Severity</th><th>Raised</th><th>ID</th><th>Type</th>
-                  <th>Affected OGV</th><th>Resource</th><th>Impact</th><th>Status</th><th>Next</th>
+                  <th>Severity</th><th>Raised</th><th><Abbr term="ID">ID</Abbr></th><th>Type</th>
+                  <th>Affected <Abbr term="OGV">OGV</Abbr></th><th>Resource</th><th>Impact</th><th>Status</th><th>Next</th>
                 </tr>
               </thead>
               <tbody>
@@ -743,7 +752,7 @@ export function ExceptionCenterPage({
                     <td>{alert.asset_code}</td>
                     <td>
                       {typeof alert.evidence.varianceMinutes === "number"
-                        ? `${alert.evidence.varianceMinutes > 0 ? "+" : ""}${alert.evidence.varianceMinutes}m ETA`
+                        ? <>{`${alert.evidence.varianceMinutes > 0 ? "+" : ""}${alert.evidence.varianceMinutes}m `}<Abbr term="ETA">ETA</Abbr></>
                         : "Observed candidate"}
                     </td>
                     <td>{short(alert.status)}</td>
@@ -836,7 +845,7 @@ export function ExceptionCenterPage({
               <h2>{selectedConflict.code}</h2>
               <p>{selectedConflict.message}</p>
               <dl>
-                <div><dt>OGV delay</dt><dd>{selectedConflict.is_blocking ? "+5h 12m" : "0h"}</dd></div>
+                <div><dt><Abbr term="OGV">OGV</Abbr> delay</dt><dd>{selectedConflict.is_blocking ? "+5h 12m" : "0h"}</dd></div>
                 <div><dt>Trip</dt><dd>{selectedTrip?.trip_id ?? "Network"}</dd></div>
                 <div><dt>Owner</dt><dd>{selectedTrip?.assignment?.owner_organization?.name ?? "Control tower"}</dd></div>
               </dl>
@@ -850,8 +859,8 @@ export function ExceptionCenterPage({
               <span className={`status-chip ${statusTone(selectedOperationalException.severity)}`}>
                 {selectedOperationalException.source === "confirmed_event" ? "CONFIRMED" : "CANDIDATE"} {short(selectedOperationalException.severity)}
               </span>
-              <h2>{selectedOperationalException.title}</h2>
-              <p>{selectedOperationalException.message}</p>
+              <h2><AbbrText text={selectedOperationalException.title} /></h2>
+              <p><AbbrText text={selectedOperationalException.message} /></p>
               <dl>
                 <div><dt>Source</dt><dd>{selectedOperationalException.source === "confirmed_event" ? "Confirmed operational event" : "Pending event candidate"}</dd></div>
                 <div><dt>Event</dt><dd>{shortOperationalLabel(selectedOperationalException.eventKind)}</dd></div>
@@ -870,8 +879,8 @@ export function ExceptionCenterPage({
               <span className={`status-chip ${statusTone(selectedTrackingAlert.severity)}`}>
                 OBSERVED {short(selectedTrackingAlert.severity)}
               </span>
-              <h2>{short(selectedTrackingAlert.alert_type)}</h2>
-              <p>{selectedTrackingAlert.message}</p>
+              <h2><AbbrText text={short(selectedTrackingAlert.alert_type)} /></h2>
+              <p><AbbrText text={selectedTrackingAlert.message} /></p>
               <dl>
                 <div><dt>Source</dt><dd>{selectedTrackingAlert.source_id}</dd></div>
                 <div><dt>Candidate status</dt><dd>{short(selectedTrackingAlert.status)}</dd></div>
@@ -879,7 +888,7 @@ export function ExceptionCenterPage({
                 <div><dt>Trip</dt><dd>{selectedTrackingAlert.trip_ref ?? "Unlinked"}</dd></div>
                 <div><dt>Planned event</dt><dd>{short(selectedTrackingAlert.schedule_event_type)}</dd></div>
                 <div><dt>Planned at</dt><dd><GridDate value={selectedTrackingAlert.schedule_event_planned_at ?? ""} /></dd></div>
-                <div><dt>Observed ETA</dt><dd>{dt(String(selectedTrackingAlert.evidence.observedEta ?? ""))}</dd></div>
+                <div><dt>Observed <Abbr term="ETA">ETA</Abbr></dt><dd>{dt(String(selectedTrackingAlert.evidence.observedEta ?? ""))}</dd></div>
                 <div><dt>Variance</dt><dd>{valueNum(selectedTrackingAlert.evidence.varianceMinutes, 0)}m</dd></div>
                 <div><dt>Source ping</dt><dd>{selectedTrackingAlert.source_ping_ref ?? "No ping"}</dd></div>
               </dl>
@@ -962,7 +971,7 @@ export function ExceptionCenterPage({
             <Fragment key={node.id}>
               {index ? <span className="chain-line" /> : null}
               <span className={`chain-node ${node.status === "critical" ? "critical" : node.status === "warning" || node.status === "pending" ? "pending" : ""}`}>
-                <strong>{node.label}</strong>
+                <strong><AbbrText text={node.label} /></strong>
                 <em>{nodeValue(node)}</em>
                 <small>{nodeDetail(node)}</small>
               </span>
@@ -1041,6 +1050,7 @@ export function RecommendationConsolePage({
     recommendation?.metadata.scoreSummary ?? evaluation?.metadata.scoreSummary,
     "Score explanation unavailable.",
   );
+  const optionRiskExplanation = optionRiskSummary(scoreSummary);
   const selectedRecommendationAssistant = useNextActions("/recovery/recommendations", {
     enabled: Boolean(recommendation?.id),
     objectType: "recovery_recommendation",
@@ -1071,11 +1081,11 @@ export function RecommendationConsolePage({
             actionId="MATERIALIZE_RECOVERY_RECOMMENDATION"
             actions={assistantActions}
             fallback={!canEdit
-              ? "Your role cannot create scenarios from recommendations."
+              ? "Your role cannot test recommendations as scenarios."
               : materialized
                 ? "This recommendation is already a governed scenario."
                 : recommendation?.status === "dismissed"
-                  ? "Dismissed recommendations cannot be materialized."
+                  ? "Dismissed recommendations cannot be tested as scenarios."
                   : ""}
           >
             <button
@@ -1088,10 +1098,10 @@ export function RecommendationConsolePage({
               onClick={() => {
                 if (recommendation) onMaterializeRecommendation?.(recommendation.id);
               }}
-              title={!canEdit ? "Your role cannot create scenarios from recommendations." : undefined}
+              title={!canEdit ? "Your role cannot test recommendations as scenarios." : undefined}
               type="button"
             >
-              Create scenario from recommendation
+              Test as scenario
             </button>
           </DisabledReasonTooltip>
         </div>
@@ -1117,9 +1127,9 @@ export function RecommendationConsolePage({
         <div><span>Latest run</span><strong>{selectedRun?.run_id ?? "NONE"}</strong></div>
         <div><span>Candidates</span><strong>{recommendations.length}</strong></div>
         <div><span>Best score</span><strong>{bestScore.toFixed(1)}</strong></div>
-        <div><span>Low risk</span><strong className="success-text">{riskCounts.low ?? 0}</strong></div>
-        <div><span>High / critical</span><strong className={(riskCounts.high ?? 0) + (riskCounts.critical ?? 0) ? "critical-text" : "success-text"}>{(riskCounts.high ?? 0) + (riskCounts.critical ?? 0)}</strong></div>
-        <div><span>Materialized</span><strong className={recommendations.some((item) => item.scenario_ref) ? "pending-text" : ""}>{recommendations.filter((item) => item.scenario_ref).length}</strong></div>
+        <div><span>Low option risk</span><strong className="success-text">{riskCounts.low ?? 0}</strong></div>
+        <div><span>High option risk</span><strong className={(riskCounts.high ?? 0) + (riskCounts.critical ?? 0) ? "critical-text" : "success-text"}>{(riskCounts.high ?? 0) + (riskCounts.critical ?? 0)}</strong></div>
+        <div><span>Scenarios created</span><strong className={recommendations.some((item) => item.scenario_ref) ? "pending-text" : ""}>{recommendations.filter((item) => item.scenario_ref).length}</strong></div>
       </div>
 
       <div className="recommendation-layout">
@@ -1161,14 +1171,14 @@ export function RecommendationConsolePage({
         <section className="board-surface recommendation-grid-panel">
           <div className="grid-header">
             <div><SvgIcon name="rule" /><strong>Ranked recovery options</strong></div>
-            <span>Rank · score · risk · delay · missed windows · resource conflicts</span>
+            <span>Rank - score - option risk - delay - missed windows - resource conflicts</span>
           </div>
           <div className="grid-scroll">
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
                   <th>Rank</th><th>Recommendation</th><th>Strategy</th><th>Score</th>
-                  <th>Risk</th><th>Delay</th><th>Windows</th><th>Conflicts</th><th>Status</th><th>Hint</th>
+                  <th>Option risk</th><th>Delay</th><th>Windows</th><th>Conflicts</th><th>Status</th><th>Hint</th>
                 </tr>
               </thead>
               <tbody>
@@ -1215,7 +1225,7 @@ export function RecommendationConsolePage({
           {recommendation ? (
             <div className="inspector-body">
               <span className={`status-chip ${statusTone(recommendation.risk_level)}`}>
-                {short(recommendation.risk_level)}
+                {short(recommendation.risk_level)} option risk
               </span>
               <h2>{strategyLabel(recommendation)}</h2>
               <p>{recommendation.summary}</p>
@@ -1233,11 +1243,11 @@ export function RecommendationConsolePage({
                 <div><dt>Resource conflicts</dt><dd>{evaluation?.resource_conflicts ?? 0}</dd></div>
                 <div><dt>Changed resources</dt><dd>{changedResourceCount}</dd></div>
                 <div><dt>Hard constraints</dt><dd>{evaluation?.hard_constraints_passed ? "PASSED" : "REVIEW REQUIRED"}</dd></div>
-                <div><dt>Scenario</dt><dd>{recommendation.scenario_ref ?? "Not materialized"}</dd></div>
+                <div><dt>Scenario</dt><dd>{recommendation.scenario_ref ?? "Not created"}</dd></div>
               </dl>
               <section className="recovery-box">
                 <strong>Why it ranks here</strong>
-                <p>{scoreSummary}</p>
+                <p>{optionRiskExplanation}</p>
               </section>
               {materialized ? (
                 <button onClick={() => onNavigate?.("/simulation/workspace")} type="button">
@@ -1293,7 +1303,7 @@ export function RecommendationConsolePage({
                 className={`recommendation-explanation-node ${statusTone(node.severity)}`}
                 key={node.id}
               >
-                <strong>{node.label}</strong>
+                <strong><AbbrText text={node.label} /></strong>
                 <em>{node.value}</em>
                 <small>{node.detail}</small>
               </span>
@@ -1751,7 +1761,7 @@ export function SimulationWorkspacePage({
 
             {assumptionKind === "rate_change" ? (
               <label>
-                Rate TPH
+                Rate <Abbr term="TPH">TPH</Abbr>
                 <input
                   min="1"
                   onChange={(event) => setRateTph(event.target.value)}
@@ -1796,7 +1806,7 @@ export function SimulationWorkspacePage({
             {assumptionKind === "ogv_eta_change" ? (
               <>
                 <label>
-                  OGV
+                  <Abbr term="OGV">OGV</Abbr>
                   <select onChange={(event) => setTripId(event.target.value)} value={selectedTripId}>
                     {trips.map((trip) => (
                       <option key={trip.id} value={trip.id}>{trip.voyage.vessel_name}</option>
@@ -1804,7 +1814,7 @@ export function SimulationWorkspacePage({
                   </select>
                 </label>
                 <label>
-                  New ETA
+                  New <Abbr term="ETA">ETA</Abbr>
                   <input
                     onChange={(event) => setOgvEta(event.target.value)}
                     type="datetime-local"
@@ -1882,16 +1892,16 @@ export function SimulationWorkspacePage({
           <section className="scenario-summary-strip">
             <span><strong>{money(demurrageDelta)}</strong><em>Demurrage delta</em></span>
             <span><strong>{signedMinutes(maxDelay)}</strong><em>Max trip delta</em></span>
-            <span><strong>{utilizationDelta.toFixed(2)}%</strong><em>Avg utilization delta</em></span>
+            <span><strong>{utilizationDelta.toFixed(2)}%</strong><em><Abbr term="Avg">Avg</Abbr> utilization delta</em></span>
             <span><strong>{constraints.length}</strong><em>Constraint evaluations</em></span>
           </section>
           <div className="grid-scroll scenario-comparison-grid">
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
-                  <th>#</th><th>OGV / Grade-Hatch</th><th>Chain</th>
-                  <th>Baseline Start</th><th>Sim Start</th><th>Baseline Completion</th>
-                  <th>Sim Completion</th><th>Delta</th>
+                  <th>#</th><th><Abbr term="OGV">OGV</Abbr> / Grade-Hatch</th><th>Chain</th>
+                  <th>Baseline Start</th><th><Abbr term="Sim">Sim</Abbr> Start</th><th>Baseline Completion</th>
+                  <th><Abbr term="Sim">Sim</Abbr> Completion</th><th>Delta</th>
                 </tr>
               </thead>
               <tbody>
@@ -1996,7 +2006,7 @@ export function SimulationWorkspacePage({
 
             <div className="scenario-result-panel">
               <div className="grid-header">
-                <div><SvgIcon name="schedule" /><strong>OGV completion & demurrage</strong></div>
+                <div><SvgIcon name="schedule" /><strong><Abbr term="OGV">OGV</Abbr> completion & demurrage</strong></div>
                 <span>Completion risk by voyage</span>
               </div>
               <div className="scenario-mini-list">
@@ -2007,7 +2017,7 @@ export function SimulationWorkspacePage({
                     <small className={`${constraintTone(item.risk_status)}-text`}>{short(item.risk_status)}</small>
                   </span>
                 ))}
-                {!ogvProjections.length ? <span>No OGV projections yet</span> : null}
+                {!ogvProjections.length ? <span><AbbrText text="No OGV projections yet" /></span> : null}
               </div>
             </div>
 
@@ -2096,7 +2106,7 @@ export function SimulationWorkspacePage({
                   {selectedImpactNodes.map((node, index) => (
                     <Fragment key={node.id}>
                       <span className={`chain-node ${constraintTone(node.status)}`}>
-                        <strong>{node.label}</strong>
+                        <strong><AbbrText text={node.label} /></strong>
                         <em>{node.value}</em>
                         <small>{node.detail}</small>
                       </span>
@@ -2164,7 +2174,7 @@ export function ApprovalsPublishingPage({
 }: RecoveryPageProps) {
   const requests = overview?.approvalRequests ?? EMPTY_APPROVALS;
   const snapshots = overview?.publishedSnapshots ?? [];
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const request = requests[0];
   const published = request?.status === "published" || overview?.activePlanVersion?.status === "published";
   const readyToPublish =
@@ -2234,8 +2244,8 @@ export function ApprovalsPublishingPage({
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
-                  <th>Status</th><th>Raised</th><th>ID</th><th>Source</th>
-                  <th>Requested change</th><th>Impact</th><th>Req. approvals</th>
+                  <th>Status</th><th>Raised</th><th><Abbr term="ID">ID</Abbr></th><th>Source</th>
+                  <th>Requested change</th><th>Impact</th><th><Abbr term="Req">Req</Abbr>. approvals</th>
                 </tr>
               </thead>
               <tbody>

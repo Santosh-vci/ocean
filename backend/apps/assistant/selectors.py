@@ -141,15 +141,22 @@ def select_active_plan_version(user: AbstractBaseUser | None = None) -> PlanVers
     return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at").first()
 
 
-def select_planning_counts(user: AbstractBaseUser | None = None) -> dict[str, int]:
+def select_planning_counts(
+    user: AbstractBaseUser | None = None,
+    active_plan_version: PlanVersion | None = None,
+) -> dict[str, int]:
+    local_issue_layer_ids = set(
+        CargoLayerStep.objects.filter(
+            Q(sequence_violation=True)
+            | Q(status__in=[CargoLayerStep.Status.BLOCKED, CargoLayerStep.Status.QC_HOLD])
+        ).values_list("id", flat=True)
+    )
+
     return {
         "demand_count": OGVVoyage.objects.exclude(
             status=OGVVoyage.Status.COMPLETED,
         ).count(),
-        "cargo_layer_issue_count": CargoLayerStep.objects.filter(
-            Q(sequence_violation=True)
-            | Q(status__in=[CargoLayerStep.Status.BLOCKED, CargoLayerStep.Status.QC_HOLD])
-        ).count(),
+        "cargo_layer_issue_count": len(local_issue_layer_ids),
         "tide_window_count": TideWindow.objects.filter(is_active=True).count(),
         "bridge_window_count": BridgeWindow.objects.filter(is_active=True).count(),
         "constraint_blocker_count": NavigationConstraintCheck.objects.filter(
@@ -261,12 +268,17 @@ def select_event_candidate_counts(user: AbstractBaseUser | None = None) -> dict[
 
 
 def select_tracking_alert_counts(user: AbstractBaseUser | None = None) -> dict[str, int]:
-    open_alerts = TrackingAlert.objects.filter(status=TrackingAlert.Status.OPEN)
+    active_alerts = TrackingAlert.objects.filter(
+        status__in=[
+            TrackingAlert.Status.OPEN,
+            TrackingAlert.Status.ACKNOWLEDGED,
+        ],
+    )
     return {
-        "stale_signal_alert_count": open_alerts.filter(
+        "stale_signal_alert_count": active_alerts.filter(
             alert_type=TrackingAlert.AlertType.STALE_SIGNAL,
         ).count(),
-        "open_tracking_alert_count": open_alerts.count(),
+        "open_tracking_alert_count": active_alerts.count(),
     }
 
 
@@ -520,7 +532,7 @@ def build_assistant_context(
     permissions = select_user_permissions(user)
     role_codes = select_user_role_codes(user)
     active_plan_version = select_active_plan_version(user)
-    planning_counts = select_planning_counts(user)
+    planning_counts = select_planning_counts(user, active_plan_version)
     conflict_counts = select_conflict_counts(user, active_plan_version)
     approval_status = select_approval_status(user, active_plan_version, role_codes)
     export_status = select_export_status(user, active_plan_version)

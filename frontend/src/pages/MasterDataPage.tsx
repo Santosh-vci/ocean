@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 
+import { AbbrText } from "../components/Abbreviation";
 import { SvgIcon } from "../components/SvgIcon";
 import {
   DisabledReasonTooltip,
@@ -333,7 +334,7 @@ export function MasterDataPage({
           </strong>
         </div>
         <div>
-          <span>Missing GPS</span>
+          <span><AbbrText text="Missing GPS" /></span>
           <strong className={overview.validation.missingGpsDevices ? "warning-text" : ""}>
             {overview.validation.missingGpsDevices}
           </strong>
@@ -363,7 +364,7 @@ export function MasterDataPage({
                     type="button"
                   >
                     <SvgIcon name={catalog.icon} />
-                    <span>{catalog.label}</span>
+                    <span><AbbrText text={catalog.label} /></span>
                     <em>{count}</em>
                   </button>
                 );
@@ -373,13 +374,13 @@ export function MasterDataPage({
         </aside>
 
         <section className="plain-section board-surface master-grid-panel">
-          <h2>{activeCatalog.module} / {activeCatalog.label}</h2>
+          <h2>{activeCatalog.module} / <AbbrText text={activeCatalog.label} /></h2>
           <div className="master-grid-scroll">
             <table className="master-table">
               <thead>
                 <tr>
                   {activeCatalog.columns.map((column) => (
-                    <th key={column}>{column}</th>
+                    <th key={column}><AbbrText text={column} /></th>
                   ))}
                   <th>Action</th>
                 </tr>
@@ -433,7 +434,7 @@ export function MasterDataPage({
         {selectedRecord ? (
           <aside className="detail-drawer master-drawer">
             <div>
-              <span>{activeCatalog.label} record</span>
+              <span><AbbrText text={`${activeCatalog.label} record`} /></span>
               <strong>{selectedRecord.code}</strong>
               <small>{selectedRecord.name}</small>
             </div>
@@ -506,8 +507,8 @@ export function MasterDataPage({
               <div className="impact-preview">
                 <strong>Change impact preview</strong>
                 <p>
-                  Publishing this configuration may change schedule feasibility once OGV demand and
-                  availability boards are active.
+                  Publishing this configuration may change schedule feasibility once{" "}
+                  <AbbrText text="OGV" /> demand and availability boards are active.
                 </p>
               </div>
             </section>

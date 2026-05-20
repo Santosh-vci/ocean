@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 
 import type { NavModule } from "../lib/navigation";
+import { AbbrText, expandAbbreviationsText } from "./Abbreviation";
 import { SvgIcon } from "./SvgIcon";
 
 type SidebarProps = {
@@ -80,13 +81,13 @@ export function Sidebar({
                 aria-expanded={isOpen}
                 className="nav-module-trigger"
                 onClick={() => toggleModule(module.id)}
-                title={collapsed ? module.label : undefined}
+                title={collapsed ? expandAbbreviationsText(module.label) : undefined}
                 type="button"
               >
                 <SvgIcon name={module.icon} />
                 <span className="module-copy">
-                  <strong>{module.label}</strong>
-                  <em>{module.eyebrow}</em>
+                  <strong><AbbrText text={module.label} /></strong>
+                  <em><AbbrText text={module.eyebrow} /></em>
                 </span>
                 <SvgIcon name="chevron-down" className={isOpen ? "svg-icon open" : "svg-icon"} />
               </button>
@@ -114,7 +115,7 @@ export function Sidebar({
                         type="button"
                       >
                         <SvgIcon name={item.icon} />
-                        <span>{item.label}</span>
+                        <span><AbbrText text={item.label} /></span>
                       </button>
                     );
                   })}

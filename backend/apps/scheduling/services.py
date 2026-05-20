@@ -2992,6 +2992,13 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
 
 
 def _clear_generated_state(plan_version: PlanVersion) -> None:
+    trip_ids = list(
+        Trip.objects.filter(plan_version=plan_version).values_list("id", flat=True)
+    )
+    if trip_ids:
+        ScenarioEventProjection.objects.filter(trip_id__in=trip_ids).delete()
+        ScenarioConstraintEvaluation.objects.filter(trip_id__in=trip_ids).delete()
+        ScenarioTripProjection.objects.filter(trip_id__in=trip_ids).delete()
     Conflict.objects.filter(plan_version=plan_version).delete()
     Trip.objects.filter(plan_version=plan_version).delete()
 
@@ -3091,6 +3098,32 @@ def _navigation_checks(voyage: OGVVoyage):
         Q(status=NavigationConstraintCheck.Status.MISSED)
         | Q(status=NavigationConstraintCheck.Status.MARGINAL)
     )
+
+
+def _navigation_check_applies_to_trip(
+    check: NavigationConstraintCheck,
+    *,
+    trip: Trip,
+    assignment: Assignment,
+) -> bool:
+    if check.asset_code:
+        assigned_codes = {
+            assignment.tug.code if assignment.tug else "",
+            assignment.barge.code if assignment.barge else "",
+            assignment.cts.code if assignment.cts else "",
+            trip.cargo_layer_step.planned_barge.code
+            if trip.cargo_layer_step and trip.cargo_layer_step.planned_barge
+            else "",
+        }
+        if check.asset_code not in assigned_codes:
+            return False
+
+    eta_gate = check.eta_gate
+    windows = [
+        (trip.planned_start, trip.planned_end),
+        (assignment.planned_departure, assignment.planned_arrival),
+    ]
+    return any(start <= eta_gate <= end for start, end in windows if start and end)
 
 
 def _create_events(*, trip: Trip, assignment: Assignment) -> None:
@@ -3247,6 +3280,12 @@ def _validate_trip(*, plan_version: PlanVersion, trip: Trip, assignment: Assignm
                 message=f"{assignment.tug.code} is incompatible with {assignment.barge.code}.",
             )
     for check in _navigation_checks(trip.voyage):
+        if not _navigation_check_applies_to_trip(
+            check,
+            trip=trip,
+            assignment=assignment,
+        ):
+            continue
         if check.constraint_type == NavigationConstraintCheck.ConstraintType.TIDE:
             code = "TIDE_WINDOW_MISSED"
         else:

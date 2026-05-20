@@ -1,21 +1,13 @@
-﻿{
-  "blockingConflictCount": 4,
+{
+  "blockingConflictCount": 2,
   "cargoLayerCount": 6,
-  "conflictCount": 6,
+  "conflictCount": 3,
   "conflicts": [
     {
       "code": "BRIDGE_WINDOW_MISSED",
       "is_blocking": true,
       "message": "Bridge gate missed; use recovery loop to resequence or shift window.",
-      "object_id": "489",
-      "object_type": "bridge",
-      "severity": "critical"
-    },
-    {
-      "code": "BRIDGE_WINDOW_MISSED",
-      "is_blocking": true,
-      "message": "Bridge gate missed; use recovery loop to resequence or shift window.",
-      "object_id": "489",
+      "object_id": "620",
       "object_type": "bridge",
       "severity": "critical"
     },
@@ -23,15 +15,7 @@
       "code": "TIDE_WINDOW_MISSED",
       "is_blocking": true,
       "message": "Missed Rantau tide gate; generate recovery options before dispatch.",
-      "object_id": "488",
-      "object_type": "tide",
-      "severity": "critical"
-    },
-    {
-      "code": "TIDE_WINDOW_MISSED",
-      "is_blocking": true,
-      "message": "Missed Rantau tide gate; generate recovery options before dispatch.",
-      "object_id": "488",
+      "object_id": "619",
       "object_type": "tide",
       "severity": "critical"
     },
@@ -39,15 +23,7 @@
       "code": "TIDE_WINDOW_MISSED",
       "is_blocking": false,
       "message": "Marginal tide margin; monitor after recovery candidate is simulated.",
-      "object_id": "490",
-      "object_type": "tide",
-      "severity": "warning"
-    },
-    {
-      "code": "TIDE_WINDOW_MISSED",
-      "is_blocking": false,
-      "message": "Marginal tide margin; monitor after recovery candidate is simulated.",
-      "object_id": "490",
+      "object_id": "621",
       "object_type": "tide",
       "severity": "warning"
     }
@@ -55,8 +31,8 @@
   "missedCheckCount": 2,
   "navigationCheckCount": 4,
   "planStatus": "generated",
-  "planVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
-  "planVersionId": 121,
+  "planVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+  "planVersionId": 148,
   "tripCount": 6,
   "validationStatus": "blocked",
   "voyageCount": 3

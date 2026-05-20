@@ -1,6 +1,6 @@
 # Assist SUPER Mode Recovery Practice Guide
 
-Date: 2026-05-19  
+Date: 2026-05-20  
 Workspace: `F:\ocean`  
 Mode tested: `SUPER`  
 User tested: `admin@coalflow.local`
@@ -16,20 +16,26 @@ The practice flow starts with:
 | OGV demands | 3 |
 | Cargo layers | 6 |
 | Missed tide or bridge checks | 2 |
-| Open blockers | 4 critical / 2 warning |
-| Active plan | `PLAN-RECOVERY-PRACTICE-20260519 V1` |
+| Open blockers | 2 critical blocking / 1 warning monitor |
+| Active plan | `PLAN-RECOVERY-PRACTICE-20260520 V1` |
 | Plan state | `generated / blocked` |
 
 The practice flow ends with:
 
 | Area | Ending screen result |
 |---|---:|
-| Active plan | `PLAN-RECOVERY-PRACTICE-20260519 V2` |
+| Active plan | `PLAN-RECOVERY-PRACTICE-20260520 V2` |
 | Plan state | `published / feasible` |
 | Open blockers | 0 |
 | Missed tide or bridge checks | 0 |
 | Approvals | 2 of 2 complete |
-| Export | Printable schedule generated |
+| Export | Printable schedule handoff generated |
+
+Last revalidated evidence:
+
+- Seed summary: `docs/evidence/assistant_recovery_flow/recovery_practice_seed_summary.json`
+- Final state: `docs/evidence/assistant_recovery_flow/recovery_practice_final_state.json`
+- End state checks: published `true`, feasible `true`, no open blockers `true`, no missed windows `true`, printable export generated `true`
 
 ## How To Read Assist
 
@@ -85,7 +91,7 @@ Do this:
 docker compose exec -T api python manage.py seed_assistant_recovery_practice --skip-reset
 ```
 
-3. Refresh the app.
+3. Do not rely on a browser refresh. Click any app navigation item or click `Sync workspace` so the app rereads the DB-backed read models.
 4. Stay in `SUPER` mode.
 5. Go to `Network Situation`.
 
@@ -96,7 +102,7 @@ This creates the practice transaction data on top of the clean masters-only syst
 - multiple OGV demand rows,
 - cargo layers for those OGVs,
 - tide and bridge checks,
-- `PLAN-RECOVERY-PRACTICE-20260519 V1`,
+- `PLAN-RECOVERY-PRACTICE-20260520 V1`,
 - open blockers caused by missed tide or bridge windows.
 
 You should see:
@@ -104,7 +110,7 @@ You should see:
 - `Open Blockers` showing critical blockers.
 - `Assistant Action Inbox` showing `Open Exception Center`.
 - The top blue Assist banner showing `Open Exception Center`.
-- The active plan showing `PLAN-RECOVERY-PRACTICE-20260519 V1`.
+- The active plan showing `PLAN-RECOVERY-PRACTICE-20260520 V1`.
 - The plan still blocked, not published.
 
 ### C. Operator Practice Goal
@@ -127,7 +133,7 @@ The operator should now use the click-by-click flow below to:
 The practice is complete only when the operator can see:
 
 - plan state `published / feasible`,
-- active plan `PLAN-RECOVERY-PRACTICE-20260519 V2`,
+- active plan `PLAN-RECOVERY-PRACTICE-20260520 V2`,
 - open blockers `0`,
 - missed tide or bridge checks `0`,
 - printable schedule generated.
@@ -151,7 +157,7 @@ The screen is telling the operator that the plan has blockers and the right star
 
 You should see:
 
-- `Open Blockers` showing `4`.
+- `Open Blockers` showing `2` blocking conflicts.
 - `Assistant Action Inbox` showing `Open Exception Center`.
 - The active plan marked as a recovery practice plan.
 
@@ -249,20 +255,20 @@ The operator is asking the app to prepare recovery choices, compare them, and sh
 You should see:
 
 - `Ranked recovery options`.
-- Scores, risk, delay, missed windows, and resource conflict columns.
-- A button named `Create scenario from recommendation`.
+- Scores, option risk, delay, missed windows, and resource conflict columns.
+- A button named `Test as scenario`.
 
 Works: yes. `Generate recovery options` creates the recovery choices and opens the recommendation screen.
 
 ![Recommendation Console ranked options](screenshots/05_recommendation_console_ranked_options.png)
 
-### 6. Create A Scenario From The Recommendation
+### 6. Test The Recommendation As A Scenario
 
 Screen: `Simulation Workspace`
 
 Do this:
 
-1. Click `Create scenario from recommendation`.
+1. Click `Test as scenario`.
 2. Wait for `Simulation Workspace` to open.
 3. Confirm the selected recommendation is now available as a scenario.
 
@@ -277,7 +283,7 @@ You should see:
 - A visible `Run simulation` button.
 - A visible `Promote to proposed` button.
 
-Works: yes. `Create scenario from recommendation` opens the simulation workspace.
+Works: yes. `Test as scenario` opens the simulation workspace.
 
 ![Simulation workspace handoff](screenshots/06_simulation_workspace_handoff.png)
 
@@ -394,7 +400,7 @@ After fixing the windows, the operator must rebuild the plan so the plan uses th
 
 You should see:
 
-- `PLAN-RECOVERY-PRACTICE-20260519 V2`.
+- `PLAN-RECOVERY-PRACTICE-20260520 V2`.
 - Plan status showing feasible.
 - Open blockers showing `0`.
 - Assist moving the operator toward approval.
@@ -429,7 +435,7 @@ Works: yes. `Submit approval` sends the plan to the approval screen.
 
 ### 13. Submit Approval
 
-Screen: `Plan Approvals & Publishing`
+Screen: `Approvals & Publishing`
 
 Do this:
 
@@ -453,7 +459,7 @@ Works: yes. The first `Approve` click records the first approval.
 
 ### 14. Record The First Approval
 
-Screen: `Plan Approvals & Publishing`
+Screen: `Approvals & Publishing`
 
 Do this:
 
@@ -476,7 +482,7 @@ Works: yes. The second `Approve` click records the second approval.
 
 ### 15. Confirm Both Approvals Are Complete
 
-Screen: `Plan Approvals & Publishing`
+Screen: `Approvals & Publishing`
 
 Do this:
 
@@ -499,7 +505,7 @@ Works: yes. `Publish plan` publishes the approved `V2` plan.
 
 ### 16. Confirm The Recovery Plan Is Published
 
-Screen: `Plan Approvals & Publishing`
+Screen: `Approvals & Publishing`
 
 Do this:
 
@@ -540,7 +546,7 @@ You should see:
 - `Printable schedule`.
 - No generated export yet, or a place where export history will appear.
 
-Works: yes. `Printable schedule` generates the handoff file.
+Works: yes. `Printable schedule` generates the handoff file. The capture script clicks this visible command card instead of the off-screen header `Generate schedule` button.
 
 ![Published recovery plan ready for handoff](screenshots/17_published_recovery_plan_ready_for_handoff.png)
 
@@ -561,7 +567,7 @@ This is the end state. The operator has recovered the plan, cleared the blockers
 You should see:
 
 - A generated printable schedule.
-- `PLAN-RECOVERY-PRACTICE-20260519 V2`.
+- `PLAN-RECOVERY-PRACTICE-20260520 V2`.
 - Published and feasible plan state.
 - Open blockers at `0`.
 
@@ -577,19 +583,27 @@ Works: yes. The recovery practice flow is complete.
 | `OGV Demand & Laycan` | Left navigation | Opens the demand board |
 | `Tide & Bridge Window` | Left navigation | Opens tide and bridge constraints |
 | `Generate recovery options` | `Exception Center` | Opens `Recommendation Console` with ranked options |
-| `Create scenario from recommendation` | `Recommendation Console` | Opens `Simulation Workspace` |
+| `Test as scenario` | `Recommendation Console` | Opens `Simulation Workspace` |
 | `Run simulation` | `Simulation Workspace` | Runs the selected scenario |
 | `Promote to proposed` | `Simulation Workspace` | Promotes the scenario but still leaves blockers in this training case |
 | `Enter operating windows` | `Tide & Bridge Window` | Corrects the tide and bridge windows |
 | `Regenerate plan` | `Tug/Barge Assignment` | Creates feasible `V2` |
 | `Submit approval` | `Published Plan & Schedule` | Opens approval request |
-| `Approve` | `Plan Approvals & Publishing` | Records each required approval |
-| `Publish plan` | `Plan Approvals & Publishing` | Publishes `V2` |
+| `Approve` | `Approvals & Publishing` | Records each required approval |
+| `Publish plan` | `Approvals & Publishing` | Publishes `V2` |
 | `Printable schedule` | `Exports & Operational Handoff` | Generates the handoff export |
 
 No clicked button failed during this pass. The only expected stop is after `Promote to proposed`: the app correctly keeps the plan blocked until the operator fixes tide and bridge windows and regenerates the plan.
 
 ## Evidence Files
+
+The capture script is self-contained for this recovery practice pack. It resets the system to masters-only data, rebuilds the recovery practice case through Django models, captures all screens, writes the seed summary, and writes the final published-state JSON.
+
+Run it with:
+
+```powershell
+node docs/evidence/assistant_recovery_flow/capture_recovery_flow.mjs
+```
 
 Capture log:
 

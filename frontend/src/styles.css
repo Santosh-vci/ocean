@@ -762,6 +762,12 @@ tbody tr:hover,
   text-align: left;
 }
 
+.topbar-assistant .next-action-pill {
+  border-radius: 0.25rem;
+  background: var(--surface-high);
+  color: var(--on-surface);
+}
+
 .next-action-pill:hover:not(:disabled) {
   border-color: rgba(137, 206, 255, 0.62);
 }
@@ -796,11 +802,31 @@ tbody tr:hover,
   color: var(--status-critical);
 }
 
+.topbar-assistant .next-action-pill.critical {
+  border-color: rgba(239, 68, 68, 0.44);
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.42), var(--surface-high) 46%);
+  color: #f8d1d1;
+}
+
+.topbar-assistant .next-action-pill.critical span {
+  color: #fca5a5;
+}
+
 .next-action-pill.warning,
 .assistant-recommendation-card.warning,
 .assistant-inbox-list button.warning {
   border-color: rgba(245, 158, 11, 0.5);
   color: var(--status-warning);
+}
+
+.topbar-assistant .next-action-pill.warning {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: linear-gradient(90deg, rgba(120, 53, 15, 0.42), var(--surface-high) 46%);
+  color: #f9dfa8;
+}
+
+.topbar-assistant .next-action-pill.warning span {
+  color: #fbbf24;
 }
 
 .next-action-pill.normal,
@@ -811,6 +837,18 @@ tbody tr:hover,
 .assistant-inbox-list button.info {
   border-color: rgba(137, 206, 255, 0.42);
   color: var(--primary);
+}
+
+.topbar-assistant .next-action-pill.normal,
+.topbar-assistant .next-action-pill.info {
+  border-color: rgba(125, 211, 252, 0.42);
+  background: linear-gradient(90deg, rgba(14, 116, 144, 0.28), var(--surface-high) 46%);
+  color: #bae6fd;
+}
+
+.topbar-assistant .next-action-pill.normal span,
+.topbar-assistant .next-action-pill.info span {
+  color: #7dd3fc;
 }
 
 .assistant-action-inbox {
@@ -1081,6 +1119,20 @@ tbody tr:hover,
   font-size: 0.62rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.abbreviation-tooltip {
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted rgba(137, 206, 255, 0.62);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.abbreviation-tooltip:hover,
+.abbreviation-tooltip:focus-visible {
+  color: var(--primary);
+  text-decoration-color: currentColor;
 }
 
 .disabled-reason-tooltip {

@@ -173,7 +173,7 @@ def build_dashboard_read_model(user) -> dict:
             blocking_count=blocking_count,
             role_shape=role_shape,
         ),
-        "resourceTimeline": _resource_timeline(trips, conflicts),
+        "resourceTimeline": _resource_timeline(trips),
         "drilldowns": _drilldowns(plan_risk, queue_pressure, blocking_count),
     }
 
@@ -500,9 +500,13 @@ def _version_payload(active_version: PlanVersion, live_snapshot: PublishedPlanSn
 
 def _conflict_aggregation(conflicts):
     rows = []
-    grouped = conflicts.values("code", "severity", "object_type").annotate(
+    grouped = conflicts.filter(resolved_at__isnull=True).values(
+        "code",
+        "severity",
+        "object_type",
+    ).annotate(
         total=Count("id"),
-        blocking=Count("id", filter=Q(is_blocking=True, resolved_at__isnull=True)),
+        blocking=Count("id", filter=Q(is_blocking=True)),
     ).order_by("-blocking", "-total", "code")
     for row in grouped:
         rows.append(
@@ -565,12 +569,18 @@ def _priority_actions(
     return actions[:4]
 
 
-def _resource_timeline(trips, conflicts):
-    conflict_by_trip = {conflict.trip_id: conflict for conflict in conflicts if conflict.trip_id}
+def _status_tone(status: str | None) -> str:
+    if status in {"blocked", "maintenance", "qc_hold", "cancelled"}:
+        return "critical"
+    if status in {"waiting_tide", "waiting_bridge", "delayed", "loading", "pending"}:
+        return "pending"
+    return "ok"
+
+
+def _resource_timeline(trips):
     rows_by_category: dict[str, list[dict]] = defaultdict(list)
     for index, trip in enumerate(trips.order_by("planned_start", "sequence")):
-        conflict = conflict_by_trip.get(trip.id)
-        tone = "critical" if conflict and conflict.is_blocking else "pending" if conflict else "ok"
+        trip_tone = _status_tone(trip.status)
         offset = (index % 8) * 9
         width = 18 + min(26, int((trip.planned_quantity_mt or 0) / 4000))
         rows_by_category["OGV"].append(
@@ -580,13 +590,14 @@ def _resource_timeline(trips, conflicts):
                 "status": trip.status,
                 "start": trip.planned_start.isoformat(),
                 "end": trip.planned_end.isoformat(),
-                "tone": tone,
+                "tone": trip_tone,
                 "offsetPct": offset,
                 "widthPct": width,
             }
         )
         assignment = getattr(trip, "assignment", None)
         if assignment:
+            assignment_tone = _status_tone(assignment.status)
             rows_by_category["Jetty"].append(
                 {
                     "label": assignment.jetty.code if assignment.jetty else "UNASSIGNED JETTY",
@@ -594,7 +605,7 @@ def _resource_timeline(trips, conflicts):
                     "status": assignment.status,
                     "start": assignment.planned_departure.isoformat(),
                     "end": assignment.planned_arrival.isoformat(),
-                    "tone": tone,
+                    "tone": assignment_tone,
                     "offsetPct": min(76, offset + 3),
                     "widthPct": max(14, width - 6),
                 }
@@ -609,7 +620,7 @@ def _resource_timeline(trips, conflicts):
                     "status": assignment.status,
                     "start": assignment.planned_departure.isoformat(),
                     "end": assignment.planned_arrival.isoformat(),
-                    "tone": tone,
+                    "tone": assignment_tone,
                     "offsetPct": min(76, offset + 6),
                     "widthPct": max(12, width - 8),
                 }
@@ -621,7 +632,7 @@ def _resource_timeline(trips, conflicts):
                     "status": assignment.status,
                     "start": assignment.planned_departure.isoformat(),
                     "end": assignment.planned_arrival.isoformat(),
-                    "tone": tone,
+                    "tone": assignment_tone,
                     "offsetPct": min(76, offset + 10),
                     "widthPct": max(10, width - 10),
                 }

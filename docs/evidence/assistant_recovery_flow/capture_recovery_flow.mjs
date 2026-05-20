@@ -15,6 +15,7 @@ const flowLog = [];
 
 async function main() {
 await mkdir(SCREENSHOT_DIR, { recursive: true });
+await seedPracticeCase();
 await rm(PROFILE, { recursive: true, force: true });
 
 const chrome = spawn(
@@ -115,8 +116,8 @@ try {
     note: "The recovery loop ranks candidate actions and explains score, risk, delay, missed windows, and hard constraints.",
   });
 
-  await clickButton(cdp, "Create scenario from recommendation", {
-    purpose: "Recommendation CTA materializes the selected recommendation as a scenario",
+  await clickButton(cdp, "Test as scenario", {
+    purpose: "Recommendation CTA creates a governed scenario for the selected option",
     exact: true,
   });
   await waitForHash(cdp, "/simulation/workspace");
@@ -126,7 +127,7 @@ try {
     route: "/simulation/workspace",
     title: "Simulation workspace handoff",
     expectedNext: "PROMOTE_SCENARIO",
-    note: "The materialized recommendation opens in Simulation Workspace with a completed scenario run.",
+    note: "The tested recommendation opens in Simulation Workspace with a completed scenario run.",
   });
 
   await clickButton(cdp, "Run simulation", {
@@ -322,9 +323,16 @@ try {
     note: "The published plan is ready for a governed handoff artifact.",
   });
 
-  await clickButton(cdp, "Printable schedule", {
-    purpose: "Visible export command generates the operator handoff schedule",
+  await domClickButton(cdp, "Printable schedule", {
+    exact: false,
   });
+  flowLog.push({
+    step: "click",
+    title: "Visible export command generates the operator handoff schedule",
+    target: "Printable schedule",
+    result: "clicked",
+  });
+  await delay(4000);
   await waitForExportState(cdp, (exports) => (exports.summary?.total ?? 0) >= 1, 30000);
   await captureStep(cdp, {
     step: "18",
@@ -334,11 +342,37 @@ try {
     note: "The flow ends with a published recovery plan and a generated handoff artifact.",
   });
 
+  await writeFinalState(cdp);
   await writeFile(`${EVIDENCE_DIR}/assist_recovery_flow_capture.json`, JSON.stringify(flowLog, null, 2));
   console.log(JSON.stringify({ ok: true, steps: flowLog.length, evidenceDir: EVIDENCE_DIR }, null, 2));
 } finally {
   chrome.kill();
 }
+}
+
+async function seedPracticeCase() {
+  await runCommand("docker", [
+    "compose",
+    "exec",
+    "-T",
+    "api",
+    "python",
+    "manage.py",
+    "seed_phase0",
+    "--master-data-only",
+  ]);
+  const seedJson = await runCommand("docker", [
+    "compose",
+    "exec",
+    "-T",
+    "api",
+    "python",
+    "manage.py",
+    "seed_assistant_recovery_practice",
+    "--skip-reset",
+    "--json",
+  ]);
+  await writeFile(`${EVIDENCE_DIR}/recovery_practice_seed_summary.json`, seedJson);
 }
 
 async function captureStep(cdp, { step, route, title, expectedNext, note }) {
@@ -423,6 +457,70 @@ async function captureStep(cdp, { step, route, title, expectedNext, note }) {
         }
       : null,
   });
+}
+
+async function writeFinalState(cdp) {
+  const scheduling = await pageFetchJson(cdp, "/api/scheduling/overview/");
+  const planning = await pageFetchJson(cdp, "/api/planning/overview/");
+  const exports = await pageFetchJson(cdp, "/api/exports/overview/");
+  const audit = await pageFetchJson(cdp, "/api/audit-events/").catch(() => []);
+  const scenarioRuns = (scheduling.simulationScenarios ?? []).reduce(
+    (count, scenario) => count + (scenario.runs?.length ?? 0),
+    0,
+  );
+  const finalState = {
+    revalidatedAt: new Date().toISOString(),
+    activePlan: scheduling.activePlanVersion
+      ? {
+          planCode: scheduling.activePlanVersion.plan_code,
+          versionNo: scheduling.activePlanVersion.version_no,
+          status: scheduling.activePlanVersion.status,
+          validationStatus: scheduling.activePlanVersion.validation_status,
+          openBlockingConflicts: scheduling.validation?.blockingConflictCount ?? 0,
+        }
+      : null,
+    endStateChecks: {
+      published: scheduling.activePlanVersion?.status === "published",
+      feasible: scheduling.activePlanVersion?.validation_status === "feasible",
+      noOpenBlockers: (scheduling.validation?.blockingConflictCount ?? 0) === 0,
+      noMissedWindows: (planning.validation?.missedWindows ?? 0) === 0,
+      printableExportGenerated: (exports.summary?.plan ?? 0) >= 1,
+    },
+    planVersions: (scheduling.planVersions ?? []).map((version) => ({
+      planCode: version.plan_code,
+      versionNo: version.version_no,
+      status: version.status,
+      validationStatus: version.validation_status,
+    })),
+    approvals: (scheduling.approvalRequests ?? []).map((request) => ({
+      request_id: request.request_id,
+      status: request.status,
+      decisions: request.decisions?.length ?? 0,
+    })),
+    publishedSnapshots: (scheduling.publishedSnapshots ?? []).map((snapshot) => ({
+      snapshot_id: snapshot.snapshot_id,
+      status: snapshot.status,
+    })),
+    exports: (exports.exports ?? []).map((item) => ({
+      export_type: item.export_type,
+      export_format: item.export_format,
+      file_name: item.file_name,
+      status: item.status,
+    })),
+    voyages: planning.voyages?.length ?? 0,
+    cargoLayers: planning.cargoLayerSteps?.length ?? 0,
+    navigationChecks: planning.constraintChecks?.length ?? 0,
+    missedChecks: planning.validation?.missedWindows ?? 0,
+    optimizerRuns: scheduling.optimizerRuns?.length ?? 0,
+    recommendations: scheduling.recoveryRecommendations?.length ?? 0,
+    simulationScenarios: scheduling.simulationScenarios?.length ?? 0,
+    scenarioRuns,
+    auditActions: (audit ?? []).map((item) => item.action),
+  };
+  await writeFile(
+    `${EVIDENCE_DIR}/recovery_practice_final_state.json`,
+    JSON.stringify(finalState, null, 2),
+  );
 }
 
 async function loginIfNeeded(cdp) {
@@ -625,7 +723,7 @@ async function pageFetchJson(cdp, path) {
   return evalAsync(
     cdp,
     `
-      await fetch(${JSON.stringify(path)}, { credentials: 'include' })
+      await fetch(${JSON.stringify(path)}, { credentials: 'include', cache: 'no-store' })
         .then(async (response) => {
           if (!response.ok) throw new Error(String(response.status));
           return response.json();
@@ -650,7 +748,7 @@ async function screenState(cdp) {
           'Generate recovery options',
           'Recommendation Console',
           'Ranked recovery options',
-          'Create scenario from recommendation',
+          'Test as scenario',
           'Simulation Workspace',
           'Run simulation',
           'Promote to proposed',
@@ -659,7 +757,7 @@ async function screenState(cdp) {
           'Regenerate plan',
           'Published Plan & Schedule',
           'Submit approval',
-          'Plan Approvals & Publishing',
+          'Approvals & Publishing',
           'Approve',
           'Ready to publish',
           'Publish plan',
@@ -684,6 +782,28 @@ async function screenState(cdp) {
       })()
     `,
   );
+}
+
+function runCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd: ROOT, shell: false });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+      reject(new Error(`${command} ${args.join(" ")} failed with ${code}: ${stderr || stdout}`));
+    });
+  });
 }
 
 async function bodyText(cdp) {

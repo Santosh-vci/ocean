@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.scheduling.models import Conflict, PlanVersion
@@ -50,6 +51,46 @@ def test_dashboard_read_model_reconciles_kpis_to_schedule_fixture():
     assert _kpi(response.data, "cargoRemainingMt")["value"] == expected_remaining
     assert response.data["planRisk"]["highestRiskOgv"]["vesselName"]
     assert response.data["planRisk"]["mostConstrainedResource"]["label"]
+
+
+@pytest.mark.django_db
+def test_dashboard_read_model_excludes_resolved_conflicts_from_active_status():
+    call_command("seed_phase0")
+    version = seeded_plan_version()
+    Conflict.objects.filter(plan_version=version).update(resolved_at=timezone.now())
+
+    response = _client_for("admin@coalflow.local").get("/api/dashboard/situation/")
+
+    assert response.status_code == 200
+    assert _kpi(response.data, "blockingConflicts")["value"] == 0
+    assert response.data["planRisk"]["criticalConflicts"] == 0
+    assert response.data["conflictAggregation"] == []
+
+
+@pytest.mark.django_db
+def test_dashboard_timeline_tone_uses_trip_status_not_exception_status():
+    call_command("seed_phase0")
+    version = seeded_plan_version()
+    trip = version.trips.filter(status="planned").select_related("voyage").first()
+    assert trip is not None
+    Conflict.objects.create(
+        plan_version=version,
+        trip=trip,
+        code="TEST_BLOCKER",
+        severity=Conflict.Severity.CRITICAL,
+        message="Synthetic blocker for status coherence test.",
+        is_blocking=True,
+    )
+
+    response = _client_for("admin@coalflow.local").get("/api/dashboard/situation/")
+
+    assert response.status_code == 200
+    ogv_rows = next(
+        item["rows"] for item in response.data["resourceTimeline"] if item["category"] == "OGV"
+    )
+    row = next(item for item in ogv_rows if item["tripId"] == trip.trip_id)
+    assert row["status"] == "planned"
+    assert row["tone"] == "ok"
 
 
 @pytest.mark.django_db

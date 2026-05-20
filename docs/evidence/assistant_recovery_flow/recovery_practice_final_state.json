@@ -1,67 +1,75 @@
-﻿{
+{
+  "revalidatedAt": "2026-05-20T06:00:49.448Z",
   "activePlan": {
-    "openBlockingConflicts": 0,
-    "planCode": "PLAN-RECOVERY-PRACTICE-20260519",
+    "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+    "versionNo": 2,
     "status": "published",
     "validationStatus": "feasible",
-    "versionNo": 2
+    "openBlockingConflicts": 0
   },
-  "approvals": [
-    {
-      "request_id": "APR-PLAN-RECOVERY-PRACTICE-20260519-V2",
-      "status": "published"
-    }
-  ],
-  "auditActions": [
-    "auth.login",
-    "recovery.input_snapshot.build",
-    "recovery.optimizer.run",
-    "recovery.recommendation.materialize_scenario",
-    "simulation.run",
-    "simulation.promote",
-    "planning.operating_windows.entered",
-    "planversion.generate",
-    "approval.request",
-    "approval.decision",
-    "approval.decision",
-    "planversion.publish",
-    "export.generated"
-  ],
-  "cargoLayers": 6,
-  "exports": [
-    {
-      "export_format": "print",
-      "export_type": "plan",
-      "file_name": "coalflow-plan-plan-recovery-practice-20260519-v2-all-network-20260519150819.txt",
-      "status": "generated"
-    }
-  ],
-  "missedChecks": 0,
-  "navigationChecks": 10,
-  "optimizerRuns": 1,
+  "endStateChecks": {
+    "published": true,
+    "feasible": true,
+    "noOpenBlockers": true,
+    "noMissedWindows": true,
+    "printableExportGenerated": true
+  },
   "planVersions": [
     {
-      "planCode": "PLAN-RECOVERY-PRACTICE-20260519",
-      "status": "generated",
-      "validationStatus": "blocked",
-      "versionNo": 1
+      "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+      "versionNo": 2,
+      "status": "published",
+      "validationStatus": "feasible"
     },
     {
-      "planCode": "PLAN-RECOVERY-PRACTICE-20260519",
+      "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+      "versionNo": 1,
+      "status": "generated",
+      "validationStatus": "blocked"
+    }
+  ],
+  "approvals": [
+    {
+      "request_id": "APR-PLAN-RECOVERY-PRACTICE-20260520-V2",
       "status": "published",
-      "validationStatus": "feasible",
-      "versionNo": 2
+      "decisions": 2
     }
   ],
   "publishedSnapshots": [
     {
-      "snapshot_id": "LIVE-PLAN-RECOVERY-PRACTICE-20260519-V2",
+      "snapshot_id": "LIVE-PLAN-RECOVERY-PRACTICE-20260520-V2",
       "status": "active"
     }
   ],
+  "exports": [
+    {
+      "export_type": "plan",
+      "export_format": "print",
+      "file_name": "coalflow-plan-plan-recovery-practice-20260520-v2-all-network-20260520060043.txt",
+      "status": "generated"
+    }
+  ],
+  "voyages": 3,
+  "cargoLayers": 6,
+  "navigationChecks": 10,
+  "missedChecks": 0,
+  "optimizerRuns": 1,
   "recommendations": 5,
-  "revalidatedAt": "2026-05-19T23:09:53.419717+08:00",
-  "scenarioRuns": 2,
   "simulationScenarios": 1,
-  "voyages": 3
+  "scenarioRuns": 2,
+  "auditActions": [
+    "export.generated",
+    "planversion.publish",
+    "approval.decision",
+    "approval.decision",
+    "approval.request",
+    "planversion.generate",
+    "planning.operating_windows.entered",
+    "simulation.promote",
+    "simulation.run",
+    "recovery.recommendation.materialize_scenario",
+    "recovery.optimizer.run",
+    "recovery.input_snapshot.build",
+    "auth.login"
+  ]
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { AbbrText } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -180,9 +181,9 @@ export function ExportHandoffPage({
                   onClick={() => onGenerate(command)}
                   type="button"
                 >
-                  <span>{formatType(command.exportType)} · {command.exportFormat.toUpperCase()}</span>
-                  <strong>{command.title}</strong>
-                  <em>{command.detail}</em>
+                  <span><AbbrText text={`${formatType(command.exportType)} · ${command.exportFormat.toUpperCase()}`} /></span>
+                  <strong><AbbrText text={command.title} /></strong>
+                  <em><AbbrText text={command.detail} /></em>
                 </button>
               </DisabledReasonTooltip>
             ))}
@@ -232,7 +233,7 @@ export function ExportHandoffPage({
                     >
                       <td>{formatDate(item.created_at)}</td>
                       <td><span className="status-chip ok">{formatType(item.export_type)}</span></td>
-                      <td>{item.export_format.toUpperCase()}</td>
+                      <td><AbbrText text={item.export_format.toUpperCase()} /></td>
                       <td>{item.record_count.toLocaleString()}</td>
                       <td>{item.file_name}</td>
                       <td><code>{item.checksum_sha256.slice(0, 12)}</code></td>
@@ -257,12 +258,12 @@ export function ExportHandoffPage({
               <span className="status-chip ok">{formatType(selectedExport.export_type)}</span>
               <h2>{selectedExport.file_name}</h2>
               <p>
-                Stored as {selectedExport.storage_uri}. Download URL is policy-gated and checksum-bound.
+                Stored as {selectedExport.storage_uri}. Download <AbbrText text="URL" /> is policy-gated and checksum-bound.
               </p>
               <dl>
                 <div><dt>Plan version</dt><dd>{selectedExport.plan_version_ref ?? "n/a"}</dd></div>
                 <div><dt>Records</dt><dd>{selectedExport.record_count.toLocaleString()}</dd></div>
-                <div><dt>Size</dt><dd>{sizeLabel(selectedExport.size_bytes)}</dd></div>
+                <div><dt>Size</dt><dd><AbbrText text={sizeLabel(selectedExport.size_bytes)} /></dd></div>
                 <div><dt>Scope</dt><dd>{selectedExport.scope.label}</dd></div>
                 <div><dt>Created by</dt><dd>{selectedExport.created_by_email ?? "system"}</dd></div>
               </dl>

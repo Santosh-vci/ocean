@@ -30,12 +30,12 @@ function rawResponse() {
 function rawAction(overrides: Record<string, unknown> = {}) {
   return {
     action_id: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-    label: "Create scenario from recommendation",
+    label: "Test recommendation as scenario",
     priority: "warning",
     rank_score: 810,
     enabled: true,
     route: "/recovery/recommendations",
-    cta_label: "Create scenario",
+    cta_label: "Test as scenario",
     reason: "The top recovery recommendation is ready.",
     hover_hint: "Ready for scenario handoff.",
     detail_text: "Persisted Phase 5 guidance.",

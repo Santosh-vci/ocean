@@ -1,7 +1,9 @@
+import { Abbr, AbbrText } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import { ActionInboxPanel, GuidedChecklist } from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
+import { activeTrackingAlerts } from "../lib/planStatus";
 import type {
   AuditEvent,
   CurrentUser,
@@ -75,7 +77,7 @@ export function DashboardPage({
   const queue = dashboard?.queuePressure;
   const kpis = dashboard?.kpis ?? [];
   const recentAudit = auditEvents.slice(0, 5);
-  const openTrackingAlerts = trackingAlerts.filter((alert) => alert.status === "open");
+  const openTrackingAlerts = activeTrackingAlerts(trackingAlerts);
   const criticalTrackingAlerts = openTrackingAlerts.filter((alert) => alert.severity === "critical");
   const healthRisks = operationsHealth?.risks ?? [];
   const highestVariance = etaProjections
@@ -185,7 +187,7 @@ export function DashboardPage({
               <SvgIcon name="account-tree" />
               <strong>Network resource timeline</strong>
             </div>
-            <span>Read model ? OGV ? jetty ? tug/barge ? CTS</span>
+            <span>Read model · <Abbr term="OGV">OGV</Abbr> · jetty · tug/barge · <Abbr term="CTS">CTS</Abbr></span>
           </div>
           <div className="timeline-timebar">
             <strong>Asset resource</strong>
@@ -247,7 +249,7 @@ export function DashboardPage({
             <span className={`status-chip ${toneClass(planRisk?.tone)}`}>
               {planRisk?.riskScore ?? 0}% risk
             </span>
-            <h2>{planRisk?.highestRiskOgv.vesselName ?? "No active OGV"}</h2>
+            <h2>{planRisk?.highestRiskOgv.vesselName ?? <AbbrText text="No active OGV" />}</h2>
             <p>{planRisk?.highestRiskOgv.detail ?? "Waiting for dashboard read model."}</p>
             <dl>
               <div>
@@ -315,7 +317,7 @@ export function DashboardPage({
                 </dd>
               </div>
               <div>
-                <dt>Latest ETA calc</dt>
+                <dt>Latest <Abbr term="ETA">ETA</Abbr> <Abbr term="calc">calc</Abbr></dt>
                 <dd>{latestProjection ? formatGridDateLabel(latestProjection.calculated_at) : "No feed"}</dd>
               </div>
               <div>

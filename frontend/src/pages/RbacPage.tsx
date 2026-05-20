@@ -4,6 +4,7 @@ import {
   RecommendationCard,
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
+import { AbbrText } from "../components/Abbreviation";
 import type { AccessPermission, RbacOverview, UserSummary } from "../types";
 
 type RbacPageProps = AssistantRecommendationSurfaceProps & {
@@ -51,7 +52,7 @@ export function RbacPage({
       <header className="page-heading">
         <div>
           <p>Admin</p>
-          <h1>Users & RBAC</h1>
+          <h1>Users & <AbbrText text="RBAC" /></h1>
         </div>
         <span className="phase-chip">Hardened governance cockpit</span>
       </header>
@@ -69,7 +70,7 @@ export function RbacPage({
           <strong>{overview.users.length}</strong>
         </div>
         <div>
-          <span>Approval auth</span>
+          <span>Approval <AbbrText text="auth" /></span>
           <strong>{approvalAuthorityCount}</strong>
         </div>
         <div>

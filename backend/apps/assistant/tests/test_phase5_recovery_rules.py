@@ -179,7 +179,7 @@ def test_dismissed_candidate_is_not_materializable_and_explains_block():
         if item.action_id == "MATERIALIZE_RECOVERY_RECOMMENDATION"
     ]
     assert blocked
-    assert "Dismissed recommendations cannot be materialized" in blocked[0].blocked_reason
+    assert "Dismissed recommendations cannot be tested as scenarios" in blocked[0].blocked_reason
 
 
 def test_materialized_candidate_moves_to_simulation_and_blocks_dismiss():
@@ -203,7 +203,7 @@ def test_materialized_candidate_moves_to_simulation_and_blocks_dismiss():
     )
     assert (
         blocked_by_id["DISMISS_RECOVERY_RECOMMENDATION"].blocked_reason
-        == "Materialized recommendations cannot be dismissed."
+        == "Recommendations already created as scenarios cannot be dismissed."
     )
 
 

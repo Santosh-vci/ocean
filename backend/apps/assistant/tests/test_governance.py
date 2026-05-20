@@ -266,6 +266,39 @@ def test_phase5_recommendation_handoff_does_not_bypass_scenario_governance():
     assert materialized.global_next_action.action_id not in PUBLISH_OR_EXPORT_ACTIONS
 
 
+def test_simulation_workspace_shell_action_stays_on_scenario_workflow_with_open_blockers():
+    ready_to_run = shaped_for(
+        route="/simulation/workspace",
+        blocking_conflict_count=2,
+        open_scenario_count=1,
+        scenario_ready_to_run_count=1,
+    )
+    promotable = shaped_for(
+        route="/simulation/workspace",
+        blocking_conflict_count=2,
+        open_scenario_count=1,
+        promotable_scenario_count=1,
+    )
+    exception_center = shaped_for(
+        route="/exceptions/center",
+        blocking_conflict_count=2,
+        scenario_ready_to_run_count=1,
+    )
+
+    assert ready_to_run.global_next_action
+    assert ready_to_run.global_next_action.action_id == "RUN_SIMULATION"
+    assert "MATERIALIZE_RECOVERY_RECOMMENDATION" not in action_ids(
+        ready_to_run.page_actions
+    )
+    assert promotable.global_next_action
+    assert promotable.global_next_action.action_id == "PROMOTE_SCENARIO"
+    assert "MATERIALIZE_RECOVERY_RECOMMENDATION" not in action_ids(
+        promotable.page_actions
+    )
+    assert exception_center.global_next_action
+    assert exception_center.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
+
+
 def test_phase5_proof_pack_is_low_priority_and_does_not_override_blockers():
     ctx = context(
         route="/recovery/recommendations",

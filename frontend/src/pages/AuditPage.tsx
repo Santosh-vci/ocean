@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Abbr } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import {
   RecommendationCard,
@@ -114,7 +115,7 @@ export function AuditPage({
                 <dd>{selectedEvent.object_repr || selectedEvent.object_id}</dd>
               </div>
               <div>
-                <dt>Request ID</dt>
+                <dt>Request <Abbr term="ID">ID</Abbr></dt>
                 <dd>{selectedEvent.request_id ?? "—"}</dd>
               </div>
             </dl>
@@ -138,7 +139,7 @@ export function AuditPage({
             <section>
               <h2>Technical metadata</h2>
               <code>
-                IP {selectedEvent.ip_address ?? "n/a"} · object {selectedEvent.object_id}
+                <Abbr term="IP">IP</Abbr> {selectedEvent.ip_address ?? "n/a"} · object {selectedEvent.object_id}
               </code>
             </section>
           </aside>

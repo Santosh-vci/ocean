@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { Abbr, AbbrText } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -20,6 +21,7 @@ import {
   operationalVarianceMinutes,
   shortOperationalLabel,
 } from "../lib/operations";
+import { activeConflictForTrip, activePlanConflicts } from "../lib/planStatus";
 import type {
   AssignmentRecord,
   ConfirmedOperationalEventRecord,
@@ -164,8 +166,7 @@ function ganttBlockStyle(trip: TripRecord, range: ReturnType<typeof ganttRange>)
 }
 
 function conflictForTrip(conflicts: ConflictRecord[], tripId: number | null | undefined) {
-  return conflicts.find((conflict) => conflict.trip === tripId && conflict.is_blocking)
-    ?? conflicts.find((conflict) => conflict.trip === tripId);
+  return activeConflictForTrip(conflicts, tripId);
 }
 
 function selectedTripFor(
@@ -323,7 +324,7 @@ export function TugBargeAssignmentPage({
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(
     assignments[0]?.id ?? null,
   );
@@ -334,9 +335,15 @@ export function TugBargeAssignmentPage({
     ...(assistantPageActions ?? []),
     ...(assistantBlockedActions ?? []),
   ];
-  const operationalCount = assignments.filter((item) => statusTone(item.status) === "ok").length;
-  const delayedCount = assignments.filter((item) => statusTone(item.status) === "pending").length;
-  const blockedCount = assignments.filter((item) => statusTone(item.status) === "critical").length;
+  const operationalCount = assignments.filter((item) => (
+    statusTone(item.status) === "ok"
+  )).length;
+  const delayedCount = assignments.filter((item) => (
+    statusTone(item.status) === "pending"
+  )).length;
+  const blockedCount = assignments.filter((item) => (
+    statusTone(item.status) === "critical"
+  )).length;
 
   return (
     <section className="workspace-page logistics-board">
@@ -386,7 +393,7 @@ export function TugBargeAssignmentPage({
         <section className="board-surface planning-grid-panel">
           <div className="grid-header">
             <div><SvgIcon name="fleet" /><strong>Fleet assignment console</strong></div>
-            <span>Status · tug unit · barge unit · assigned OGV · next availability</span>
+            <span>Status · tug unit · barge unit · assigned <Abbr term="OGV">OGV</Abbr> · next availability</span>
           </div>
           <div className="grid-scroll">
             <table className="planning-table logistics-table">
@@ -396,9 +403,9 @@ export function TugBargeAssignmentPage({
                   <th>Tug Unit</th>
                   <th>Barge Unit</th>
                   <th>Location</th>
-                  <th>Assigned OGV</th>
-                  <th>Next Avail PLN</th>
-                  <th>Next Avail PRD</th>
+                  <th>Assigned <Abbr term="OGV">OGV</Abbr></th>
+                  <th>Next <Abbr term="Avail">Avail</Abbr> <Abbr term="PLN">PLN</Abbr></th>
+                  <th>Next <Abbr term="Avail">Avail</Abbr> <Abbr term="PRD">PRD</Abbr></th>
                   <th>Delay Reason</th>
                   <th>Hint</th>
                 </tr>
@@ -413,7 +420,7 @@ export function TugBargeAssignmentPage({
                       key={assignment.id}
                       onClick={() => setSelectedAssignmentId(assignment.id)}
                     >
-                      <td><span className={`status-chip ${statusTone(assignment.status, conflict?.is_blocking)}`}>{shortStatus(assignment.status)}</span></td>
+                      <td><span className={`status-chip ${statusTone(assignment.status)}`}>{shortStatus(assignment.status)}</span></td>
                       <td><strong>{assignment.tug?.name ?? "UNASSIGNED"}</strong></td>
                       <td>{assignment.barge?.code ?? "NONE"}</td>
                       <td>{assignment.route_segment ? `SEG-${assignment.route_segment}` : assignment.jetty?.code ?? "-"}</td>
@@ -444,16 +451,16 @@ export function TugBargeAssignmentPage({
           </div>
           {selectedTrip ? (
             <div className="inspector-body">
-              <span className={`status-chip ${statusTone(selectedTrip.status, selectedConflict?.is_blocking)}`}>
+              <span className={`status-chip ${statusTone(selectedTrip.status)}`}>
                 {shortStatus(selectedTrip.status)}
               </span>
               <h2>{selectedTrip.voyage.vessel_name}</h2>
-              <p>{selectedConflict?.message ?? selectedTrip.assignment?.next_action ?? "No blocker recorded."}</p>
+              <p>{selectedTrip.assignment?.next_action ?? selectedConflict?.message ?? "No blocker recorded."}</p>
               <dl>
                 <div><dt>Tug</dt><dd>{selectedTrip.assignment?.tug?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Barge</dt><dd>{selectedTrip.assignment?.barge?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Jetty</dt><dd>{selectedTrip.assignment?.jetty?.code ?? "Unassigned"}</dd></div>
-                <div><dt>CTS</dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
+                <div><dt><Abbr term="CTS">CTS</Abbr></dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
               </dl>
             </div>
           ) : null}
@@ -471,7 +478,7 @@ export function TugBargeAssignmentPage({
               <strong>{trip.assignment?.tug?.code ?? trip.trip_id}</strong>
               <div>
                 <span
-                  className={`gantt-pill ${statusTone(trip.status, conflictForTrip(conflicts, trip.id)?.is_blocking)}`}
+                  className={`gantt-pill ${statusTone(trip.status)}`}
                   style={{ marginLeft: `${(index % 5) * 8}%`, width: `${24 + progressFor(trip) / 3}%` }}
                 >
                   {trip.trip_id} · {trip.voyage.vessel_name}
@@ -506,7 +513,6 @@ export function JettyLoadingPage({
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(
     assignments.find((assignment) => assignment.jetty)?.id ?? assignments[0]?.id ?? null,
   );
@@ -620,19 +626,18 @@ export function JettyLoadingPage({
         <section className="board-surface jetty-plan-panel">
           <div className="grid-header">
             <div><SvgIcon name="locations" /><strong>Jetty execution queue</strong></div>
-            <span>OGV, grade, hatch/layer, tonnage, start/end, readiness, next constraint</span>
+            <span><Abbr term="OGV">OGV</Abbr>, grade, hatch/layer, tonnage, start/end, readiness, next constraint</span>
           </div>
           <div className="jetty-sections">
             {byJetty.map(([jettyCode, rows]) => (
               <section className="jetty-section" key={jettyCode}>
                 <h2>{jettyCode}<span>{rows[0]?.jetty?.status?.toUpperCase() ?? "PLANNED"}</span></h2>
                 <div className="jetty-row jetty-row-header">
-                  <span>OGV</span><span>Grade</span><span>Hatch</span><span>Load MT</span>
+                  <span><Abbr term="OGV">OGV</Abbr></span><span>Grade</span><span>Hatch</span><span>Load <Abbr term="MT">MT</Abbr></span>
                   <span>Progress</span><span>Planned start / end</span><span>Actual start / end</span><span>Readiness</span><span>Next</span>
                 </div>
                 {rows.map((assignment) => {
                   const trip = trips.find((item) => item.id === assignment.trip);
-                  const conflict = conflictForTrip(conflicts, assignment.trip);
                   return (
                     <div
                       className={selectedAssignment?.id === assignment.id ? "jetty-row selected-row" : "jetty-row"}
@@ -650,8 +655,8 @@ export function JettyLoadingPage({
                         {" / "}
                         {dt(eventFor(trip, "load_complete")?.actual_at)}
                       </span>
-                      <span className={statusTone(assignment.status, conflict?.is_blocking)}>{trip ? `${progressFor(trip)}%` : "0%"}</span>
-                      <span>{conflict?.code ?? assignment.next_action}</span>
+                      <span className={statusTone(assignment.status)}>{trip ? `${progressFor(trip)}%` : "0%"}</span>
+                      <span>{assignment.next_action}</span>
                     </div>
                   );
                 })}
@@ -675,7 +680,7 @@ export function JettyLoadingPage({
               <div><dt>Planned load</dt><dd>{dt(plannedLoadStart)}</dd></div>
               <div><dt>Actual start</dt><dd>{dt(loadStartEvent?.actual_at)}</dd></div>
               <div><dt>Actual complete</dt><dd>{dt(loadCompleteEvent?.actual_at)}</dd></div>
-              <div><dt>Loaded MT</dt><dd>{selectedTrip ? mt(selectedTrip.loaded_quantity_mt) : "-"}</dd></div>
+              <div><dt>Loaded <Abbr term="MT">MT</Abbr></dt><dd>{selectedTrip ? mt(selectedTrip.loaded_quantity_mt) : "-"}</dd></div>
               <div><dt>Barge</dt><dd>{selectedAssignment?.barge?.code ?? "Unassigned"}</dd></div>
               <div><dt>Grade</dt><dd>{selectedTrip?.cargo_layer_step?.coal_grade.code ?? "-"}</dd></div>
               <div><dt>Departure ready</dt><dd>{departJettyEvent?.actual_at ? "Confirmed" : "Pending"}</dd></div>
@@ -748,10 +753,11 @@ export function CtsOperationsPage({
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
   const activeCts = new Set(assignments.map((assignment) => assignment.cts?.code).filter(Boolean)).size;
   const waitingQueue = assignments.filter((assignment) => assignment.status.includes("waiting")).length;
-  const downtime = assignments.filter((assignment) => statusTone(assignment.status) === "critical").length;
+  const downtime = assignments.filter((assignment) => (
+    statusTone(assignment.status) === "critical"
+  )).length;
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(assignments[0]?.id ?? null);
   const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId)
     ?? assignments[0];
@@ -782,8 +788,8 @@ export function CtsOperationsPage({
     <section className="workspace-page logistics-board">
       <header className="page-heading planning-heading">
         <div>
-          <p>Operations / CTS Floating Crane</p>
-          <h1>CTS / Floating Crane</h1>
+          <p>Operations / <Abbr term="CTS">CTS</Abbr> Floating Crane</p>
+          <h1><Abbr term="CTS">CTS</Abbr> / Floating Crane</h1>
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Transshipment capacity</span>
@@ -793,7 +799,7 @@ export function CtsOperationsPage({
               onClick={onExport}
               type="button"
             >
-              Export CTS queue
+              Export <Abbr term="CTS">CTS</Abbr> queue
             </button>
           </DisabledReasonTooltip>
         </div>
@@ -807,8 +813,8 @@ export function CtsOperationsPage({
       />
 
       <div className="metric-strip four-up planning-kpis">
-        <div><span>Active CTS</span><strong>{activeCts}</strong></div>
-        <div><span>Avg discharge rate</span><strong>{Math.round((overview?.validation.loadedMt ?? 0) / Math.max(activeCts, 1)).toLocaleString()}</strong></div>
+        <div><span>Active <Abbr term="CTS">CTS</Abbr></span><strong>{activeCts}</strong></div>
+        <div><span><Abbr term="Avg">Avg</Abbr> discharge rate</span><strong>{Math.round((overview?.validation.loadedMt ?? 0) / Math.max(activeCts, 1)).toLocaleString()}</strong></div>
         <div><span>Barge queue</span><strong className={waitingQueue ? "warning-text" : ""}>{waitingQueue}</strong></div>
         <div><span>Low-rate signals</span><strong className={lowRateCandidates.length ? "warning-text" : ""}>{lowRateCandidates.length || downtime}</strong></div>
       </div>
@@ -816,14 +822,14 @@ export function CtsOperationsPage({
       <div className="cts-layout">
         <section className="board-surface planning-grid-panel cts-panel">
           <div className="grid-header">
-            <div><SvgIcon name="operations" /><strong>CTS operations board</strong></div>
+            <div><SvgIcon name="operations" /><strong><Abbr term="CTS">CTS</Abbr> operations board</strong></div>
             <span>Planned versus actual discharge state, low-rate signals, queue pressure</span>
           </div>
           <div className="grid-scroll">
             <table className="planning-table logistics-table">
               <thead>
                 <tr>
-                  <th>CTS ID</th><th>Current OGV</th><th>Assigned Barge</th><th>Queue Pos</th>
+                  <th><Abbr term="CTS">CTS</Abbr> <Abbr term="ID">ID</Abbr></th><th>Current <Abbr term="OGV">OGV</Abbr></th><th>Assigned Barge</th><th>Queue <Abbr term="Pos">Pos</Abbr></th>
                   <th>Coal Grade</th><th>Planned start</th><th>Actual start</th><th>Actual complete</th>
                   <th>Rate signal</th><th>Status</th>
                 </tr>
@@ -831,7 +837,6 @@ export function CtsOperationsPage({
               <tbody>
                 {assignments.map((assignment, index) => {
                   const trip = trips.find((item) => item.id === assignment.trip);
-                  const conflict = conflictForTrip(conflicts, assignment.trip);
                   const rateCandidate = latestCandidate(operationCandidates, (candidate) => (
                     candidate.trip === trip?.id && candidate.event_kind === "cts_rate_updated"
                   ));
@@ -850,7 +855,7 @@ export function CtsOperationsPage({
                       <td>{dt(eventFor(trip, "discharge_start")?.actual_at)}</td>
                       <td>{dt(eventFor(trip, "discharge_complete")?.actual_at)}</td>
                       <td>{rateCandidate ? shortOperationalLabel(rateCandidate.status) : "-"}</td>
-                      <td><span className={`status-chip ${statusTone(assignment.status, conflict?.is_blocking)}`}>{shortStatus(assignment.status)}</span></td>
+                      <td><span className={`status-chip ${statusTone(assignment.status)}`}>{shortStatus(assignment.status)}</span></td>
                     </tr>
                   );
                 })}
@@ -861,14 +866,14 @@ export function CtsOperationsPage({
 
         <aside className="board-surface logistics-inspector">
           <div className="grid-header">
-            <div><SvgIcon name="account-tree" /><strong>CTS event detail</strong></div>
-            <span>{selectedAssignment?.cts?.code ?? "No CTS"}</span>
+            <div><SvgIcon name="account-tree" /><strong><Abbr term="CTS">CTS</Abbr> event detail</strong></div>
+            <span>{selectedAssignment?.cts?.code ?? <AbbrText text="No CTS" />}</span>
           </div>
           <div className="inspector-body">
             <span className={`status-chip ${operationalTone(selectedCtsDevice?.latest_health?.healthStatus ?? selectedCtsDevice?.status)}`}>
               {deviceHealthLabel(selectedCtsDevice)}
             </span>
-            <h2>{selectedAssignment?.vessel_name ?? "CTS queue"}</h2>
+            <h2>{selectedAssignment?.vessel_name ?? <AbbrText text="CTS queue" />}</h2>
             <dl>
               <div><dt>Arrived actual</dt><dd>{dt(eventFor(selectedTrip, "arrive_cts")?.actual_at)}</dd></div>
               <div><dt>Discharge start</dt><dd>{dt(eventFor(selectedTrip, "discharge_start")?.actual_at)}</dd></div>
@@ -906,11 +911,11 @@ export function PublishedPlanPage({
   onSubmitApproval,
 }: LogisticsPageProps) {
   const trips = overview?.trips ?? EMPTY_TRIPS;
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const activeVersion = overview?.activePlanVersion;
   const lineage = activeVersion?.scenario_lineage;
   const scenarioDiff = activeVersion?.scenario_diff_summary;
-  const selectedTrip = trips.find((trip) => conflictForTrip(conflicts, trip.id)?.is_blocking) ?? trips[0];
+  const selectedTrip = trips[0];
   const selectedConflict = conflictForTrip(conflicts, selectedTrip?.id);
   const range = useMemo(() => ganttRange(trips), [trips]);
   const assistantActions = [
@@ -997,7 +1002,7 @@ export function PublishedPlanPage({
                 return (
                   <div className="gantt-resource-row" key={trip.id}>
                     <span
-                      className={`gantt-block ${statusTone(trip.status, conflict?.is_blocking)}`}
+                      className={`gantt-block ${statusTone(trip.status)}`}
                       style={ganttBlockStyle(trip, range)}
                       title={`${dtText(trip.planned_start)} - ${dtText(trip.planned_end)}`}
                     >
@@ -1018,8 +1023,8 @@ export function PublishedPlanPage({
           </div>
           {selectedTrip ? (
             <div className="inspector-body">
-              <span className={`status-chip ${statusTone(selectedTrip.status, selectedConflict?.is_blocking)}`}>
-                {selectedConflict?.severity ?? selectedTrip.status}
+              <span className={`status-chip ${statusTone(selectedTrip.status)}`}>
+                {selectedTrip.status}
               </span>
               <h2>{selectedTrip.trip_id}</h2>
               <p>{selectedTrip.voyage.vessel_name}</p>
@@ -1027,7 +1032,7 @@ export function PublishedPlanPage({
                 <div><dt>Jetty</dt><dd>{selectedTrip.origin_jetty?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Tug</dt><dd>{selectedTrip.assignment?.tug?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Barge</dt><dd>{selectedTrip.assignment?.barge?.code ?? "Unassigned"}</dd></div>
-                <div><dt>CTS</dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
+                <div><dt><Abbr term="CTS">CTS</Abbr></dt><dd>{selectedTrip.assignment?.cts?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Planned start</dt><dd>{dt(selectedTrip.planned_start)}</dd></div>
                 <div><dt>Planned end</dt><dd>{dt(selectedTrip.planned_end)}</dd></div>
               </dl>
@@ -1044,7 +1049,7 @@ export function PublishedPlanPage({
                 </section>
               ) : null}
               <section className="recovery-box">
-                <strong>Conflict center MVP</strong>
+                <strong>Conflict center <Abbr term="MVP">MVP</Abbr></strong>
                 <p>{selectedConflict?.message ?? "No active conflict on this trip."}</p>
               </section>
             </div>

@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from apps.assistant.selectors import build_assistant_context
-from apps.masters.models import Location
+from apps.masters.models import CoalGrade, Location
 from apps.organizations.models import Organization
-from apps.planning.models import BridgeWindow, OGVVoyage, TideWindow
+from apps.planning.models import BridgeWindow, CargoLayerStep, OGVVoyage, TideWindow
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import (
     ApprovalDecision,
@@ -18,6 +18,7 @@ from apps.scheduling.models import (
     PlanVersion,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    Trip,
 )
 
 
@@ -135,6 +136,79 @@ def test_build_assistant_context_reads_permissions_and_planning_counts():
     assert ctx.blocking_conflict_count == 1
     assert "schedule.edit" in ctx.permissions
     assert ctx.route == "/exceptions/center"
+
+
+@pytest.mark.django_db
+def test_assistant_planning_counts_keep_conflicts_out_of_cargo_layer_status():
+    org = make_org("assistant-layer-conflict")
+    location = make_location(org)
+    user = User.objects.create_user(username="assistant-layer-conflict", password="secret")
+    assign(user, org, ["schedule.view", "schedule.edit"])
+    version = make_plan_version(org)
+    now = timezone.now()
+    voyage = OGVVoyage.objects.create(
+        voyage_id="VOY-ASSIST-LAYER",
+        vessel_name="MV Assist Layer",
+        customer_name="Customer",
+        eta=now,
+        laycan_start=now,
+        laycan_end=now + timedelta(days=2),
+        required_mt=46000,
+        organization=org,
+        anchorage_location=location,
+    )
+    grade = CoalGrade.objects.create(
+        code="GRADE-ASSIST-LAYER",
+        name="Assistant Layer Grade",
+        brand_family="Thermal",
+        sequence_priority=1,
+    )
+    layer = CargoLayerStep.objects.create(
+        voyage=voyage,
+        hatch_no=1,
+        layer_no=1,
+        required_sequence_no=1,
+        coal_grade=grade,
+        required_mt=46000,
+        remaining_mt=46000,
+        status=CargoLayerStep.Status.PLANNED,
+        blocking_reason="",
+        chain_status="PLANNED",
+        sequence_violation=False,
+    )
+    trip = Trip.objects.create(
+        plan_version=version,
+        trip_id="PI-ASSIST-LAYER-001",
+        sequence=1,
+        voyage=voyage,
+        cargo_layer_step=layer,
+        planned_start=now,
+        planned_end=now + timedelta(hours=8),
+        planned_quantity_mt=46000,
+        status=Trip.Status.PLANNED,
+    )
+    Conflict.objects.create(
+        plan_version=version,
+        trip=trip,
+        code="BRIDGE_WINDOW_MISSED",
+        severity=Conflict.Severity.CRITICAL,
+        message="Bridge window missed.",
+        is_blocking=True,
+    )
+    Conflict.objects.create(
+        plan_version=version,
+        trip=trip,
+        code="OLD_TIDE_WINDOW_MISSED",
+        severity=Conflict.Severity.CRITICAL,
+        message="Resolved conflict should not count.",
+        is_blocking=True,
+        resolved_at=now,
+    )
+
+    ctx = build_assistant_context(user, route="/schedule/coal-grade-sequence")
+
+    assert ctx.cargo_layer_issue_count == 0
+    assert ctx.blocking_conflict_count == 1
 
 
 @pytest.mark.django_db

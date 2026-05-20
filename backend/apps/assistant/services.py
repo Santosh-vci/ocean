@@ -55,6 +55,10 @@ class AssistantChecklistItem:
 
 
 VALID_ASSISTANT_MODES = {"off", "assisted", "guided", "supervisor"}
+RECOVERY_WORKFLOW_NEXT_ACTION_IDS = {
+    "RUN_SIMULATION",
+    "PROMOTE_SCENARIO",
+}
 
 
 def build_recommendation(
@@ -189,7 +193,7 @@ def shape_recommendations(
         if _action_affects_current_route(item, ctx.route)
         and item not in row_actions
     ][:limit]
-    global_next_action = sorted_enabled[0] if sorted_enabled else None
+    global_next_action = _select_global_next_action(sorted_enabled, ctx)
 
     return ShapedRecommendations(
         global_next_action=global_next_action,
@@ -197,6 +201,25 @@ def shape_recommendations(
         row_actions=row_actions[:limit],
         blocked_actions=sorted_blocked[:limit],
     )
+
+
+def _select_global_next_action(
+    sorted_enabled: list[ActionRecommendation],
+    ctx,
+) -> ActionRecommendation | None:
+    if not sorted_enabled:
+        return None
+
+    route_workflow_actions = [
+        item
+        for item in sorted_enabled
+        if item.action_id in RECOVERY_WORKFLOW_NEXT_ACTION_IDS
+        and _action_affects_current_route(item, ctx.route)
+    ]
+    if route_workflow_actions:
+        return route_workflow_actions[0]
+
+    return sorted_enabled[0]
 
 
 def build_checklist(ctx, shaped: ShapedRecommendations) -> list[dict[str, Any]]:
@@ -525,7 +548,7 @@ def _stage_recommendation_materialized(ctx) -> AssistantChecklistItem:
     ):
         return _stage(
             "recommendation_materialized",
-            "Recommendation materialized as scenario",
+            "Recommendation tested as scenario",
             "complete",
             reason="The selected recommendation has a governed scenario handoff.",
         )
@@ -535,7 +558,7 @@ def _stage_recommendation_materialized(ctx) -> AssistantChecklistItem:
     ):
         return _stage(
             "recommendation_materialized",
-            "Recommendation materialized as scenario",
+            "Recommendation tested as scenario",
             "blocked",
             action_id="MATERIALIZE_RECOVERY_RECOMMENDATION",
             reason="The selected recommendation was dismissed.",
@@ -546,16 +569,16 @@ def _stage_recommendation_materialized(ctx) -> AssistantChecklistItem:
     ):
         return _stage(
             "recommendation_materialized",
-            "Recommendation materialized as scenario",
+            "Recommendation tested as scenario",
             "current",
             action_id="MATERIALIZE_RECOVERY_RECOMMENDATION",
-            reason="The top recovery recommendation is ready for scenario handoff.",
+            reason="The top recovery recommendation is ready to be tested as a scenario.",
         )
     return _stage(
         "recommendation_materialized",
-        "Recommendation materialized as scenario",
+        "Recommendation tested as scenario",
         "pending",
-        reason="Review a recovery recommendation before scenario materialization.",
+        reason="Review a recovery recommendation before scenario testing.",
     )
 
 

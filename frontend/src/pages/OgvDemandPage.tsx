@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Abbr } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -8,10 +9,19 @@ import {
   type AssistantRecommendationSurfaceProps,
 } from "../components/assistant";
 import { cargoLayerChainStatusLabel } from "../lib/cargoLayer";
-import type { CargoLayerStepRecord, OGVVoyageRecord, PlanningOverview } from "../types";
+import { activePlanConflicts, activeTrackingAlerts, primaryConflict } from "../lib/planStatus";
+import type {
+  CargoLayerStepRecord,
+  ConflictRecord,
+  OGVVoyageRecord,
+  PlanningOverview,
+  SchedulingOverview,
+  TrackingAlertRecord,
+} from "../types";
 
 type OgvDemandPageProps = AssistantRecommendationSurfaceProps & {
   overview: PlanningOverview | null;
+  schedulingOverview?: SchedulingOverview | null;
   canEdit: boolean;
   canExport: boolean;
   isActionRunning: boolean;
@@ -30,6 +40,52 @@ function riskTone(voyage: OGVVoyageRecord) {
   return "ok";
 }
 
+function baseRiskLabel(voyage: OGVVoyageRecord) {
+  if (voyage.risk_status === "demurrage") return "high";
+  return voyage.risk_status.replace("_", " ");
+}
+
+function conflictReason(conflict: ConflictRecord) {
+  if (conflict.message) return conflict.message;
+  if (conflict.code === "TIDE_WINDOW_MISSED") return "Tide window needs recovery.";
+  if (conflict.code === "BRIDGE_WINDOW_MISSED") return "Bridge window needs recovery.";
+  if (conflict.code === "LAYER_SEQUENCE_VIOLATION") return "Coal grade sequence needs review.";
+  return "Plan exception needs review.";
+}
+
+function alertReason(alert: TrackingAlertRecord) {
+  if (alert.message) return alert.message;
+  if (alert.alert_type === "delay") return "Live tracking delay needs review.";
+  if (alert.alert_type === "eta_risk") return "Live ETA variance needs review.";
+  return "Live tracking alert needs review.";
+}
+
+function effectiveRisk(
+  voyage: OGVVoyageRecord,
+  conflicts: ConflictRecord[] = [],
+  alerts: TrackingAlertRecord[] = [],
+) {
+  const conflict = primaryConflict(conflicts);
+  const alert = alerts.find((item) => item.severity === "critical") ?? alerts[0];
+  if (conflict?.is_blocking || conflict?.severity === "critical") {
+    return { label: "high", tone: "critical", reason: conflictReason(conflict) };
+  }
+  if (alert?.severity === "critical") {
+    return { label: "high", tone: "critical", reason: alertReason(alert) };
+  }
+  if (conflict) {
+    return { label: "medium", tone: "pending", reason: conflictReason(conflict) };
+  }
+  if (alert) {
+    return { label: "medium", tone: "pending", reason: alertReason(alert) };
+  }
+  return {
+    label: baseRiskLabel(voyage),
+    tone: riskTone(voyage),
+    reason: voyage.next_blocking_constraint || "Clear",
+  };
+}
+
 function stageLabel(step: CargoLayerStepRecord) {
   return `H${step.hatch_no}/L${step.layer_no} ${step.coal_grade.code}`;
 }
@@ -40,6 +96,7 @@ export function OgvDemandPage({
   assistantPageActions,
   assistantRowActions,
   overview,
+  schedulingOverview,
   canEdit,
   canExport,
   isActionRunning,
@@ -48,6 +105,46 @@ export function OgvDemandPage({
   onImportDemand,
 }: OgvDemandPageProps) {
   const voyages = overview?.voyages ?? [];
+  const activeConflicts = useMemo(
+    () => activePlanConflicts(schedulingOverview?.conflicts),
+    [schedulingOverview?.conflicts],
+  );
+  const openTrackingAlerts = useMemo(
+    () => activeTrackingAlerts(schedulingOverview?.trackingAlerts),
+    [schedulingOverview?.trackingAlerts],
+  );
+  const tripsById = useMemo(
+    () => new Map((schedulingOverview?.trips ?? []).map((trip) => [trip.id, trip])),
+    [schedulingOverview?.trips],
+  );
+  const conflictsByVoyageId = useMemo(() => {
+    const rows = new Map<number, ConflictRecord[]>();
+    activeConflicts.forEach((conflict) => {
+      const voyageId = conflict.trip ? tripsById.get(conflict.trip)?.voyage.id : undefined;
+      if (!voyageId) return;
+      rows.set(voyageId, [...(rows.get(voyageId) ?? []), conflict]);
+    });
+    return rows;
+  }, [activeConflicts, tripsById]);
+  const trackingAlertsByVoyageId = useMemo(() => {
+    const rows = new Map<number, TrackingAlertRecord[]>();
+    openTrackingAlerts.forEach((alert) => {
+      const voyageId = alert.trip ? tripsById.get(alert.trip)?.voyage.id : undefined;
+      if (!voyageId) return;
+      rows.set(voyageId, [...(rows.get(voyageId) ?? []), alert]);
+    });
+    return rows;
+  }, [openTrackingAlerts, tripsById]);
+  const riskByVoyageId = useMemo(() => new Map(
+    voyages.map((voyage) => [
+      voyage.id,
+      effectiveRisk(
+        voyage,
+        conflictsByVoyageId.get(voyage.id) ?? [],
+        trackingAlertsByVoyageId.get(voyage.id) ?? [],
+      ),
+    ]),
+  ), [conflictsByVoyageId, trackingAlertsByVoyageId, voyages]);
   const [selectedVoyageId, setSelectedVoyageId] = useState<number | null>(voyages[0]?.id ?? null);
   const selectedVoyage = voyages.find((voyage) => voyage.id === selectedVoyageId) ?? voyages[0];
   const selectedSteps = useMemo(
@@ -63,8 +160,12 @@ export function OgvDemandPage({
   );
   const totalRequired = overview?.validation.activeDemandMt ?? 0;
   const totalRemaining = overview?.validation.remainingDemandMt ?? 0;
-  const highRiskCount = overview?.validation.highRiskVoyages ?? 0;
-  const readyCount = voyages.filter((voyage) => voyage.risk_status === "low").length;
+  const highRiskCount = voyages.filter((voyage) => (
+    riskByVoyageId.get(voyage.id)?.tone === "critical"
+  )).length;
+  const readyCount = voyages.filter((voyage) => (
+    riskByVoyageId.get(voyage.id)?.tone === "ok"
+  )).length;
   const assistantActions = [
     ...(assistantRowActions ?? []),
     ...(assistantPageActions ?? []),
@@ -75,8 +176,8 @@ export function OgvDemandPage({
     <section className="workspace-page planning-board">
       <header className="page-heading planning-heading">
         <div>
-          <p>Schedule / OGV Demand Board</p>
-          <h1>OGV Demand & Laycan</h1>
+          <p>Schedule / <Abbr term="OGV">OGV</Abbr> Demand Board</p>
+          <h1><Abbr term="OGV">OGV</Abbr> Demand & Laycan</h1>
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Demand intake</span>
@@ -154,11 +255,11 @@ export function OgvDemandPage({
             <table className="planning-table demand-table">
               <thead>
                 <tr>
-                  <th>OGV Name</th>
+                  <th><Abbr term="OGV">OGV</Abbr> Name</th>
                   <th>Customer</th>
                   <th>Laycan Start</th>
                   <th>Laycan End</th>
-                  <th>ETA / ETB / ETC</th>
+                  <th><Abbr term="ETA">ETA</Abbr> / <Abbr term="ETB">ETB</Abbr> / <Abbr term="ETC">ETC</Abbr></th>
                   <th>Required</th>
                   <th>Loaded</th>
                   <th>In-Transit</th>
@@ -170,39 +271,42 @@ export function OgvDemandPage({
                 </tr>
               </thead>
               <tbody>
-                {voyages.map((voyage) => (
-                  <tr
-                    className={selectedVoyage?.id === voyage.id ? "selected-row" : ""}
-                    key={voyage.id}
-                    onClick={() => setSelectedVoyageId(voyage.id)}
-                  >
-                    <td><strong>{voyage.vessel_name}</strong></td>
-                    <td>{voyage.customer_name}</td>
-                    <td><GridDate value={voyage.laycan_start} /></td>
-                    <td><GridDate value={voyage.laycan_end} /></td>
-                    <td>
-                      <span className="grid-date-stack">
-                        <GridDate value={voyage.eta} />
-                        <span className="grid-date-separator">/</span>
-                        <GridDate value={voyage.etb} />
-                        <span className="grid-date-separator">/</span>
-                        <GridDate value={voyage.etc_target} />
-                      </span>
-                    </td>
-                    <td>{mt(voyage.required_mt)}</td>
-                    <td>{mt(voyage.loaded_mt)}</td>
-                    <td>{mt(voyage.in_transit_mt)}</td>
-                    <td>{mt(voyage.discharged_mt)}</td>
-                    <td>{mt(voyage.remaining_mt)}</td>
-                    <td>{voyage.current_stage || "-"}</td>
-                    <td>{voyage.next_blocking_constraint || "Clear"}</td>
-                    <td>
-                      <span className={`status-chip ${riskTone(voyage)}`}>
-                        {voyage.risk_status.replace("_", " ")}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {voyages.map((voyage) => {
+                  const risk = riskByVoyageId.get(voyage.id) ?? effectiveRisk(voyage);
+                  return (
+                    <tr
+                      className={selectedVoyage?.id === voyage.id ? "selected-row" : ""}
+                      key={voyage.id}
+                      onClick={() => setSelectedVoyageId(voyage.id)}
+                    >
+                      <td><strong>{voyage.vessel_name}</strong></td>
+                      <td>{voyage.customer_name}</td>
+                      <td><GridDate value={voyage.laycan_start} /></td>
+                      <td><GridDate value={voyage.laycan_end} /></td>
+                      <td>
+                        <span className="grid-date-stack">
+                          <GridDate value={voyage.eta} />
+                          <span className="grid-date-separator">/</span>
+                          <GridDate value={voyage.etb} />
+                          <span className="grid-date-separator">/</span>
+                          <GridDate value={voyage.etc_target} />
+                        </span>
+                      </td>
+                      <td>{mt(voyage.required_mt)}</td>
+                      <td>{mt(voyage.loaded_mt)}</td>
+                      <td>{mt(voyage.in_transit_mt)}</td>
+                      <td>{mt(voyage.discharged_mt)}</td>
+                      <td>{mt(voyage.remaining_mt)}</td>
+                      <td>{voyage.current_stage || "-"}</td>
+                      <td>{risk.reason}</td>
+                      <td>
+                        <span className={`status-chip ${risk.tone}`}>
+                          {risk.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -218,16 +322,19 @@ export function OgvDemandPage({
           </div>
           <ol className="risk-list">
             {voyages
-              .filter((voyage) => voyage.risk_status !== "low")
-              .map((voyage) => (
-                <li key={voyage.id}>
-                  <span className={`dot ${riskTone(voyage)}`} />
-                  <div>
-                    <strong>{voyage.vessel_name}</strong>
-                    <p>{voyage.next_blocking_constraint}</p>
-                  </div>
-                </li>
-              ))}
+              .filter((voyage) => riskByVoyageId.get(voyage.id)?.tone !== "ok")
+              .map((voyage) => {
+                const risk = riskByVoyageId.get(voyage.id) ?? effectiveRisk(voyage);
+                return (
+                  <li key={voyage.id}>
+                    <span className={`dot ${risk.tone}`} />
+                    <div>
+                      <strong>{voyage.vessel_name}</strong>
+                      <p>{risk.reason}</p>
+                    </div>
+                  </li>
+                );
+              })}
           </ol>
           <section className="import-review">
             <strong>Import validation</strong>
@@ -267,7 +374,10 @@ export function OgvDemandPage({
               <h2>Hatch / layer chain</h2>
               <ol className="hatch-sequence-strip">
                 {selectedSteps.map((step) => (
-                  <li className={step.sequence_violation ? "violated" : step.status} key={step.id}>
+                  <li
+                    className={step.sequence_violation ? "violated" : step.status}
+                    key={step.id}
+                  >
                     <span>{step.required_sequence_no}</span>
                     <strong>{stageLabel(step)}</strong>
                     <em>{cargoLayerChainStatusLabel(step)}</em>

@@ -1,4 +1,5 @@
 import type { ActionRecommendation } from "../../types/assistant";
+import { AbbrText } from "../Abbreviation";
 
 type NextActionPillProps = {
   action: ActionRecommendation | null;
@@ -18,8 +19,8 @@ export function NextActionPill({ action, onNavigate }: NextActionPillProps) {
       title={action.enabled ? action.reason : action.blockedReason || action.reason}
       type="button"
     >
-      <span>{action.priority}</span>
-      <strong>{action.label}</strong>
+      <span>Next Action</span>
+      <strong><AbbrText text={action.label} /></strong>
     </button>
   );
 }

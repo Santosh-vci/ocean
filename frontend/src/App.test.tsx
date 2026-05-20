@@ -303,6 +303,364 @@ test("coal sequence page does not show recovery state for clear layers", () => {
   expect(screen.getByText("No recovery needed for this layer.")).toBeInTheDocument();
 });
 
+test("coal sequence page does not overwrite clear cargo layers with active plan exceptions", () => {
+  const now = "2026-05-19T00:00:00.000Z";
+  const baseMaster = {
+    id: 1,
+    code: "BASE",
+    name: "Base",
+    organization: null,
+    is_active: true,
+    effective_from: null,
+    effective_to: null,
+    created_at: now,
+    updated_at: now,
+  };
+  const overview = {
+    voyages: [],
+    cargoRequirements: [],
+    cargoLayerSteps: [{
+      id: 10,
+      voyage: 20,
+      voyage_ref: "VOY-ACTIVE",
+      vessel_name: "MV Active Layer",
+      cargo_requirement: null,
+      hatch_no: 1,
+      layer_no: 1,
+      required_sequence_no: 1,
+      coal_grade: {
+        ...baseMaster,
+        code: "EBONY",
+        brand_family: "Thermal",
+        typical_cv_kcal: 4200,
+        sulfur_pct: null,
+        ash_pct: null,
+        sequence_priority: 1,
+      },
+      required_mt: 46000,
+      remaining_mt: 46000,
+      planned_barge: null,
+      planned_jetty: null,
+      planned_cts: null,
+      status: "planned",
+      blocking_reason: "",
+      chain_status: "PLANNED",
+      sequence_violation: false,
+      planned_start: now,
+      planned_end: now,
+      created_at: now,
+      updated_at: now,
+    }],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 46000,
+      remainingDemandMt: 46000,
+    },
+  } as PlanningOverview;
+  const schedulingOverview = {
+    trips: [{
+      id: 101,
+      cargo_layer_step: { id: 10 },
+    }],
+    conflicts: [
+      {
+        id: 901,
+        plan_version: 1,
+        plan_version_ref: "PLAN V1",
+        trip: 101,
+        trip_ref: "PI-001",
+        vessel_name: "MV Active Layer",
+        code: "TIDE_WINDOW_MISSED",
+        severity: "critical",
+        object_type: "barge",
+        object_id: "BRG-VAL-08",
+        message: "Tide window missed; recovery recommendation required",
+        is_blocking: true,
+        resolved_at: null,
+        created_at: now,
+      },
+      {
+        id: 902,
+        plan_version: 1,
+        plan_version_ref: "PLAN V1",
+        trip: 101,
+        trip_ref: "PI-001",
+        vessel_name: "MV Active Layer",
+        code: "BRIDGE_WINDOW_MISSED",
+        severity: "critical",
+        object_type: "barge",
+        object_id: "BRG-VAL-08",
+        message: "Bridge window missed; recovery recommendation required",
+        is_blocking: true,
+        resolved_at: null,
+        created_at: now,
+      },
+    ],
+  } as unknown as SchedulingOverview;
+
+  render(
+    <CoalGradeSequencePage
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExport={vi.fn()}
+      overview={overview}
+      schedulingOverview={schedulingOverview}
+    />,
+  );
+
+  expect(screen.getAllByText("Open exceptions").length).toBeGreaterThan(0);
+  expect(screen.queryByText("WAITING RECOVERY")).not.toBeInTheDocument();
+  expect(screen.queryByText("Tide window missed")).not.toBeInTheDocument();
+  expect(screen.getAllByText("PLANNED").length).toBeGreaterThan(0);
+  expect(screen.getByText("No recovery needed for this layer.")).toBeInTheDocument();
+  expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+});
+
+test("coal sequence page keeps non-blocking warning exceptions out of journey status", () => {
+  const now = "2026-05-19T00:00:00.000Z";
+  const baseMaster = {
+    id: 1,
+    code: "BASE",
+    name: "Base",
+    organization: null,
+    is_active: true,
+    effective_from: null,
+    effective_to: null,
+    created_at: now,
+    updated_at: now,
+  };
+  const overview = {
+    voyages: [],
+    cargoRequirements: [],
+    cargoLayerSteps: [{
+      id: 11,
+      voyage: 21,
+      voyage_ref: "VOY-WATCH",
+      vessel_name: "MV Watch Layer",
+      cargo_requirement: null,
+      hatch_no: 1,
+      layer_no: 1,
+      required_sequence_no: 1,
+      coal_grade: {
+        ...baseMaster,
+        code: "AGATHIS",
+        brand_family: "Thermal",
+        typical_cv_kcal: 4200,
+        sulfur_pct: null,
+        ash_pct: null,
+        sequence_priority: 1,
+      },
+      required_mt: 31000,
+      remaining_mt: 31000,
+      planned_barge: null,
+      planned_jetty: null,
+      planned_cts: null,
+      status: "planned",
+      blocking_reason: "",
+      chain_status: "PLANNED",
+      sequence_violation: false,
+      planned_start: now,
+      planned_end: now,
+      created_at: now,
+      updated_at: now,
+    }],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 31000,
+      remainingDemandMt: 31000,
+    },
+  } as PlanningOverview;
+  const schedulingOverview = {
+    trips: [{
+      id: 111,
+      cargo_layer_step: { id: 11 },
+    }],
+    conflicts: [{
+      id: 904,
+      plan_version: 1,
+      plan_version_ref: "PLAN V1",
+      trip: 111,
+      trip_ref: "PI-003",
+      vessel_name: "MV Watch Layer",
+      code: "TIDE_WINDOW_MISSED",
+      severity: "warning",
+      object_type: "barge",
+      object_id: "BRG-NUS-17",
+      message: "Marginal tide margin; monitor after recovery candidate is simulated.",
+      is_blocking: false,
+      resolved_at: null,
+      created_at: now,
+    }],
+  } as unknown as SchedulingOverview;
+
+  render(
+    <CoalGradeSequencePage
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExport={vi.fn()}
+      overview={overview}
+      schedulingOverview={schedulingOverview}
+    />,
+  );
+
+  expect(screen.queryByText("MONITOR")).not.toBeInTheDocument();
+  expect(screen.queryByText("WAITING RECOVERY")).not.toBeInTheDocument();
+  expect(screen.queryByText("Marginal tide margin")).not.toBeInTheDocument();
+  expect(screen.getAllByText("PLANNED").length).toBeGreaterThan(0);
+  expect(screen.getByText("Layer clear")).toBeInTheDocument();
+  expect(screen.getByText("No recovery needed for this layer.")).toBeInTheDocument();
+});
+
+test("OGV demand board overlays active plan exceptions on stored low-risk demand", () => {
+  const now = "2026-05-19T00:00:00.000Z";
+  const baseMaster = {
+    id: 1,
+    code: "BASE",
+    name: "Base",
+    organization: null,
+    is_active: true,
+    effective_from: null,
+    effective_to: null,
+    created_at: now,
+    updated_at: now,
+  };
+  const overview = {
+    voyages: [{
+      id: 501,
+      voyage_id: "VOY-RISK-001",
+      vessel_name: "MV Demand Risk",
+      customer_name: "Pilot Customer",
+      vessel_class: "Panamax",
+      eta: now,
+      etb: null,
+      etc_target: null,
+      laycan_start: now,
+      laycan_end: now,
+      required_mt: 46000,
+      loaded_mt: 0,
+      in_transit_mt: 0,
+      discharged_mt: 0,
+      remaining_mt: 46000,
+      priority: 1,
+      demurrage_rate_usd_per_day: "42000.00",
+      anchorage_location: null,
+      organization: null,
+      status: "planned",
+      risk_status: "low",
+      current_stage: "PLANNED",
+      next_blocking_constraint: "Ready for scheduling",
+      created_at: now,
+      updated_at: now,
+    }],
+    cargoRequirements: [],
+    cargoLayerSteps: [{
+      id: 502,
+      voyage: 501,
+      voyage_ref: "VOY-RISK-001",
+      vessel_name: "MV Demand Risk",
+      cargo_requirement: null,
+      hatch_no: 1,
+      layer_no: 1,
+      required_sequence_no: 1,
+      coal_grade: {
+        ...baseMaster,
+        code: "EBONY",
+        brand_family: "Thermal",
+        typical_cv_kcal: 4200,
+        sulfur_pct: null,
+        ash_pct: null,
+        sequence_priority: 1,
+      },
+      required_mt: 46000,
+      remaining_mt: 46000,
+      planned_barge: null,
+      planned_jetty: null,
+      planned_cts: null,
+      status: "planned",
+      blocking_reason: "",
+      chain_status: "PLANNED",
+      sequence_violation: false,
+      planned_start: now,
+      planned_end: now,
+      created_at: now,
+      updated_at: now,
+    }],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 46000,
+      remainingDemandMt: 46000,
+    },
+  } as PlanningOverview;
+  const schedulingOverview = {
+    trips: [{
+      id: 601,
+      voyage: { id: 501 },
+      cargo_layer_step: { id: 502 },
+    }],
+    conflicts: [{
+      id: 903,
+      plan_version: 1,
+      plan_version_ref: "PLAN V1",
+      trip: 601,
+      trip_ref: "PI-002",
+      vessel_name: "MV Demand Risk",
+      code: "BRIDGE_WINDOW_MISSED",
+      severity: "critical",
+      object_type: "barge",
+      object_id: "BRG-VAL-08",
+      message: "Bridge window needs recovery before publishing.",
+      is_blocking: true,
+      resolved_at: null,
+      created_at: now,
+    }],
+    trackingAlerts: [],
+  } as unknown as SchedulingOverview;
+
+  render(
+    <OgvDemandPage
+      canEdit={false}
+      canExport={false}
+      isActionRunning={false}
+      onExportBoard={vi.fn()}
+      onImportDemand={vi.fn()}
+      overview={overview}
+      schedulingOverview={schedulingOverview}
+    />,
+  );
+
+  expect(screen.getAllByText("Bridge window needs recovery before publishing.").length)
+    .toBeGreaterThan(0);
+  expect(screen.getByText("high")).toBeInTheDocument();
+  expect(screen.queryByText("WAITING RECOVERY")).not.toBeInTheDocument();
+  expect(screen.getAllByText("PLANNED").length).toBeGreaterThan(0);
+});
+
 test("live map exposes seeded replay controls", () => {
   const onStartReplay = vi.fn();
   render(
@@ -405,6 +763,38 @@ test("published plan gantt uses planned trip dates for its axis", () => {
   expect(screen.getByText("Operating schedule gantt")).toBeInTheDocument();
   expect(screen.queryByText("24 OCT 04:00")).not.toBeInTheDocument();
   expect(screen.getAllByText(/MAY/).length).toBeGreaterThan(0);
+});
+
+test("published plan ignores resolved conflicts in active schedule status", () => {
+  const overview = stageSevenOverview();
+  overview.conflicts = [{
+    id: 1001,
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    trip: 201,
+    trip_ref: "PI-PLAN-UI-0001",
+    vessel_name: "MV Operator UI Import",
+    code: "BRIDGE_WINDOW_MISSED",
+    severity: "critical",
+    object_type: "barge",
+    object_id: "BRG-VAL-08",
+    message: "Resolved bridge conflict should not remain active.",
+    is_blocking: true,
+    resolved_at: "2026-05-17T12:00:00.000Z",
+    created_at: "2026-05-17T02:00:00.000Z",
+  }];
+
+  render(
+    <PublishedPlanPage
+      canCreateDraft={false}
+      isActionRunning={false}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.queryByText("Resolved bridge conflict should not remain active."))
+    .not.toBeInTheDocument();
+  expect(screen.getByText("No active conflict on this trip.")).toBeInTheDocument();
 });
 
 function phaseFiveOverview(): SchedulingOverview {
@@ -1009,7 +1399,7 @@ test("recommendation console renders ranking evidence and materializes a scenari
   expect(screen.getAllByText("NEXT WINDOW REPAIR").length).toBeGreaterThan(0);
   expect(screen.getByText("Before / after actions")).toBeInTheDocument();
   expect(screen.getAllByText("Input snapshot").length).toBeGreaterThan(0);
-  fireEvent.click(screen.getByRole("button", { name: "Create scenario from recommendation" }));
+  fireEvent.click(screen.getByRole("button", { name: "Test as scenario" }));
   expect(onMaterializeRecommendation).toHaveBeenCalledWith(801);
 });
 

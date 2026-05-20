@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AuditStrip } from "./components/AuditStrip";
 import { Sidebar } from "./components/Sidebar";
@@ -70,6 +70,9 @@ import type {
 function currentHashPath() {
   return window.location.hash.replace("#", "") || "/dashboard/situation";
 }
+
+const LIVE_REFRESH_INTERVAL_MS = 15000;
+const INTERACTION_REFRESH_THROTTLE_MS = 1000;
 
 function upcomingLocalIso(daysFromToday: number, hour: number, minute = 0) {
   const now = new Date();
@@ -151,6 +154,10 @@ function App() {
   const [isExportGenerating, setIsExportGenerating] = useState(false);
   const [isBooting, setIsBooting] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const masterDataOverviewRef = useRef<MasterDataOverview | null>(null);
+  const schedulingOverviewRef = useRef<SchedulingOverview | null>(null);
+  const workspaceRefreshPromiseRef = useRef<Promise<void> | null>(null);
+  const workspaceLastRefreshAtRef = useRef(0);
 
   useEffect(() => {
     apiFetch<CurrentUser>("/me/")
@@ -220,6 +227,7 @@ function App() {
   const routeIsAllowed = navItems.some((item) => item.path === activePath);
   const route = routeIsAllowed ? activePath : firstAccessiblePath;
   const assistant = useNextActions(route, { enabled: Boolean(currentUser) });
+  const refreshAssistantActions = assistant.refresh;
 
   const refreshWorkspaceData = useCallback(async () => {
     if (!currentUser) {
@@ -242,8 +250,14 @@ function App() {
 
     if (canViewMasterData) {
       refreshes.push(apiFetch<MasterDataOverview>("/master-data/overview/")
-        .then(setMasterDataOverview)
-        .catch(() => setMasterDataOverview(null)));
+        .then((data) => {
+          masterDataOverviewRef.current = data;
+          setMasterDataOverview(data);
+        })
+        .catch(() => {
+          masterDataOverviewRef.current = null;
+          setMasterDataOverview(null);
+        }));
     }
 
     if (canViewAudit) {
@@ -272,8 +286,14 @@ function App() {
 
     if (canViewSchedule) {
       refreshes.push(apiFetch<SchedulingOverview>("/scheduling/overview/")
-        .then(setSchedulingOverview)
-        .catch(() => setSchedulingOverview(null)));
+        .then((data) => {
+          schedulingOverviewRef.current = data;
+          setSchedulingOverview(data);
+        })
+        .catch(() => {
+          schedulingOverviewRef.current = null;
+          setSchedulingOverview(null);
+        }));
     }
 
     if (canViewTelemetry) {
@@ -337,23 +357,106 @@ function App() {
     currentUser,
   ]);
 
+  const requestWorkspaceRefresh = useCallback(async (options: { force?: boolean } = {}) => {
+    if (!currentUser) {
+      return;
+    }
+
+    const now = Date.now();
+    if (
+      !options.force
+      && !workspaceRefreshPromiseRef.current
+      && now - workspaceLastRefreshAtRef.current < INTERACTION_REFRESH_THROTTLE_MS
+    ) {
+      return;
+    }
+
+    if (workspaceRefreshPromiseRef.current) {
+      await workspaceRefreshPromiseRef.current;
+      return;
+    }
+
+    const refreshPromise = refreshWorkspaceData()
+      .then(() => {
+        workspaceLastRefreshAtRef.current = Date.now();
+        refreshAssistantActions();
+      })
+      .finally(() => {
+        workspaceRefreshPromiseRef.current = null;
+      });
+    workspaceRefreshPromiseRef.current = refreshPromise;
+    await refreshPromise;
+  }, [currentUser, refreshAssistantActions, refreshWorkspaceData]);
+
   useEffect(() => {
     if (!currentUser) {
       return;
     }
 
-    void refreshWorkspaceData();
-  }, [currentUser, refreshWorkspaceData]);
+    void requestWorkspaceRefresh({ force: true });
+  }, [currentUser, requestWorkspaceRefresh, route]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState !== "hidden") {
+        void requestWorkspaceRefresh();
+      }
+    }
+
+    const intervalId = window.setInterval(refreshWhenVisible, LIVE_REFRESH_INTERVAL_MS);
+    window.addEventListener("focus", refreshWhenVisible);
+    window.addEventListener("online", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshWhenVisible);
+      window.removeEventListener("online", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [currentUser, requestWorkspaceRefresh]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    function refreshForOperatorInteraction(event: Event) {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".operations-shell")) {
+        return;
+      }
+      void requestWorkspaceRefresh();
+    }
+
+    document.addEventListener("pointerdown", refreshForOperatorInteraction, true);
+    document.addEventListener("keydown", refreshForOperatorInteraction, true);
+    return () => {
+      document.removeEventListener("pointerdown", refreshForOperatorInteraction, true);
+      document.removeEventListener("keydown", refreshForOperatorInteraction, true);
+    };
+  }, [currentUser, requestWorkspaceRefresh]);
+
+  function liveSchedulingOverview() {
+    return schedulingOverviewRef.current ?? schedulingOverview;
+  }
+
+  function liveMasterDataOverview() {
+    return masterDataOverviewRef.current ?? masterDataOverview;
+  }
 
   async function runWorkspaceAction(label: string, action: () => Promise<string>) {
     setActionInFlight(label);
     setActionError(null);
     setActionMessage(null);
     try {
+      await requestWorkspaceRefresh({ force: true });
       const message = await action();
       setActionMessage(message);
-      await refreshWorkspaceData();
-      assistant.refresh();
+      await requestWorkspaceRefresh({ force: true });
     } catch (error) {
       const detail = error instanceof Error ? error.message : "unknown error";
       setActionError(`${label} failed (${detail}). Check permissions, active plan state, and backend logs.`);
@@ -374,6 +477,10 @@ function App() {
     setMasterDataOverview(null);
     setPlanningOverview(null);
     setSchedulingOverview(null);
+    masterDataOverviewRef.current = null;
+    schedulingOverviewRef.current = null;
+    workspaceRefreshPromiseRef.current = null;
+    workspaceLastRefreshAtRef.current = 0;
     setLatestAssetStates([]);
     setGeofenceZones([]);
     setMovementEvents([]);
@@ -430,7 +537,7 @@ function App() {
       setIsExportGenerating(true);
       setExportError(null);
       const csrfToken = await getCsrfToken();
-      const activePlanVersionId = schedulingOverview?.activePlanVersion?.id;
+      const activePlanVersionId = liveSchedulingOverview()?.activePlanVersion?.id;
       const exportJob = await apiFetch<ExportJobRecord>("/exports/generate/", {
         method: "POST",
         headers: {
@@ -543,7 +650,7 @@ function App() {
 
   async function handleMasterDataValidate(catalogKey: MasterDataCatalogKey) {
     await runWorkspaceAction("Master data validate", async () => {
-      const records = masterDataOverview?.catalogs[catalogKey] ?? [];
+      const records = liveMasterDataOverview()?.catalogs[catalogKey] ?? [];
       const inactive = records.filter((record) => !record.is_active).length;
       return `Master data validation complete: ${records.length} ${catalogKey} records, ${inactive} inactive`;
     });
@@ -579,7 +686,7 @@ function App() {
 
   async function handleCreateDraft() {
     await runWorkspaceAction("Create draft", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion;
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
       if (!activeVersion) {
         const draft = await createInitialOperatorPlanVersion();
         return `Initial draft created: ${draft.plan_code} V${draft.version_no}`;
@@ -606,7 +713,7 @@ function App() {
 
   async function handleRegeneratePlan() {
     await runWorkspaceAction("Generate schedule", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion
         ?? await createInitialOperatorPlanVersion();
       if (["published", "superseded"].includes(activeVersion.status)) {
         throw new Error("No editable active plan version");
@@ -627,9 +734,10 @@ function App() {
 
   async function handleForceStartJetty(assignmentId: number, actualStartAt: string) {
     await runWorkspaceAction("Force start jetty", async () => {
-      const assignment = schedulingOverview?.assignments.find((item) => item.id === assignmentId)
-        ?? schedulingOverview?.assignments.find((item) => item.jetty)
-        ?? schedulingOverview?.assignments[0];
+      const liveOverview = liveSchedulingOverview();
+      const assignment = liveOverview?.assignments.find((item) => item.id === assignmentId)
+        ?? liveOverview?.assignments.find((item) => item.jetty)
+        ?? liveOverview?.assignments[0];
       if (!assignment) {
         throw new Error("No assignment available for jetty override");
       }
@@ -729,7 +837,7 @@ function App() {
         return `Scenario created from observed delay: ${scenario.scenario_id}`;
       }
 
-      const activeVersion = schedulingOverview?.activePlanVersion;
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
       if (!activeVersion) {
         throw new Error("No active plan version");
       }
@@ -755,7 +863,7 @@ function App() {
 
   async function handleGenerateRecoveryOptions(source: RecommendationSourceInput) {
     await runWorkspaceAction("Generate recovery options", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion;
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
       if (!activeVersion) {
         throw new Error("No active plan version");
       }
@@ -845,8 +953,9 @@ function App() {
   }
 
   function currentScenario(scenarioId?: number) {
-    return schedulingOverview?.simulationScenarios.find((scenario) => scenario.id === scenarioId)
-      ?? schedulingOverview?.simulationScenarios[0]
+    const liveOverview = liveSchedulingOverview();
+    return liveOverview?.simulationScenarios.find((scenario) => scenario.id === scenarioId)
+      ?? liveOverview?.simulationScenarios[0]
       ?? null;
   }
 
@@ -893,7 +1002,7 @@ function App() {
 
   async function handleSubmitApproval() {
     await runWorkspaceAction("Submit approval", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion;
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
       if (!activeVersion || ["published", "superseded"].includes(activeVersion.status)) {
         throw new Error("No submittable active plan version");
       }
@@ -934,8 +1043,9 @@ function App() {
 
   async function handleApprovePlan() {
     await runWorkspaceAction("Approve plan", async () => {
-      const request = schedulingOverview?.approvalRequests.find((item) => item.status === "pending")
-        ?? schedulingOverview?.approvalRequests[0];
+      const liveOverview = liveSchedulingOverview();
+      const request = liveOverview?.approvalRequests.find((item) => item.status === "pending")
+        ?? liveOverview?.approvalRequests[0];
       if (!request) {
         throw new Error("No approval request");
       }
@@ -964,8 +1074,9 @@ function App() {
 
   async function handleRejectPlan() {
     await runWorkspaceAction("Reject plan", async () => {
-      const request = schedulingOverview?.approvalRequests.find((item) => item.status === "pending")
-        ?? schedulingOverview?.approvalRequests[0];
+      const liveOverview = liveSchedulingOverview();
+      const request = liveOverview?.approvalRequests.find((item) => item.status === "pending")
+        ?? liveOverview?.approvalRequests[0];
       if (!request) {
         throw new Error("No approval request");
       }
@@ -993,7 +1104,7 @@ function App() {
 
   async function handlePublishPlan() {
     await runWorkspaceAction("Publish plan", async () => {
-      const activeVersion = schedulingOverview?.activePlanVersion;
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
       if (!activeVersion) {
         throw new Error("No active plan version");
       }
@@ -1009,8 +1120,10 @@ function App() {
   }
 
   function handleNavigate(path: string) {
-    window.location.hash = path;
-    setActivePath(path);
+    void requestWorkspaceRefresh({ force: true }).finally(() => {
+      window.location.hash = path;
+      setActivePath(path);
+    });
   }
 
   if (isBooting) {
@@ -1099,6 +1212,7 @@ function App() {
             onExportBoard={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
             onImportDemand={handleImportDemand}
             overview={planningOverview}
+            schedulingOverview={schedulingOverview}
           />
         ) : null}
         {route === "/schedule/coal-grade-sequence" && canViewSchedule ? (
@@ -1109,6 +1223,7 @@ function App() {
             isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "conflict", exportFormat: "json" })}
             overview={planningOverview}
+            schedulingOverview={schedulingOverview}
           />
         ) : null}
         {route === "/constraints/tide-bridge" && canViewSchedule ? (

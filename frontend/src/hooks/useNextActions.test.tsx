@@ -36,12 +36,12 @@ function rawResponse() {
     context: { route: "/recovery/recommendations" },
     global_next_action: {
       action_id: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-      label: "Create scenario from recommendation",
+      label: "Test recommendation as scenario",
       priority: "warning",
       rank_score: 810,
       enabled: true,
       route: "/recovery/recommendations",
-      cta_label: "Create scenario",
+      cta_label: "Test as scenario",
       reason: "The top recovery recommendation is ready.",
       hover_hint: "",
       detail_text: "",
@@ -128,7 +128,7 @@ test("useNextActions requests object-scoped Phase 5 guidance", async () => {
 
   await waitFor(() => {
     expect(screen.getByTestId("label")).toHaveTextContent(
-      "Create scenario from recommendation",
+      "Test recommendation as scenario",
     );
   });
   expect(fetchMock).toHaveBeenCalledWith(

@@ -90,6 +90,7 @@ class Command(BaseCommand):
         )
 
         with transaction.atomic():
+            self._clear_existing_practice_case()
             voyages = self._create_demand(
                 organization=organization,
                 anchorage=anchorage,
@@ -154,6 +155,13 @@ class Command(BaseCommand):
                 )
             ),
         }
+
+    def _clear_existing_practice_case(self) -> None:
+        Plan.objects.filter(code__startswith="PLAN-RECOVERY-PRACTICE-").delete()
+        OGVVoyage.objects.filter(current_stage="RECOVERY_PRACTICE").delete()
+        ImportJob.objects.filter(source="assistant-recovery-practice").delete()
+        TideWindow.objects.filter(source="assistant-recovery-practice").delete()
+        BridgeWindow.objects.filter(code__startswith="BRDG-REC-PRACTICE-").delete()
 
     def _create_demand(self, *, organization, anchorage) -> list[OGVVoyage]:
         specs = [

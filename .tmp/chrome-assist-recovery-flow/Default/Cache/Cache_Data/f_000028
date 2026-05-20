@@ -1,0 +1,457 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/pages/RbacPage.tsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=8ced4974"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("/app/src/pages/RbacPage.tsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+var _s = $RefreshSig$();
+import __vite__cjsImport3_react from "/node_modules/.vite/deps/react.js?v=8ced4974"; const useState = __vite__cjsImport3_react["useState"];
+import {
+  RecommendationCard
+} from "/src/components/assistant/index.ts";
+function hasPermission(user, permissionCode) {
+  return user.assignments.some(
+    (assignment) => assignment.role.permissions.some((permission) => permission.code === permissionCode)
+  );
+}
+function selectedPermissions(user) {
+  const seen = /* @__PURE__ */ new Map();
+  user.assignments.forEach((assignment) => {
+    assignment.role.permissions.forEach((permission) => {
+      seen.set(permission.id, permission);
+    });
+  });
+  return [...seen.values()];
+}
+export function RbacPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
+  onAssistantNavigate,
+  overview
+}) {
+  _s();
+  const [selectedUserId, setSelectedUserId] = useState(overview.users[0]?.id ?? 0);
+  const selectedUser = overview.users.find((user) => user.id === selectedUserId) ?? overview.users[0];
+  const accessRiskCount = overview.users.filter(
+    (user) => hasPermission(user, "admin.manage_users")
+  ).length;
+  const approvalAuthorityCount = overview.users.filter(
+    (user) => hasPermission(user, "schedule.approve")
+  ).length;
+  const permissions = selectedUser ? selectedPermissions(selectedUser) : [];
+  const permissionModules = [...new Set(overview.permissions.map((permission) => permission.module))];
+  return /* @__PURE__ */ jsxDEV("section", { className: "workspace-page governance-cockpit", children: [
+    /* @__PURE__ */ jsxDEV("header", { className: "page-heading", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("p", { children: "Admin" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 72,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("h1", { children: "Users & RBAC" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 73,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 71,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("span", { className: "phase-chip", children: "Hardened governance cockpit" }, void 0, false, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 75,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/RbacPage.tsx",
+      lineNumber: 70,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(
+      RecommendationCard,
+      {
+        assistantBlockedActions,
+        assistantChecklist,
+        assistantPageActions,
+        assistantRowActions,
+        onAssistantNavigate
+      },
+      void 0,
+      false,
+      {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 77,
+        columnNumber: 7
+      },
+      this
+    ),
+    /* @__PURE__ */ jsxDEV("div", { className: "metric-strip four-up", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Users" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 87,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: overview.users.length }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 88,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 86,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Approval auth" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 91,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: approvalAuthorityCount }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 92,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 90,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Module access" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 95,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: permissionModules.length }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 96,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 94,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Access risk" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 99,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: accessRiskCount }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 100,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 98,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/RbacPage.tsx",
+      lineNumber: 85,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "governance-layout", children: [
+      /* @__PURE__ */ jsxDEV("section", { className: "plain-section board-surface", children: [
+        /* @__PURE__ */ jsxDEV("h2", { children: "User access roster" }, void 0, false, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 106,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("table", { children: [
+          /* @__PURE__ */ jsxDEV("thead", { children: /* @__PURE__ */ jsxDEV("tr", { children: [
+            /* @__PURE__ */ jsxDEV("th", { children: "User" }, void 0, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 110,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Organization" }, void 0, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 111,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Role assignment" }, void 0, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 112,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Data scope" }, void 0, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 113,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Approval" }, void 0, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 114,
+              columnNumber: 17
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 109,
+            columnNumber: 15
+          }, this) }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 108,
+            columnNumber: 13
+          }, this),
+          /* @__PURE__ */ jsxDEV("tbody", { children: overview.users.map((user) => {
+            const assignment = user.assignments[0];
+            const isSelected = user.id === selectedUser?.id;
+            return /* @__PURE__ */ jsxDEV(
+              "tr",
+              {
+                className: isSelected ? "selected-row" : "",
+                onClick: () => setSelectedUserId(user.id),
+                children: [
+                  /* @__PURE__ */ jsxDEV("td", { children: user.email }, void 0, false, {
+                    fileName: "/app/src/pages/RbacPage.tsx",
+                    lineNumber: 127,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: assignment?.organization.name ?? "—" }, void 0, false, {
+                    fileName: "/app/src/pages/RbacPage.tsx",
+                    lineNumber: 128,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: assignment?.role.name ?? "—" }, void 0, false, {
+                    fileName: "/app/src/pages/RbacPage.tsx",
+                    lineNumber: 129,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: assignment?.data_scope.name ?? "—" }, void 0, false, {
+                    fileName: "/app/src/pages/RbacPage.tsx",
+                    lineNumber: 130,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: hasPermission(user, "schedule.approve") ? "Yes" : "No" }, void 0, false, {
+                    fileName: "/app/src/pages/RbacPage.tsx",
+                    lineNumber: 131,
+                    columnNumber: 21
+                  }, this)
+                ]
+              },
+              user.id,
+              true,
+              {
+                fileName: "/app/src/pages/RbacPage.tsx",
+                lineNumber: 122,
+                columnNumber: 19
+              },
+              this
+            );
+          }) }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 117,
+            columnNumber: 13
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 107,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 105,
+        columnNumber: 9
+      }, this),
+      selectedUser ? /* @__PURE__ */ jsxDEV("aside", { className: "detail-drawer rbac-drawer", children: [
+        /* @__PURE__ */ jsxDEV("div", { children: [
+          /* @__PURE__ */ jsxDEV("span", { children: "Selected user" }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 142,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("strong", { children: selectedUser.email }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 143,
+            columnNumber: 15
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 141,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV("section", { children: [
+          /* @__PURE__ */ jsxDEV("h2", { children: "Role assignment" }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 147,
+            columnNumber: 15
+          }, this),
+          selectedUser.assignments.map(
+            (assignment) => /* @__PURE__ */ jsxDEV("dl", { children: [
+              /* @__PURE__ */ jsxDEV("div", { children: [
+                /* @__PURE__ */ jsxDEV("dt", { children: "Role" }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 151,
+                  columnNumber: 21
+                }, this),
+                /* @__PURE__ */ jsxDEV("dd", { children: assignment.role.name }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 152,
+                  columnNumber: 21
+                }, this)
+              ] }, void 0, true, {
+                fileName: "/app/src/pages/RbacPage.tsx",
+                lineNumber: 150,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { children: [
+                /* @__PURE__ */ jsxDEV("dt", { children: "Organization" }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 155,
+                  columnNumber: 21
+                }, this),
+                /* @__PURE__ */ jsxDEV("dd", { children: assignment.organization.name }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 156,
+                  columnNumber: 21
+                }, this)
+              ] }, void 0, true, {
+                fileName: "/app/src/pages/RbacPage.tsx",
+                lineNumber: 154,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("div", { children: [
+                /* @__PURE__ */ jsxDEV("dt", { children: "Data scope" }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 159,
+                  columnNumber: 21
+                }, this),
+                /* @__PURE__ */ jsxDEV("dd", { children: assignment.data_scope.name }, void 0, false, {
+                  fileName: "/app/src/pages/RbacPage.tsx",
+                  lineNumber: 160,
+                  columnNumber: 21
+                }, this)
+              ] }, void 0, true, {
+                fileName: "/app/src/pages/RbacPage.tsx",
+                lineNumber: 158,
+                columnNumber: 19
+              }, this)
+            ] }, `${assignment.role.code}-${assignment.organization.slug}`, true, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 149,
+              columnNumber: 13
+            }, this)
+          )
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 146,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV("section", { children: [
+          /* @__PURE__ */ jsxDEV("h2", { children: "Module access matrix" }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 167,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("div", { className: "matrix-list", children: permissionModules.map((module) => {
+            const enabled = permissions.some((permission) => permission.module === module);
+            return /* @__PURE__ */ jsxDEV("span", { className: enabled ? "matrix-cell enabled" : "matrix-cell", children: module }, module, false, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 172,
+              columnNumber: 19
+            }, this);
+          }) }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 168,
+            columnNumber: 15
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 166,
+          columnNumber: 13
+        }, this),
+        /* @__PURE__ */ jsxDEV("section", { children: [
+          /* @__PURE__ */ jsxDEV("h2", { children: "Validation checklist" }, void 0, false, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 181,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("ul", { className: "validation-list", children: [
+            /* @__PURE__ */ jsxDEV("li", { children: [
+              selectedUser.memberships.length > 0 ? "✓" : "!",
+              " Organization assigned"
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 183,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("li", { children: [
+              selectedUser.assignments.length > 0 ? "✓" : "!",
+              " Role assigned"
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 184,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("li", { children: [
+              permissions.length > 0 ? "✓" : "!",
+              " Permissions resolved"
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/RbacPage.tsx",
+              lineNumber: 185,
+              columnNumber: 17
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/RbacPage.tsx",
+            lineNumber: 182,
+            columnNumber: 15
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/RbacPage.tsx",
+          lineNumber: 180,
+          columnNumber: 13
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/RbacPage.tsx",
+        lineNumber: 140,
+        columnNumber: 9
+      }, this) : null
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/RbacPage.tsx",
+      lineNumber: 104,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "/app/src/pages/RbacPage.tsx",
+    lineNumber: 69,
+    columnNumber: 5
+  }, this);
+}
+_s(RbacPage, "jo76cXz7ytlSuodDzEnzjEpEKsw=");
+_c = RbacPage;
+var _c;
+$RefreshReg$(_c, "RbacPage");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("/app/src/pages/RbacPage.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("/app/src/pages/RbacPage.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,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QTtBQUFBLFdBL0NGO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFnREEsSUFDRTtBQUFBLFNBckZOO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FzRkE7QUFBQSxPQXpIRjtBQUFBO0FBQUE7QUFBQTtBQUFBLFNBMEhBO0FBRUo7QUFBQ1IsR0FqSmVQLFVBQVE7QUFBQSxLQUFSQTtBQUFRLElBQUE2QjtBQUFBLGFBQUFBLElBQUEiLCJuYW1lcyI6WyJ1c2VTdGF0ZSIsIlJlY29tbWVuZGF0aW9uQ2FyZCIsImhhc1Blcm1pc3Npb24iLCJ1c2VyIiwicGVybWlzc2lvbkNvZGUiLCJhc3NpZ25tZW50cyIsInNvbWUiLCJhc3NpZ25tZW50Iiwicm9sZSIsInBlcm1pc3Npb25zIiwicGVybWlzc2lvbiIsImNvZGUiLCJzZWxlY3RlZFBlcm1pc3Npb25zIiwic2VlbiIsIk1hcCIsImZvckVhY2giLCJzZXQiLCJpZCIsInZhbHVlcyIsIlJiYWNQYWdlIiwiYXNzaXN0YW50QmxvY2tlZEFjdGlvbnMiLCJhc3Npc3RhbnRDaGVja2xpc3QiLCJhc3Npc3RhbnRQYWdlQWN0aW9ucyIsImFzc2lzdGFudFJvd0FjdGlvbnMiLCJvbkFzc2lzdGFudE5hdmlnYXRlIiwib3ZlcnZpZXciLCJfcyIsInNlbGVjdGVkVXNlcklkIiwic2V0U2VsZWN0ZWRVc2VySWQiLCJ1c2VycyIsInNlbGVjdGVkVXNlciIsImZpbmQiLCJhY2Nlc3NSaXNrQ291bnQiLCJmaWx0ZXIiLCJsZW5ndGgiLCJhcHByb3ZhbEF1dGhvcml0eUNvdW50IiwicGVybWlzc2lvbk1vZHVsZXMiLCJTZXQiLCJtYXAiLCJtb2R1bGUiLCJpc1NlbGVjdGVkIiwiZW1haWwiLCJvcmdhbml6YXRpb24iLCJuYW1lIiwiZGF0YV9zY29wZSIsInNsdWciLCJlbmFibGVkIiwibWVtYmVyc2hpcHMiLCJfYyJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlcyI6WyJSYmFjUGFnZS50c3giXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgdXNlU3RhdGUgfSBmcm9tIFwicmVhY3RcIjtcblxuaW1wb3J0IHtcbiAgUmVjb21tZW5kYXRpb25DYXJkLFxuICB0eXBlIEFzc2lzdGFudFJlY29tbWVuZGF0aW9uU3VyZmFjZVByb3BzLFxufSBmcm9tIFwiLi4vY29tcG9uZW50cy9hc3Npc3RhbnRcIjtcbmltcG9ydCB0eXBlIHsgQWNjZXNzUGVybWlzc2lvbiwgUmJhY092ZXJ2aWV3LCBVc2VyU3VtbWFyeSB9IGZyb20gXCIuLi90eXBlc1wiO1xuXG50eXBlIFJiYWNQYWdlUHJvcHMgPSBBc3Npc3RhbnRSZWNvbW1lbmRhdGlvblN1cmZhY2VQcm9wcyAmIHtcbiAgb3ZlcnZpZXc6IFJiYWNPdmVydmlldztcbn07XG5cbmZ1bmN0aW9uIGhhc1Blcm1pc3Npb24odXNlcjogVXNlclN1bW1hcnksIHBlcm1pc3Npb25Db2RlOiBzdHJpbmcpIHtcbiAgcmV0dXJuIHVzZXIuYXNzaWdubWVudHMuc29tZSgoYXNzaWdubWVudCkgPT5cbiAgICBhc3NpZ25tZW50LnJvbGUucGVybWlzc2lvbnMuc29tZSgocGVybWlzc2lvbikgPT4gcGVybWlzc2lvbi5jb2RlID09PSBwZXJtaXNzaW9uQ29kZSksXG4gICk7XG59XG5cbmZ1bmN0aW9uIHNlbGVjdGVkUGVybWlzc2lvbnModXNlcjogVXNlclN1bW1hcnkpOiBBY2Nlc3NQZXJtaXNzaW9uW10ge1xuICBjb25zdCBzZWVuID0gbmV3IE1hcDxudW1iZXIsIEFjY2Vzc1Blcm1pc3Npb24+KCk7XG4gIHVzZXIuYXNzaWdubWVudHMuZm9yRWFjaCgoYXNzaWdubWVudCkgPT4ge1xuICAgIGFzc2lnbm1lbnQucm9sZS5wZXJtaXNzaW9ucy5mb3JFYWNoKChwZXJtaXNzaW9uKSA9PiB7XG4gICAgICBzZWVuLnNldChwZXJtaXNzaW9uLmlkLCBwZXJtaXNzaW9uKTtcbiAgICB9KTtcbiAgfSk7XG4gIHJldHVybiBbLi4uc2Vlbi52YWx1ZXMoKV07XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBSYmFjUGFnZSh7XG4gIGFzc2lzdGFudEJsb2NrZWRBY3Rpb25zLFxuICBhc3Npc3RhbnRDaGVja2xpc3QsXG4gIGFzc2lzdGFudFBhZ2VBY3Rpb25zLFxuICBhc3Npc3RhbnRSb3dBY3Rpb25zLFxuICBvbkFzc2lzdGFudE5hdmlnYXRlLFxuICBvdmVydmlldyxcbn06IFJiYWNQYWdlUHJvcHMpIHtcbiAgY29uc3QgW3NlbGVjdGVkVXNlcklkLCBzZXRTZWxlY3RlZFVzZXJJZF0gPSB1c2VTdGF0ZTxudW1iZXI+KG92ZXJ2aWV3LnVzZXJzWzBdPy5pZCA/PyAwKTtcbiAgY29uc3Qgc2VsZWN0ZWRVc2VyID1cbiAgICBvdmVydmlldy51c2Vycy5maW5kKCh1c2VyKSA9PiB1c2VyLmlkID09PSBzZWxlY3RlZFVzZXJJZCkgPz8gb3ZlcnZpZXcudXNlcnNbMF07XG4gIGNvbnN0IGFjY2Vzc1Jpc2tDb3VudCA9IG92ZXJ2aWV3LnVzZXJzLmZpbHRlcigodXNlcikgPT5cbiAgICBoYXNQZXJtaXNzaW9uKHVzZXIsIFwiYWRtaW4ubWFuYWdlX3VzZXJzXCIpLFxuICApLmxlbmd0aDtcbiAgY29uc3QgYXBwcm92YWxBdXRob3JpdHlDb3VudCA9IG92ZXJ2aWV3LnVzZXJzLmZpbHRlcigodXNlcikgPT5cbiAgICBoYXNQZXJtaXNzaW9uKHVzZXIsIFwic2NoZWR1bGUuYXBwcm92ZVwiKSxcbiAgKS5sZW5ndGg7XG4gIGNvbnN0IHBlcm1pc3Npb25zID0gc2VsZWN0ZWRVc2VyID8gc2VsZWN0ZWRQZXJtaXNzaW9ucyhzZWxlY3RlZFVzZXIpIDogW107XG4gIGNvbnN0IHBlcm1pc3Npb25Nb2R1bGVzID0gWy4uLm5ldyBTZXQob3ZlcnZpZXcucGVybWlzc2lvbnMubWFwKChwZXJtaXNzaW9uKSA9PiBwZXJtaXNzaW9uLm1vZHVsZSkpXTtcblxuICByZXR1cm4gKFxuICAgIDxzZWN0aW9uIGNsYXNzTmFtZT1cIndvcmtzcGFjZS1wYWdlIGdvdmVybmFuY2UtY29ja3BpdFwiPlxuICAgICAgPGhlYWRlciBjbGFzc05hbWU9XCJwYWdlLWhlYWRpbmdcIj5cbiAgICAgICAgPGRpdj5cbiAgICAgICAgICA8cD5BZG1pbjwvcD5cbiAgICAgICAgICA8aDE+VXNlcnMgJiBSQkFDPC9oMT5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cInBoYXNlLWNoaXBcIj5IYXJkZW5lZCBnb3Zlcm5hbmNlIGNvY2twaXQ8L3NwYW4+XG4gICAgICA8L2hlYWRlcj5cbiAgICAgIDxSZWNvbW1lbmRhdGlvbkNhcmRcbiAgICAgICAgYXNzaXN0YW50QmxvY2tlZEFjdGlvbnM9e2Fzc2lzdGFudEJsb2NrZWRBY3Rpb25zfVxuICAgICAgICBhc3Npc3RhbnRDaGVja2xpc3Q9e2Fzc2lzdGFudENoZWNrbGlzdH1cbiAgICAgICAgYXNzaXN0YW50UGFnZUFjdGlvbnM9e2Fzc2lzdGFudFBhZ2VBY3Rpb25zfVxuICAgICAgICBhc3Npc3RhbnRSb3dBY3Rpb25zPXthc3Npc3RhbnRSb3dBY3Rpb25zfVxuICAgICAgICBvbkFzc2lzdGFudE5hdmlnYXRlPXtvbkFzc2lzdGFudE5hdmlnYXRlfVxuICAgICAgLz5cblxuICAgICAgPGRpdiBjbGFzc05hbWU9XCJtZXRyaWMtc3RyaXAgZm91ci11cFwiPlxuICAgICAgICA8ZGl2PlxuICAgICAgICAgIDxzcGFuPlVzZXJzPC9zcGFuPlxuICAgICAgICAgIDxzdHJvbmc+e292ZXJ2aWV3LnVzZXJzLmxlbmd0aH08L3N0cm9uZz5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIDxkaXY+XG4gICAgICAgICAgPHNwYW4+QXBwcm92YWwgYXV0aDwvc3Bhbj5cbiAgICAgICAgICA8c3Ryb25nPnthcHByb3ZhbEF1dGhvcml0eUNvdW50fTwvc3Ryb25nPlxuICAgICAgICA8L2Rpdj5cbiAgICAgICAgPGRpdj5cbiAgICAgICAgICA8c3Bhbj5Nb2R1bGUgYWNjZXNzPC9zcGFuPlxuICAgICAgICAgIDxzdHJvbmc+e3Blcm1pc3Npb25Nb2R1bGVzLmxlbmd0aH08L3N0cm9uZz5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIDxkaXY+XG4gICAgICAgICAgPHNwYW4+QWNjZXNzIHJpc2s8L3NwYW4+XG4gICAgICAgICAgPHN0cm9uZz57YWNjZXNzUmlza0NvdW50fTwvc3Ryb25nPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIDwvZGl2PlxuXG4gICAgICA8ZGl2IGNsYXNzTmFtZT1cImdvdmVybmFuY2UtbGF5b3V0XCI+XG4gICAgICAgIDxzZWN0aW9uIGNsYXNzTmFtZT1cInBsYWluLXNlY3Rpb24gYm9hcmQtc3VyZmFjZVwiPlxuICAgICAgICAgIDxoMj5Vc2VyIGFjY2VzcyByb3N0ZXI8L2gyPlxuICAgICAgICAgIDx0YWJsZT5cbiAgICAgICAgICAgIDx0aGVhZD5cbiAgICAgICAgICAgICAgPHRyPlxuICAgICAgICAgICAgICAgIDx0aD5Vc2VyPC90aD5cbiAgICAgICAgICAgICAgICA8dGg+T3JnYW5pemF0aW9uPC90aD5cbiAgICAgICAgICAgICAgICA8dGg+Um9sZSBhc3NpZ25tZW50PC90aD5cbiAgICAgICAgICAgICAgICA8dGg+RGF0YSBzY29wZTwvdGg+XG4gICAgICAgICAgICAgICAgPHRoPkFwcHJvdmFsPC90aD5cbiAgICAgICAgICAgICAgPC90cj5cbiAgICAgICAgICAgIDwvdGhlYWQ+XG4gICAgICAgICAgICA8dGJvZHk+XG4gICAgICAgICAgICAgIHtvdmVydmlldy51c2Vycy5tYXAoKHVzZXIpID0+IHtcbiAgICAgICAgICAgICAgICBjb25zdCBhc3NpZ25tZW50ID0gdXNlci5hc3NpZ25tZW50c1swXTtcbiAgICAgICAgICAgICAgICBjb25zdCBpc1NlbGVjdGVkID0gdXNlci5pZCA9PT0gc2VsZWN0ZWRVc2VyPy5pZDtcbiAgICAgICAgICAgICAgICByZXR1cm4gKFxuICAgICAgICAgICAgICAgICAgPHRyXG4gICAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT17aXNTZWxlY3RlZCA/IFwic2VsZWN0ZWQtcm93XCIgOiBcIlwifVxuICAgICAgICAgICAgICAgICAgICBrZXk9e3VzZXIuaWR9XG4gICAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNldFNlbGVjdGVkVXNlcklkKHVzZXIuaWQpfVxuICAgICAgICAgICAgICAgICAgPlxuICAgICAgICAgICAgICAgICAgICA8dGQ+e3VzZXIuZW1haWx9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPnthc3NpZ25tZW50Py5vcmdhbml6YXRpb24ubmFtZSA/PyBcIuKAlFwifTwvdGQ+XG4gICAgICAgICAgICAgICAgICAgIDx0ZD57YXNzaWdubWVudD8ucm9sZS5uYW1lID8/IFwi4oCUXCJ9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPnthc3NpZ25tZW50Py5kYXRhX3Njb3BlLm5hbWUgPz8gXCLigJRcIn08L3RkPlxuICAgICAgICAgICAgICAgICAgICA8dGQ+e2hhc1Blcm1pc3Npb24odXNlciwgXCJzY2hlZHVsZS5hcHByb3ZlXCIpID8gXCJZZXNcIiA6IFwiTm9cIn08L3RkPlxuICAgICAgICAgICAgICAgICAgPC90cj5cbiAgICAgICAgICAgICAgICApO1xuICAgICAgICAgICAgICB9KX1cbiAgICAgICAgICAgIDwvdGJvZHk+XG4gICAgICAgICAgPC90YWJsZT5cbiAgICAgICAgPC9zZWN0aW9uPlxuXG4gICAgICAgIHtzZWxlY3RlZFVzZXIgPyAoXG4gICAgICAgICAgPGFzaWRlIGNsYXNzTmFtZT1cImRldGFpbC1kcmF3ZXIgcmJhYy1kcmF3ZXJcIj5cbiAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgIDxzcGFuPlNlbGVjdGVkIHVzZXI8L3NwYW4+XG4gICAgICAgICAgICAgIDxzdHJvbmc+e3NlbGVjdGVkVXNlci5lbWFpbH08L3N0cm9uZz5cbiAgICAgICAgICAgIDwvZGl2PlxuXG4gICAgICAgICAgICA8c2VjdGlvbj5cbiAgICAgICAgICAgICAgPGgyPlJvbGUgYXNzaWdubWVudDwvaDI+XG4gICAgICAgICAgICAgIHtzZWxlY3RlZFVzZXIuYXNzaWdubWVudHMubWFwKChhc3NpZ25tZW50KSA9PiAoXG4gICAgICAgICAgICAgICAgPGRsIGtleT17YCR7YXNzaWdubWVudC5yb2xlLmNvZGV9LSR7YXNzaWdubWVudC5vcmdhbml6YXRpb24uc2x1Z31gfT5cbiAgICAgICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgICAgIDxkdD5Sb2xlPC9kdD5cbiAgICAgICAgICAgICAgICAgICAgPGRkPnthc3NpZ25tZW50LnJvbGUubmFtZX08L2RkPlxuICAgICAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICAgICAgICA8ZGl2PlxuICAgICAgICAgICAgICAgICAgICA8ZHQ+T3JnYW5pemF0aW9uPC9kdD5cbiAgICAgICAgICAgICAgICAgICAgPGRkPnthc3NpZ25tZW50Lm9yZ2FuaXphdGlvbi5uYW1lfTwvZGQ+XG4gICAgICAgICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgICAgIDxkdD5EYXRhIHNjb3BlPC9kdD5cbiAgICAgICAgICAgICAgICAgICAgPGRkPnthc3NpZ25tZW50LmRhdGFfc2NvcGUubmFtZX08L2RkPlxuICAgICAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICAgICAgPC9kbD5cbiAgICAgICAgICAgICAgKSl9XG4gICAgICAgICAgICA8L3NlY3Rpb24+XG5cbiAgICAgICAgICAgIDxzZWN0aW9uPlxuICAgICAgICAgICAgICA8aDI+TW9kdWxlIGFjY2VzcyBtYXRyaXg8L2gyPlxuICAgICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cIm1hdHJpeC1saXN0XCI+XG4gICAgICAgICAgICAgICAge3Blcm1pc3Npb25Nb2R1bGVzLm1hcCgobW9kdWxlKSA9PiB7XG4gICAgICAgICAgICAgICAgICBjb25zdCBlbmFibGVkID0gcGVybWlzc2lvbnMuc29tZSgocGVybWlzc2lvbikgPT4gcGVybWlzc2lvbi5tb2R1bGUgPT09IG1vZHVsZSk7XG4gICAgICAgICAgICAgICAgICByZXR1cm4gKFxuICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9e2VuYWJsZWQgPyBcIm1hdHJpeC1jZWxsIGVuYWJsZWRcIiA6IFwibWF0cml4LWNlbGxcIn0ga2V5PXttb2R1bGV9PlxuICAgICAgICAgICAgICAgICAgICAgIHttb2R1bGV9XG4gICAgICAgICAgICAgICAgICAgIDwvc3Bhbj5cbiAgICAgICAgICAgICAgICAgICk7XG4gICAgICAgICAgICAgICAgfSl9XG4gICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgPC9zZWN0aW9uPlxuXG4gICAgICAgICAgICA8c2VjdGlvbj5cbiAgICAgICAgICAgICAgPGgyPlZhbGlkYXRpb24gY2hlY2tsaXN0PC9oMj5cbiAgICAgICAgICAgICAgPHVsIGNsYXNzTmFtZT1cInZhbGlkYXRpb24tbGlzdFwiPlxuICAgICAgICAgICAgICAgIDxsaT57c2VsZWN0ZWRVc2VyLm1lbWJlcnNoaXBzLmxlbmd0aCA+IDAgPyBcIuKck1wiIDogXCIhXCJ9IE9yZ2FuaXphdGlvbiBhc3NpZ25lZDwvbGk+XG4gICAgICAgICAgICAgICAgPGxpPntzZWxlY3RlZFVzZXIuYXNzaWdubWVudHMubGVuZ3RoID4gMCA/IFwi4pyTXCIgOiBcIiFcIn0gUm9sZSBhc3NpZ25lZDwvbGk+XG4gICAgICAgICAgICAgICAgPGxpPntwZXJtaXNzaW9ucy5sZW5ndGggPiAwID8gXCLinJNcIiA6IFwiIVwifSBQZXJtaXNzaW9ucyByZXNvbHZlZDwvbGk+XG4gICAgICAgICAgICAgIDwvdWw+XG4gICAgICAgICAgICA8L3NlY3Rpb24+XG4gICAgICAgICAgPC9hc2lkZT5cbiAgICAgICAgKSA6IG51bGx9XG4gICAgICA8L2Rpdj5cbiAgICA8L3NlY3Rpb24+XG4gICk7XG59XG4iXSwiZmlsZSI6Ii9hcHAvc3JjL3BhZ2VzL1JiYWNQYWdlLnRzeCJ9

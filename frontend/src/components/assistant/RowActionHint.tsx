@@ -1,4 +1,5 @@
 import type { ActionRecommendation } from "../../types/assistant";
+import { AbbrText } from "../Abbreviation";
 import { actionsForObject } from "./actionMatching";
 
 type RowActionHintProps = {
@@ -31,8 +32,8 @@ export function RowActionHint({
         title={reason}
         type="button"
       >
-        <strong>{label}</strong>
-        <em>{action.label}</em>
+        <strong><AbbrText text={label} /></strong>
+        <em><AbbrText text={action.label} /></em>
       </button>
     );
   }
@@ -42,8 +43,8 @@ export function RowActionHint({
       className={`row-action-hint ${action.priority}${action.enabled ? "" : " blocked"}`}
       title={reason}
     >
-      <strong>{label}</strong>
-      <em>{action.enabled ? action.label : reason}</em>
+      <strong><AbbrText text={label} /></strong>
+      <em><AbbrText text={action.enabled ? action.label : reason} /></em>
     </span>
   );
 }

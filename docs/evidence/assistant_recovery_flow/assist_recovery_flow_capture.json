@@ -47,7 +47,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -55,7 +55,7 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
@@ -73,9 +73,9 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "pending",
-        "reason": "Review a recovery recommendation before scenario materialization."
+        "reason": "Review a recovery recommendation before scenario testing."
       },
       {
         "key": "approval_submitted",
@@ -118,6 +118,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/dashboard/situation",
@@ -138,12 +139,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 0,
       "recommendations": 0,
       "scenarios": 0,
@@ -205,7 +206,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -213,7 +214,7 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
@@ -231,9 +232,9 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "pending",
-        "reason": "Review a recovery recommendation before scenario materialization."
+        "reason": "Review a recovery recommendation before scenario testing."
       },
       {
         "key": "approval_submitted",
@@ -273,6 +274,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/schedule/ogv-demand",
@@ -293,12 +295,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 0,
       "recommendations": 0,
       "scenarios": 0,
@@ -360,7 +362,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -368,7 +370,7 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
@@ -386,9 +388,9 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "pending",
-        "reason": "Review a recovery recommendation before scenario materialization."
+        "reason": "Review a recovery recommendation before scenario testing."
       },
       {
         "key": "approval_submitted",
@@ -428,6 +430,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/constraints/tide-bridge",
@@ -448,12 +451,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 0,
       "recommendations": 0,
       "scenarios": 0,
@@ -517,7 +520,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -525,7 +528,7 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
@@ -543,9 +546,9 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "pending",
-        "reason": "Review a recovery recommendation before scenario materialization."
+        "reason": "Review a recovery recommendation before scenario testing."
       },
       {
         "key": "approval_submitted",
@@ -588,6 +591,7 @@
       "Simulation Workspace",
       "Run simulation",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/exceptions/center",
@@ -608,12 +612,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 0,
       "recommendations": 0,
       "scenarios": 0,
@@ -677,7 +681,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -685,13 +689,13 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -703,11 +707,11 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "current",
         "action_id": "MATERIALIZE_RECOVERY_RECOMMENDATION",
         "route": "/recovery/recommendations",
-        "reason": "The top recovery recommendation is ready for scenario handoff."
+        "reason": "The top recovery recommendation is ready to be tested as a scenario."
       },
       {
         "key": "approval_submitted",
@@ -746,9 +750,10 @@
       "Tide & Bridge Window",
       "BRIDGE_WINDOW_MISSED",
       "Recommendation Console",
-      "Create scenario from recommendation",
+      "Test as scenario",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/recovery/recommendations",
@@ -769,12 +774,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 1,
       "recommendations": 5,
       "scenarios": 0,
@@ -793,10 +798,10 @@
   },
   {
     "step": "click",
-    "title": "Recommendation CTA materializes the selected recommendation as a scenario",
-    "target": "Create scenario from recommendation",
-    "matchedText": "CREATE SCENARIO FROM RECOMMENDATION",
-    "matchCount": 1,
+    "title": "Recommendation CTA creates a governed scenario for the selected option",
+    "target": "Test as scenario",
+    "matchedText": "TEST AS SCENARIO",
+    "matchCount": 2,
     "result": "clicked"
   },
   {
@@ -836,7 +841,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -844,13 +849,13 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -860,7 +865,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -906,10 +911,11 @@
       "Simulation Workspace",
       "Published Plan & Schedule",
       "Submit approval",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/simulation/workspace",
-    "note": "The materialized recommendation opens in Simulation Workspace with a completed scenario run.",
+    "note": "The tested recommendation opens in Simulation Workspace with a completed scenario run.",
     "dashboardCounts": {
       "activePlanVersion": null,
       "conflictSummary": null,
@@ -926,12 +932,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 1,
       "recommendations": 5,
       "scenarios": 1,
@@ -993,7 +999,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 121 has generated trips."
+        "reason": "Active plan version 148 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1001,13 +1007,13 @@
         "status": "current",
         "action_id": "OPEN_EXCEPTION_CENTER",
         "route": "/exceptions/center",
-        "reason": "4 unresolved blocking conflict(s) remain."
+        "reason": "2 unresolved blocking conflict(s) remain."
       },
       {
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1017,7 +1023,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1063,6 +1069,7 @@
       "Simulation Workspace",
       "Published Plan & Schedule",
       "Submit approval",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/simulation/workspace",
@@ -1083,12 +1090,12 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
-      "conflicts": 6,
-      "blockingConflicts": 4,
+      "conflicts": 3,
+      "blockingConflicts": 2,
       "optimizerRuns": 1,
       "recommendations": 5,
       "scenarios": 1,
@@ -1148,7 +1155,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1162,7 +1169,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1172,7 +1179,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1219,6 +1226,7 @@
       "Scenario promoted",
       "Published Plan & Schedule",
       "Submit approval",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/simulation/workspace",
@@ -1239,7 +1247,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1307,7 +1315,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1321,7 +1329,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1331,7 +1339,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1379,6 +1387,7 @@
       "Run simulation",
       "Scenario promoted",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/exceptions/center",
@@ -1399,7 +1408,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1474,7 +1483,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1488,7 +1497,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1498,7 +1507,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1542,6 +1551,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/constraints/tide-bridge",
@@ -1562,7 +1572,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1635,7 +1645,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1647,7 +1657,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1657,7 +1667,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1703,6 +1713,7 @@
       "Simulation Workspace",
       "Published Plan & Schedule",
       "Submit approval",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/operations/tug-barge-assignment",
@@ -1723,7 +1734,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "validated",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -1790,7 +1801,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1802,7 +1813,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1812,7 +1823,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -1858,6 +1869,7 @@
       "Simulation Workspace",
       "Published Plan & Schedule",
       "Submit approval",
+      "Approvals & Publishing",
       "Published"
     ],
     "url": "http://localhost:8080/#/schedule/published-plan",
@@ -1878,7 +1890,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "validated",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -1946,7 +1958,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1958,7 +1970,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1968,7 +1980,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2013,7 +2025,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
-      "Plan Approvals & Publishing",
+      "Approvals & Publishing",
       "Approve",
       "Published"
     ],
@@ -2035,7 +2047,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2103,7 +2115,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2115,7 +2127,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2125,7 +2137,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2170,7 +2182,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
-      "Plan Approvals & Publishing",
+      "Approvals & Publishing",
       "Approve",
       "Published"
     ],
@@ -2192,7 +2204,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2259,7 +2271,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2271,7 +2283,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2281,7 +2293,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2326,7 +2338,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
-      "Plan Approvals & Publishing",
+      "Approvals & Publishing",
       "Approve",
       "Publish plan",
       "Published"
@@ -2349,7 +2361,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "approved",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2414,7 +2426,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2426,7 +2438,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2436,7 +2448,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2481,7 +2493,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
-      "Plan Approvals & Publishing",
+      "Approvals & Publishing",
       "Approve",
       "LIVE-",
       "Published"
@@ -2504,7 +2516,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2579,7 +2591,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2591,7 +2603,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2601,7 +2613,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2646,6 +2658,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Exports & Operational Handoff",
       "LIVE-",
       "Published"
@@ -2668,7 +2681,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2694,8 +2707,6 @@
     "step": "click",
     "title": "Visible export command generates the operator handoff schedule",
     "target": "Printable schedule",
-    "matchedText": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
-    "matchCount": 1,
     "result": "clicked"
   },
   {
@@ -2735,7 +2746,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 122 has generated trips."
+        "reason": "Active plan version 149 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2747,7 +2758,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 27 produced candidate options."
+        "reason": "Optimizer run 36 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2757,7 +2768,7 @@
       },
       {
         "key": "recommendation_materialized",
-        "label": "Recommendation materialized as scenario",
+        "label": "Recommendation tested as scenario",
         "status": "complete",
         "reason": "The selected recommendation has a governed scenario handoff."
       },
@@ -2800,6 +2811,7 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Published Plan & Schedule",
+      "Approvals & Publishing",
       "Exports & Operational Handoff",
       "LIVE-",
       "Published"
@@ -2822,7 +2834,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260519 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2841,7 +2853,7 @@
       "conflict": 0,
       "scenarioDiff": 0,
       "visibleExports": 1,
-      "latestPlanExport": "coalflow-plan-plan-recovery-practice-20260519-v2-all-network-20260519150819.txt"
+      "latestPlanExport": "coalflow-plan-plan-recovery-practice-20260520-v2-all-network-20260520060043.txt"
     }
   }
 ]

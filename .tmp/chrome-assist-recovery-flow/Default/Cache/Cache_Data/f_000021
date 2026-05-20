@@ -1,0 +1,754 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/pages/CoalGradeSequencePage.tsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=8ced4974"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+let prevRefreshReg;
+let prevRefreshSig;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  prevRefreshReg = window.$RefreshReg$;
+  prevRefreshSig = window.$RefreshSig$;
+  window.$RefreshReg$ = RefreshRuntime.getRefreshReg("/app/src/pages/CoalGradeSequencePage.tsx");
+  window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
+}
+var _s = $RefreshSig$();
+import __vite__cjsImport3_react from "/node_modules/.vite/deps/react.js?v=8ced4974"; const useMemo = __vite__cjsImport3_react["useMemo"]; const useState = __vite__cjsImport3_react["useState"];
+import { GridDate } from "/src/components/GridDate.tsx";
+import { SvgIcon } from "/src/components/SvgIcon.tsx";
+import {
+  DisabledReasonTooltip,
+  RecommendationCard
+} from "/src/components/assistant/index.ts";
+import {
+  cargoLayerChainStatusLabel,
+  cargoLayerNeedsRecovery,
+  cargoLayerRecoveryMessage,
+  cargoLayerSeverity
+} from "/src/lib/cargoLayer.ts";
+const EMPTY_STEPS = [];
+function mt(value) {
+  return `${Math.round(value).toLocaleString()} MT`;
+}
+function time(value) {
+  return /* @__PURE__ */ jsxDEV(GridDate, { value }, void 0, false, {
+    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+    lineNumber: 57,
+    columnNumber: 10
+  }, this);
+}
+export function CoalGradeSequencePage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantPageActions,
+  assistantRowActions,
+  overview,
+  schedulingOverview,
+  canEdit,
+  canExport,
+  isActionRunning,
+  onAssistantNavigate,
+  onExport
+}) {
+  _s();
+  const steps = overview?.cargoLayerSteps ?? EMPTY_STEPS;
+  const openExceptionCount = useMemo(
+    () => (schedulingOverview?.conflicts ?? []).filter((conflict) => !conflict.resolved_at).length,
+    [schedulingOverview?.conflicts]
+  );
+  const [selectedStepId, setSelectedStepId] = useState(steps[0]?.id ?? null);
+  const selectedStep = steps.find((step) => step.id === selectedStepId) ?? steps[0];
+  const selectedNeedsRecovery = selectedStep ? cargoLayerNeedsRecovery(selectedStep) : false;
+  const selectedVoyageSteps = useMemo(
+    () => steps.filter((step) => step.voyage === selectedStep?.voyage).sort((left, right) => left.required_sequence_no - right.required_sequence_no),
+    [selectedStep?.voyage, steps]
+  );
+  const voyagesInSequence = new Set(steps.map((step) => step.voyage)).size;
+  const gradeConflicts = steps.filter((step) => step.sequence_violation).length;
+  const layersNeedingReview = steps.filter((step) => cargoLayerNeedsRecovery(step)).length;
+  const atRiskBarges = new Set(
+    steps.filter((step) => cargoLayerNeedsRecovery(step)).map((step) => step.planned_barge?.code).filter(Boolean)
+  ).size;
+  const assistantActions = [
+    ...assistantRowActions ?? [],
+    ...assistantPageActions ?? [],
+    ...assistantBlockedActions ?? []
+  ];
+  return /* @__PURE__ */ jsxDEV("section", { className: "workspace-page planning-board", children: [
+    /* @__PURE__ */ jsxDEV("header", { className: "page-heading planning-heading", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("p", { children: "Schedule / Coal Grade Sequence" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 107,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("h1", { children: "Coal Grade Sequence" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 108,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 106,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { className: "planning-actions", children: [
+        /* @__PURE__ */ jsxDEV("span", { className: "phase-chip", children: "Grade layering" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 111,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV(
+          DisabledReasonTooltip,
+          {
+            actionId: "REVIEW_COAL_SEQUENCE",
+            actions: assistantActions,
+            fallback: canEdit ? "Direct sequence editing is locked for Phase 1 governed planning." : "Your role cannot edit coal grade sequence.",
+            children: /* @__PURE__ */ jsxDEV(
+              "button",
+              {
+                disabled: true,
+                title: canEdit ? "Direct sequence editing is locked for Phase 1 governed planning." : "Your role cannot edit coal grade sequence.",
+                type: "button",
+                children: "Edit sequence locked"
+              },
+              void 0,
+              false,
+              {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 119,
+                columnNumber: 13
+              },
+              this
+            )
+          },
+          void 0,
+          false,
+          {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 112,
+            columnNumber: 11
+          },
+          this
+        ),
+        /* @__PURE__ */ jsxDEV(
+          DisabledReasonTooltip,
+          {
+            actionId: "GENERATE_EXPORT",
+            actions: assistantActions,
+            fallback: !canExport ? "Your role cannot generate exports." : "",
+            children: /* @__PURE__ */ jsxDEV("button", { disabled: !canExport || isActionRunning, onClick: onExport, type: "button", children: "Export QC view" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 134,
+              columnNumber: 13
+            }, this)
+          },
+          void 0,
+          false,
+          {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 129,
+            columnNumber: 11
+          },
+          this
+        )
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 110,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+      lineNumber: 105,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(
+      RecommendationCard,
+      {
+        assistantBlockedActions,
+        assistantChecklist,
+        assistantPageActions,
+        assistantRowActions,
+        onAssistantNavigate
+      },
+      void 0,
+      false,
+      {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 140,
+        columnNumber: 7
+      },
+      this
+    ),
+    /* @__PURE__ */ jsxDEV("div", { className: "metric-strip six-up planning-kpis", children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "OGVs in sequence" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 150,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: voyagesInSequence }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 151,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 149,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Grade conflicts" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 154,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { className: gradeConflicts ? "critical-text" : "", children: gradeConflicts }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 155,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 153,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Open exceptions" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 158,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { className: openExceptionCount ? "critical-text" : "", children: openExceptionCount }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 159,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 157,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Rows needing review" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 164,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { className: layersNeedingReview ? "warning-text" : "", children: layersNeedingReview }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 165,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 163,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "At-risk barges" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 170,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { className: atRiskBarges ? "warning-text" : "", children: atRiskBarges }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 171,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 169,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("span", { children: "Plan state" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 174,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("strong", { children: "DRAFT" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 175,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 173,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+      lineNumber: 148,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("div", { className: "sequence-layout", children: [
+      /* @__PURE__ */ jsxDEV("section", { className: "board-surface planning-grid-panel", children: [
+        /* @__PURE__ */ jsxDEV("div", { className: "grid-header", children: [
+          /* @__PURE__ */ jsxDEV("div", { children: [
+            /* @__PURE__ */ jsxDEV(SvgIcon, { name: "coal" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 183,
+              columnNumber: 15
+            }, this),
+            /* @__PURE__ */ jsxDEV("strong", { children: "Sequence queue" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 184,
+              columnNumber: 15
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 182,
+            columnNumber: 13
+          }, this),
+          /* @__PURE__ */ jsxDEV("span", { children: "Hatch, layer, jetty, CTS, and blocking reason in one operational grid" }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 186,
+            columnNumber: 13
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 181,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("div", { className: "grid-scroll", children: /* @__PURE__ */ jsxDEV("table", { className: "planning-table sequence-table", children: [
+          /* @__PURE__ */ jsxDEV("thead", { children: /* @__PURE__ */ jsxDEV("tr", { children: [
+            /* @__PURE__ */ jsxDEV("th", { children: "Severity" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 192,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "OGV" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 193,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Hatch/L" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 194,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Grade" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 195,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Req MT" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 196,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Remain" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 197,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Blocking Reason" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 198,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Jetty" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 199,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "CTS" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 200,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Chain Status" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 201,
+              columnNumber: 19
+            }, this),
+            /* @__PURE__ */ jsxDEV("th", { children: "Window" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 202,
+              columnNumber: 19
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 191,
+            columnNumber: 17
+          }, this) }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 190,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("tbody", { children: steps.map((step) => {
+            const severity = cargoLayerSeverity(step);
+            return /* @__PURE__ */ jsxDEV(
+              "tr",
+              {
+                className: selectedStep?.id === step.id ? "selected-row" : "",
+                onClick: () => setSelectedStepId(step.id),
+                children: [
+                  /* @__PURE__ */ jsxDEV("td", { children: /* @__PURE__ */ jsxDEV("span", { className: `status-chip ${severity}`, children: severity }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 215,
+                    columnNumber: 23
+                  }, this) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 214,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: /* @__PURE__ */ jsxDEV("strong", { children: step.vessel_name }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 219,
+                    columnNumber: 25
+                  }, this) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 219,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: [
+                    "H",
+                    step.hatch_no,
+                    "/L",
+                    step.layer_no
+                  ] }, void 0, true, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 220,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: step.coal_grade.code }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 221,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: mt(step.required_mt) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 222,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: mt(step.remaining_mt) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 223,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: step.blocking_reason || "Clear" }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 224,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: step.planned_jetty?.code ?? "-" }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 225,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: step.planned_cts?.code ?? "-" }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 226,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: cargoLayerChainStatusLabel(step) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 227,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("td", { children: /* @__PURE__ */ jsxDEV("span", { className: "grid-date-pair", children: [
+                    time(step.planned_start),
+                    /* @__PURE__ */ jsxDEV("span", { className: "grid-date-separator", children: "→" }, void 0, false, {
+                      fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                      lineNumber: 231,
+                      columnNumber: 25
+                    }, this),
+                    time(step.planned_end)
+                  ] }, void 0, true, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 229,
+                    columnNumber: 23
+                  }, this) }, void 0, false, {
+                    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                    lineNumber: 228,
+                    columnNumber: 21
+                  }, this)
+                ]
+              },
+              step.id,
+              true,
+              {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 209,
+                columnNumber: 21
+              },
+              this
+            );
+          }) }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 205,
+            columnNumber: 15
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 189,
+          columnNumber: 13
+        }, this) }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 188,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 180,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("aside", { className: "board-surface sequence-inspector", children: [
+        /* @__PURE__ */ jsxDEV("div", { className: "grid-header", children: [
+          /* @__PURE__ */ jsxDEV("div", { children: [
+            /* @__PURE__ */ jsxDEV(SvgIcon, { name: "rule" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 246,
+              columnNumber: 15
+            }, this),
+            /* @__PURE__ */ jsxDEV("strong", { children: selectedNeedsRecovery ? "Sequence review" : "Layer clear" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 247,
+              columnNumber: 15
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 245,
+            columnNumber: 13
+          }, this),
+          /* @__PURE__ */ jsxDEV("span", { children: "Layer status and operator guidance" }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 251,
+            columnNumber: 13
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 244,
+          columnNumber: 11
+        }, this),
+        selectedStep ? /* @__PURE__ */ jsxDEV("div", { className: "inspector-body", children: [
+          /* @__PURE__ */ jsxDEV("span", { className: `status-chip ${cargoLayerSeverity(selectedStep)}`, children: selectedStep.sequence_violation ? "Violation" : cargoLayerChainStatusLabel(selectedStep) }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 255,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("h2", { children: [
+            selectedStep.vessel_name,
+            " · H",
+            selectedStep.hatch_no,
+            "/L",
+            selectedStep.layer_no
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 260,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("p", { children: selectedStep.blocking_reason || "No blocking reason recorded for this layer." }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 261,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("dl", { children: [
+            /* @__PURE__ */ jsxDEV("div", { children: [
+              /* @__PURE__ */ jsxDEV("dt", { children: "Grade" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 264,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("dd", { children: selectedStep.coal_grade.code }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 265,
+                columnNumber: 19
+              }, this)
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 263,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("div", { children: [
+              /* @__PURE__ */ jsxDEV("dt", { children: "Barge" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 268,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("dd", { children: selectedStep.planned_barge?.code ?? "Unassigned" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 269,
+                columnNumber: 19
+              }, this)
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 267,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("div", { children: [
+              /* @__PURE__ */ jsxDEV("dt", { children: "Jetty" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 272,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("dd", { children: selectedStep.planned_jetty?.code ?? "Unassigned" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 273,
+                columnNumber: 19
+              }, this)
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 271,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("div", { children: [
+              /* @__PURE__ */ jsxDEV("dt", { children: "CTS" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 276,
+                columnNumber: 19
+              }, this),
+              /* @__PURE__ */ jsxDEV("dd", { children: selectedStep.planned_cts?.code ?? "Unassigned" }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 277,
+                columnNumber: 19
+              }, this)
+            ] }, void 0, true, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 275,
+              columnNumber: 17
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 262,
+            columnNumber: 15
+          }, this),
+          /* @__PURE__ */ jsxDEV("section", { className: "recovery-box", children: [
+            /* @__PURE__ */ jsxDEV("strong", { children: selectedNeedsRecovery ? "Recommended recovery" : "Layer status" }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 281,
+              columnNumber: 17
+            }, this),
+            /* @__PURE__ */ jsxDEV("p", { children: cargoLayerRecoveryMessage(selectedStep) }, void 0, false, {
+              fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+              lineNumber: 284,
+              columnNumber: 17
+            }, this)
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 280,
+            columnNumber: 15
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 254,
+          columnNumber: 11
+        }, this) : null
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 243,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+      lineNumber: 179,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV("section", { className: "board-surface focus-sequence", children: [
+      /* @__PURE__ */ jsxDEV("div", { className: "grid-header", children: [
+        /* @__PURE__ */ jsxDEV("div", { children: [
+          /* @__PURE__ */ jsxDEV(SvgIcon, { name: "account-tree" }, void 0, false, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 296,
+            columnNumber: 13
+          }, this),
+          /* @__PURE__ */ jsxDEV("strong", { children: [
+            "Focus view · ",
+            selectedStep?.vessel_name ?? "No OGV selected"
+          ] }, void 0, true, {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 297,
+            columnNumber: 13
+          }, this)
+        ] }, void 0, true, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 295,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("span", { children: "Sequence-strip parity with hardened frontend reference" }, void 0, false, {
+          fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+          lineNumber: 299,
+          columnNumber: 11
+        }, this)
+      ] }, void 0, true, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 294,
+        columnNumber: 9
+      }, this),
+      /* @__PURE__ */ jsxDEV("ol", { className: "sequence-strip", children: selectedVoyageSteps.map(
+        (step) => /* @__PURE__ */ jsxDEV(
+          "li",
+          {
+            className: cargoLayerSeverity(step),
+            children: [
+              /* @__PURE__ */ jsxDEV("span", { children: step.required_sequence_no }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 307,
+                columnNumber: 15
+              }, this),
+              /* @__PURE__ */ jsxDEV("strong", { children: [
+                "H",
+                step.hatch_no,
+                "/L",
+                step.layer_no
+              ] }, void 0, true, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 308,
+                columnNumber: 15
+              }, this),
+              /* @__PURE__ */ jsxDEV("em", { children: step.coal_grade.code }, void 0, false, {
+                fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+                lineNumber: 309,
+                columnNumber: 15
+              }, this)
+            ]
+          },
+          step.id,
+          true,
+          {
+            fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+            lineNumber: 303,
+            columnNumber: 11
+          },
+          this
+        )
+      ) }, void 0, false, {
+        fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+        lineNumber: 301,
+        columnNumber: 9
+      }, this)
+    ] }, void 0, true, {
+      fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+      lineNumber: 293,
+      columnNumber: 7
+    }, this)
+  ] }, void 0, true, {
+    fileName: "/app/src/pages/CoalGradeSequencePage.tsx",
+    lineNumber: 104,
+    columnNumber: 5
+  }, this);
+}
+_s(CoalGradeSequencePage, "x+JBhJ7khI9NIS4qooV09RBUpFE=");
+_c = CoalGradeSequencePage;
+var _c;
+$RefreshReg$(_c, "CoalGradeSequencePage");
+if (import.meta.hot && !inWebWorker) {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+if (import.meta.hot && !inWebWorker) {
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("/app/src/pages/CoalGradeSequencePage.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("/app/src/pages/CoalGradeSequencePage.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+
+//# sourceMappingURL=data:application/json;base64,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QTtBQUFBO0FBQUEsYUFXQTtBQUFBLFNBbkJGO0FBQUE7QUFBQTtBQUFBO0FBQUEsV0FvQkE7QUFBQSxPQWpORjtBQUFBO0FBQUE7QUFBQTtBQUFBLFNBa05BO0FBRUo7QUFBQ1gsR0FoUWVaLHVCQUFxQjtBQUFBLEtBQXJCQTtBQUFxQixJQUFBMEQ7QUFBQSxhQUFBQSxJQUFBIiwibmFtZXMiOlsidXNlTWVtbyIsInVzZVN0YXRlIiwiR3JpZERhdGUiLCJTdmdJY29uIiwiRGlzYWJsZWRSZWFzb25Ub29sdGlwIiwiUmVjb21tZW5kYXRpb25DYXJkIiwiY2FyZ29MYXllckNoYWluU3RhdHVzTGFiZWwiLCJjYXJnb0xheWVyTmVlZHNSZWNvdmVyeSIsImNhcmdvTGF5ZXJSZWNvdmVyeU1lc3NhZ2UiLCJjYXJnb0xheWVyU2V2ZXJpdHkiLCJFTVBUWV9TVEVQUyIsIm10IiwidmFsdWUiLCJNYXRoIiwicm91bmQiLCJ0b0xvY2FsZVN0cmluZyIsInRpbWUiLCJDb2FsR3JhZGVTZXF1ZW5jZVBhZ2UiLCJhc3Npc3RhbnRCbG9ja2VkQWN0aW9ucyIsImFzc2lzdGFudENoZWNrbGlzdCIsImFzc2lzdGFudFBhZ2VBY3Rpb25zIiwiYXNzaXN0YW50Um93QWN0aW9ucyIsIm92ZXJ2aWV3Iiwic2NoZWR1bGluZ092ZXJ2aWV3IiwiY2FuRWRpdCIsImNhbkV4cG9ydCIsImlzQWN0aW9uUnVubmluZyIsIm9uQXNzaXN0YW50TmF2aWdhdGUiLCJvbkV4cG9ydCIsIl9zIiwic3RlcHMiLCJjYXJnb0xheWVyU3RlcHMiLCJvcGVuRXhjZXB0aW9uQ291bnQiLCJjb25mbGljdHMiLCJmaWx0ZXIiLCJjb25mbGljdCIsInJlc29sdmVkX2F0IiwibGVuZ3RoIiwic2VsZWN0ZWRTdGVwSWQiLCJzZXRTZWxlY3RlZFN0ZXBJZCIsImlkIiwic2VsZWN0ZWRTdGVwIiwiZmluZCIsInN0ZXAiLCJzZWxlY3RlZE5lZWRzUmVjb3ZlcnkiLCJzZWxlY3RlZFZveWFnZVN0ZXBzIiwidm95YWdlIiwic29ydCIsImxlZnQiLCJyaWdodCIsInJlcXVpcmVkX3NlcXVlbmNlX25vIiwidm95YWdlc0luU2VxdWVuY2UiLCJTZXQiLCJtYXAiLCJzaXplIiwiZ3JhZGVDb25mbGljdHMiLCJzZXF1ZW5jZV92aW9sYXRpb24iLCJsYXllcnNOZWVkaW5nUmV2aWV3IiwiYXRSaXNrQmFyZ2VzIiwicGxhbm5lZF9iYXJnZSIsImNvZGUiLCJCb29sZWFuIiwiYXNzaXN0YW50QWN0aW9ucyIsInNldmVyaXR5IiwidmVzc2VsX25hbWUiLCJoYXRjaF9ubyIsImxheWVyX25vIiwiY29hbF9ncmFkZSIsInJlcXVpcmVkX210IiwicmVtYWluaW5nX210IiwiYmxvY2tpbmdfcmVhc29uIiwicGxhbm5lZF9qZXR0eSIsInBsYW5uZWRfY3RzIiwicGxhbm5lZF9zdGFydCIsInBsYW5uZWRfZW5kIiwiX2MiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiQ29hbEdyYWRlU2VxdWVuY2VQYWdlLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyB1c2VNZW1vLCB1c2VTdGF0ZSB9IGZyb20gXCJyZWFjdFwiO1xuXG5pbXBvcnQgeyBHcmlkRGF0ZSB9IGZyb20gXCIuLi9jb21wb25lbnRzL0dyaWREYXRlXCI7XG5pbXBvcnQgeyBTdmdJY29uIH0gZnJvbSBcIi4uL2NvbXBvbmVudHMvU3ZnSWNvblwiO1xuaW1wb3J0IHtcbiAgRGlzYWJsZWRSZWFzb25Ub29sdGlwLFxuICBSZWNvbW1lbmRhdGlvbkNhcmQsXG4gIHR5cGUgQXNzaXN0YW50UmVjb21tZW5kYXRpb25TdXJmYWNlUHJvcHMsXG59IGZyb20gXCIuLi9jb21wb25lbnRzL2Fzc2lzdGFudFwiO1xuaW1wb3J0IHtcbiAgY2FyZ29MYXllckNoYWluU3RhdHVzTGFiZWwsXG4gIGNhcmdvTGF5ZXJOZWVkc1JlY292ZXJ5LFxuICBjYXJnb0xheWVyUmVjb3ZlcnlNZXNzYWdlLFxuICBjYXJnb0xheWVyU2V2ZXJpdHksXG59IGZyb20gXCIuLi9saWIvY2FyZ29MYXllclwiO1xuaW1wb3J0IHR5cGUge1xuICBDYXJnb0xheWVyU3RlcFJlY29yZCxcbiAgUGxhbm5pbmdPdmVydmlldyxcbiAgU2NoZWR1bGluZ092ZXJ2aWV3LFxufSBmcm9tIFwiLi4vdHlwZXNcIjtcblxudHlwZSBDb2FsR3JhZGVTZXF1ZW5jZVBhZ2VQcm9wcyA9IEFzc2lzdGFudFJlY29tbWVuZGF0aW9uU3VyZmFjZVByb3BzICYge1xuICBvdmVydmlldzogUGxhbm5pbmdPdmVydmlldyB8IG51bGw7XG4gIHNjaGVkdWxpbmdPdmVydmlldz86IFNjaGVkdWxpbmdPdmVydmlldyB8IG51bGw7XG4gIGNhbkVkaXQ6IGJvb2xlYW47XG4gIGNhbkV4cG9ydDogYm9vbGVhbjtcbiAgaXNBY3Rpb25SdW5uaW5nOiBib29sZWFuO1xuICBvbkV4cG9ydDogKCkgPT4gdm9pZDtcbn07XG5cbmNvbnN0IEVNUFRZX1NURVBTOiBDYXJnb0xheWVyU3RlcFJlY29yZFtdID0gW107XG5cbmZ1bmN0aW9uIG10KHZhbHVlOiBudW1iZXIpIHtcbiAgcmV0dXJuIGAke01hdGgucm91bmQodmFsdWUpLnRvTG9jYWxlU3RyaW5nKCl9IE1UYDtcbn1cblxuZnVuY3Rpb24gdGltZSh2YWx1ZTogc3RyaW5nIHwgbnVsbCkge1xuICByZXR1cm4gPEdyaWREYXRlIHZhbHVlPXt2YWx1ZX0gLz47XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBDb2FsR3JhZGVTZXF1ZW5jZVBhZ2Uoe1xuICBhc3Npc3RhbnRCbG9ja2VkQWN0aW9ucyxcbiAgYXNzaXN0YW50Q2hlY2tsaXN0LFxuICBhc3Npc3RhbnRQYWdlQWN0aW9ucyxcbiAgYXNzaXN0YW50Um93QWN0aW9ucyxcbiAgb3ZlcnZpZXcsXG4gIHNjaGVkdWxpbmdPdmVydmlldyxcbiAgY2FuRWRpdCxcbiAgY2FuRXhwb3J0LFxuICBpc0FjdGlvblJ1bm5pbmcsXG4gIG9uQXNzaXN0YW50TmF2aWdhdGUsXG4gIG9uRXhwb3J0LFxufTogQ29hbEdyYWRlU2VxdWVuY2VQYWdlUHJvcHMpIHtcbiAgY29uc3Qgc3RlcHMgPSBvdmVydmlldz8uY2FyZ29MYXllclN0ZXBzID8/IEVNUFRZX1NURVBTO1xuICBjb25zdCBvcGVuRXhjZXB0aW9uQ291bnQgPSB1c2VNZW1vKFxuICAgICgpID0+IChzY2hlZHVsaW5nT3ZlcnZpZXc/LmNvbmZsaWN0cyA/PyBbXSkuZmlsdGVyKChjb25mbGljdCkgPT4gIWNvbmZsaWN0LnJlc29sdmVkX2F0KS5sZW5ndGgsXG4gICAgW3NjaGVkdWxpbmdPdmVydmlldz8uY29uZmxpY3RzXSxcbiAgKTtcbiAgY29uc3QgW3NlbGVjdGVkU3RlcElkLCBzZXRTZWxlY3RlZFN0ZXBJZF0gPSB1c2VTdGF0ZTxudW1iZXIgfCBudWxsPihzdGVwc1swXT8uaWQgPz8gbnVsbCk7XG4gIGNvbnN0IHNlbGVjdGVkU3RlcCA9IHN0ZXBzLmZpbmQoKHN0ZXApID0+IHN0ZXAuaWQgPT09IHNlbGVjdGVkU3RlcElkKSA/PyBzdGVwc1swXTtcbiAgY29uc3Qgc2VsZWN0ZWROZWVkc1JlY292ZXJ5ID0gc2VsZWN0ZWRTdGVwID8gY2FyZ29MYXllck5lZWRzUmVjb3Zlcnkoc2VsZWN0ZWRTdGVwKSA6IGZhbHNlO1xuICBjb25zdCBzZWxlY3RlZFZveWFnZVN0ZXBzID0gdXNlTWVtbyhcbiAgICAoKSA9PlxuICAgICAgc3RlcHNcbiAgICAgICAgLmZpbHRlcigoc3RlcCkgPT4gc3RlcC52b3lhZ2UgPT09IHNlbGVjdGVkU3RlcD8udm95YWdlKVxuICAgICAgICAuc29ydCgobGVmdCwgcmlnaHQpID0+IGxlZnQucmVxdWlyZWRfc2VxdWVuY2Vfbm8gLSByaWdodC5yZXF1aXJlZF9zZXF1ZW5jZV9ubyksXG4gICAgW3NlbGVjdGVkU3RlcD8udm95YWdlLCBzdGVwc10sXG4gICk7XG4gIGNvbnN0IHZveWFnZXNJblNlcXVlbmNlID0gbmV3IFNldChzdGVwcy5tYXAoKHN0ZXApID0+IHN0ZXAudm95YWdlKSkuc2l6ZTtcbiAgY29uc3QgZ3JhZGVDb25mbGljdHMgPSBzdGVwcy5maWx0ZXIoKHN0ZXApID0+IHN0ZXAuc2VxdWVuY2VfdmlvbGF0aW9uKS5sZW5ndGg7XG4gIGNvbnN0IGxheWVyc05lZWRpbmdSZXZpZXcgPSBzdGVwcy5maWx0ZXIoKHN0ZXApID0+IGNhcmdvTGF5ZXJOZWVkc1JlY292ZXJ5KHN0ZXApKS5sZW5ndGg7XG4gIGNvbnN0IGF0Umlza0JhcmdlcyA9IG5ldyBTZXQoXG4gICAgc3RlcHNcbiAgICAgIC5maWx0ZXIoKHN0ZXApID0+IGNhcmdvTGF5ZXJOZWVkc1JlY292ZXJ5KHN0ZXApKVxuICAgICAgLm1hcCgoc3RlcCkgPT4gc3RlcC5wbGFubmVkX2JhcmdlPy5jb2RlKVxuICAgICAgLmZpbHRlcihCb29sZWFuKSxcbiAgKS5zaXplO1xuICBjb25zdCBhc3Npc3RhbnRBY3Rpb25zID0gW1xuICAgIC4uLihhc3Npc3RhbnRSb3dBY3Rpb25zID8/IFtdKSxcbiAgICAuLi4oYXNzaXN0YW50UGFnZUFjdGlvbnMgPz8gW10pLFxuICAgIC4uLihhc3Npc3RhbnRCbG9ja2VkQWN0aW9ucyA/PyBbXSksXG4gIF07XG5cbiAgcmV0dXJuIChcbiAgICA8c2VjdGlvbiBjbGFzc05hbWU9XCJ3b3Jrc3BhY2UtcGFnZSBwbGFubmluZy1ib2FyZFwiPlxuICAgICAgPGhlYWRlciBjbGFzc05hbWU9XCJwYWdlLWhlYWRpbmcgcGxhbm5pbmctaGVhZGluZ1wiPlxuICAgICAgICA8ZGl2PlxuICAgICAgICAgIDxwPlNjaGVkdWxlIC8gQ29hbCBHcmFkZSBTZXF1ZW5jZTwvcD5cbiAgICAgICAgICA8aDE+Q29hbCBHcmFkZSBTZXF1ZW5jZTwvaDE+XG4gICAgICAgIDwvZGl2PlxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cInBsYW5uaW5nLWFjdGlvbnNcIj5cbiAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XCJwaGFzZS1jaGlwXCI+R3JhZGUgbGF5ZXJpbmc8L3NwYW4+XG4gICAgICAgICAgPERpc2FibGVkUmVhc29uVG9vbHRpcFxuICAgICAgICAgICAgYWN0aW9uSWQ9XCJSRVZJRVdfQ09BTF9TRVFVRU5DRVwiXG4gICAgICAgICAgICBhY3Rpb25zPXthc3Npc3RhbnRBY3Rpb25zfVxuICAgICAgICAgICAgZmFsbGJhY2s9e2NhbkVkaXRcbiAgICAgICAgICAgICAgPyBcIkRpcmVjdCBzZXF1ZW5jZSBlZGl0aW5nIGlzIGxvY2tlZCBmb3IgUGhhc2UgMSBnb3Zlcm5lZCBwbGFubmluZy5cIlxuICAgICAgICAgICAgICA6IFwiWW91ciByb2xlIGNhbm5vdCBlZGl0IGNvYWwgZ3JhZGUgc2VxdWVuY2UuXCJ9XG4gICAgICAgICAgPlxuICAgICAgICAgICAgPGJ1dHRvblxuICAgICAgICAgICAgICBkaXNhYmxlZFxuICAgICAgICAgICAgICB0aXRsZT17Y2FuRWRpdFxuICAgICAgICAgICAgICAgID8gXCJEaXJlY3Qgc2VxdWVuY2UgZWRpdGluZyBpcyBsb2NrZWQgZm9yIFBoYXNlIDEgZ292ZXJuZWQgcGxhbm5pbmcuXCJcbiAgICAgICAgICAgICAgICA6IFwiWW91ciByb2xlIGNhbm5vdCBlZGl0IGNvYWwgZ3JhZGUgc2VxdWVuY2UuXCJ9XG4gICAgICAgICAgICAgIHR5cGU9XCJidXR0b25cIlxuICAgICAgICAgICAgPlxuICAgICAgICAgICAgICBFZGl0IHNlcXVlbmNlIGxvY2tlZFxuICAgICAgICAgICAgPC9idXR0b24+XG4gICAgICAgICAgPC9EaXNhYmxlZFJlYXNvblRvb2x0aXA+XG4gICAgICAgICAgPERpc2FibGVkUmVhc29uVG9vbHRpcFxuICAgICAgICAgICAgYWN0aW9uSWQ9XCJHRU5FUkFURV9FWFBPUlRcIlxuICAgICAgICAgICAgYWN0aW9ucz17YXNzaXN0YW50QWN0aW9uc31cbiAgICAgICAgICAgIGZhbGxiYWNrPXshY2FuRXhwb3J0ID8gXCJZb3VyIHJvbGUgY2Fubm90IGdlbmVyYXRlIGV4cG9ydHMuXCIgOiBcIlwifVxuICAgICAgICAgID5cbiAgICAgICAgICAgIDxidXR0b24gZGlzYWJsZWQ9eyFjYW5FeHBvcnQgfHwgaXNBY3Rpb25SdW5uaW5nfSBvbkNsaWNrPXtvbkV4cG9ydH0gdHlwZT1cImJ1dHRvblwiPlxuICAgICAgICAgICAgICBFeHBvcnQgUUMgdmlld1xuICAgICAgICAgICAgPC9idXR0b24+XG4gICAgICAgICAgPC9EaXNhYmxlZFJlYXNvblRvb2x0aXA+XG4gICAgICAgIDwvZGl2PlxuICAgICAgPC9oZWFkZXI+XG4gICAgICA8UmVjb21tZW5kYXRpb25DYXJkXG4gICAgICAgIGFzc2lzdGFudEJsb2NrZWRBY3Rpb25zPXthc3Npc3RhbnRCbG9ja2VkQWN0aW9uc31cbiAgICAgICAgYXNzaXN0YW50Q2hlY2tsaXN0PXthc3Npc3RhbnRDaGVja2xpc3R9XG4gICAgICAgIGFzc2lzdGFudFBhZ2VBY3Rpb25zPXthc3Npc3RhbnRQYWdlQWN0aW9uc31cbiAgICAgICAgYXNzaXN0YW50Um93QWN0aW9ucz17YXNzaXN0YW50Um93QWN0aW9uc31cbiAgICAgICAgb25Bc3Npc3RhbnROYXZpZ2F0ZT17b25Bc3Npc3RhbnROYXZpZ2F0ZX1cbiAgICAgIC8+XG5cbiAgICAgIDxkaXYgY2xhc3NOYW1lPVwibWV0cmljLXN0cmlwIHNpeC11cCBwbGFubmluZy1rcGlzXCI+XG4gICAgICAgIDxkaXY+XG4gICAgICAgICAgPHNwYW4+T0dWcyBpbiBzZXF1ZW5jZTwvc3Bhbj5cbiAgICAgICAgICA8c3Ryb25nPnt2b3lhZ2VzSW5TZXF1ZW5jZX08L3N0cm9uZz5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIDxkaXY+XG4gICAgICAgICAgPHNwYW4+R3JhZGUgY29uZmxpY3RzPC9zcGFuPlxuICAgICAgICAgIDxzdHJvbmcgY2xhc3NOYW1lPXtncmFkZUNvbmZsaWN0cyA/IFwiY3JpdGljYWwtdGV4dFwiIDogXCJcIn0+e2dyYWRlQ29uZmxpY3RzfTwvc3Ryb25nPlxuICAgICAgICA8L2Rpdj5cbiAgICAgICAgPGRpdj5cbiAgICAgICAgICA8c3Bhbj5PcGVuIGV4Y2VwdGlvbnM8L3NwYW4+XG4gICAgICAgICAgPHN0cm9uZyBjbGFzc05hbWU9e29wZW5FeGNlcHRpb25Db3VudCA/IFwiY3JpdGljYWwtdGV4dFwiIDogXCJcIn0+XG4gICAgICAgICAgICB7b3BlbkV4Y2VwdGlvbkNvdW50fVxuICAgICAgICAgIDwvc3Ryb25nPlxuICAgICAgICA8L2Rpdj5cbiAgICAgICAgPGRpdj5cbiAgICAgICAgICA8c3Bhbj5Sb3dzIG5lZWRpbmcgcmV2aWV3PC9zcGFuPlxuICAgICAgICAgIDxzdHJvbmcgY2xhc3NOYW1lPXtsYXllcnNOZWVkaW5nUmV2aWV3ID8gXCJ3YXJuaW5nLXRleHRcIiA6IFwiXCJ9PlxuICAgICAgICAgICAge2xheWVyc05lZWRpbmdSZXZpZXd9XG4gICAgICAgICAgPC9zdHJvbmc+XG4gICAgICAgIDwvZGl2PlxuICAgICAgICA8ZGl2PlxuICAgICAgICAgIDxzcGFuPkF0LXJpc2sgYmFyZ2VzPC9zcGFuPlxuICAgICAgICAgIDxzdHJvbmcgY2xhc3NOYW1lPXthdFJpc2tCYXJnZXMgPyBcIndhcm5pbmctdGV4dFwiIDogXCJcIn0+e2F0Umlza0Jhcmdlc308L3N0cm9uZz5cbiAgICAgICAgPC9kaXY+XG4gICAgICAgIDxkaXY+XG4gICAgICAgICAgPHNwYW4+UGxhbiBzdGF0ZTwvc3Bhbj5cbiAgICAgICAgICA8c3Ryb25nPkRSQUZUPC9zdHJvbmc+XG4gICAgICAgIDwvZGl2PlxuICAgICAgPC9kaXY+XG5cbiAgICAgIDxkaXYgY2xhc3NOYW1lPVwic2VxdWVuY2UtbGF5b3V0XCI+XG4gICAgICAgIDxzZWN0aW9uIGNsYXNzTmFtZT1cImJvYXJkLXN1cmZhY2UgcGxhbm5pbmctZ3JpZC1wYW5lbFwiPlxuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZC1oZWFkZXJcIj5cbiAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgIDxTdmdJY29uIG5hbWU9XCJjb2FsXCIgLz5cbiAgICAgICAgICAgICAgPHN0cm9uZz5TZXF1ZW5jZSBxdWV1ZTwvc3Ryb25nPlxuICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICA8c3Bhbj5IYXRjaCwgbGF5ZXIsIGpldHR5LCBDVFMsIGFuZCBibG9ja2luZyByZWFzb24gaW4gb25lIG9wZXJhdGlvbmFsIGdyaWQ8L3NwYW4+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPGRpdiBjbGFzc05hbWU9XCJncmlkLXNjcm9sbFwiPlxuICAgICAgICAgICAgPHRhYmxlIGNsYXNzTmFtZT1cInBsYW5uaW5nLXRhYmxlIHNlcXVlbmNlLXRhYmxlXCI+XG4gICAgICAgICAgICAgIDx0aGVhZD5cbiAgICAgICAgICAgICAgICA8dHI+XG4gICAgICAgICAgICAgICAgICA8dGg+U2V2ZXJpdHk8L3RoPlxuICAgICAgICAgICAgICAgICAgPHRoPk9HVjwvdGg+XG4gICAgICAgICAgICAgICAgICA8dGg+SGF0Y2gvTDwvdGg+XG4gICAgICAgICAgICAgICAgICA8dGg+R3JhZGU8L3RoPlxuICAgICAgICAgICAgICAgICAgPHRoPlJlcSBNVDwvdGg+XG4gICAgICAgICAgICAgICAgICA8dGg+UmVtYWluPC90aD5cbiAgICAgICAgICAgICAgICAgIDx0aD5CbG9ja2luZyBSZWFzb248L3RoPlxuICAgICAgICAgICAgICAgICAgPHRoPkpldHR5PC90aD5cbiAgICAgICAgICAgICAgICAgIDx0aD5DVFM8L3RoPlxuICAgICAgICAgICAgICAgICAgPHRoPkNoYWluIFN0YXR1czwvdGg+XG4gICAgICAgICAgICAgICAgICA8dGg+V2luZG93PC90aD5cbiAgICAgICAgICAgICAgICA8L3RyPlxuICAgICAgICAgICAgICA8L3RoZWFkPlxuICAgICAgICAgICAgICA8dGJvZHk+XG4gICAgICAgICAgICAgICAge3N0ZXBzLm1hcCgoc3RlcCkgPT4ge1xuICAgICAgICAgICAgICAgICAgY29uc3Qgc2V2ZXJpdHkgPSBjYXJnb0xheWVyU2V2ZXJpdHkoc3RlcCk7XG4gICAgICAgICAgICAgICAgICByZXR1cm4gKFxuICAgICAgICAgICAgICAgICAgPHRyXG4gICAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT17c2VsZWN0ZWRTdGVwPy5pZCA9PT0gc3RlcC5pZCA/IFwic2VsZWN0ZWQtcm93XCIgOiBcIlwifVxuICAgICAgICAgICAgICAgICAgICBrZXk9e3N0ZXAuaWR9XG4gICAgICAgICAgICAgICAgICAgIG9uQ2xpY2s9eygpID0+IHNldFNlbGVjdGVkU3RlcElkKHN0ZXAuaWQpfVxuICAgICAgICAgICAgICAgICAgPlxuICAgICAgICAgICAgICAgICAgICA8dGQ+XG4gICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPXtgc3RhdHVzLWNoaXAgJHtzZXZlcml0eX1gfT5cbiAgICAgICAgICAgICAgICAgICAgICAgIHtzZXZlcml0eX1cbiAgICAgICAgICAgICAgICAgICAgICA8L3NwYW4+XG4gICAgICAgICAgICAgICAgICAgIDwvdGQ+XG4gICAgICAgICAgICAgICAgICAgIDx0ZD48c3Ryb25nPntzdGVwLnZlc3NlbF9uYW1lfTwvc3Ryb25nPjwvdGQ+XG4gICAgICAgICAgICAgICAgICAgIDx0ZD5Ie3N0ZXAuaGF0Y2hfbm99L0x7c3RlcC5sYXllcl9ub308L3RkPlxuICAgICAgICAgICAgICAgICAgICA8dGQ+e3N0ZXAuY29hbF9ncmFkZS5jb2RlfTwvdGQ+XG4gICAgICAgICAgICAgICAgICAgIDx0ZD57bXQoc3RlcC5yZXF1aXJlZF9tdCl9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPnttdChzdGVwLnJlbWFpbmluZ19tdCl9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPntzdGVwLmJsb2NraW5nX3JlYXNvbiB8fCBcIkNsZWFyXCJ9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPntzdGVwLnBsYW5uZWRfamV0dHk/LmNvZGUgPz8gXCItXCJ9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPntzdGVwLnBsYW5uZWRfY3RzPy5jb2RlID8/IFwiLVwifTwvdGQ+XG4gICAgICAgICAgICAgICAgICAgIDx0ZD57Y2FyZ29MYXllckNoYWluU3RhdHVzTGFiZWwoc3RlcCl9PC90ZD5cbiAgICAgICAgICAgICAgICAgICAgPHRkPlxuICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzTmFtZT1cImdyaWQtZGF0ZS1wYWlyXCI+XG4gICAgICAgICAgICAgICAgICAgICAgICB7dGltZShzdGVwLnBsYW5uZWRfc3RhcnQpfVxuICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVwiZ3JpZC1kYXRlLXNlcGFyYXRvclwiPuKGkjwvc3Bhbj5cbiAgICAgICAgICAgICAgICAgICAgICAgIHt0aW1lKHN0ZXAucGxhbm5lZF9lbmQpfVxuICAgICAgICAgICAgICAgICAgICAgIDwvc3Bhbj5cbiAgICAgICAgICAgICAgICAgICAgPC90ZD5cbiAgICAgICAgICAgICAgICAgIDwvdHI+XG4gICAgICAgICAgICAgICAgICApO1xuICAgICAgICAgICAgICAgIH0pfVxuICAgICAgICAgICAgICA8L3Rib2R5PlxuICAgICAgICAgICAgPC90YWJsZT5cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgPC9zZWN0aW9uPlxuXG4gICAgICAgIDxhc2lkZSBjbGFzc05hbWU9XCJib2FyZC1zdXJmYWNlIHNlcXVlbmNlLWluc3BlY3RvclwiPlxuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZC1oZWFkZXJcIj5cbiAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgIDxTdmdJY29uIG5hbWU9XCJydWxlXCIgLz5cbiAgICAgICAgICAgICAgPHN0cm9uZz5cbiAgICAgICAgICAgICAgICB7c2VsZWN0ZWROZWVkc1JlY292ZXJ5ID8gXCJTZXF1ZW5jZSByZXZpZXdcIiA6IFwiTGF5ZXIgY2xlYXJcIn1cbiAgICAgICAgICAgICAgPC9zdHJvbmc+XG4gICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICAgIDxzcGFuPkxheWVyIHN0YXR1cyBhbmQgb3BlcmF0b3IgZ3VpZGFuY2U8L3NwYW4+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAge3NlbGVjdGVkU3RlcCA/IChcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiaW5zcGVjdG9yLWJvZHlcIj5cbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPXtgc3RhdHVzLWNoaXAgJHtjYXJnb0xheWVyU2V2ZXJpdHkoc2VsZWN0ZWRTdGVwKX1gfT5cbiAgICAgICAgICAgICAgICB7c2VsZWN0ZWRTdGVwLnNlcXVlbmNlX3Zpb2xhdGlvblxuICAgICAgICAgICAgICAgICAgPyBcIlZpb2xhdGlvblwiXG4gICAgICAgICAgICAgICAgICA6IGNhcmdvTGF5ZXJDaGFpblN0YXR1c0xhYmVsKHNlbGVjdGVkU3RlcCl9XG4gICAgICAgICAgICAgIDwvc3Bhbj5cbiAgICAgICAgICAgICAgPGgyPntzZWxlY3RlZFN0ZXAudmVzc2VsX25hbWV9IMK3IEh7c2VsZWN0ZWRTdGVwLmhhdGNoX25vfS9Me3NlbGVjdGVkU3RlcC5sYXllcl9ub308L2gyPlxuICAgICAgICAgICAgICA8cD57c2VsZWN0ZWRTdGVwLmJsb2NraW5nX3JlYXNvbiB8fCBcIk5vIGJsb2NraW5nIHJlYXNvbiByZWNvcmRlZCBmb3IgdGhpcyBsYXllci5cIn08L3A+XG4gICAgICAgICAgICAgIDxkbD5cbiAgICAgICAgICAgICAgICA8ZGl2PlxuICAgICAgICAgICAgICAgICAgPGR0PkdyYWRlPC9kdD5cbiAgICAgICAgICAgICAgICAgIDxkZD57c2VsZWN0ZWRTdGVwLmNvYWxfZ3JhZGUuY29kZX08L2RkPlxuICAgICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgICA8ZHQ+QmFyZ2U8L2R0PlxuICAgICAgICAgICAgICAgICAgPGRkPntzZWxlY3RlZFN0ZXAucGxhbm5lZF9iYXJnZT8uY29kZSA/PyBcIlVuYXNzaWduZWRcIn08L2RkPlxuICAgICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgICA8ZHQ+SmV0dHk8L2R0PlxuICAgICAgICAgICAgICAgICAgPGRkPntzZWxlY3RlZFN0ZXAucGxhbm5lZF9qZXR0eT8uY29kZSA/PyBcIlVuYXNzaWduZWRcIn08L2RkPlxuICAgICAgICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgICAgICAgIDxkaXY+XG4gICAgICAgICAgICAgICAgICA8ZHQ+Q1RTPC9kdD5cbiAgICAgICAgICAgICAgICAgIDxkZD57c2VsZWN0ZWRTdGVwLnBsYW5uZWRfY3RzPy5jb2RlID8/IFwiVW5hc3NpZ25lZFwifTwvZGQ+XG4gICAgICAgICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgICAgIDwvZGw+XG4gICAgICAgICAgICAgIDxzZWN0aW9uIGNsYXNzTmFtZT1cInJlY292ZXJ5LWJveFwiPlxuICAgICAgICAgICAgICAgIDxzdHJvbmc+XG4gICAgICAgICAgICAgICAgICB7c2VsZWN0ZWROZWVkc1JlY292ZXJ5ID8gXCJSZWNvbW1lbmRlZCByZWNvdmVyeVwiIDogXCJMYXllciBzdGF0dXNcIn1cbiAgICAgICAgICAgICAgICA8L3N0cm9uZz5cbiAgICAgICAgICAgICAgICA8cD5cbiAgICAgICAgICAgICAgICAgIHtjYXJnb0xheWVyUmVjb3ZlcnlNZXNzYWdlKHNlbGVjdGVkU3RlcCl9XG4gICAgICAgICAgICAgICAgPC9wPlxuICAgICAgICAgICAgICA8L3NlY3Rpb24+XG4gICAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICApIDogbnVsbH1cbiAgICAgICAgPC9hc2lkZT5cbiAgICAgIDwvZGl2PlxuXG4gICAgICA8c2VjdGlvbiBjbGFzc05hbWU9XCJib2FyZC1zdXJmYWNlIGZvY3VzLXNlcXVlbmNlXCI+XG4gICAgICAgIDxkaXYgY2xhc3NOYW1lPVwiZ3JpZC1oZWFkZXJcIj5cbiAgICAgICAgICA8ZGl2PlxuICAgICAgICAgICAgPFN2Z0ljb24gbmFtZT1cImFjY291bnQtdHJlZVwiIC8+XG4gICAgICAgICAgICA8c3Ryb25nPkZvY3VzIHZpZXcgwrcge3NlbGVjdGVkU3RlcD8udmVzc2VsX25hbWUgPz8gXCJObyBPR1Ygc2VsZWN0ZWRcIn08L3N0cm9uZz5cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICA8c3Bhbj5TZXF1ZW5jZS1zdHJpcCBwYXJpdHkgd2l0aCBoYXJkZW5lZCBmcm9udGVuZCByZWZlcmVuY2U8L3NwYW4+XG4gICAgICAgIDwvZGl2PlxuICAgICAgICA8b2wgY2xhc3NOYW1lPVwic2VxdWVuY2Utc3RyaXBcIj5cbiAgICAgICAgICB7c2VsZWN0ZWRWb3lhZ2VTdGVwcy5tYXAoKHN0ZXApID0+IChcbiAgICAgICAgICAgIDxsaVxuICAgICAgICAgICAgICBjbGFzc05hbWU9e2NhcmdvTGF5ZXJTZXZlcml0eShzdGVwKX1cbiAgICAgICAgICAgICAga2V5PXtzdGVwLmlkfVxuICAgICAgICAgICAgPlxuICAgICAgICAgICAgICA8c3Bhbj57c3RlcC5yZXF1aXJlZF9zZXF1ZW5jZV9ub308L3NwYW4+XG4gICAgICAgICAgICAgIDxzdHJvbmc+SHtzdGVwLmhhdGNoX25vfS9Me3N0ZXAubGF5ZXJfbm99PC9zdHJvbmc+XG4gICAgICAgICAgICAgIDxlbT57c3RlcC5jb2FsX2dyYWRlLmNvZGV9PC9lbT5cbiAgICAgICAgICAgIDwvbGk+XG4gICAgICAgICAgKSl9XG4gICAgICAgIDwvb2w+XG4gICAgICA8L3NlY3Rpb24+XG4gICAgPC9zZWN0aW9uPlxuICApO1xufVxuIl0sImZpbGUiOiIvYXBwL3NyYy9wYWdlcy9Db2FsR3JhZGVTZXF1ZW5jZVBhZ2UudHN4In0=

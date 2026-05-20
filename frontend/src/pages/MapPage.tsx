@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
+import { Abbr } from "../components/Abbreviation";
 import { SvgIcon } from "../components/SvgIcon";
 import {
   DisabledReasonTooltip,
@@ -8,6 +9,7 @@ import {
 } from "../components/assistant";
 import { formatGridDateLabel } from "../lib/gridDate";
 import { shortOperationalLabel } from "../lib/operations";
+import { activePlanConflicts, activeTrackingAlerts } from "../lib/planStatus";
 import type {
   ConfirmedOperationalEventRecord,
   DeviceEndpointRecord,
@@ -152,7 +154,7 @@ export function LiveResourceMapPage({
   trackingAlerts,
 }: LiveResourceMapPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
-  const conflicts = overview?.conflicts ?? EMPTY_CONFLICTS;
+  const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const statesByAsset = useMemo(
     () => new Map(latestAssetStates.map((state) => [state.asset_code, state])),
     [latestAssetStates],
@@ -170,7 +172,7 @@ export function LiveResourceMapPage({
     });
     return rows;
   }, [etaProjections]);
-  const openAlerts = trackingAlerts.filter((alert) => alert.status === "open");
+  const openAlerts = activeTrackingAlerts(trackingAlerts);
   const alertsByAsset = useMemo(() => {
     const rows = new Map<string, TrackingAlertRecord[]>();
     openAlerts.forEach((alert) => {
@@ -407,7 +409,7 @@ export function LiveResourceMapPage({
         <div><span>Movement events</span><strong>{movementEvents.length}</strong></div>
         <div><span>Open alerts</span><strong className={openAlerts.length ? "warning-text" : "ok-text"}>{openAlerts.length}</strong></div>
         <div><span>Operational overlays</span><strong className={operationalMarkers.length ? "warning-text" : ""}>{operationalMarkers.length}</strong></div>
-        <div><span>Max ETA variance</span><strong className={`${projectionTone(highestVariance)}-text`}>{varianceLabel(highestVariance)}</strong></div>
+        <div><span>Max <Abbr term="ETA">ETA</Abbr> variance</span><strong className={`${projectionTone(highestVariance)}-text`}>{varianceLabel(highestVariance)}</strong></div>
       </div>
 
       <div className="live-map-layout">
@@ -480,15 +482,15 @@ export function LiveResourceMapPage({
             <h2>Asset layers</h2>
             <span>Tugs <strong>{stateCounts.tug ?? 0}</strong></span>
             <span>Barges <strong>{stateCounts.barge ?? 0}</strong></span>
-            <span>CTS <strong>{stateCounts.cts ?? 0}</strong></span>
-            <span>OGVs <strong>{stateCounts.ogv ?? 0}</strong></span>
+            <span><Abbr term="CTS">CTS</Abbr> <strong>{stateCounts.cts ?? 0}</strong></span>
+            <span><Abbr term="OGV">OGVs</Abbr> <strong>{stateCounts.ogv ?? 0}</strong></span>
           </section>
           <section>
             <h2>Geofence layers</h2>
             <span>Jetties <strong>{zoneCounts.jetty ?? 0}</strong></span>
             <span>Bridge gates <strong>{zoneCounts.bridge ?? 0}</strong></span>
             <span>Tide gates <strong>{zoneCounts.tide_gate ?? 0}</strong></span>
-            <span>CTS zones <strong>{zoneCounts.cts_zone ?? 0}</strong></span>
+            <span><Abbr term="CTS">CTS</Abbr> zones <strong>{zoneCounts.cts_zone ?? 0}</strong></span>
           </section>
           <section className="signal-health-list">
             <h2>Signal health</h2>
@@ -538,7 +540,7 @@ export function LiveResourceMapPage({
                     ? alertTone(alerts[0])
                     : signal
                       ? toneForFreshness(signal.freshness_status)
-                      : toneFor(assignment?.status, conflict?.is_blocking)
+                      : toneFor(assignment?.status)
                 }`}
                 key={`${signal.asset_type}-${signal.asset_code}`}
                 onClick={() => setSelectedAssetCode(signal.asset_code)}
@@ -566,7 +568,7 @@ export function LiveResourceMapPage({
           </div>
           <div className="map-movement-log">
             <div>
-              <strong>Observed ETA & alerts</strong>
+              <strong>Observed <Abbr term="ETA">ETA</Abbr> & alerts</strong>
               <span>Projection compares live evidence to planned schedule events.</span>
             </div>
             <div className="movement-event-list">
@@ -605,7 +607,7 @@ export function LiveResourceMapPage({
           {selected || selectedState ? (
             <div className="map-selected-asset">
               <span className={`status-chip ${
-                selected ? toneFor(selected.status, selectedConflict?.is_blocking) : toneForFreshness(selectedState?.freshness_status)
+                selected ? toneFor(selected.status) : toneForFreshness(selectedState?.freshness_status)
               }`}
               >
                 {selected ? short(selected.status) : short(selectedState?.freshness_status)}
@@ -615,15 +617,15 @@ export function LiveResourceMapPage({
               <dl>
                 <div><dt>Signal</dt><dd>{short(selectedState?.freshness_status)}</dd></div>
                 <div><dt>Source</dt><dd>{selectedState?.source_id ?? "No feed"}</dd></div>
-                <div><dt>External ID</dt><dd>{selectedState?.external_id ?? "Unmapped"}</dd></div>
+                <div><dt>External <Abbr term="ID">ID</Abbr></dt><dd>{selectedState?.external_id ?? "Unmapped"}</dd></div>
                 <div><dt>Last seen</dt><dd>{selectedState ? stateAgeLabel(selectedState) : "No ping"}</dd></div>
                 <div><dt>Position</dt><dd>{coordinateLabel(selectedState)}</dd></div>
                 <div><dt>Heading</dt><dd>{selectedState?.heading_degrees ? `${selectedState.heading_degrees} deg` : "Unknown"}</dd></div>
                 <div><dt>Current zone</dt><dd>{selectedState?.current_geofence_name ?? "Outside geofence"}</dd></div>
                 <div><dt>Last movement</dt><dd>{eventLabel(selectedState?.last_movement_event_type)}</dd></div>
                 <div><dt>Planned event</dt><dd>{short(selectedProjection?.schedule_event_type)}</dd></div>
-                <div><dt>Observed ETA</dt><dd>{selectedProjection?.observed_eta ? formatGridDateLabel(selectedProjection.observed_eta) : "Not calculated"}</dd></div>
-                <div><dt>ETA variance</dt><dd className={`${projectionTone(selectedProjection)}-text`}>{varianceLabel(selectedProjection)}</dd></div>
+                <div><dt>Observed <Abbr term="ETA">ETA</Abbr></dt><dd>{selectedProjection?.observed_eta ? formatGridDateLabel(selectedProjection.observed_eta) : "Not calculated"}</dd></div>
+                <div><dt><Abbr term="ETA">ETA</Abbr> variance</dt><dd className={`${projectionTone(selectedProjection)}-text`}>{varianceLabel(selectedProjection)}</dd></div>
                 <div><dt>Open alerts</dt><dd>{selectedAlerts.length ? selectedAlerts.map((alert) => short(alert.alert_type)).join(", ") : "None"}</dd></div>
                 <div><dt>Ops event</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.event_kind ?? selectedOperationalConfirmed?.event_kind)}</dd></div>
                 <div><dt>Ops state</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.status ?? selectedOperationalConfirmed?.confirmation_mode)}</dd></div>
@@ -634,7 +636,7 @@ export function LiveResourceMapPage({
                     : "No event"}</dd></div>
                 <div><dt>Paired asset</dt><dd>{selected?.barge?.code ?? "No barge"}</dd></div>
                 <div><dt>Jetty</dt><dd>{selected?.jetty?.code ?? "Unassigned"}</dd></div>
-                <div><dt>CTS</dt><dd>{selected?.cts?.code ?? "Unassigned"}</dd></div>
+                <div><dt><Abbr term="CTS">CTS</Abbr></dt><dd>{selected?.cts?.code ?? "Unassigned"}</dd></div>
                 <div><dt>Exception</dt><dd>{selectedConflict?.code ?? "None"}</dd></div>
               </dl>
               <button onClick={() => onNavigate("/operations/tug-barge-assignment")} type="button">

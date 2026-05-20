@@ -694,7 +694,7 @@ class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
         recommendation = self.get_object()
         if recommendation.scenario_id:
             return Response(
-                {"detail": "Materialized recommendations cannot be dismissed."},
+                {"detail": "Recommendations already created as scenarios cannot be dismissed."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         recommendation.status = RecoveryRecommendation.Status.DISMISSED
@@ -1167,9 +1167,10 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
             required=Sum("planned_quantity_mt"),
             loaded=Sum("loaded_quantity_mt"),
         )
-        conflict_counts = conflicts.aggregate(
+        unresolved_conflicts = conflicts.filter(resolved_at__isnull=True)
+        conflict_counts = unresolved_conflicts.aggregate(
             total=Count("id"),
-            blocking=Count("id", filter=Q(is_blocking=True, resolved_at__isnull=True)),
+            blocking=Count("id", filter=Q(is_blocking=True)),
             critical=Count("id", filter=Q(severity=Conflict.Severity.CRITICAL)),
         )
 
@@ -1234,10 +1235,16 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "trackingSummary": {
                     "projectionCount": eta_projections.count(),
                     "openAlertCount": tracking_alerts.filter(
-                        status=TrackingAlert.Status.OPEN,
+                        status__in=[
+                            TrackingAlert.Status.OPEN,
+                            TrackingAlert.Status.ACKNOWLEDGED,
+                        ],
                     ).count(),
                     "criticalAlertCount": tracking_alerts.filter(
-                        status=TrackingAlert.Status.OPEN,
+                        status__in=[
+                            TrackingAlert.Status.OPEN,
+                            TrackingAlert.Status.ACKNOWLEDGED,
+                        ],
                         severity=TrackingAlert.Severity.CRITICAL,
                     ).count(),
                     "highestVarianceMinutes": (
@@ -1265,7 +1272,10 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     "recoveryRecommendationCount": recovery_recommendations.count(),
                     "trackingAlertCount": tracking_alerts.count(),
                     "openTrackingAlertCount": tracking_alerts.filter(
-                        status=TrackingAlert.Status.OPEN,
+                        status__in=[
+                            TrackingAlert.Status.OPEN,
+                            TrackingAlert.Status.ACKNOWLEDGED,
+                        ],
                     ).count(),
                     "plannedMt": trip_totals["required"] or 0,
                     "loadedMt": trip_totals["loaded"] or 0,

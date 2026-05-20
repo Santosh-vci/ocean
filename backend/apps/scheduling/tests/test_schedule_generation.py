@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from apps.audit.models import AuditEvent
 from apps.masters.models import AssetCompatibilityRule, CTSAsset, Location
 from apps.organizations.models import Organization
-from apps.planning.models import BridgeWindow, TideWindow
+from apps.planning.models import BridgeWindow, CargoLayerStep, OGVVoyage, TideWindow
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import (
     ApprovalDecision,
@@ -207,6 +207,81 @@ def test_seeded_schedule_generation_is_deterministic_and_idempotent():
 
 
 @pytest.mark.django_db
+def test_navigation_checks_apply_only_to_the_affected_journey():
+    call_command("seed_assistant_recovery_practice")
+    version = PlanVersion.objects.get(plan__name="Assist Super Recovery Practice")
+
+    conflicts = Conflict.objects.filter(
+        plan_version=version,
+        resolved_at__isnull=True,
+    )
+
+    assert conflicts.count() == 3
+    assert conflicts.filter(is_blocking=True).count() == 2
+    assert not conflicts.filter(
+        trip__cargo_layer_step__required_sequence_no=2,
+    ).exists()
+    assert not conflicts.filter(
+        is_blocking=True,
+        trip__cargo_layer_step__blocking_reason="",
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_recovery_practice_seed_skip_reset_is_idempotent():
+    call_command("seed_phase0", master_data_only=True, verbosity=0)
+    call_command("seed_assistant_recovery_practice", skip_reset=True)
+    first_version = PlanVersion.objects.get(plan__name="Assist Super Recovery Practice")
+    first_plan_id = first_version.plan_id
+
+    call_command("seed_assistant_recovery_practice", skip_reset=True)
+
+    version = PlanVersion.objects.get(plan__name="Assist Super Recovery Practice")
+    conflicts = Conflict.objects.filter(plan_version=version, resolved_at__isnull=True)
+
+    assert version.plan_id != first_plan_id
+    assert OGVVoyage.objects.filter(current_stage="RECOVERY_PRACTICE").count() == 3
+    assert CargoLayerStep.objects.filter(voyage__current_stage="RECOVERY_PRACTICE").count() == 6
+    assert conflicts.count() == 3
+
+
+@pytest.mark.django_db
+def test_regeneration_clears_stale_scenario_event_projections_first():
+    call_command("seed_phase0")
+    version = seeded_plan_version()
+    trip = Trip.objects.filter(plan_version=version).prefetch_related("events").first()
+    event = trip.events.first()
+    scenario = SimulationScenario.objects.create(
+        scenario_id="SCN-REGEN-CLEAR-001",
+        name="Regeneration cleanup",
+        scenario_type="conflict_recovery",
+        baseline_version=version,
+    )
+    run = ScenarioRun.objects.create(
+        scenario=scenario,
+        run_id="RUN-REGEN-CLEAR-001",
+        baseline_version=version,
+        status=ScenarioRun.Status.SUCCEEDED,
+        algorithm_version="test",
+        input_hash="regen-clear",
+    )
+    ScenarioEventProjection.objects.create(
+        run=run,
+        event=event,
+        trip=trip,
+        event_type=event.event_type,
+        baseline_at=event.planned_at,
+        projected_at=event.planned_at,
+        projected_status=event.status,
+    )
+
+    result = generate_plan_version(version)
+
+    assert result.trip_count == 6
+    assert not ScenarioEventProjection.objects.filter(run=run).exists()
+
+
+@pytest.mark.django_db
 def test_schedule_viewer_can_read_overview_but_cannot_generate():
     call_command("seed_phase0")
     platform = Organization.objects.get(slug="coalflow-platform")
@@ -222,6 +297,26 @@ def test_schedule_viewer_can_read_overview_but_cannot_generate():
     assert overview_response.status_code == 200
     assert overview_response.data["validation"]["tripCount"] == 6
     assert generate_response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_scheduling_overview_counts_only_unresolved_active_conflicts():
+    call_command("seed_phase0")
+    platform = Organization.objects.get(slug="coalflow-platform")
+    user = User.objects.create_user(username="schedule-active-conflicts", password="secret")
+    assign(user, platform, ["schedule.view"])
+    version = seeded_plan_version()
+    Conflict.objects.filter(plan_version=version).update(resolved_at=timezone.now())
+
+    client = APIClient()
+    client.force_authenticate(user)
+    overview_response = client.get("/api/scheduling/overview/")
+
+    assert Conflict.objects.filter(plan_version=version).exists()
+    assert overview_response.status_code == 200
+    assert overview_response.data["validation"]["conflictCount"] == 0
+    assert overview_response.data["validation"]["blockingConflictCount"] == 0
+    assert overview_response.data["validation"]["criticalConflictCount"] == 0
 
 
 @pytest.mark.django_db

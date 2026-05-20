@@ -10,6 +10,7 @@ type RequestOptions = RequestInit & {
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: "no-store",
     ...options,
     credentials: "include",
     headers: {

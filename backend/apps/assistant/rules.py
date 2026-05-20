@@ -430,12 +430,12 @@ def rule_recovery_recommendation_ready_to_materialize(
                 rank_score=810,
                 enabled=True,
                 reason=(
-                    "The top recovery recommendation is ready to become a governed scenario."
+                    "The top recovery recommendation is ready to be tested as a governed scenario."
                 ),
                 source="recovery.recommendation_ready_to_materialize",
                 target_object_type="recovery_recommendation",
                 target_object_id=ctx.top_recovery_recommendation_id,
-                impact_if_ignored="The optimizer output remains advisory only.",
+                impact_if_ignored="The optimizer output remains advisory and cannot change the plan.",
                 metadata={"recommendationRef": ctx.top_recovery_recommendation_ref},
             )
         ]
@@ -486,7 +486,7 @@ def rule_recovery_recommendation_blocked_state(
                 enabled=False,
                 reason="The selected recovery recommendation was dismissed.",
                 blocked_reason=(
-                    "Dismissed recommendations cannot be materialized. Select an "
+                    "Dismissed recommendations cannot be tested as scenarios. Select an "
                     "actionable candidate or generate new recovery options."
                 ),
                 source="recovery.recommendation_dismissed",
@@ -503,7 +503,7 @@ def rule_recovery_recommendation_blocked_state(
                 priority="info",
                 rank_score=330,
                 enabled=False,
-                reason="The selected recovery recommendation is already materialized.",
+                reason="The selected recovery recommendation is already a governed scenario.",
                 blocked_reason=(
                     "This recommendation is already a governed scenario. Continue in "
                     "Simulation Workspace."
@@ -518,8 +518,8 @@ def rule_recovery_recommendation_blocked_state(
                 priority="info",
                 rank_score=320,
                 enabled=False,
-                reason="The selected recovery recommendation is already materialized.",
-                blocked_reason="Materialized recommendations cannot be dismissed.",
+                reason="The selected recovery recommendation is already a governed scenario.",
+                blocked_reason="Recommendations already created as scenarios cannot be dismissed.",
                 source="recovery.recommendation_materialized",
                 **target,
             )

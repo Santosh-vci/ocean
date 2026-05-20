@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { Abbr } from "../components/Abbreviation";
 import { GridDate } from "../components/GridDate";
 import { SvgIcon } from "../components/SvgIcon";
 import {
@@ -382,7 +383,7 @@ export function TideBridgePage({
                   <dd>{recovery.route_segment?.from_location} to {recovery.route_segment?.to_location}</dd>
                 </div>
                 <div>
-                  <dt>ETA gate</dt>
+                  <dt><Abbr term="ETA">ETA</Abbr> gate</dt>
                   <dd>{dt(recovery.eta_gate)}</dd>
                 </div>
                 <div>
@@ -454,10 +455,10 @@ export function TideBridgePage({
             <thead>
               <tr>
                 <th>Asset</th>
-                <th>OGV</th>
+                <th><Abbr term="OGV">OGV</Abbr></th>
                 <th>Segment</th>
                 <th>Draft</th>
-                <th>ETA Gate</th>
+                <th><Abbr term="ETA">ETA</Abbr> Gate</th>
                 <th>Type</th>
                 <th>Window Start</th>
                 <th>Window End</th>

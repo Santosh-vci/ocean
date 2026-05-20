@@ -106,8 +106,8 @@ test("dashboard inbox renders Phase 5 assistant actions", () => {
       pageActions={[
         action({
           actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-          ctaLabel: "Create scenario",
-          label: "Create scenario from recommendation",
+          ctaLabel: "Test as scenario",
+          label: "Test recommendation as scenario",
           source: "recovery.recommendation_ready_to_materialize",
           targetObjectType: "recovery_recommendation",
           targetObjectId: "801",
@@ -118,7 +118,7 @@ test("dashboard inbox renders Phase 5 assistant actions", () => {
 
   expect(screen.getByText("Assistant action inbox")).toBeInTheDocument();
   expect(screen.getByText("Open Recommendation Console")).toBeInTheDocument();
-  expect(screen.getByText("Create scenario from recommendation")).toBeInTheDocument();
+  expect(screen.getByText("Test recommendation as scenario")).toBeInTheDocument();
 });
 
 test("recommendation card CTA navigates with the action route", () => {
@@ -186,8 +186,8 @@ test("row action hint filters by object type and object id", () => {
       actions={[
         action({
           actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-          ctaLabel: "Create scenario",
-          label: "Create scenario from recommendation",
+          ctaLabel: "Test as scenario",
+          label: "Test recommendation as scenario",
           targetObjectType: "recovery_recommendation",
           targetObjectId: "801",
         }),
@@ -203,7 +203,7 @@ test("row action hint filters by object type and object id", () => {
     />,
   );
 
-  fireEvent.click(screen.getByRole("button", { name: /Create scenario/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Test as scenario/ }));
   expect(screen.queryByText("Open run")).not.toBeInTheDocument();
   expect(onNavigate).toHaveBeenCalledWith("/recovery/recommendations");
 });
@@ -226,15 +226,15 @@ test("row action hint targets one recovery recommendation without affecting sibl
       actions={[
         action({
           actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-          ctaLabel: "Create scenario",
-          label: "Create scenario from REC-801",
+          ctaLabel: "Test as scenario",
+          label: "Test REC-801 as scenario",
           targetObjectType: "recovery_recommendation",
           targetObjectId: "801",
         }),
         action({
           actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-          ctaLabel: "Create scenario",
-          label: "Create scenario from REC-802",
+          ctaLabel: "Test as scenario",
+          label: "Test REC-802 as scenario",
           targetObjectType: "recovery_recommendation",
           targetObjectId: "802",
         }),
@@ -244,21 +244,21 @@ test("row action hint targets one recovery recommendation without affecting sibl
     />,
   );
 
-  expect(screen.getByText("Create scenario from REC-802")).toBeInTheDocument();
-  expect(screen.queryByText("Create scenario from REC-801")).not.toBeInTheDocument();
+  expect(screen.getByText("Test REC-802 as scenario")).toBeInTheDocument();
+  expect(screen.queryByText("Test REC-801 as scenario")).not.toBeInTheDocument();
 });
 
 test("row action hint shows distinct dismissed and materialized blocked reasons", () => {
   const dismissed = action({
     actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-    blockedReason: "Dismissed recommendations cannot be materialized.",
+    blockedReason: "Dismissed recommendations cannot be tested as scenarios.",
     enabled: false,
     targetObjectType: "recovery_recommendation",
     targetObjectId: "901",
   });
   const materialized = action({
     actionId: "DISMISS_RECOVERY_RECOMMENDATION",
-    blockedReason: "Materialized recommendations cannot be dismissed.",
+    blockedReason: "Recommendations already created as scenarios cannot be dismissed.",
     enabled: false,
     targetObjectType: "recovery_recommendation",
     targetObjectId: "902",
@@ -271,7 +271,7 @@ test("row action hint shows distinct dismissed and materialized blocked reasons"
     />,
   );
 
-  expect(screen.getByText("Dismissed recommendations cannot be materialized."))
+  expect(screen.getByText("Dismissed recommendations cannot be tested as scenarios."))
     .toBeInTheDocument();
 
   rerender(
@@ -282,7 +282,7 @@ test("row action hint shows distinct dismissed and materialized blocked reasons"
     />,
   );
 
-  expect(screen.getByText("Materialized recommendations cannot be dismissed."))
+  expect(screen.getByText("Recommendations already created as scenarios cannot be dismissed."))
     .toBeInTheDocument();
 });
 

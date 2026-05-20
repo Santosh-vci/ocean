@@ -1,4 +1,5 @@
 import type { ActionRecommendation } from "../../types/assistant";
+import { AbbrText } from "../Abbreviation";
 
 type ActionInboxPanelProps = {
   globalAction: ActionRecommendation | null;
@@ -42,14 +43,14 @@ export function ActionInboxPanel({
             type="button"
           >
             <span>{action.priority}</span>
-            <strong>{action.label}</strong>
+            <strong><AbbrText text={action.label} /></strong>
             <em>{action.source}</em>
           </button>
         ))}
         {blocked.map((action) => (
           <span className="assistant-inbox-blocked" key={actionKey(action)}>
-            <strong>{action.label}</strong>
-            <em>{action.blockedReason || action.reason}</em>
+            <strong><AbbrText text={action.label} /></strong>
+            <em><AbbrText text={action.blockedReason || action.reason} /></em>
           </span>
         ))}
       </div>
