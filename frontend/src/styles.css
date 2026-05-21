@@ -1483,11 +1483,30 @@ button.row-action-hint:hover {
   font-weight: 850;
   letter-spacing: 0.03em;
   pointer-events: none;
+  animation: workspace-action-banner-lifecycle 4s ease forwards;
 }
 
 .workspace-action-banner.critical {
   border-color: rgba(248, 113, 113, 0.5);
   color: var(--status-critical);
+}
+
+@keyframes workspace-action-banner-lifecycle {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+
+  10%,
+  82% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-0.15rem);
+  }
 }
 
 .workspace-page {

@@ -73,6 +73,7 @@ function currentHashPath() {
 
 const LIVE_REFRESH_INTERVAL_MS = 15000;
 const INTERACTION_REFRESH_THROTTLE_MS = 1000;
+const ACTION_FEEDBACK_TIMEOUT_MS = 4000;
 
 function upcomingLocalIso(daysFromToday: number, hour: number, minute = 0) {
   const now = new Date();
@@ -158,6 +159,7 @@ function App() {
   const schedulingOverviewRef = useRef<SchedulingOverview | null>(null);
   const workspaceRefreshPromiseRef = useRef<Promise<void> | null>(null);
   const workspaceLastRefreshAtRef = useRef(0);
+  const actionFeedbackTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     apiFetch<CurrentUser>("/me/")
@@ -418,6 +420,30 @@ function App() {
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [currentUser, requestWorkspaceRefresh]);
+
+  useEffect(() => {
+    if (actionFeedbackTimerRef.current !== null) {
+      window.clearTimeout(actionFeedbackTimerRef.current);
+      actionFeedbackTimerRef.current = null;
+    }
+
+    if (!actionMessage && !actionError) {
+      return undefined;
+    }
+
+    actionFeedbackTimerRef.current = window.setTimeout(() => {
+      setActionMessage(null);
+      setActionError(null);
+      actionFeedbackTimerRef.current = null;
+    }, ACTION_FEEDBACK_TIMEOUT_MS);
+
+    return () => {
+      if (actionFeedbackTimerRef.current !== null) {
+        window.clearTimeout(actionFeedbackTimerRef.current);
+        actionFeedbackTimerRef.current = null;
+      }
+    };
+  }, [actionMessage, actionError]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -1173,8 +1199,16 @@ function App() {
         onToggleCollapsed={() => setSidebarCollapsed((value) => !value)}
       />
       <section className="operations-main">
-        {actionMessage ? <div className="workspace-action-banner">{actionMessage}</div> : null}
-        {actionError ? <div className="workspace-action-banner critical">{actionError}</div> : null}
+        {actionMessage ? (
+          <div aria-live="polite" className="workspace-action-banner" role="status">
+            {actionMessage}
+          </div>
+        ) : null}
+        {actionError ? (
+          <div aria-live="assertive" className="workspace-action-banner critical" role="alert">
+            {actionError}
+          </div>
+        ) : null}
         {route === "/admin/master-data" && masterDataOverview ? (
           <MasterDataPage
             {...assistantPageProps}

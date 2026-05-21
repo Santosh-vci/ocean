@@ -402,6 +402,71 @@ def _next_operating_anchor():
     return timezone.make_aware(datetime.combine(next_day, time(6, 0)))
 
 
+def _is_navigation_recovery_text(value: str | None) -> bool:
+    text = (value or "").lower()
+    return ("tide" in text or "bridge" in text) and (
+        "miss" in text or "recovery" in text or "window" in text
+    )
+
+
+def _clear_resolved_navigation_recovery_state(voyages: list[OGVVoyage]) -> dict[str, int]:
+    voyage_ids = [voyage.id for voyage in voyages]
+    if not voyage_ids:
+        return {"cargoLayers": 0, "voyages": 0}
+
+    cleared_layers = 0
+    layer_steps = CargoLayerStep.objects.filter(voyage_id__in=voyage_ids)
+    for step in layer_steps:
+        if step.sequence_violation:
+            continue
+        if not _is_navigation_recovery_text(f"{step.blocking_reason} {step.chain_status}"):
+            continue
+        if step.status != CargoLayerStep.Status.BLOCKED and not step.blocking_reason:
+            continue
+        step.status = CargoLayerStep.Status.PLANNED
+        step.blocking_reason = ""
+        step.chain_status = "PLANNED"
+        step.save(update_fields=["status", "blocking_reason", "chain_status", "updated_at"])
+        cleared_layers += 1
+
+    cleared_voyages = 0
+    refreshed_voyages = OGVVoyage.objects.filter(id__in=voyage_ids).prefetch_related(
+        "layer_steps"
+    )
+    for voyage in refreshed_voyages:
+        if not _is_navigation_recovery_text(voyage.next_blocking_constraint):
+            continue
+        has_layer_blocker = any(
+            step.sequence_violation
+            or step.status in {CargoLayerStep.Status.BLOCKED, CargoLayerStep.Status.QC_HOLD}
+            or bool(step.blocking_reason)
+            for step in voyage.layer_steps.all()
+        )
+        has_navigation_warning = NavigationConstraintCheck.objects.filter(
+            voyage=voyage,
+            status__in=[
+                NavigationConstraintCheck.Status.MISSED,
+                NavigationConstraintCheck.Status.MARGINAL,
+            ],
+        ).exists()
+        if has_layer_blocker or has_navigation_warning:
+            continue
+        voyage.status = OGVVoyage.Status.PLANNED
+        voyage.risk_status = OGVVoyage.RiskStatus.LOW
+        voyage.next_blocking_constraint = ""
+        voyage.save(
+            update_fields=[
+                "status",
+                "risk_status",
+                "next_blocking_constraint",
+                "updated_at",
+            ]
+        )
+        cleared_voyages += 1
+
+    return {"cargoLayers": cleared_layers, "voyages": cleared_voyages}
+
+
 class PlanningOverviewViewSet(PlanningViewSet):
     queryset = OGVVoyage.objects.none()
     serializer_class = OGVVoyageSerializer
@@ -615,6 +680,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 )
                 checks_created += 2
 
+        cleared_recovery_state = _clear_resolved_navigation_recovery_state(target_voyages)
+
         record_audit_event(
             actor=request.user,
             organization=None,
@@ -628,6 +695,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "tide_windows": [window.code for window in tide_windows],
                 "bridge_windows": [window.code for window in bridge_windows],
                 "constraint_checks": checks_created,
+                "cleared_layer_blockers": cleared_recovery_state["cargoLayers"],
+                "cleared_voyage_blockers": cleared_recovery_state["voyages"],
             },
             request=request,
         )
@@ -640,6 +709,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "tideWindows": [window.code for window in tide_windows],
                 "bridgeWindows": [window.code for window in bridge_windows],
                 "constraintChecks": checks_created,
+                "clearedLayerBlockers": cleared_recovery_state["cargoLayers"],
+                "clearedVoyageBlockers": cleared_recovery_state["voyages"],
             },
             status=status.HTTP_201_CREATED,
         )

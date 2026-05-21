@@ -2949,6 +2949,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
             _validate_trip(plan_version=plan_version, trip=trip, assignment=assignment)
 
         conflicts = Conflict.objects.filter(plan_version=plan_version)
+        _reconcile_generated_trip_statuses(plan_version=plan_version, conflicts=conflicts)
         blocking_count = conflicts.filter(is_blocking=True, resolved_at__isnull=True).count()
         warning_count = conflicts.filter(severity=Conflict.Severity.WARNING).count()
         plan_version.generated_at = timezone.now()
@@ -3026,6 +3027,85 @@ def _assignment_status(step: CargoLayerStep) -> str:
     if step.status == CargoLayerStep.Status.COMPLETED:
         return Assignment.Status.AT_CTS
     return Assignment.Status.ASSIGNED
+
+
+def _is_navigation_recovery_text(value: str | None) -> bool:
+    text = (value or "").lower()
+    return ("tide" in text or "bridge" in text) and (
+        "miss" in text or "recovery" in text or "window" in text
+    )
+
+
+def _reconcile_generated_trip_statuses(*, plan_version: PlanVersion, conflicts) -> None:
+    blocking_by_trip: dict[int, list[Conflict]] = {}
+    for conflict in conflicts.filter(
+        is_blocking=True,
+        resolved_at__isnull=True,
+        trip_id__isnull=False,
+    ).order_by("created_at"):
+        blocking_by_trip.setdefault(conflict.trip_id, []).append(conflict)
+
+    trips = Trip.objects.filter(plan_version=plan_version).select_related("assignment")
+    for trip in trips:
+        active_blockers = blocking_by_trip.get(trip.id, [])
+        desired_trip_status = trip.status
+        if active_blockers:
+            desired_trip_status = Trip.Status.BLOCKED
+        elif trip.status == Trip.Status.BLOCKED:
+            desired_trip_status = Trip.Status.PLANNED
+
+        if desired_trip_status != trip.status:
+            trip.status = desired_trip_status
+            trip.save(update_fields=["status", "updated_at"])
+
+        assignment = getattr(trip, "assignment", None)
+        if assignment is None:
+            continue
+
+        desired_assignment_status = assignment.status
+        desired_next_constraint = assignment.next_constraint
+        desired_next_action = assignment.next_action
+
+        if active_blockers:
+            first_blocker = active_blockers[0]
+            blocker_codes = {conflict.code for conflict in active_blockers}
+            if "TIDE_WINDOW_MISSED" in blocker_codes:
+                desired_assignment_status = Assignment.Status.WAITING_TIDE
+            elif "BRIDGE_WINDOW_MISSED" in blocker_codes:
+                desired_assignment_status = Assignment.Status.WAITING_BRIDGE
+            else:
+                desired_assignment_status = Assignment.Status.BLOCKED
+            desired_next_constraint = first_blocker.message
+            desired_next_action = "Review blocker and generate replan candidate."
+        elif assignment.status in {
+            Assignment.Status.BLOCKED,
+            Assignment.Status.WAITING_TIDE,
+            Assignment.Status.WAITING_BRIDGE,
+        }:
+            desired_assignment_status = Assignment.Status.ASSIGNED
+
+        if not active_blockers and _is_navigation_recovery_text(
+            f"{assignment.next_constraint} {assignment.next_action}"
+        ):
+            desired_next_constraint = ""
+            desired_next_action = "Dispatch chain on planned window."
+
+        if (
+            desired_assignment_status != assignment.status
+            or desired_next_constraint != assignment.next_constraint
+            or desired_next_action != assignment.next_action
+        ):
+            assignment.status = desired_assignment_status
+            assignment.next_constraint = desired_next_constraint
+            assignment.next_action = desired_next_action
+            assignment.save(
+                update_fields=[
+                    "status",
+                    "next_constraint",
+                    "next_action",
+                    "updated_at",
+                ]
+            )
 
 
 def _next_action(step: CargoLayerStep) -> str:

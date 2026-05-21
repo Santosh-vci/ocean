@@ -14,6 +14,7 @@ from apps.organizations.models import Organization
 from apps.planning.models import BridgeWindow, CargoLayerStep, OGVVoyage, TideWindow
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import (
+    Assignment,
     ApprovalDecision,
     ApprovalRequest,
     Conflict,
@@ -243,6 +244,45 @@ def test_recovery_practice_seed_skip_reset_is_idempotent():
     assert OGVVoyage.objects.filter(current_stage="RECOVERY_PRACTICE").count() == 3
     assert CargoLayerStep.objects.filter(voyage__current_stage="RECOVERY_PRACTICE").count() == 6
     assert conflicts.count() == 3
+
+
+@pytest.mark.django_db
+def test_recovery_operating_windows_clear_stale_trip_blockers_before_regeneration():
+    call_command("seed_assistant_recovery_practice")
+    user = User.objects.get(username="admin@coalflow.local")
+    version = PlanVersion.objects.get(plan__name="Assist Super Recovery Practice")
+
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.post("/api/planning/overview/enter-operating-windows/")
+
+    result = generate_plan_version(version)
+    version.refresh_from_db()
+
+    assert response.status_code == 201
+    assert response.data["clearedLayerBlockers"] == 2
+    assert result.blocking_conflict_count == 0
+    assert version.validation_status == PlanVersion.ValidationStatus.FEASIBLE
+    assert not Trip.objects.filter(
+        plan_version=version,
+        status=Trip.Status.BLOCKED,
+    ).exists()
+    assert not Assignment.objects.filter(
+        trip__plan_version=version,
+        status__in=[
+            Assignment.Status.BLOCKED,
+            Assignment.Status.WAITING_TIDE,
+            Assignment.Status.WAITING_BRIDGE,
+        ],
+    ).exists()
+    assert not CargoLayerStep.objects.filter(
+        voyage__current_stage="RECOVERY_PRACTICE",
+        status=CargoLayerStep.Status.BLOCKED,
+    ).exists()
+    assert not OGVVoyage.objects.filter(
+        current_stage="RECOVERY_PRACTICE",
+        next_blocking_constraint__icontains="tide",
+    ).exists()
 
 
 @pytest.mark.django_db
