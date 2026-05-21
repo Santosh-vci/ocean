@@ -126,7 +126,7 @@ def rule_editable_stale_regenerate(ctx: AssistantContext) -> list[ActionRecommen
             build_recommendation(
                 "REGENERATE_PLAN",
                 priority="warning",
-                rank_score=740,
+                rank_score=990,
                 enabled=True,
                 reason="Source demand, constraints, or actuals changed after plan generation.",
                 source="plan.editable_stale_regenerate",
@@ -418,6 +418,7 @@ def rule_recovery_recommendation_ready_to_materialize(
         ctx.top_recovery_recommendation_id
         and ctx.top_recovery_recommendation_scenario_id is None
         and ctx.top_recovery_recommendation_status
+        and ctx.top_recovery_recommendation_status
         not in {
             RecoveryRecommendation.Status.DISMISSED,
             RecoveryRecommendation.Status.MATERIALIZED,
@@ -427,7 +428,7 @@ def rule_recovery_recommendation_ready_to_materialize(
             build_recommendation(
                 "MATERIALIZE_RECOVERY_RECOMMENDATION",
                 priority="warning",
-                rank_score=810,
+                rank_score=870,
                 enabled=True,
                 reason=(
                     "The top recovery recommendation is ready to be tested as a governed scenario."

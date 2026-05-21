@@ -47,7 +47,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -139,7 +139,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -206,7 +206,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -295,7 +295,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -362,7 +362,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -451,7 +451,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -477,7 +477,7 @@
     "step": "click",
     "title": "Assistant global CTA navigates operator to exception triage",
     "target": "Open Exception Center",
-    "matchedText": "CRITICAL Open Exception Center",
+    "matchedText": "NEXT ACTION Open Exception Center",
     "matchCount": 1,
     "result": "clicked"
   },
@@ -520,7 +520,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -612,7 +612,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -648,11 +648,11 @@
     "route": "/recovery/recommendations",
     "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/05_recommendation_console_ranked_options.png",
     "expectedNext": "MATERIALIZE_RECOVERY_RECOMMENDATION",
-    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
-    "actualGlobalLabel": "Open Exception Center",
+    "actualGlobalNext": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+    "actualGlobalLabel": "Test recommendation as scenario",
     "pageActions": [
-      "OPEN_RECOMMENDATION_CONSOLE",
       "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      "OPEN_RECOMMENDATION_CONSOLE",
       "DISMISS_RECOVERY_RECOMMENDATION"
     ],
     "blockedActions": [],
@@ -681,7 +681,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -695,7 +695,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -745,7 +745,6 @@
       }
     ],
     "visibleHighlights": [
-      "Open Exception Center",
       "OGV Demand",
       "Tide & Bridge Window",
       "BRIDGE_WINDOW_MISSED",
@@ -774,7 +773,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -810,8 +809,8 @@
     "route": "/simulation/workspace",
     "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/06_simulation_workspace_handoff.png",
     "expectedNext": "PROMOTE_SCENARIO",
-    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
-    "actualGlobalLabel": "Open Exception Center",
+    "actualGlobalNext": "PROMOTE_SCENARIO",
+    "actualGlobalLabel": "Promote scenario",
     "pageActions": [
       "PROMOTE_SCENARIO"
     ],
@@ -841,7 +840,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -855,7 +854,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -903,7 +902,6 @@
       }
     ],
     "visibleHighlights": [
-      "Open Exception Center",
       "OGV Demand",
       "Tide & Bridge Window",
       "BRIDGE_WINDOW_MISSED",
@@ -932,7 +930,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -968,8 +966,8 @@
     "route": "/simulation/workspace",
     "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/07_simulation_rerun_completed.png",
     "expectedNext": "PROMOTE_SCENARIO",
-    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
-    "actualGlobalLabel": "Open Exception Center",
+    "actualGlobalNext": "PROMOTE_SCENARIO",
+    "actualGlobalLabel": "Promote scenario",
     "pageActions": [
       "PROMOTE_SCENARIO"
     ],
@@ -999,7 +997,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 148 has generated trips."
+        "reason": "Active plan version 201 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1013,7 +1011,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1061,7 +1059,6 @@
       }
     ],
     "visibleHighlights": [
-      "Open Exception Center",
       "OGV Demand",
       "Tide & Bridge Window",
       "BRIDGE_WINDOW_MISSED",
@@ -1090,7 +1087,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
       "activePlanStatus": "generated",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1155,7 +1152,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1169,7 +1166,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1186,8 +1183,8 @@
       {
         "key": "approval_submitted",
         "label": "Approval submitted",
-        "status": "complete",
-        "reason": "The active plan has entered approval governance."
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
       },
       {
         "key": "approval_completed",
@@ -1247,7 +1244,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1273,7 +1270,7 @@
     "step": "click",
     "title": "Assistant routes the operator back to unresolved blockers",
     "target": "Open Exception Center",
-    "matchedText": "CRITICAL Open Exception Center",
+    "matchedText": "NEXT ACTION Open Exception Center",
     "matchCount": 1,
     "result": "clicked"
   },
@@ -1315,7 +1312,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1329,7 +1326,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1346,8 +1343,8 @@
       {
         "key": "approval_submitted",
         "label": "Approval submitted",
-        "status": "complete",
-        "reason": "The active plan has entered approval governance."
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
       },
       {
         "key": "approval_completed",
@@ -1385,7 +1382,6 @@
       "Recommendation Console",
       "Simulation Workspace",
       "Run simulation",
-      "Scenario promoted",
       "Published Plan & Schedule",
       "Approvals & Publishing",
       "Published"
@@ -1408,7 +1404,7 @@
       "highRiskVoyages": 3
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1452,9 +1448,10 @@
     "route": "/constraints/tide-bridge",
     "screenshot": "F:/ocean/docs/evidence/assistant_recovery_flow/screenshots/10_recovery_windows_implemented.png",
     "expectedNext": "REGENERATE_PLAN",
-    "actualGlobalNext": "OPEN_EXCEPTION_CENTER",
-    "actualGlobalLabel": "Open Exception Center",
+    "actualGlobalNext": "REGENERATE_PLAN",
+    "actualGlobalLabel": "Regenerate plan",
     "pageActions": [
+      "REGENERATE_PLAN",
       "OPEN_EXCEPTION_CENTER"
     ],
     "blockedActions": [],
@@ -1468,10 +1465,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -1483,7 +1478,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1497,7 +1492,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1514,8 +1509,8 @@
       {
         "key": "approval_submitted",
         "label": "Approval submitted",
-        "status": "complete",
-        "reason": "The active plan has entered approval governance."
+        "status": "pending",
+        "reason": "Resolve plan generation and blocking exceptions before approval."
       },
       {
         "key": "approval_completed",
@@ -1545,11 +1540,11 @@
       }
     ],
     "visibleHighlights": [
-      "Open Exception Center",
       "OGV Demand",
       "Tide & Bridge Window",
       "Recommendation Console",
       "Simulation Workspace",
+      "Regenerate plan",
       "Published Plan & Schedule",
       "Approvals & Publishing",
       "Published"
@@ -1569,10 +1564,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "blocked",
       "trips": 6,
@@ -1607,7 +1602,7 @@
     "title": "Page CTA regenerates the proposed recovery plan against corrected constraints",
     "target": "Regenerate plan",
     "matchedText": "REGENERATE PLAN",
-    "matchCount": 1,
+    "matchCount": 2,
     "result": "clicked"
   },
   {
@@ -1630,10 +1625,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -1645,7 +1638,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1657,7 +1650,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1731,10 +1724,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "validated",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -1786,10 +1779,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -1801,7 +1792,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1813,7 +1804,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -1887,10 +1878,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "validated",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -1943,10 +1934,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -1958,7 +1947,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -1970,7 +1959,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2044,10 +2033,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2100,10 +2089,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -2115,7 +2102,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2127,7 +2114,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2201,10 +2188,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "proposed",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2256,10 +2243,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -2271,7 +2256,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2283,7 +2268,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2358,10 +2343,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "approved",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2411,10 +2396,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -2426,7 +2409,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2438,7 +2421,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2513,10 +2496,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2576,10 +2559,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -2591,7 +2572,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2603,7 +2584,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2678,10 +2659,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2731,10 +2712,8 @@
       {
         "key": "cargo_sequence_reviewed",
         "label": "Cargo sequence reviewed",
-        "status": "current",
-        "action_id": "REVIEW_COAL_SEQUENCE",
-        "route": "/schedule/coal-grade-sequence",
-        "reason": "2 cargo layer issue(s) need review."
+        "status": "complete",
+        "reason": "No open cargo sequence issue is blocking planning."
       },
       {
         "key": "operating_windows_entered",
@@ -2746,7 +2725,7 @@
         "key": "plan_generated",
         "label": "Plan generated",
         "status": "complete",
-        "reason": "Active plan version 149 has generated trips."
+        "reason": "Active plan version 202 has generated trips."
       },
       {
         "key": "exceptions_resolved",
@@ -2758,7 +2737,7 @@
         "key": "recovery_options_generated",
         "label": "Recovery options generated",
         "status": "complete",
-        "reason": "Optimizer run 36 produced candidate options."
+        "reason": "Optimizer run 68 produced candidate options."
       },
       {
         "key": "recovery_recommendation_reviewed",
@@ -2831,10 +2810,10 @@
       "bridgeWindows": 4,
       "constraintChecks": 10,
       "missedWindows": 0,
-      "highRiskVoyages": 3
+      "highRiskVoyages": 0
     },
     "schedulingCounts": {
-      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260520 V2",
+      "activePlanVersion": "PLAN-RECOVERY-PRACTICE-20260521 V2",
       "activePlanStatus": "published",
       "activePlanValidation": "feasible",
       "trips": 6,
@@ -2853,7 +2832,7 @@
       "conflict": 0,
       "scenarioDiff": 0,
       "visibleExports": 1,
-      "latestPlanExport": "coalflow-plan-plan-recovery-practice-20260520-v2-all-network-20260520060043.txt"
+      "latestPlanExport": "coalflow-plan-plan-recovery-practice-20260521-v2-all-network-20260521011322.txt"
     }
   }
 ]

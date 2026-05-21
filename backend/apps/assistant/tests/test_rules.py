@@ -154,6 +154,65 @@ def test_blocking_conflict_outranks_submit_approval():
     assert shaped.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
 
 
+def test_recovery_recommendation_route_prioritizes_testing_over_generic_exception():
+    ctx = context(
+        route="/recovery/recommendations",
+        active_plan_status=PlanVersion.Status.GENERATED,
+        active_plan_trip_count=4,
+        blocking_conflict_count=2,
+        demand_count=2,
+        tide_window_count=1,
+        bridge_window_count=1,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        top_recovery_recommendation_id=44,
+        top_recovery_recommendation_ref="REC-44",
+        top_recovery_recommendation_status=RecoveryRecommendation.Status.CANDIDATE,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    assert action_ids(shaped.page_actions)[0] == "MATERIALIZE_RECOVERY_RECOMMENDATION"
+
+
+def test_corrected_constraints_prioritize_regeneration_over_stale_exceptions():
+    ctx = context(
+        route="/constraints/tide-bridge",
+        active_plan_status=PlanVersion.Status.PROPOSED,
+        active_plan_trip_count=6,
+        active_plan_is_editable=True,
+        source_inputs_changed=True,
+        blocking_conflict_count=6,
+        constraint_blocker_count=0,
+        demand_count=3,
+        tide_window_count=4,
+        bridge_window_count=4,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "REGENERATE_PLAN"
+    assert action_ids(shaped.page_actions)[0] == "REGENERATE_PLAN"
+
+
+def test_promoted_but_blocked_plan_does_not_claim_approval_submitted():
+    ctx = context(
+        active_plan_status=PlanVersion.Status.PROPOSED,
+        active_plan_trip_count=6,
+        blocking_conflict_count=2,
+        pending_approval_count=0,
+        all_required_approvals_complete=False,
+    )
+
+    checklist = checklist_by_key(build_checklist(ctx, shape_recommendations(ctx, [])))
+
+    assert checklist["approval_submitted"]["status"] == "pending"
+
+
 def test_phase5_disruption_recommends_recovery_options_before_manual_scenario():
     ctx = context(
         route="/exceptions/center",

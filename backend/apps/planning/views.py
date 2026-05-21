@@ -15,6 +15,7 @@ from apps.audit.services import record_audit_event
 from apps.masters.models import Barge, CoalGrade, CTSAsset, Jetty, Location, RouteSegment
 from apps.organizations.models import Organization
 from apps.rbac.permissions import RequiresAccessPermission
+from apps.scheduling.models import PlanVersion
 
 from .models import (
     AssetAvailabilityWindow,
@@ -467,6 +468,29 @@ def _clear_resolved_navigation_recovery_state(voyages: list[OGVVoyage]) -> dict[
     return {"cargoLayers": cleared_layers, "voyages": cleared_voyages}
 
 
+def _mark_editable_plan_versions_stale(*, reason: str) -> int:
+    stale_count = 0
+    now = timezone.now().isoformat()
+    for plan_version in PlanVersion.objects.filter(
+        status__in=[
+            PlanVersion.Status.DRAFT,
+            PlanVersion.Status.GENERATED,
+            PlanVersion.Status.VALIDATED,
+            PlanVersion.Status.PROPOSED,
+        ],
+    ):
+        summary = plan_version.summary if isinstance(plan_version.summary, dict) else {}
+        plan_version.summary = {
+            **summary,
+            "sourceInputsChanged": True,
+            "sourceInputChangeReason": reason,
+            "sourceInputChangedAt": now,
+        }
+        plan_version.save(update_fields=["summary", "updated_at"])
+        stale_count += 1
+    return stale_count
+
+
 class PlanningOverviewViewSet(PlanningViewSet):
     queryset = OGVVoyage.objects.none()
     serializer_class = OGVVoyageSerializer
@@ -681,6 +705,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 checks_created += 2
 
         cleared_recovery_state = _clear_resolved_navigation_recovery_state(target_voyages)
+        stale_plan_versions = _mark_editable_plan_versions_stale(
+            reason="operating_windows_entered",
+        )
 
         record_audit_event(
             actor=request.user,
@@ -697,6 +724,7 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "constraint_checks": checks_created,
                 "cleared_layer_blockers": cleared_recovery_state["cargoLayers"],
                 "cleared_voyage_blockers": cleared_recovery_state["voyages"],
+                "stale_plan_versions": stale_plan_versions,
             },
             request=request,
         )
@@ -711,6 +739,7 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "constraintChecks": checks_created,
                 "clearedLayerBlockers": cleared_recovery_state["cargoLayers"],
                 "clearedVoyageBlockers": cleared_recovery_state["voyages"],
+                "stalePlanVersions": stale_plan_versions,
             },
             status=status.HTTP_201_CREATED,
         )

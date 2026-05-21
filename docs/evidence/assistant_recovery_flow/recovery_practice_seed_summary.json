@@ -7,7 +7,7 @@
       "code": "BRIDGE_WINDOW_MISSED",
       "is_blocking": true,
       "message": "Bridge gate missed; use recovery loop to resequence or shift window.",
-      "object_id": "620",
+      "object_id": "950",
       "object_type": "bridge",
       "severity": "critical"
     },
@@ -15,7 +15,7 @@
       "code": "TIDE_WINDOW_MISSED",
       "is_blocking": true,
       "message": "Missed Rantau tide gate; generate recovery options before dispatch.",
-      "object_id": "619",
+      "object_id": "949",
       "object_type": "tide",
       "severity": "critical"
     },
@@ -23,7 +23,7 @@
       "code": "TIDE_WINDOW_MISSED",
       "is_blocking": false,
       "message": "Marginal tide margin; monitor after recovery candidate is simulated.",
-      "object_id": "621",
+      "object_id": "951",
       "object_type": "tide",
       "severity": "warning"
     }
@@ -31,8 +31,8 @@
   "missedCheckCount": 2,
   "navigationCheckCount": 4,
   "planStatus": "generated",
-  "planVersion": "PLAN-RECOVERY-PRACTICE-20260520 V1",
-  "planVersionId": 148,
+  "planVersion": "PLAN-RECOVERY-PRACTICE-20260521 V1",
+  "planVersionId": 201,
   "tripCount": 6,
   "validationStatus": "blocked",
   "voyageCount": 3

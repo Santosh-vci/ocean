@@ -426,6 +426,7 @@ ROUTE_ACTIONS: Final[dict[str, tuple[str, ...]]] = {
     "/constraints/tide-bridge": (
         "ENTER_OPERATING_WINDOWS",
         "GENERATE_PLAN",
+        "REGENERATE_PLAN",
         "OPEN_EXCEPTION_CENTER",
     ),
     "/operations/tug-barge-assignment": (

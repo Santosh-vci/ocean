@@ -256,6 +256,11 @@ def test_recovery_operating_windows_clear_stale_trip_blockers_before_regeneratio
     client.force_authenticate(user)
     response = client.post("/api/planning/overview/enter-operating-windows/")
 
+    version.refresh_from_db()
+    assert response.data["stalePlanVersions"] >= 1
+    assert version.summary["sourceInputsChanged"] is True
+    assert version.summary["sourceInputChangeReason"] == "operating_windows_entered"
+
     result = generate_plan_version(version)
     version.refresh_from_db()
 

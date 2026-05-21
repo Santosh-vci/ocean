@@ -172,7 +172,7 @@ export const NAV_MODULES: NavModule[] = [
   {
     id: "map",
     label: "Map & Signals",
-    eyebrow: "MVP-lite",
+    eyebrow: "GPS/AIS Dashboard",
     icon: "map",
     items: [
       {

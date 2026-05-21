@@ -56,8 +56,10 @@ class AssistantChecklistItem:
 
 VALID_ASSISTANT_MODES = {"off", "assisted", "guided", "supervisor"}
 RECOVERY_WORKFLOW_NEXT_ACTION_IDS = {
+    "MATERIALIZE_RECOVERY_RECOMMENDATION",
     "RUN_SIMULATION",
     "PROMOTE_SCENARIO",
+    "REGENERATE_PLAN",
 }
 
 
@@ -587,7 +589,6 @@ def _stage_approval_submitted(ctx) -> AssistantChecklistItem:
         ctx.pending_approval_count > 0
         or ctx.all_required_approvals_complete
         or ctx.active_plan_status in {
-            PlanVersion.Status.PROPOSED,
             PlanVersion.Status.APPROVED,
             PlanVersion.Status.PUBLISHED,
         }
@@ -604,6 +605,7 @@ def _stage_approval_submitted(ctx) -> AssistantChecklistItem:
             PlanVersion.Status.DRAFT,
             PlanVersion.Status.GENERATED,
             PlanVersion.Status.VALIDATED,
+            PlanVersion.Status.PROPOSED,
         }
         and ctx.active_plan_trip_count > 0
         and ctx.blocking_conflict_count == 0

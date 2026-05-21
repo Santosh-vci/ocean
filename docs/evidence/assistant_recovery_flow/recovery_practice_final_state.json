@@ -1,7 +1,7 @@
 {
-  "revalidatedAt": "2026-05-20T06:00:49.448Z",
+  "revalidatedAt": "2026-05-21T01:13:27.745Z",
   "activePlan": {
-    "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+    "planCode": "PLAN-RECOVERY-PRACTICE-20260521",
     "versionNo": 2,
     "status": "published",
     "validationStatus": "feasible",
@@ -16,13 +16,13 @@
   },
   "planVersions": [
     {
-      "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+      "planCode": "PLAN-RECOVERY-PRACTICE-20260521",
       "versionNo": 2,
       "status": "published",
       "validationStatus": "feasible"
     },
     {
-      "planCode": "PLAN-RECOVERY-PRACTICE-20260520",
+      "planCode": "PLAN-RECOVERY-PRACTICE-20260521",
       "versionNo": 1,
       "status": "generated",
       "validationStatus": "blocked"
@@ -30,14 +30,14 @@
   ],
   "approvals": [
     {
-      "request_id": "APR-PLAN-RECOVERY-PRACTICE-20260520-V2",
+      "request_id": "APR-PLAN-RECOVERY-PRACTICE-20260521-V2",
       "status": "published",
       "decisions": 2
     }
   ],
   "publishedSnapshots": [
     {
-      "snapshot_id": "LIVE-PLAN-RECOVERY-PRACTICE-20260520-V2",
+      "snapshot_id": "LIVE-PLAN-RECOVERY-PRACTICE-20260521-V2",
       "status": "active"
     }
   ],
@@ -45,7 +45,7 @@
     {
       "export_type": "plan",
       "export_format": "print",
-      "file_name": "coalflow-plan-plan-recovery-practice-20260520-v2-all-network-20260520060043.txt",
+      "file_name": "coalflow-plan-plan-recovery-practice-20260521-v2-all-network-20260521011322.txt",
       "status": "generated"
     }
   ],
