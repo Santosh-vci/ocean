@@ -2,9 +2,9 @@
 
 ## Status
 
-Phase 5 is closed as **PASS for deterministic recovery recommendation scope** on May 18, 2026.
+Phase 5 is closed as **PASS for deterministic recovery recommendation and trial-pack closure scope**.
 
-The implementation now proves the full operator path from disruption input to ranked recommendation, scenario materialization, promotion into approval, recommendation proof-pack reconstruction, and browser-visible evidence. It also preserves the existing governance rule: a recommendation-origin candidate may be dual-approved and still remain publish-blocked if unresolved blocking risk remains.
+The implementation now proves the full operator path from disruption input to ranked recommendation, scenario materialization, promotion into approval, recommendation proof-pack reconstruction, browser-visible evidence, and final exception resolution to a publish-ready plan. It also preserves the existing governance rule: a recommendation-origin candidate may be dual-approved and still remain publish-blocked if unresolved risk remains, but the closure flow must stop the loop once all seeded exception sources are handled.
 
 ## Hardening Added In Chunk 5.6
 
@@ -18,6 +18,8 @@ The Chunk 5.6 closure pass added:
 - repeatable `phase5_recovery_proof` command;
 - browser evidence capture script;
 - this completion document and the Phase 5 operator runbook.
+- `phase5_resolve_trial_pack`, which resolves remaining seeded exception sources, creates a clean approved successor version, and records closure audit evidence.
+- idempotent closure behavior, so repeated closure runs return the existing clean approved version instead of creating more candidate versions.
 
 Two closure defects were found and fixed while exercising the runtime:
 
@@ -25,6 +27,63 @@ Two closure defects were found and fixed while exercising the runtime:
 2. rerunning the seeded proof after a scenario run existed could fail during reset because scenario projection children were not cleared before scenarios.
 
 The closure pass now keeps baseline recommendation lineage visible while a promoted successor is active, and the seed reset path explicitly clears scenario projections and runs before deleting scenarios.
+
+A later runtime defect was found while closing the operator trial: the plan conflicts were resolved, but two synthetic telemetry alerts on `BRG-VAL-08` (`delay` and `geofence_dwell`) were still open. Those alerts kept the assistant in recovery mode and caused the operator to see a loop of additional versions instead of a resolved state. The closure command now includes open tracking alerts in its definition of done.
+
+## Trial-Pack Closure Evidence
+
+Latest runtime closure command:
+
+```text
+docker compose exec -T api python manage.py phase5_resolve_trial_pack --json
+```
+
+Key values from the validated runtime:
+
+| Evidence | Value |
+|---|---|
+| Previous active version | `PLAN-2026-05-26 V8` |
+| Closure version | `PLAN-2026-05-26 V9` |
+| Closure version ID | `231` |
+| Closure status | `approved` |
+| Closure validation | `feasible` |
+| Trip count | `6` |
+| Prior open conflicts | `0` |
+| Prior open tracking alerts | `2` |
+| Resolved tracking alerts | `2` |
+| Closure open conflicts | `0` |
+| Closure blocking conflicts | `0` |
+| Closure open tracking alerts | `0` |
+| Approval request | `APR-PLAN-2026-05-26-V9` |
+| Approval decisions | `2` |
+| Definition of done | `PASS`, all exceptions handled |
+| Audit action | `phase5.trial.exceptions_resolved` |
+
+Repeat-run evidence:
+
+| Evidence | Value |
+|---|---|
+| Re-run closure version | `PLAN-2026-05-26 V9` |
+| New version created | No |
+| Idempotent flag | `true` |
+| Definition of done | `PASS`, all exceptions handled |
+
+Assistant runtime verification after closure:
+
+| Context field | Value |
+|---|---|
+| Active plan version ID | `231` |
+| Active plan status | `approved` |
+| Validation status | `feasible` |
+| Blocking conflicts | `0` |
+| Critical conflicts | `0` |
+| Warning conflicts | `0` |
+| Pending operational events | `0` |
+| Open tracking alerts | `0` |
+| Active override risks | `0` |
+| Pending approvals | `0` |
+| Required approvals complete | `true` |
+| Global next action | `PUBLISH_PLAN` |
 
 ## Machine Evidence
 
@@ -84,16 +143,21 @@ Screenshots:
 
 Visible UI proof from the latest browser capture:
 
-- Exception Center exposes **Generate recovery options**.
-- Recommendation Console shows the ranked candidate set, before/after actions, and explanation chain.
-- Simulation Workspace shows the materialized recovery recommendation scenario and lineage.
-- Approvals & Publishing shows the promoted candidate inside the approval workflow.
-- Audit & Logs shows `phase5.proof.*` evidence.
+- Exception Center shows zero active exception sources for the active closure plan.
+- Recommendation Console shows no new recovery run required for the clean active plan.
+- Simulation Workspace shows no active scenario required for the clean active plan and retains the 6-trip baseline.
+- Approvals & Publishing shows `READY TO PUBLISH`, `PLAN STATE APPROVED`, and the publish action enabled.
+- Audit & Logs shows `phase5.trial.exceptions_resolved` for the closure version, alongside the earlier `phase5.proof.*` evidence.
 
 ## Commands Run
 
 ```text
+docker compose exec -T api python manage.py operator_trial_practice reset --json
+docker compose exec -T api python manage.py operator_trial_practice import-demand --json
+docker compose exec -T api python manage.py operator_trial_practice enter-windows --json
+docker compose exec -T api python manage.py operator_trial_practice generate-plan --json
 docker compose exec -T api python manage.py phase5_recovery_proof --json > docs\evidence\phase5\phase5_recovery_evidence.json
+docker compose exec -T api python manage.py phase5_resolve_trial_pack --json
 docker compose exec -T api pytest apps/core/tests/test_phase5_recovery_proof.py -q
 docker compose exec -T api pytest apps/scheduling/tests/test_schedule_generation.py -q
 node scripts\capture_phase5_browser_evidence.mjs
@@ -109,6 +173,7 @@ Phase 5 lands correctly for the intended first-pass scope:
 - it converts the chosen recommendation into a scenario instead of mutating the active plan;
 - it routes the scenario into existing approval governance;
 - it preserves publication blocking when unresolved risk remains;
+- it resolves the seeded remaining exception sources into an approved, feasible, publish-ready closure version;
 - it reconstructs a recommendation proof pack from persisted lineage and audit events.
 
 No additional Phase 5 scenario is required before closure of the deterministic recommendation MVP.

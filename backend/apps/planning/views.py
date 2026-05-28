@@ -39,6 +39,7 @@ from .serializers import (
     OGVVoyageSerializer,
     TideWindowSerializer,
 )
+from .trial_pack import operator_trial_demand_rows, trial_dt
 
 
 class PlanningViewSet(AuditMutationMixin, ModelViewSet):
@@ -243,6 +244,42 @@ class ImportJobViewSet(PlanningViewSet):
         response_status = status.HTTP_400_BAD_REQUEST if errors else status.HTTP_201_CREATED
         return Response(ImportJobSerializer(job).data, status=response_status)
 
+    @action(detail=False, methods=["post"], url_path="import-trial-demand")
+    def import_trial_demand(self, request):
+        rows = operator_trial_demand_rows()
+        with transaction.atomic():
+            committed_voyages = self._commit_ogv_demand_rows(rows=rows, actor=request.user)
+            job = ImportJob.objects.create(
+                import_type=ImportJob.ImportType.OGV_DEMAND,
+                filename=request.data.get("filename", "operator_trial_ogv_demand.xlsx"),
+                source=request.data.get("source", "operator-trial-practice"),
+                status=ImportJob.Status.IMPORTED,
+                total_rows=len(rows),
+                valid_rows=len(rows),
+                error_rows=0,
+                errors=[],
+                created_by=request.user,
+            )
+            record_audit_event(
+                actor=request.user,
+                organization=None,
+                action="planning_import_job.validate",
+                object_type="planning_import_job",
+                object_id=str(job.pk),
+                object_repr=str(job),
+                metadata={
+                    "import_type": job.import_type,
+                    "filename": job.filename,
+                    "total_rows": job.total_rows,
+                    "valid_rows": job.valid_rows,
+                    "error_rows": job.error_rows,
+                    "committed_voyages": committed_voyages,
+                    "trial_pack": "operator_trial_phase5",
+                },
+                request=request,
+            )
+        return Response(ImportJobSerializer(job).data, status=status.HTTP_201_CREATED)
+
     def _commit_ogv_demand_rows(self, *, rows: list[dict], actor) -> list[str]:
         organization = (
             actor.organization_memberships.filter(is_default=True, is_active=True)
@@ -296,8 +333,11 @@ class ImportJobViewSet(PlanningViewSet):
         return committed_voyages
 
     def _commit_cargo_layers(self, *, voyage: OGVVoyage, row: dict, required_mt: int) -> None:
+        requirements_by_grade = self._commit_cargo_requirements(voyage=voyage, row=row)
         layer_rows = row.get("cargo_layers")
-        if not isinstance(layer_rows, list) or not layer_rows:
+        if isinstance(layer_rows, list) and not layer_rows:
+            return
+        if not isinstance(layer_rows, list):
             first_quantity = required_mt // 2
             layer_rows = [
                 {
@@ -341,19 +381,22 @@ class ImportJobViewSet(PlanningViewSet):
             barge = _object_by_code(Barge, layer.get("planned_barge_code"))
             cts = _object_by_code(CTSAsset, layer.get("planned_cts_code"))
             quantity = int(Decimal(str(layer.get("required_mt", required_mt))))
-            requirement, _ = CargoRequirement.objects.update_or_create(
-                voyage=voyage,
-                coal_grade=grade,
-                defaults={
-                    "source_location": source,
-                    "preferred_jetty": jetty,
-                    "required_mt": quantity,
-                    "loaded_mt": 0,
-                    "in_transit_mt": 0,
-                    "discharged_mt": 0,
-                    "status": CargoRequirement.Status.PLANNED,
-                },
-            )
+            requirement = requirements_by_grade.get(grade.code)
+            if requirement is None:
+                requirement, _ = CargoRequirement.objects.update_or_create(
+                    voyage=voyage,
+                    coal_grade=grade,
+                    defaults={
+                        "source_location": source,
+                        "preferred_jetty": jetty,
+                        "required_mt": quantity,
+                        "loaded_mt": 0,
+                        "in_transit_mt": 0,
+                        "discharged_mt": 0,
+                        "status": CargoRequirement.Status.PLANNED,
+                    },
+                )
+                requirements_by_grade[grade.code] = requirement
             CargoLayerStep.objects.update_or_create(
                 voyage=voyage,
                 required_sequence_no=int(layer.get("required_sequence_no", index) or index),
@@ -363,18 +406,55 @@ class ImportJobViewSet(PlanningViewSet):
                     "layer_no": int(layer.get("layer_no", 1) or 1),
                     "coal_grade": grade,
                     "required_mt": quantity,
-                    "remaining_mt": quantity,
+                    "remaining_mt": int(Decimal(str(layer.get("remaining_mt", quantity)))),
                     "planned_barge": barge,
                     "planned_jetty": jetty,
                     "planned_cts": cts,
-                    "status": CargoLayerStep.Status.PLANNED,
-                    "blocking_reason": "",
-                    "chain_status": "IMPORTED",
-                    "sequence_violation": False,
-                    "planned_start": None,
-                    "planned_end": None,
+                    "status": layer.get("status") or CargoLayerStep.Status.PLANNED,
+                    "blocking_reason": layer.get("blocking_reason", ""),
+                    "chain_status": layer.get("chain_status", "IMPORTED"),
+                    "sequence_violation": _truthy(layer.get("sequence_violation", False)),
+                    "planned_start": _parsed_datetime(layer.get("planned_start")),
+                    "planned_end": _parsed_datetime(layer.get("planned_end")),
                 },
             )
+
+    def _commit_cargo_requirements(self, *, voyage: OGVVoyage, row: dict) -> dict[str, CargoRequirement]:
+        requirement_rows = row.get("cargo_requirements")
+        requirements_by_grade: dict[str, CargoRequirement] = {}
+        if not isinstance(requirement_rows, list):
+            return requirements_by_grade
+
+        for requirement_row in requirement_rows:
+            grade = _object_by_code(CoalGrade, requirement_row.get("coal_grade_code"))
+            if grade is None:
+                raise serializers.ValidationError(
+                    "At least one coal grade is required before import."
+                )
+            source = _object_by_code(Location, requirement_row.get("source_location_code"))
+            jetty = (
+                _object_by_code(Jetty, requirement_row.get("preferred_jetty_code"))
+                or Jetty.objects.first()
+            )
+            requirement, _ = CargoRequirement.objects.update_or_create(
+                voyage=voyage,
+                coal_grade=grade,
+                defaults={
+                    "source_location": source,
+                    "preferred_jetty": jetty,
+                    "required_mt": int(Decimal(str(requirement_row.get("required_mt", 0)))),
+                    "loaded_mt": int(Decimal(str(requirement_row.get("loaded_mt", 0) or 0))),
+                    "in_transit_mt": int(
+                        Decimal(str(requirement_row.get("in_transit_mt", 0) or 0))
+                    ),
+                    "discharged_mt": int(
+                        Decimal(str(requirement_row.get("discharged_mt", 0) or 0))
+                    ),
+                    "status": requirement_row.get("status") or CargoRequirement.Status.PLANNED,
+                },
+            )
+            requirements_by_grade[grade.code] = requirement
+        return requirements_by_grade
 
 
 def _truthy(value) -> bool:
@@ -500,6 +580,17 @@ class PlanningOverviewViewSet(PlanningViewSet):
         voyages = list(
             OGVVoyage.objects.prefetch_related("layer_steps", "layer_steps__planned_barge").all()
         )
+        trial_voyages = [
+            voyage for voyage in voyages if voyage.voyage_id.startswith("VOY-")
+        ]
+        trial_ids = {voyage.voyage_id for voyage in trial_voyages}
+        if {
+            "VOY-PACIFIC-PRIDE",
+            "VOY-NORTH-STAR",
+            "VOY-TRITON-STAR",
+        }.issubset(trial_ids):
+            return self._enter_trial_operating_windows(request=request, voyages=trial_voyages)
+
         operator_voyages = [
             voyage
             for voyage in voyages
@@ -739,6 +830,212 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "constraintChecks": checks_created,
                 "clearedLayerBlockers": cleared_recovery_state["cargoLayers"],
                 "clearedVoyageBlockers": cleared_recovery_state["voyages"],
+                "stalePlanVersions": stale_plan_versions,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def _enter_trial_operating_windows(self, *, request, voyages):
+        locations = {record.code: record for record in Location.objects.all()}
+        jetties = {record.code: record for record in Jetty.objects.all()}
+        segments = {
+            record.sequence: record for record in RouteSegment.objects.select_related("route")
+        }
+        voyages_by_id = {voyage.voyage_id: voyage for voyage in voyages}
+
+        AssetAvailabilityWindow.objects.filter(
+            reason__in=[
+                "Planned maintenance at Dock 01",
+                "Awaiting bridge pass",
+                "Primary conveyor online",
+            ],
+        ).delete()
+        JettyAvailabilityWindow.objects.filter(
+            reason__in=[
+                "",
+                "Shift handover and conveyor inspection",
+                "Silt clearance",
+            ],
+        ).delete()
+        TideWindow.objects.filter(source="operator-trial-practice").delete()
+        BridgeWindow.objects.filter(code__startswith="BRDG-TRIAL-").delete()
+        NavigationConstraintCheck.objects.filter(voyage__in=voyages).delete()
+
+        asset_windows = 0
+        for asset_type, asset_code, start, end, window_status, reason in [
+            (
+                AssetAvailabilityWindow.AssetType.TUG,
+                "BER-TUG-04",
+                trial_dt(0, 0),
+                trial_dt(2, 8),
+                AssetAvailabilityWindow.Status.MAINTENANCE,
+                "Planned maintenance at Dock 01",
+            ),
+            (
+                AssetAvailabilityWindow.AssetType.BARGE,
+                "BRG-KAL-22",
+                trial_dt(1, 0),
+                trial_dt(1, 10),
+                AssetAvailabilityWindow.Status.UNAVAILABLE,
+                "Awaiting bridge pass",
+            ),
+            (
+                AssetAvailabilityWindow.AssetType.CTS,
+                "CTS-JAVA",
+                trial_dt(0, 0),
+                trial_dt(5, 0),
+                AssetAvailabilityWindow.Status.AVAILABLE,
+                "Primary conveyor online",
+            ),
+        ]:
+            AssetAvailabilityWindow.objects.update_or_create(
+                asset_type=asset_type,
+                asset_code=asset_code,
+                reason=reason,
+                defaults={
+                    "window_start": start,
+                    "window_end": end,
+                    "status": window_status,
+                },
+            )
+            asset_windows += 1
+
+        jetty_windows = 0
+        for jetty_code, start, end, window_status, rate, reason in [
+            ("JTY-SUARAN", trial_dt(0, 0), trial_dt(2, 0), JettyAvailabilityWindow.Status.WORKING, 2800, ""),
+            (
+                "JTY-LATI",
+                trial_dt(0, 16),
+                trial_dt(1, 7),
+                JettyAvailabilityWindow.Status.REDUCED,
+                1500,
+                "Shift handover and conveyor inspection",
+            ),
+            (
+                "JTY-GMB",
+                trial_dt(1, 6),
+                trial_dt(2, 6),
+                JettyAvailabilityWindow.Status.BLOCKED,
+                None,
+                "Silt clearance",
+            ),
+        ]:
+            jetty = jetties.get(jetty_code)
+            if not jetty:
+                continue
+            JettyAvailabilityWindow.objects.update_or_create(
+                jetty=jetty,
+                reason=reason,
+                defaults={
+                    "window_start": start,
+                    "window_end": end,
+                    "status": window_status,
+                    "loading_rate_override_tph": rate,
+                },
+            )
+            jetty_windows += 1
+
+        tide_windows = []
+        for code, location, start, end, water_level, draft, segment, risk in [
+            ("TIDE-TRIAL-RANTAU-01", "LOC-RANTAU-DELTA", trial_dt(0, 7), trial_dt(0, 12), "2.40", "4.40", 2, TideWindow.RiskLevel.NORMAL),
+            ("TIDE-TRIAL-RANTAU-02", "LOC-RANTAU-DELTA", trial_dt(1, 8), trial_dt(1, 10), "2.10", "4.20", 2, TideWindow.RiskLevel.TIGHT),
+            ("TIDE-TRIAL-DEEP-01", "LOC-MUARA-PANTAI", trial_dt(1, 18), trial_dt(1, 23), "2.90", "4.80", 3, TideWindow.RiskLevel.NORMAL),
+        ]:
+            tide_window, _ = TideWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": locations[location],
+                    "window_start": start,
+                    "window_end": end,
+                    "min_water_level_m": Decimal(water_level),
+                    "max_loaded_draft_m": Decimal(draft),
+                    "applicable_route_segment": segments[segment],
+                    "risk_level": risk,
+                    "source": "operator-trial-practice",
+                    "is_active": True,
+                },
+            )
+            tide_windows.append(tide_window)
+
+        bridge_windows = []
+        for code, start, end, clearance, allowed_class, window_status, notes in [
+            ("BRDG-TRIAL-GATE-B-01", trial_dt(0, 6), trial_dt(0, 9), "12.50", "300ft barge", BridgeWindow.Status.OPEN, "Normal lift slot"),
+            ("BRDG-TRIAL-GATE-B-02", trial_dt(1, 4), trial_dt(1, 5), "10.80", "300ft barge", BridgeWindow.Status.RESTRICTED, "Pilot approval required"),
+            ("BRDG-TRIAL-GATE-B-03", trial_dt(1, 9), trial_dt(1, 13), "0.00", "", BridgeWindow.Status.CLOSED, "Maintenance hold"),
+        ]:
+            bridge_window, _ = BridgeWindow.objects.update_or_create(
+                code=code,
+                defaults={
+                    "location": locations["LOC-BRIDGE-GATE-B"],
+                    "window_start": start,
+                    "window_end": end,
+                    "clearance_m": Decimal(clearance),
+                    "allowed_asset_class": allowed_class,
+                    "status": window_status,
+                    "notes": notes,
+                    "is_active": True,
+                },
+            )
+            bridge_windows.append(bridge_window)
+
+        checks_created = 0
+        for voyage_id, asset, segment, kind, eta, window_start, window_end, draft, margin, check_status, hint in [
+            ("VOY-PACIFIC-PRIDE", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(0, 8), trial_dt(0, 7), trial_dt(0, 12), "4.10", 118, NavigationConstraintCheck.Status.CAN_CROSS, "Proceed through Rantau Delta on current slot."),
+            ("VOY-OCEAN-VOYAGER", "BRG-KAL-22", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 10, 40), trial_dt(1, 8), trial_dt(1, 10), "4.50", -40, NavigationConstraintCheck.Status.MISSED, "Split load or resequence against TIDE-DEEP-01."),
+            ("VOY-NORTH-STAR", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 9, 45), trial_dt(1, 4), trial_dt(1, 5), "4.00", -285, NavigationConstraintCheck.Status.MISSED, "Hold upstream and request next bridge lift."),
+            ("VOY-TRITON-STAR", "BRG-VAL-08", 3, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 18, 20), trial_dt(1, 18), trial_dt(1, 23), "4.60", 22, NavigationConstraintCheck.Status.MARGINAL, "Use priority tow and reduce loading target if delayed."),
+            ("VOY-GOLDEN-ORIOLE", "BRG-KAL-22", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 4, 25), trial_dt(1, 4), trial_dt(1, 5), "4.40", 35, NavigationConstraintCheck.Status.WAITING, "Await pilot confirmation before dispatch."),
+        ]:
+            voyage = voyages_by_id.get(voyage_id)
+            if not voyage:
+                continue
+            NavigationConstraintCheck.objects.create(
+                voyage=voyage,
+                asset_code=asset,
+                route_segment=segments[segment],
+                constraint_type=kind,
+                eta_gate=eta,
+                window_start=window_start,
+                window_end=window_end,
+                draft_m=Decimal(draft),
+                margin_minutes=margin,
+                status=check_status,
+                recovery_hint=hint,
+            )
+            checks_created += 1
+
+        stale_plan_versions = _mark_editable_plan_versions_stale(
+            reason="operator_trial_operating_windows_entered",
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=None,
+            action="planning.operating_windows.entered",
+            object_type="planning_windows",
+            object_id="operator-trial-practice",
+            object_repr="Operator trial tide, bridge, and availability windows",
+            metadata={
+                "asset_windows": asset_windows,
+                "jetty_windows": jetty_windows,
+                "tide_windows": [window.code for window in tide_windows],
+                "bridge_windows": [window.code for window in bridge_windows],
+                "constraint_checks": checks_created,
+                "stale_plan_versions": stale_plan_versions,
+                "trial_pack": "operator_trial_phase5",
+            },
+            request=request,
+        )
+        return Response(
+            {
+                "assetWindows": asset_windows,
+                "jettyWindows": jetty_windows,
+                "tideWindow": tide_windows[0].code,
+                "bridgeWindow": bridge_windows[0].code,
+                "tideWindows": [window.code for window in tide_windows],
+                "bridgeWindows": [window.code for window in bridge_windows],
+                "constraintChecks": checks_created,
+                "clearedLayerBlockers": 0,
+                "clearedVoyageBlockers": 0,
                 "stalePlanVersions": stale_plan_versions,
             },
             status=status.HTTP_201_CREATED,

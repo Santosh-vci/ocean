@@ -235,7 +235,7 @@ const evidence = {
   generatedAt: new Date().toISOString(),
   appUrl: APP_URL,
   user: USERNAME,
-  mode: "Recommendation proof flow",
+  mode: "Recommendation closure flow",
   screenshots: {},
   observations: {},
   routeTimingsMs: {},
@@ -285,7 +285,7 @@ try {
     evidence,
     "exceptionCenter",
     "/exceptions/center",
-    "/Exception Center/i.test(document.body.innerText) && /Generate recovery options/i.test(document.body.innerText)",
+    "/Exception Center/i.test(document.body.innerText) && /No active exceptions/i.test(document.body.innerText)",
     "phase5-exception-center.png",
   );
   await captureTarget(
@@ -301,7 +301,7 @@ try {
     evidence,
     "simulationWorkspace",
     "/simulation/workspace",
-    "/Simulation Workspace/i.test(document.body.innerText) && /recovery recommendation/i.test(document.body.innerText)",
+    "/Simulation Workspace/i.test(document.body.innerText) && (/recovery recommendation/i.test(document.body.innerText) || /NO SCENARIOS YET/i.test(document.body.innerText) || /No scenario/i.test(document.body.innerText))",
     "phase5-simulation-workspace.png",
   );
   await captureTarget(
@@ -309,7 +309,7 @@ try {
     evidence,
     "approvalsPublishing",
     "/approvals/publishing",
-    "/Plan Approvals & Publishing/i.test(document.body.innerText) && /APPROVAL CHAIN/i.test(document.body.innerText)",
+    "/Plan Approvals & Publishing/i.test(document.body.innerText) && /READY TO PUBLISH/i.test(document.body.innerText) && /APPROVAL CHAIN/i.test(document.body.innerText)",
     "phase5-approvals-publishing.png",
   );
   await captureTarget(
@@ -317,7 +317,7 @@ try {
     evidence,
     "auditLogs",
     "/admin/audit-logs",
-    "/Audit & Logs/i.test(document.body.innerText) && /phase5\\.proof/i.test(document.body.innerText)",
+    "/Audit & Logs/i.test(document.body.innerText) && /phase5\\.(proof|trial)/i.test(document.body.innerText)",
     "phase5-audit-logs.png",
   );
 
