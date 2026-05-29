@@ -1,10 +1,15 @@
 import type { CurrentUser } from "../types";
-import type { ActionRecommendation, AssistantMode } from "../types/assistant";
+import type {
+  ActionRecommendation,
+  AssistantFlow,
+  AssistantMode,
+} from "../types/assistant";
 import { AssistantModeToggle, NextActionPill } from "./assistant";
 import { SvgIcon } from "./SvgIcon";
 
 type TopbarProps = {
   assistantAction: ActionRecommendation | null;
+  assistantFlow?: AssistantFlow | null;
   assistantMode: AssistantMode;
   currentUser: CurrentUser;
   onAssistantModeChange: (mode: AssistantMode) => void;
@@ -17,6 +22,7 @@ type TopbarProps = {
 
 export function Topbar({
   assistantAction,
+  assistantFlow = null,
   assistantMode,
   currentUser,
   onAssistantModeChange,
@@ -57,7 +63,11 @@ export function Topbar({
       </div>
 
       <div className="topbar-assistant">
-        <NextActionPill action={assistantAction} onNavigate={onAssistantNavigate} />
+        <NextActionPill
+          action={assistantAction}
+          assistantFlow={assistantFlow}
+          onNavigate={onAssistantNavigate}
+        />
         <AssistantModeToggle mode={assistantMode} onChange={onAssistantModeChange} />
       </div>
 

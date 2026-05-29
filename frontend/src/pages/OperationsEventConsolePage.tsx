@@ -94,6 +94,7 @@ function payloadSummary(payload: Record<string, unknown>) {
 export function OperationsEventConsolePage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   candidates,
@@ -186,6 +187,7 @@ export function OperationsEventConsolePage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

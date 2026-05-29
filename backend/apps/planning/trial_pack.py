@@ -144,6 +144,64 @@ def operator_trial_demand_rows() -> list[dict]:
     ]
 
 
+def operator_happy_path_demand_rows() -> list[dict]:
+    def iso(day_offset: int, hour: int, minute: int = 0) -> str:
+        return trial_dt(day_offset, hour, minute).isoformat()
+
+    return [
+        {
+            "voyage_id": "VOY-HAPPY-001",
+            "vessel_name": "MV HAPPY PATH ONE",
+            "customer_name": "BERAU PILOT",
+            "vessel_class": "Panamax",
+            "eta": iso(0, 6),
+            "etb": iso(0, 10),
+            "etc_target": iso(2, 14),
+            "laycan_start": iso(0, 0),
+            "laycan_end": iso(4, 0),
+            "required_mt": 96000,
+            "loaded_mt": 0,
+            "in_transit_mt": 0,
+            "priority": 1,
+            "demurrage_rate_usd_per_day": "12500.00",
+            "current_stage": "READY_TO_PLAN",
+            "next_blocking_constraint": "Ready for scheduling",
+            "cargo_requirements": [
+                _requirement("EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 48000, 0, 0),
+                _requirement("AGATHIS", "LOC-LATI-PORT", "JTY-LATI", 48000, 0, 0),
+            ],
+            "cargo_layers": [
+                _layer("EBONY", 1, 1, 1, 48000, 48000, "BRG-VAL-08", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(0, 10), iso(0, 20)),
+                _layer("AGATHIS", 2, 1, 2, 48000, 48000, "BRG-NUS-17", "JTY-LATI", "CTS-JAVA", "planned", "", "READY", False, iso(1, 4), iso(1, 14)),
+            ],
+        },
+        {
+            "voyage_id": "VOY-HAPPY-002",
+            "vessel_name": "MV HAPPY PATH TWO",
+            "customer_name": "ABL PILOT",
+            "vessel_class": "Supramax",
+            "eta": iso(1, 6),
+            "etb": iso(1, 12),
+            "etc_target": iso(3, 10),
+            "laycan_start": iso(1, 0),
+            "laycan_end": iso(5, 0),
+            "required_mt": 72000,
+            "loaded_mt": 0,
+            "in_transit_mt": 0,
+            "priority": 2,
+            "demurrage_rate_usd_per_day": "11800.00",
+            "current_stage": "READY_TO_PLAN",
+            "next_blocking_constraint": "Ready for scheduling",
+            "cargo_requirements": [
+                _requirement("MAHONI", "LOC-SUARAN-PORT", "JTY-SUARAN", 72000, 0, 0),
+            ],
+            "cargo_layers": [
+                _layer("MAHONI", 1, 1, 1, 72000, 72000, "BRG-VAL-08", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(1, 12), iso(2, 2)),
+            ],
+        },
+    ]
+
+
 def _requirement(grade, source, jetty, required, loaded, in_transit):
     return {
         "coal_grade_code": grade,

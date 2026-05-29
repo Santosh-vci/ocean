@@ -1,6 +1,9 @@
 export type {
   ActionRecommendation,
   AssistantChecklistItem,
+  AssistantFlow,
+  AssistantFlowStatus,
+  AssistantFlowStepStatus,
   AssistantMode,
   AssistantPriority,
   NextActionResponse,

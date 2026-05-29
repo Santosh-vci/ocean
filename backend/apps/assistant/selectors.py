@@ -7,6 +7,8 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.db.models import Count, F, Q
 
 from apps.audit.models import AuditEvent
+from apps.flows.models import FlowStepRun
+from apps.flows.services import FlowSubject, get_active_flow_run
 from apps.operations.models import OperationalEventCandidate
 from apps.planning.models import (
     BridgeWindow,
@@ -29,6 +31,7 @@ from apps.scheduling.models import (
     PublishedPlanSnapshot,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     ScenarioRun,
     SimulationScenario,
 )
@@ -88,7 +91,26 @@ class AssistantContext:
     proof_pack_available: bool = False
     recommendation_origin_scenario_id: int | None = None
     recommendation_origin_scenario_status: str | None = None
+    top_recovery_root_cause_assessment_id: int | None = None
+    top_recovery_root_cause_assessment_ref: str = ""
+    top_recovery_root_cause_status: str | None = None
+    top_recovery_root_cause_source_type: str = ""
+    top_recovery_root_cause_residual_risk_count: int = 0
     recent_governed_mutation_count: int = 0
+    active_flow_run_id: str = ""
+    active_flow_key: str = ""
+    active_flow_name: str = ""
+    active_flow_status: str = ""
+    current_flow_step_key: str = ""
+    current_flow_step_label: str = ""
+    current_flow_step_status: str = ""
+    expected_flow_route: str = ""
+    expected_flow_action_id: str = ""
+    flow_blocked_reason: str = ""
+    flow_checklist: list[dict[str, Any]] = field(default_factory=list)
+    flow_trial_pack: str = ""
+    flow_evidence_run_id: str = ""
+    flow_expected_action_ids: list[str] = field(default_factory=list)
 
 
 def select_user_permissions(user: AbstractBaseUser) -> set[str]:
@@ -352,6 +374,11 @@ def select_phase5_recovery_status(
             "proof_pack_available": False,
             "recommendation_origin_scenario_id": None,
             "recommendation_origin_scenario_status": None,
+            "top_recovery_root_cause_assessment_id": None,
+            "top_recovery_root_cause_assessment_ref": "",
+            "top_recovery_root_cause_status": None,
+            "top_recovery_root_cause_source_type": "",
+            "top_recovery_root_cause_residual_risk_count": 0,
         }
 
     recovery_plan_versions = [active_plan_version.id]
@@ -361,7 +388,12 @@ def select_phase5_recovery_status(
     selected_id = _int_object_id(object_id)
     recommendations = RecoveryRecommendation.objects.filter(
         optimizer_run__plan_version_id__in=recovery_plan_versions,
-    ).select_related("scenario", "optimizer_run", "optimizer_run__input_snapshot")
+    ).select_related(
+        "scenario",
+        "optimizer_run",
+        "optimizer_run__input_snapshot",
+        "root_cause_assessment",
+    )
 
     selected_snapshot = None
     selected_run = None
@@ -449,6 +481,7 @@ def select_phase5_recovery_status(
     recommendation_scenario = selected_scenario if selected_recommendation else None
     if top_recommendation and top_recommendation.scenario_id:
         recommendation_scenario = top_recommendation.scenario
+    root_cause_assessment = _root_cause_assessment(top_recommendation)
 
     return {
         "latest_recovery_input_snapshot_id": latest_snapshot.id if latest_snapshot else None,
@@ -487,7 +520,45 @@ def select_phase5_recovery_status(
         "recommendation_origin_scenario_status": (
             recommendation_scenario.status if recommendation_scenario else None
         ),
+        "top_recovery_root_cause_assessment_id": (
+            root_cause_assessment.id if root_cause_assessment else None
+        ),
+        "top_recovery_root_cause_assessment_ref": (
+            root_cause_assessment.assessment_id if root_cause_assessment else ""
+        ),
+        "top_recovery_root_cause_status": (
+            root_cause_assessment.status if root_cause_assessment else None
+        ),
+        "top_recovery_root_cause_source_type": (
+            root_cause_assessment.source_cause_type if root_cause_assessment else ""
+        ),
+        "top_recovery_root_cause_residual_risk_count": (
+            _residual_risk_count(root_cause_assessment.residual_risk)
+            if root_cause_assessment
+            else 0
+        ),
     }
+
+
+def _root_cause_assessment(
+    recommendation: RecoveryRecommendation | None,
+) -> RootCauseRepairAssessment | None:
+    if recommendation is None:
+        return None
+    try:
+        return recommendation.root_cause_assessment
+    except RootCauseRepairAssessment.DoesNotExist:
+        return None
+
+
+def _residual_risk_count(residual_risk: dict[str, Any] | None) -> int:
+    if not isinstance(residual_risk, dict):
+        return 0
+    raw_count = residual_risk.get("count")
+    if isinstance(raw_count, int):
+        return raw_count
+    items = residual_risk.get("items")
+    return len(items) if isinstance(items, list) else 0
 
 
 def select_operational_actualization_risks(
@@ -522,6 +593,63 @@ def select_recent_audit_counts(user: AbstractBaseUser | None = None) -> dict[str
     return {"recent_governed_mutation_count": AuditEvent.objects.filter(query).count()}
 
 
+def select_flow_status(
+    user: AbstractBaseUser | None,
+    object_type: str | None = None,
+    object_id: str | int | None = None,
+) -> dict[str, Any]:
+    if not user or not user.is_authenticated:
+        return _empty_flow_status()
+
+    subject = (
+        FlowSubject(subject_type=object_type, subject_id=str(object_id))
+        if object_type and object_id is not None
+        else None
+    )
+    flow_run = get_active_flow_run(user, subject=subject)
+    if flow_run is None:
+        return _empty_flow_status()
+
+    ordered_steps = list(flow_run.step_runs.order_by("sequence"))
+    definition_steps = {
+        step.get("step_key"): step
+        for step in flow_run.flow_definition.steps
+        if isinstance(step, dict)
+    }
+    current_step = _current_flow_step(flow_run.current_step_key, ordered_steps)
+    current_definition = (
+        definition_steps.get(current_step.step_key, {}) if current_step else {}
+    )
+    metadata = flow_run.metadata if isinstance(flow_run.metadata, dict) else {}
+    expected_action_ids = metadata.get("expected_action_ids")
+
+    return {
+        "active_flow_run_id": flow_run.run_id,
+        "active_flow_key": flow_run.flow_definition.flow_key,
+        "active_flow_name": flow_run.flow_definition.name,
+        "active_flow_status": flow_run.status,
+        "current_flow_step_key": current_step.step_key if current_step else "",
+        "current_flow_step_label": str(current_definition.get("label", "")),
+        "current_flow_step_status": current_step.status if current_step else "",
+        "expected_flow_route": current_step.expected_route if current_step else "",
+        "expected_flow_action_id": current_step.expected_action_id if current_step else "",
+        "flow_blocked_reason": current_step.blocked_reason if current_step else "",
+        "flow_checklist": [
+            _flow_checklist_item(step_run, definition_steps.get(step_run.step_key, {}))
+            for step_run in ordered_steps
+        ],
+        "flow_trial_pack": str(metadata.get("trial_pack") or ""),
+        "flow_evidence_run_id": str(metadata.get("evidence_run_id") or ""),
+        "flow_expected_action_ids": [
+            str(action_id)
+            for action_id in expected_action_ids
+            if action_id
+        ]
+        if isinstance(expected_action_ids, list)
+        else [],
+    }
+
+
 def build_assistant_context(
     user: AbstractBaseUser,
     route: str | None = None,
@@ -547,6 +675,11 @@ def build_assistant_context(
     )
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
+    flow_status = select_flow_status(
+        user,
+        object_type=object_type,
+        object_id=object_id,
+    )
 
     active_plan_trip_count = active_plan_version.trips.count() if active_plan_version else 0
     active_plan_status = active_plan_version.status if active_plan_version else None
@@ -589,7 +722,67 @@ def build_assistant_context(
         **phase5_status,
         **operational_risks,
         **audit_counts,
+        **flow_status,
     )
+
+
+def _empty_flow_status() -> dict[str, Any]:
+    return {
+        "active_flow_run_id": "",
+        "active_flow_key": "",
+        "active_flow_name": "",
+        "active_flow_status": "",
+        "current_flow_step_key": "",
+        "current_flow_step_label": "",
+        "current_flow_step_status": "",
+        "expected_flow_route": "",
+        "expected_flow_action_id": "",
+        "flow_blocked_reason": "",
+        "flow_checklist": [],
+        "flow_trial_pack": "",
+        "flow_evidence_run_id": "",
+        "flow_expected_action_ids": [],
+    }
+
+
+def _current_flow_step(
+    current_step_key: str,
+    ordered_steps: list[FlowStepRun],
+) -> FlowStepRun | None:
+    if current_step_key:
+        for step_run in ordered_steps:
+            if step_run.step_key == current_step_key:
+                return step_run
+    for step_run in ordered_steps:
+        if step_run.status in {FlowStepRun.Status.ACTIVE, FlowStepRun.Status.BLOCKED}:
+            return step_run
+    return None
+
+
+def _flow_checklist_item(
+    step_run: FlowStepRun,
+    definition_step: dict[str, Any],
+) -> dict[str, Any]:
+    payload = {
+        "key": step_run.step_key,
+        "label": str(definition_step.get("label") or step_run.step_key.replace("_", " ").title()),
+        "status": _flow_checklist_status(step_run.status),
+        "action_id": step_run.expected_action_id,
+        "route": step_run.expected_route,
+    }
+    if step_run.blocked_reason:
+        payload["reason"] = step_run.blocked_reason
+    return payload
+
+
+def _flow_checklist_status(status: str) -> str:
+    if status == FlowStepRun.Status.COMPLETED:
+        return "complete"
+    if status == FlowStepRun.Status.BLOCKED:
+        return "blocked"
+    if status == FlowStepRun.Status.ACTIVE:
+        return "current"
+    return "pending"
 
 
 def _approval_request_pending_for_roles(

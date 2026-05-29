@@ -24,6 +24,25 @@ class ActionRecommendationSerializer(serializers.Serializer):
     metadata = serializers.DictField()
 
 
+class AssistantFlowSerializer(serializers.Serializer):
+    active_flow = serializers.CharField()
+    flow_run_id = serializers.CharField()
+    flow_name = serializers.CharField()
+    flow_status = serializers.CharField()
+    current_step = serializers.CharField(allow_blank=True)
+    current_step_label = serializers.CharField(allow_blank=True)
+    step_status = serializers.CharField(allow_blank=True)
+    expected_route = serializers.CharField(allow_blank=True)
+    expected_action_id = serializers.CharField(allow_blank=True)
+    blocked_reason = serializers.CharField(allow_blank=True)
+    trial_pack = serializers.CharField(allow_blank=True, required=False)
+    evidence_run_id = serializers.CharField(allow_blank=True, required=False)
+    expected_action_ids = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+
+
 class NextActionsResponseSerializer(serializers.Serializer):
     generated_at = serializers.DateTimeField()
     mode = serializers.CharField()
@@ -33,3 +52,4 @@ class NextActionsResponseSerializer(serializers.Serializer):
     row_actions = ActionRecommendationSerializer(many=True)
     blocked_actions = ActionRecommendationSerializer(many=True)
     checklist = serializers.ListField(child=serializers.DictField())
+    flow = AssistantFlowSerializer(allow_null=True)

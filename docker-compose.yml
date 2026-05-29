@@ -151,8 +151,15 @@ services:
     env_file:
       - .env
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/package.json:/app/package.json:ro
+      - ./frontend/package-lock.json:/app/package-lock.json:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
+      - ./frontend/tsconfig.node.json:/app/tsconfig.node.json:ro
+      - ./frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ./frontend/eslint.config.js:/app/eslint.config.js:ro
     expose:
       - "5173"
     healthcheck:
@@ -207,5 +214,4 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
-  frontend_node_modules:
   export_data:

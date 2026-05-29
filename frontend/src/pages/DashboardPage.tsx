@@ -17,12 +17,14 @@ import type {
 import type {
   ActionRecommendation,
   AssistantChecklistItem,
+  AssistantFlow,
   AssistantMode,
 } from "../types/assistant";
 
 type DashboardPageProps = {
   assistantBlockedActions?: ActionRecommendation[];
   assistantChecklist?: AssistantChecklistItem[];
+  assistantFlow?: AssistantFlow | null;
   assistantGlobalAction?: ActionRecommendation | null;
   assistantMode?: AssistantMode;
   assistantPageActions?: ActionRecommendation[];
@@ -60,6 +62,7 @@ function timeLabel(value: string) {
 export function DashboardPage({
   assistantBlockedActions = [],
   assistantChecklist = [],
+  assistantFlow = null,
   assistantGlobalAction = null,
   assistantMode = "assisted",
   assistantPageActions = [],
@@ -227,6 +230,7 @@ export function DashboardPage({
         <aside className="board-surface situation-action-rail">
           {assistantMode !== "off" ? (
             <ActionInboxPanel
+              assistantFlow={assistantFlow}
               blockedActions={assistantBlockedActions}
               globalAction={assistantGlobalAction}
               onNavigate={onNavigate}
@@ -234,7 +238,11 @@ export function DashboardPage({
             />
           ) : null}
           {assistantMode === "guided" || assistantMode === "supervisor" ? (
-            <GuidedChecklist items={assistantChecklist} mode={assistantMode} />
+            <GuidedChecklist
+              assistantFlow={assistantFlow}
+              items={assistantChecklist}
+              mode={assistantMode}
+            />
           ) : null}
 
           <div className="grid-header">

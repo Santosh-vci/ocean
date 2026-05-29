@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from apps.masters.models import Barge, CTSAsset, Jetty, Location, RouteSegment, Tug
 from apps.organizations.models import Organization
@@ -30,6 +31,10 @@ def recovery_action_reference() -> str:
 
 def recommendation_evaluation_reference() -> str:
     return _reference("REV")
+
+
+def root_cause_assessment_reference() -> str:
+    return _reference("RCA")
 
 
 class Plan(models.Model):
@@ -784,6 +789,56 @@ class RecommendationEvaluation(models.Model):
 
     def __str__(self) -> str:
         return self.evaluation_id
+
+
+class RootCauseRepairAssessment(models.Model):
+    class Status(models.TextChoices):
+        ADDRESSES_CAUSE = "addresses_cause", "Addresses cause"
+        MITIGATES_CAUSE = "mitigates_cause", "Mitigates cause"
+        DOES_NOT_ADDRESS_CAUSE = "does_not_address_cause", "Does not address cause"
+        UNKNOWN = "unknown", "Unknown"
+
+    assessment_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=root_cause_assessment_reference,
+    )
+    recommendation = models.OneToOneField(
+        RecoveryRecommendation,
+        on_delete=models.CASCADE,
+        related_name="root_cause_assessment",
+    )
+    source_kind = models.CharField(max_length=40, blank=True)
+    source_ref = models.CharField(max_length=120, blank=True)
+    source_cause_type = models.CharField(max_length=80, blank=True)
+    status = models.CharField(
+        max_length=40,
+        choices=Status.choices,
+        default=Status.UNKNOWN,
+    )
+    required_resolution = models.JSONField(default=dict, blank=True)
+    observed_resolution = models.JSONField(default=dict, blank=True)
+    residual_risk = models.JSONField(default=dict, blank=True)
+    evidence = models.JSONField(default=dict, blank=True)
+    assessed_at = models.DateTimeField(default=timezone.now)
+    assessed_by_algorithm_version = models.CharField(max_length=96)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-assessed_at", "-id"]
+        indexes = [
+            models.Index(fields=("source_cause_type", "status")),
+            models.Index(fields=("status", "assessed_at")),
+            models.Index(fields=("assessed_at",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.recommendation.organization
+
+    def __str__(self) -> str:
+        return self.assessment_id
 
 
 class ApprovalRequest(models.Model):

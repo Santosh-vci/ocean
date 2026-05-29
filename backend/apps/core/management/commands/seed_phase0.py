@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.audit.models import AuditEvent
+from apps.flows.definitions import seed_canonical_flow_definitions
+from apps.flows.models import FlowRun
 from apps.masters.models import (
     AssetCompatibilityRule,
     Barge,
@@ -64,6 +66,7 @@ from apps.scheduling.models import (
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -386,6 +389,7 @@ class Command(BaseCommand):
         self._seed_master_data(berau=berau, abl=abl)
         self._seed_telemetry_foundation()
         self._seed_operations_foundation()
+        seed_canonical_flow_definitions()
         if options["master_data_only"]:
             self.stdout.write(
                 self.style.SUCCESS(
@@ -462,6 +466,8 @@ class Command(BaseCommand):
         )
 
     def _reset_operational_data(self):
+        FlowRun.objects.all().delete()
+
         OperationalActualization.objects.all().delete()
         ConfirmedOperationalEvent.objects.all().delete()
         OperationalEventCandidate.objects.all().delete()
@@ -479,6 +485,7 @@ class Command(BaseCommand):
 
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
+        RootCauseRepairAssessment.objects.all().delete()
         RecommendationEvaluation.objects.all().delete()
         RecoveryAction.objects.all().delete()
         RecoveryRecommendation.objects.all().delete()

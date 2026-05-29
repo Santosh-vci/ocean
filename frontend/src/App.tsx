@@ -5,6 +5,11 @@ import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
 import { useNextActions } from "./hooks/useNextActions";
 import { apiFetch, getCsrfToken, login, logout } from "./lib/api";
+import {
+  fetchActiveFlowForAction,
+  recordFlowCtaEvidence,
+  shouldUseHappyPathTrialImport,
+} from "./lib/flowEvidence";
 import { canAccess, visibleNavItems, visibleNavModules } from "./lib/navigation";
 import { AuditPage } from "./pages/AuditPage";
 import { CoalGradeSequencePage } from "./pages/CoalGradeSequencePage";
@@ -60,6 +65,7 @@ import type {
   RbacOverview,
   RecoveryInputSnapshotRecord,
   RecoveryRecommendationRecord,
+  RootCauseRepairAssessmentRecord,
   OptimizerRunRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
@@ -230,6 +236,11 @@ function App() {
   const route = routeIsAllowed ? activePath : firstAccessiblePath;
   const assistant = useNextActions(route, { enabled: Boolean(currentUser) });
   const refreshAssistantActions = assistant.refresh;
+  const assistantFlowRef = useRef(assistant.data?.flow ?? null);
+
+  useEffect(() => {
+    assistantFlowRef.current = assistant.data?.flow ?? null;
+  }, [assistant.data?.flow]);
 
   const refreshWorkspaceData = useCallback(async () => {
     if (!currentUser) {
@@ -491,6 +502,50 @@ function App() {
     }
   }
 
+  async function recordActiveFlowCta(
+    actionId: string,
+    route: string,
+    metadata: Record<string, unknown> = {},
+  ) {
+    const flow = await resolveActiveFlowForAction(actionId);
+    await recordFlowCtaEvidence(flow, actionId, route, metadata);
+  }
+
+  function hasFlowRecommendationForAction(actionId: string) {
+    const actions = [
+      assistant.data?.globalNextAction,
+      ...(assistant.data?.pageActions ?? []),
+      ...(assistant.data?.rowActions ?? []),
+    ].filter(Boolean);
+    return actions.some((action) => (
+      action?.actionId === actionId
+      && action.source === "flow.current_step"
+    ));
+  }
+
+  async function resolveActiveFlowForAction(actionId: string) {
+    const currentFlow = assistant.data?.flow ?? assistantFlowRef.current;
+    const currentFlowHasTrialMetadata = Boolean(
+      currentFlow?.trialPack
+      || currentFlow?.evidenceRunId,
+    );
+    if (
+      currentFlow?.expectedActionId === actionId
+      && (actionId !== "IMPORT_OGV_DEMAND" || currentFlowHasTrialMetadata)
+    ) {
+      assistantFlowRef.current = currentFlow;
+      return currentFlow;
+    }
+    if (!currentFlow && !hasFlowRecommendationForAction(actionId)) {
+      return null;
+    }
+    const refreshedFlow = await fetchActiveFlowForAction(actionId);
+    if (refreshedFlow) {
+      assistantFlowRef.current = refreshedFlow;
+    }
+    return refreshedFlow;
+  }
+
   async function handleLogin(username: string, password: string) {
     const user = await login(username, password);
     setCurrentUser(user);
@@ -580,6 +635,11 @@ function App() {
       const refreshed = await apiFetch<ExportOverview>("/exports/overview/");
       setExportOverview(refreshed);
       setIsExportGenerating(false);
+      await recordActiveFlowCta("GENERATE_EXPORT", "/admin/export-handoff", {
+        exportJobId: exportJob.id,
+        exportType: command.exportType,
+        exportFormat: command.exportFormat,
+      });
       return `Export generated: ${exportJob.file_name}`;
     }).finally(() => setIsExportGenerating(false));
   }
@@ -587,31 +647,53 @@ function App() {
   async function handleImportDemand() {
     await runWorkspaceAction("Import demand", async () => {
       const csrfToken = await getCsrfToken();
-      const stamp = Date.now();
-      const dates = operatorPlanningDates();
-      const job = await apiFetch<ImportJobRecord>("/planning/import-jobs/validate-ogv-demand/", {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({
-          commit: true,
-          filename: `operator-ui-demand-${stamp}.xlsx`,
-          source: "operator-ui-action",
-          rows: [
-            {
-              voyage_id: `VOY-UI-${String(stamp).slice(-6)}`,
-              vessel_name: "MV Operator UI Import",
-              customer_name: "Pilot Customer",
-              laycan_start: dates.laycanStart,
-              laycan_end: dates.laycanEnd,
-              eta: dates.eta,
-              required_mt: 64000,
-            },
-          ],
-        }),
+      const activeFlow = await resolveActiveFlowForAction("IMPORT_OGV_DEMAND");
+      const usesHappyPathTrialPack = shouldUseHappyPathTrialImport(activeFlow);
+      const job = usesHappyPathTrialPack
+        ? await apiFetch<ImportJobRecord>("/planning/import-jobs/import-trial-demand/", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
+            pack: "operator_happy_path_v1",
+            filename: "operator_happy_path_ogv_demand.xlsx",
+            source: "operator-trial-flow-ui",
+          }),
+        })
+        : await importSingleUiDemand(csrfToken);
+      await recordActiveFlowCta("IMPORT_OGV_DEMAND", "/schedule/ogv-demand", {
+        importJobId: job.id,
+        filename: job.filename,
       });
       return `Import committed: ${job.filename} (${job.valid_rows}/${job.total_rows} rows)`;
+    });
+  }
+
+  async function importSingleUiDemand(csrfToken: string) {
+    const stamp = Date.now();
+    const dates = operatorPlanningDates();
+    return apiFetch<ImportJobRecord>("/planning/import-jobs/validate-ogv-demand/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        commit: true,
+        filename: `operator-ui-demand-${stamp}.xlsx`,
+        source: "operator-ui-action",
+        rows: [
+          {
+            voyage_id: `VOY-UI-${String(stamp).slice(-6)}`,
+            vessel_name: "MV Operator UI Import",
+            customer_name: "Pilot Customer",
+            laycan_start: dates.laycanStart,
+            laycan_end: dates.laycanEnd,
+            eta: dates.eta,
+            required_mt: 64000,
+          },
+        ],
+      }),
     });
   }
 
@@ -634,6 +716,11 @@ function App() {
       });
       const tideLabels = result.tideWindows?.join(", ") ?? result.tideWindow;
       const bridgeLabels = result.bridgeWindows?.join(", ") ?? result.bridgeWindow;
+      await recordActiveFlowCta("ENTER_OPERATING_WINDOWS", "/constraints/tide-bridge", {
+        constraintChecks: result.constraintChecks,
+        tideWindows: result.tideWindows ?? [result.tideWindow],
+        bridgeWindows: result.bridgeWindows ?? [result.bridgeWindow],
+      });
       return `Operating windows entered: ${tideLabels}; ${bridgeLabels}; ${result.constraintChecks} checks`;
     });
   }
@@ -754,6 +841,11 @@ function App() {
           },
         },
       );
+      await recordActiveFlowCta("GENERATE_PLAN", "/operations/tug-barge-assignment", {
+        planVersionId: version.id,
+        planCode: version.plan_code,
+        versionNo: version.version_no,
+      });
       return `Schedule generated: ${version.plan_code} V${version.version_no}`;
     });
   }
@@ -920,6 +1012,12 @@ function App() {
           input_snapshot: snapshot.id,
         }),
       });
+      await recordActiveFlowCta("GENERATE_RECOVERY_OPTIONS", "/exceptions/center", {
+        snapshotId: snapshot.id,
+        sourceRef: snapshot.source_ref,
+        optimizerRunId: run.id,
+        recommendationCount: run.recommendations.length,
+      });
       handleNavigate("/recovery/recommendations");
       return `Recovery options generated: ${run.recommendations.length} candidates from ${snapshot.source_ref}`;
     });
@@ -940,8 +1038,35 @@ function App() {
           }),
         },
       );
+      await recordActiveFlowCta("MATERIALIZE_RECOVERY_RECOMMENDATION", "/recovery/recommendations", {
+        recommendationId,
+        scenarioRef: recommendation.scenario_ref,
+      });
       handleNavigate("/simulation/workspace");
       return `Recovery scenario created: ${recommendation.scenario_ref ?? recommendation.recommendation_id}`;
+    });
+  }
+
+  async function handleValidateRootCause(recommendationId: number) {
+    await runWorkspaceAction("Validate root-cause repair", async () => {
+      const csrfToken = await getCsrfToken();
+      const assessment = await apiFetch<RootCauseRepairAssessmentRecord>(
+        `/scheduling/recovery-recommendations/${recommendationId}/root-cause-assessment/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      await recordActiveFlowCta("VALIDATE_ROOT_CAUSE_REPAIR", "/recovery/recommendations", {
+        recommendationId,
+        assessmentId: assessment.id,
+        assessmentRef: assessment.assessment_id,
+        status: assessment.status,
+        sourceCauseType: assessment.source_cause_type,
+      });
+      return `Root-cause validation recorded: ${assessment.status.replaceAll("_", " ")}`;
     });
   }
 
@@ -1001,6 +1126,10 @@ function App() {
           },
         },
       );
+      await recordActiveFlowCta("RUN_SIMULATION", "/simulation/workspace", {
+        scenarioId: simulated.id,
+        scenarioRef: simulated.scenario_id,
+      });
       return `Simulation complete: ${simulated.scenario_id}`;
     });
   }
@@ -1022,6 +1151,11 @@ function App() {
           body: JSON.stringify(runId ? { run_id: runId } : {}),
         },
       );
+      await recordActiveFlowCta("PROMOTE_SCENARIO", "/simulation/workspace", {
+        scenarioId: promoted.id,
+        scenarioRef: promoted.scenario_id,
+        scenarioVersionRef: promoted.scenario_version_ref,
+      });
       return `Scenario promoted: ${promoted.scenario_version_ref ?? promoted.scenario_id}`;
     });
   }
@@ -1045,6 +1179,11 @@ function App() {
           }),
         },
       );
+      await recordActiveFlowCta("SUBMIT_APPROVAL", "/schedule/published-plan", {
+        approvalRequestId: approval.id,
+        requestId: approval.request_id,
+        planVersionId: activeVersion.id,
+      });
       handleNavigate("/approvals/publishing");
       return `Approval submitted: ${approval.request_id}`;
     });
@@ -1094,6 +1233,11 @@ function App() {
           comments: `Approved from ${currentUser?.email ?? "operator"} via cockpit action.`,
         }),
       });
+      await recordActiveFlowCta("APPROVE_PLAN", "/approvals/publishing", {
+        approvalRequestId: request.id,
+        requestId: request.request_id,
+        authorityRole,
+      });
       return `Approved ${request.request_id} as ${authorityRole.replaceAll("_", " ")}`;
     });
   }
@@ -1141,6 +1285,11 @@ function App() {
           "X-CSRFToken": csrfToken,
         },
       });
+      await recordActiveFlowCta("PUBLISH_PLAN", "/approvals/publishing", {
+        planVersionId: activeVersion.id,
+        planCode: activeVersion.plan_code,
+        versionNo: activeVersion.version_no,
+      });
       return `Published ${activeVersion.plan_code} V${activeVersion.version_no}`;
     });
   }
@@ -1168,6 +1317,7 @@ function App() {
   const assistantPageProps = {
     assistantBlockedActions: assistant.data?.blockedActions ?? [],
     assistantChecklist: assistant.data?.checklist ?? [],
+    assistantFlow: assistant.data?.flow ?? null,
     assistantMode: assistant.mode,
     assistantPageActions: assistant.data?.pageActions ?? [],
     assistantRowActions: assistant.data?.rowActions ?? [],
@@ -1178,6 +1328,7 @@ function App() {
     <main className={sidebarCollapsed ? "operations-shell sidebar-is-collapsed" : "operations-shell"}>
       <Topbar
         assistantAction={assistant.data?.globalNextAction ?? null}
+        assistantFlow={assistant.data?.flow ?? null}
         assistantMode={assistant.mode}
         currentUser={currentUser}
         onAssistantModeChange={assistant.setMode}
@@ -1347,6 +1498,7 @@ function App() {
             isActionRunning={isWorkspaceActionRunning}
             onMaterializeRecommendation={handleMaterializeRecommendation}
             onNavigate={handleNavigate}
+            onValidateRootCause={handleValidateRootCause}
             overview={schedulingOverview}
           />
         ) : null}
@@ -1413,6 +1565,7 @@ function App() {
           <DashboardPage
             assistantBlockedActions={assistant.data?.blockedActions ?? []}
             assistantChecklist={assistant.data?.checklist ?? []}
+            assistantFlow={assistant.data?.flow ?? null}
             assistantGlobalAction={assistant.data?.globalNextAction ?? null}
             assistantMode={assistant.mode}
             assistantPageActions={assistant.data?.pageActions ?? []}

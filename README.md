@@ -26,6 +26,12 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
+## Docker-only local policy
+
+Do not run `npm install`, `npm ci`, `pip install`, or virtualenv setup in the workspace. Frontend and backend dependencies are installed by the Docker images from `frontend/package-lock.json` and `backend/requirements.txt`.
+
+Run app, test, lint, and management commands through `docker compose`. Host-side dependency folders such as `node_modules/`, `.venv/`, `venv/`, `dist/`, and Python cache directories are ignored and disposable.
+
 Then open:
 
 - App shell: `http://localhost:8080`

@@ -6,6 +6,7 @@ from apps.scheduling.models import (
     OptimizerRun,
     PlanVersion,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     SimulationScenario,
 )
 
@@ -13,6 +14,77 @@ from .selectors import AssistantContext
 from .services import ActionRecommendation, build_recommendation
 
 Rule = Callable[[AssistantContext], list[ActionRecommendation]]
+
+
+def rule_flow_current_step(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if not ctx.active_flow_run_id or not ctx.expected_flow_action_id:
+        return []
+
+    action_id = _flow_step_action_id(ctx)
+    reason = (
+        f"{ctx.active_flow_name} is waiting at "
+        f"{ctx.current_flow_step_label or ctx.current_flow_step_key}."
+    )
+    if ctx.current_flow_step_status == "blocked" and ctx.flow_blocked_reason:
+        reason = (
+            f"{ctx.active_flow_name} is blocked at "
+            f"{ctx.current_flow_step_label or ctx.current_flow_step_key}: "
+            f"{ctx.flow_blocked_reason}"
+        )
+
+    return [
+        build_recommendation(
+            action_id,
+            priority="warning" if ctx.current_flow_step_status == "blocked" else "normal",
+            rank_score=970,
+            enabled=True,
+            reason=reason,
+            source="flow.current_step",
+            route=ctx.expected_flow_route if action_id == ctx.expected_flow_action_id else None,
+            impact_if_ignored="The operator workflow will remain at the current governed step.",
+            metadata={
+                "flowRunId": ctx.active_flow_run_id,
+                "flowKey": ctx.active_flow_key,
+                "stepKey": ctx.current_flow_step_key,
+                "stepStatus": ctx.current_flow_step_status,
+            },
+        )
+    ]
+
+
+def _flow_step_action_id(ctx: AssistantContext) -> str:
+    if ctx.current_flow_step_status != "blocked":
+        return ctx.expected_flow_action_id
+
+    step_key = ctx.current_flow_step_key
+    reason = ctx.flow_blocked_reason.lower()
+    if (
+        ctx.blocking_conflict_count > 0
+        or step_key in {"submit_approval", "repair_remaining_conflicts"}
+        or "conflict" in reason
+    ):
+        return "OPEN_EXCEPTION_CENTER"
+    if step_key in {"approve_plan", "publish_plan"} or "approval" in reason:
+        return "APPROVE_PLAN" if ctx.pending_approval_count > 0 else "SUBMIT_APPROVAL"
+    if step_key == "review_recommendations":
+        return "GENERATE_RECOVERY_OPTIONS"
+    if step_key == "materialize_recommendation":
+        return "OPEN_RECOMMENDATION_CONSOLE"
+    if step_key == "promote_scenario":
+        return "RUN_SIMULATION"
+    if step_key == "run_simulation":
+        return "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    if step_key in {"validate_root_cause", "run_publishability_check"}:
+        return ctx.expected_flow_action_id
+    if "recovery run" in reason:
+        return "GENERATE_RECOVERY_OPTIONS"
+    if "scenario run" in reason or "simulation" in reason:
+        return "RUN_SIMULATION"
+    if "scenario" in reason:
+        return "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    if "recommendation" in reason:
+        return "OPEN_RECOMMENDATION_CONSOLE"
+    return ctx.expected_flow_action_id
 
 
 def rule_import_demand(ctx: AssistantContext) -> list[ActionRecommendation]:
@@ -443,6 +515,81 @@ def rule_recovery_recommendation_ready_to_materialize(
     return []
 
 
+def rule_recovery_root_cause_validation_needed(
+    ctx: AssistantContext,
+) -> list[ActionRecommendation]:
+    if (
+        ctx.route == "/recovery/recommendations"
+        and ctx.top_recovery_recommendation_id
+        and ctx.top_recovery_recommendation_status
+        and ctx.top_recovery_recommendation_status
+        not in {
+            RecoveryRecommendation.Status.DISMISSED,
+            RecoveryRecommendation.Status.MATERIALIZED,
+        }
+        and ctx.top_recovery_root_cause_assessment_id is None
+    ):
+        return [
+            build_recommendation(
+                "VALIDATE_ROOT_CAUSE_REPAIR",
+                priority="warning",
+                rank_score=880,
+                enabled=True,
+                reason=(
+                    "Validate whether the selected recovery option addresses the original "
+                    "operational cause."
+                ),
+                source="recovery.root_cause_validation_needed",
+                target_object_type="recovery_recommendation",
+                target_object_id=ctx.top_recovery_recommendation_id,
+                impact_if_ignored=(
+                    "Operators may proceed with a recovery option that only mitigates symptoms."
+                ),
+                metadata={"recommendationRef": ctx.top_recovery_recommendation_ref},
+            )
+        ]
+    if (
+        ctx.route == "/recovery/recommendations"
+        and ctx.top_recovery_recommendation_id
+        and ctx.top_recovery_root_cause_status
+        in {
+            RootCauseRepairAssessment.Status.MITIGATES_CAUSE,
+            RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE,
+            RootCauseRepairAssessment.Status.UNKNOWN,
+        }
+    ):
+        return [
+            build_recommendation(
+                "VALIDATE_ROOT_CAUSE_REPAIR",
+                priority=(
+                    "critical"
+                    if ctx.top_recovery_root_cause_status
+                    == RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE
+                    else "warning"
+                ),
+                rank_score=520,
+                enabled=True,
+                reason=(
+                    "Root-cause validation shows residual repair risk for the selected option."
+                ),
+                source="recovery.root_cause_residual_risk",
+                target_object_type="recovery_recommendation",
+                target_object_id=ctx.top_recovery_recommendation_id,
+                impact_if_ignored=(
+                    "Residual source-cause risk must remain visible for approval and "
+                    "publishability review."
+                ),
+                metadata={
+                    "assessmentRef": ctx.top_recovery_root_cause_assessment_ref,
+                    "status": ctx.top_recovery_root_cause_status,
+                    "sourceCauseType": ctx.top_recovery_root_cause_source_type,
+                    "residualRiskCount": ctx.top_recovery_root_cause_residual_risk_count,
+                },
+            )
+        ]
+    return []
+
+
 def rule_recovery_recommendation_dismiss_available(
     ctx: AssistantContext,
 ) -> list[ActionRecommendation]:
@@ -643,6 +790,7 @@ def rule_audit_after_governed_mutation(ctx: AssistantContext) -> list[ActionReco
 
 
 RULES: tuple[Rule, ...] = (
+    rule_flow_current_step,
     rule_import_demand,
     rule_sequence_review_needed,
     rule_missing_windows,
@@ -654,6 +802,7 @@ RULES: tuple[Rule, ...] = (
     rule_create_scenario,
     rule_recovery_disruption_ready_for_options,
     rule_recovery_optimizer_run_succeeded,
+    rule_recovery_root_cause_validation_needed,
     rule_recovery_recommendation_ready_to_materialize,
     rule_recovery_recommendation_dismiss_available,
     rule_recovery_recommendation_blocked_state,

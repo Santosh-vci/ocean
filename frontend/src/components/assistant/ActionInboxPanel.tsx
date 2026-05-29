@@ -1,7 +1,8 @@
-import type { ActionRecommendation } from "../../types/assistant";
+import type { ActionRecommendation, AssistantFlow } from "../../types/assistant";
 import { AbbrText } from "../Abbreviation";
 
 type ActionInboxPanelProps = {
+  assistantFlow?: AssistantFlow | null;
   globalAction: ActionRecommendation | null;
   pageActions?: ActionRecommendation[];
   blockedActions?: ActionRecommendation[];
@@ -9,6 +10,7 @@ type ActionInboxPanelProps = {
 };
 
 export function ActionInboxPanel({
+  assistantFlow = null,
   blockedActions = [],
   globalAction,
   onNavigate,
@@ -17,10 +19,14 @@ export function ActionInboxPanel({
   const actions = uniqueActions([
     ...(globalAction ? [globalAction] : []),
     ...pageActions,
-  ]).slice(0, 6);
+  ]);
+  const prioritizedActions = prioritizeExpectedAction(
+    actions,
+    assistantFlow?.expectedActionId,
+  ).slice(0, 6);
   const blocked = uniqueActions(blockedActions).slice(0, 3);
 
-  if (!actions.length && !blocked.length) return null;
+  if (!prioritizedActions.length && !blocked.length) return null;
 
   return (
     <section className="assistant-action-inbox">
@@ -28,10 +34,10 @@ export function ActionInboxPanel({
         <div>
           <strong>Assistant action inbox</strong>
         </div>
-        <span>{actions.length} active</span>
+        <span>{prioritizedActions.length} active</span>
       </div>
       <div className="assistant-inbox-list">
-        {actions.map((action) => (
+        {prioritizedActions.map((action) => (
           <button
             className={action.priority}
             disabled={!action.enabled}
@@ -66,6 +72,19 @@ function uniqueActions(actions: ActionRecommendation[]) {
     seen.add(key);
     return true;
   });
+}
+
+function prioritizeExpectedAction(
+  actions: ActionRecommendation[],
+  expectedActionId?: string,
+) {
+  if (!expectedActionId) return actions;
+  const preferred = actions.find((action) => action.actionId === expectedActionId);
+  if (!preferred) return actions;
+  return [
+    preferred,
+    ...actions.filter((action) => actionKey(action) !== actionKey(preferred)),
+  ];
 }
 
 function actionKey(action: ActionRecommendation) {

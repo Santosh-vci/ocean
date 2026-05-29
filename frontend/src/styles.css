@@ -2537,6 +2537,19 @@ button.row-action-hint:hover {
   text-transform: uppercase;
 }
 
+.compact-evidence-list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+}
+
+.compact-evidence-list li {
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
 .governed-override-form {
   display: grid;
   gap: 0.65rem;

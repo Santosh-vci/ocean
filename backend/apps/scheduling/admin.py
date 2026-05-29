@@ -16,6 +16,7 @@ from .models import (
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     ScheduleEvent,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
@@ -147,6 +148,34 @@ class RecommendationEvaluationAdmin(admin.ModelAdmin):
     list_filter = ("hard_constraints_passed",)
     search_fields = ("evaluation_id", "recommendation__recommendation_id")
     readonly_fields = ("evaluation_id", "score_breakdown", "metadata", "created_at")
+
+
+@admin.register(RootCauseRepairAssessment)
+class RootCauseRepairAssessmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "assessment_id",
+        "recommendation",
+        "source_cause_type",
+        "status",
+        "assessed_at",
+    )
+    list_filter = ("source_cause_type", "status", "assessed_by_algorithm_version")
+    search_fields = (
+        "assessment_id",
+        "recommendation__recommendation_id",
+        "source_ref",
+        "source_cause_type",
+    )
+    readonly_fields = (
+        "assessment_id",
+        "required_resolution",
+        "observed_resolution",
+        "residual_risk",
+        "evidence",
+        "assessed_at",
+        "created_at",
+        "updated_at",
+    )
 
 
 @admin.register(ApprovalRequest)

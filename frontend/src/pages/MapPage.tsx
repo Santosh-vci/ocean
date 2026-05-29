@@ -134,6 +134,7 @@ function operationalEventTone(status: string | null | undefined) {
 export function LiveResourceMapPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   canRunReplay,
@@ -395,6 +396,7 @@ export function LiveResourceMapPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate ?? onNavigate}

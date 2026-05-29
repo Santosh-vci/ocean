@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/", include("apps.telemetry.urls")),
     path("api/", include("apps.operations.urls")),
     path("api/", include("apps.assistant.urls")),
+    path("api/", include("apps.flows.urls")),
 ]

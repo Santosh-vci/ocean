@@ -30,6 +30,7 @@ function selectedPermissions(user: UserSummary): AccessPermission[] {
 export function RbacPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   onAssistantNavigate,
@@ -59,6 +60,7 @@ export function RbacPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

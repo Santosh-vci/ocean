@@ -808,6 +808,8 @@ Phase 5 does not yet:
 - consume live third-party GPS/AIS feeds as production truth;
 - calculate final customer commitment or demurrage settlement.
 
+The Phase 6 / Phase 5+ implementation specification in `26_Phase_6_Phase_5_Plus_Implementation_Spec.md` turns these gaps into the next governed build plan. It keeps automatic publishing, approval replacement, and final demurrage settlement out of scope while specifying persistent flow runtime, flow-aware Next Action guidance, root-cause repair validation, publishability assessment, DB-truth operator-trial seeding, telemetry trust, global optimization scaffolding, and projection-only commercial outputs.
+
 ## How To Judge Successful Phase 5 Practice
 
 The practice run is successful when the operator can answer these questions with evidence from the UI:

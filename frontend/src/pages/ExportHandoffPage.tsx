@@ -79,6 +79,7 @@ function sizeLabel(bytes: number) {
 export function ExportHandoffPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -128,6 +129,7 @@ export function ExportHandoffPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

@@ -36,6 +36,7 @@ from .models import (
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     ScenarioRun,
     ScheduleEvent,
     SimulationScenario,
@@ -48,6 +49,7 @@ from .recovery_services import (
     generate_recovery_recommendations,
     materialize_recommendation_as_scenario,
 )
+from .root_cause_services import assess_recommendation_root_cause
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
@@ -67,6 +69,7 @@ from .serializers import (
     RecoveryRecommendationDismissSerializer,
     RecoveryRecommendationMaterializeSerializer,
     RecoveryRecommendationSerializer,
+    RootCauseRepairAssessmentSerializer,
     ScenarioAssumptionSerializer,
     ScenarioConstraintEvaluationSerializer,
     ScenarioEventProjectionSerializer,
@@ -654,16 +657,54 @@ class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
         "list": "schedule.view",
         "retrieve": "schedule.view",
         "proof_pack": "schedule.view",
+        "root_cause_assessment": "schedule.view",
         "dismiss": "schedule.edit",
         "materialize_scenario": "schedule.edit",
     }
     queryset = RecoveryRecommendation.objects.select_related(
         "optimizer_run",
         "optimizer_run__input_snapshot",
+        "optimizer_run__input_snapshot__source_conflict",
+        "optimizer_run__input_snapshot__source_override",
+        "optimizer_run__input_snapshot__source_tracking_alert",
+        "optimizer_run__input_snapshot__source_operational_event",
         "optimizer_run__plan_version",
         "scenario",
+        "root_cause_assessment",
     ).prefetch_related("actions", "evaluation")
     serializer_class = RecoveryRecommendationSerializer
+
+    @action(detail=True, methods=["get", "post"], url_path="root-cause-assessment")
+    def root_cause_assessment(self, request, pk=None):
+        recommendation = self.get_object()
+        if request.method.lower() == "get":
+            assessment = RootCauseRepairAssessment.objects.filter(
+                recommendation=recommendation,
+            ).first()
+            if assessment is None:
+                return Response(None)
+            return Response(RootCauseRepairAssessmentSerializer(assessment).data)
+
+        assessment = assess_recommendation_root_cause(
+            recommendation=recommendation,
+            actor=request.user,
+        )
+        record_audit_event(
+            actor=request.user,
+            organization=recommendation.organization,
+            action="recovery.recommendation.root_cause_assess",
+            object_type="root_cause_repair_assessment",
+            object_id=str(assessment.pk),
+            object_repr=assessment.assessment_id,
+            metadata={
+                "recommendation": recommendation.recommendation_id,
+                "source_cause_type": assessment.source_cause_type,
+                "status": assessment.status,
+                "assessment_algorithm": assessment.assessed_by_algorithm_version,
+            },
+            request=request,
+        )
+        return Response(RootCauseRepairAssessmentSerializer(assessment).data)
 
     @action(detail=True, methods=["get"], url_path="proof-pack")
     def proof_pack(self, request, pk=None):

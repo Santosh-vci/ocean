@@ -19,6 +19,11 @@ PHASE5_MUTATING_ACTIONS = {
     "MATERIALIZE_RECOVERY_RECOMMENDATION",
     "DISMISS_RECOVERY_RECOMMENDATION",
 }
+FLOW_ACTION_IDS = {
+    "VALIDATE_ROOT_CAUSE_REPAIR",
+    "REPAIR_PLAN_CONFLICTS",
+    "RUN_PUBLISHABILITY_CHECK",
+}
 
 
 def context(**overrides):
@@ -337,6 +342,27 @@ def test_phase5_registry_actions_preserve_existing_mutation_governance():
     assert proof_pack.audit_required is True
     assert proof_pack.read_only is True
     assert proof_pack.required_permission == "schedule.view"
+
+
+def test_flow_action_registry_governance_and_route_ownership():
+    assert FLOW_ACTION_IDS <= set(ACTION_REGISTRY)
+    assert "VALIDATE_ROOT_CAUSE_REPAIR" in get_route_action_ids("/recovery/recommendations")
+    assert "REPAIR_PLAN_CONFLICTS" in get_route_action_ids("/exceptions/center")
+    assert "RUN_PUBLISHABILITY_CHECK" in get_route_action_ids("/approvals/publishing")
+
+    root_cause = get_action_definition("VALIDATE_ROOT_CAUSE_REPAIR")
+    publishability = get_action_definition("RUN_PUBLISHABILITY_CHECK")
+    repair = get_action_definition("REPAIR_PLAN_CONFLICTS")
+
+    assert root_cause.required_permission == "schedule.view"
+    assert root_cause.read_only is True
+    assert root_cause.audit_required is False
+    assert publishability.required_permission == "schedule.view"
+    assert publishability.read_only is True
+    assert publishability.audit_required is False
+    assert repair.required_permission == "schedule.edit"
+    assert repair.read_only is False
+    assert repair.audit_required is True
 
 
 def test_frontend_data_action_ids_map_to_registry_if_present():

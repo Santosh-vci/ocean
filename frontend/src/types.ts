@@ -747,6 +747,25 @@ export type RecommendationEvaluationRecord = {
   created_at: string;
 };
 
+export type RootCauseRepairAssessmentRecord = {
+  id: number;
+  assessment_id: string;
+  recommendation: number;
+  recommendation_ref: string;
+  source_kind: string;
+  source_ref: string;
+  source_cause_type: string;
+  status: string;
+  required_resolution: Record<string, unknown>;
+  observed_resolution: Record<string, unknown>;
+  residual_risk: Record<string, unknown>;
+  evidence: Record<string, unknown>;
+  assessed_at: string;
+  assessed_by_algorithm_version: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type RecommendationExplanationNodeRecord = {
   id: string;
   sortOrder: number;
@@ -775,6 +794,7 @@ export type RecoveryRecommendationRecord = {
   metadata: Record<string, unknown>;
   actions: RecoveryActionRecord[];
   evaluation: RecommendationEvaluationRecord | null;
+  root_cause_assessment: RootCauseRepairAssessmentRecord | null;
   created_at: string;
   updated_at: string;
 };

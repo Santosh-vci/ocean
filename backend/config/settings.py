@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.telemetry",
     "apps.operations",
     "apps.assistant",
+    "apps.flows",
 ]
 
 MIDDLEWARE = [

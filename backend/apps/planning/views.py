@@ -39,7 +39,11 @@ from .serializers import (
     OGVVoyageSerializer,
     TideWindowSerializer,
 )
-from .trial_pack import operator_trial_demand_rows, trial_dt
+from .trial_pack import (
+    operator_happy_path_demand_rows,
+    operator_trial_demand_rows,
+    trial_dt,
+)
 
 
 class PlanningViewSet(AuditMutationMixin, ModelViewSet):
@@ -246,13 +250,26 @@ class ImportJobViewSet(PlanningViewSet):
 
     @action(detail=False, methods=["post"], url_path="import-trial-demand")
     def import_trial_demand(self, request):
-        rows = operator_trial_demand_rows()
+        pack = request.data.get("pack") or "operator_trial_phase5"
+        if pack == "operator_happy_path_v1":
+            rows = operator_happy_path_demand_rows()
+        elif pack == "operator_trial_phase5":
+            rows = operator_trial_demand_rows()
+        else:
+            raise serializers.ValidationError(
+                {
+                    "pack": (
+                        "Unsupported trial pack. Use operator_happy_path_v1 "
+                        "or operator_trial_phase5."
+                    )
+                }
+            )
         with transaction.atomic():
             committed_voyages = self._commit_ogv_demand_rows(rows=rows, actor=request.user)
             job = ImportJob.objects.create(
                 import_type=ImportJob.ImportType.OGV_DEMAND,
                 filename=request.data.get("filename", "operator_trial_ogv_demand.xlsx"),
-                source=request.data.get("source", "operator-trial-practice"),
+                source=request.data.get("source", pack),
                 status=ImportJob.Status.IMPORTED,
                 total_rows=len(rows),
                 valid_rows=len(rows),
@@ -274,7 +291,7 @@ class ImportJobViewSet(PlanningViewSet):
                     "valid_rows": job.valid_rows,
                     "error_rows": job.error_rows,
                     "committed_voyages": committed_voyages,
-                    "trial_pack": "operator_trial_phase5",
+                    "trial_pack": pack,
                 },
                 request=request,
             )

@@ -42,6 +42,7 @@ function time(value: string | null) {
 export function CoalGradeSequencePage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -122,6 +123,7 @@ export function CoalGradeSequencePage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

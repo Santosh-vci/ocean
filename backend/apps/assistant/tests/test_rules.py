@@ -83,6 +83,22 @@ def test_checklist_marks_blocked_current_stage_with_action_id():
     assert "schedule.edit" in checklist["demand_imported"]["reason"]
 
 
+def test_flow_checklist_replaces_lifecycle_checklist():
+    ctx = context(
+        flow_checklist=[
+            {
+                "key": "import_ogv_demand",
+                "label": "Import OGV demand",
+                "status": "current",
+                "action_id": "IMPORT_OGV_DEMAND",
+                "route": "/schedule/ogv-demand",
+            }
+        ],
+    )
+
+    assert build_checklist(ctx, shape_recommendations(ctx, [])) == ctx.flow_checklist
+
+
 def test_phase5_checklist_advances_from_run_to_scenario_handoff():
     base = {
         "demand_count": 2,
@@ -154,6 +170,80 @@ def test_blocking_conflict_outranks_submit_approval():
     assert shaped.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
 
 
+def test_flow_current_step_becomes_global_next_action():
+    ctx = context(
+        active_flow_run_id="FLOW-TEST",
+        active_flow_key="operator_happy_path_v1",
+        active_flow_name="Operator happy path",
+        active_flow_status="active",
+        current_flow_step_key="generate_plan",
+        current_flow_step_label="Generate plan",
+        current_flow_step_status="active",
+        expected_flow_route="/operations/tug-barge-assignment",
+        expected_flow_action_id="GENERATE_PLAN",
+        demand_count=2,
+        tide_window_count=1,
+        bridge_window_count=1,
+        active_plan_version_id=7,
+        active_plan_trip_count=4,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "GENERATE_PLAN"
+    assert shaped.global_next_action.source == "flow.current_step"
+    assert shaped.global_next_action.rank_score == 970
+    assert shaped.global_next_action.metadata == {
+        "flowRunId": "FLOW-TEST",
+        "flowKey": "operator_happy_path_v1",
+        "stepKey": "generate_plan",
+        "stepStatus": "active",
+    }
+
+
+def test_critical_conflict_outranks_flow_current_step():
+    ctx = context(
+        active_flow_run_id="FLOW-BLOCKED",
+        active_flow_key="operator_happy_path_v1",
+        active_flow_name="Operator happy path",
+        active_flow_status="active",
+        current_flow_step_key="generate_plan",
+        current_flow_step_label="Generate plan",
+        current_flow_step_status="active",
+        expected_flow_route="/operations/tug-barge-assignment",
+        expected_flow_action_id="GENERATE_PLAN",
+        blocking_conflict_count=1,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
+
+
+def test_blocked_flow_step_emits_approval_resolver():
+    ctx = context(
+        active_flow_run_id="FLOW-APPROVAL",
+        active_flow_key="operator_happy_path_v1",
+        active_flow_name="Operator happy path",
+        active_flow_status="blocked",
+        current_flow_step_key="publish_plan",
+        current_flow_step_label="Publish plan",
+        current_flow_step_status="blocked",
+        expected_flow_route="/approvals/publishing",
+        expected_flow_action_id="PUBLISH_PLAN",
+        flow_blocked_reason="Required approval decisions are incomplete.",
+        pending_approval_count=1,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "APPROVE_PLAN"
+    assert shaped.global_next_action.source == "flow.current_step"
+
+
 def test_recovery_recommendation_route_prioritizes_testing_over_generic_exception():
     ctx = context(
         route="/recovery/recommendations",
@@ -174,8 +264,8 @@ def test_recovery_recommendation_route_prioritizes_testing_over_generic_exceptio
     shaped = shape_recommendations(ctx, evaluate_rules(ctx))
 
     assert shaped.global_next_action
-    assert shaped.global_next_action.action_id == "MATERIALIZE_RECOVERY_RECOMMENDATION"
-    assert action_ids(shaped.page_actions)[0] == "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    assert shaped.global_next_action.action_id == "VALIDATE_ROOT_CAUSE_REPAIR"
+    assert action_ids(shaped.page_actions)[0] == "VALIDATE_ROOT_CAUSE_REPAIR"
 
 
 def test_corrected_constraints_prioritize_regeneration_over_stale_exceptions():

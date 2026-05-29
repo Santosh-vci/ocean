@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import App from "./App";
@@ -162,7 +162,7 @@ test("OGV demand page renders route-specific assistant guidance", () => {
   );
 
   expect(screen.getByText("Assistant guidance")).toBeInTheDocument();
-  expect(screen.getByText("Import OGV demand")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /Import OGV.*demand/ })).toBeInTheDocument();
 });
 
 test("coal sequence page renders with assistant data absent and present", () => {
@@ -706,6 +706,213 @@ test("renders the role-aware dashboard shell", async () => {
   expect(screen.queryByText("Users & RBAC")).not.toBeInTheDocument();
 });
 
+test("operator trial import CTA refreshes DB-truth flow metadata before selecting pack", async () => {
+  window.location.hash = "#/schedule/ogv-demand";
+  const planningOverview = {
+    voyages: [],
+    cargoRequirements: [],
+    cargoLayerSteps: [],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 0,
+      remainingDemandMt: 0,
+    },
+  };
+  const schedulingOverview = {
+    plans: [],
+    planVersions: [],
+    activePlanVersion: null,
+    trips: [],
+    assignments: [],
+    events: [],
+    conflicts: [],
+    overrideRequests: [],
+    approvalRequests: [],
+    publishedSnapshots: [],
+    simulationScenarios: [],
+    recoveryInputSnapshots: [],
+    optimizerRuns: [],
+    recoveryRecommendations: [],
+    liveEtaProjections: [],
+    trackingAlerts: [],
+    trackingSummary: {
+      projectionCount: 0,
+      openAlertCount: 0,
+      criticalAlertCount: 0,
+      highestVarianceMinutes: 0,
+    },
+    operationsHealthSummary: {},
+    validation: {
+      tripCount: 0,
+      assignmentCount: 0,
+      eventCount: 0,
+      conflictCount: 0,
+      blockingConflictCount: 0,
+      criticalConflictCount: 0,
+      overrideCount: 0,
+      approvalPendingCount: 0,
+      scenarioCount: 0,
+      optimizerRunCount: 0,
+      recoveryRecommendationCount: 0,
+      trackingAlertCount: 0,
+      openTrackingAlertCount: 0,
+      plannedMt: 0,
+      loadedMt: 0,
+    },
+  };
+  const nextActions = {
+    generated_at: "2026-05-29T00:00:00.000Z",
+    mode: "supervisor",
+    context: {},
+    global_next_action: {
+      action_id: "IMPORT_OGV_DEMAND",
+      label: "Import OGV demand",
+      priority: "normal",
+      rank_score: 970,
+      enabled: true,
+      route: "/schedule/ogv-demand",
+      cta_label: "Import demand",
+      reason: "Operator happy path is waiting at Import OGV demand.",
+      hover_hint: "",
+      detail_text: "",
+      impact_if_ignored: "",
+      owner_role: "berau-scheduler",
+      required_permission: "schedule.edit",
+      audit_required: true,
+      target_object_type: null,
+      target_object_id: null,
+      blocked_reason: "",
+      source: "flow.current_step",
+      expires_at: null,
+      metadata: {},
+    },
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: {
+      active_flow: "operator_happy_path_v1",
+      flow_run_id: "FLOW-123",
+      flow_name: "Operator happy path",
+      flow_status: "active",
+      current_step: "import_ogv_demand",
+      current_step_label: "Import OGV demand",
+      step_status: "active",
+      expected_route: "/schedule/ogv-demand",
+      expected_action_id: "IMPORT_OGV_DEMAND",
+      blocked_reason: "",
+      expected_action_ids: ["IMPORT_OGV_DEMAND"],
+    },
+  };
+  const fetchMock = vi.fn().mockImplementation((input: string, init?: RequestInit) => {
+    if (input.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: ["dashboard.view", "schedule.view", "schedule.edit"],
+        }),
+      });
+    }
+    if (input.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (input.endsWith("/flows/active/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          flow: {
+            run_id: "FLOW-123",
+            flow_definition: {
+              flow_key: "operator_happy_path_v1",
+              name: "Operator happy path",
+            },
+            status: "active",
+            current_step_key: "import_ogv_demand",
+            metadata: {
+              trial_pack: "operator_happy_path_v1",
+              evidence_run_id: "operator-trial-happy-path",
+              expected_action_ids: ["IMPORT_OGV_DEMAND"],
+            },
+            step_runs: [{
+              step_key: "import_ogv_demand",
+              status: "active",
+              expected_route: "/schedule/ogv-demand",
+              expected_action_id: "IMPORT_OGV_DEMAND",
+              blocked_reason: "",
+            }],
+          },
+        }),
+      });
+    }
+    if (input.endsWith("/auth/csrf/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ csrfToken: "csrf" }) });
+    }
+    if (input.endsWith("/planning/overview/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => planningOverview });
+    }
+    if (input.endsWith("/scheduling/overview/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => schedulingOverview });
+    }
+    if (input.endsWith("/dashboard/situation/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+    }
+    if (input.endsWith("/planning/import-jobs/import-trial-demand/")) {
+      expect(JSON.parse(String(init?.body))).toMatchObject({ pack: "operator_happy_path_v1" });
+      return Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 9,
+          filename: "operator_happy_path_ogv_demand.xlsx",
+          valid_rows: 2,
+          total_rows: 2,
+        }),
+      });
+    }
+    if (input.endsWith("/planning/import-jobs/validate-ogv-demand/")) {
+      return Promise.resolve({ ok: false, status: 599, json: async () => ({}) });
+    }
+    if (input.endsWith("/flows/FLOW-123/events/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ run_id: "FLOW-123" }) });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  fireEvent.click(await screen.findByRole("button", { name: /^Import demand$/i }));
+
+  await waitFor(() => {
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/planning/import-jobs/import-trial-demand/",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
+  expect(fetchMock).not.toHaveBeenCalledWith(
+    "/api/planning/import-jobs/validate-ogv-demand/",
+    expect.anything(),
+  );
+});
+
 function stageSevenOverview(): SchedulingOverview {
   return {
     activePlanVersion: { plan_code: "PLAN-UI", status: "validated", version_no: 1 },
@@ -903,6 +1110,7 @@ function phaseFiveOverview(): SchedulingOverview {
         },
         created_at: "2026-05-18T03:31:10.000Z",
       },
+      root_cause_assessment: null,
       created_at: "2026-05-18T03:31:10.000Z",
       updated_at: "2026-05-18T03:31:10.000Z",
     }],
@@ -1403,6 +1611,55 @@ test("recommendation console renders ranking evidence and materializes a scenari
   expect(onMaterializeRecommendation).toHaveBeenCalledWith(801);
 });
 
+test("recommendation console validates and renders root-cause assessment", () => {
+  const onValidateRootCause = vi.fn();
+  const overview = phaseFiveOverview();
+  overview.optimizerRuns[0].recommendations[0].root_cause_assessment = {
+    id: 1201,
+    assessment_id: "RCA-PHASE6-UI",
+    recommendation: 801,
+    recommendation_ref: "REC-PHASE5-UI-01",
+    source_kind: "conflict",
+    source_ref: "BARGE_UNAVAILABLE:99",
+    source_cause_type: "BARGE_UNAVAILABLE",
+    status: "does_not_address_cause",
+    required_resolution: {},
+    observed_resolution: {
+      resolutionEvidence: [{
+        kind: "unrelated_action_family",
+        detail: "CTS reassignment does not repair BARGE_UNAVAILABLE.",
+      }],
+    },
+    residual_risk: {
+      level: "high",
+      count: 1,
+      items: [{ severity: "critical", message: "BARGE_UNAVAILABLE remains physically unresolved." }],
+    },
+    evidence: {},
+    assessed_at: "2026-05-18T03:31:30.000Z",
+    assessed_by_algorithm_version: "phase6.3-root-cause-repair-assessment",
+    created_at: "2026-05-18T03:31:30.000Z",
+    updated_at: "2026-05-18T03:31:30.000Z",
+  };
+  overview.recoveryRecommendations = overview.optimizerRuns[0].recommendations;
+
+  render(
+    <RecommendationConsolePage
+      canEdit
+      onValidateRootCause={onValidateRootCause}
+      overview={overview}
+    />,
+  );
+
+  expect(screen.getByText("Root-cause validation")).toBeInTheDocument();
+  expect(screen.getByText(/BARGE UNAVAILABLE/)).toBeInTheDocument();
+  expect(screen.getByText(/DOES NOT ADDRESS CAUSE/)).toBeInTheDocument();
+  expect(screen.getByText(/CTS reassignment does not repair/)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Re-run validation" }));
+  expect(onValidateRootCause).toHaveBeenCalledWith(801);
+});
+
 test("simulation workspace renders computed run results and impact nodes", () => {
   const overview = stageSevenOverview();
   overview.simulationScenarios = [{
@@ -1568,7 +1825,10 @@ test("simulation workspace renders computed run results and impact nodes", () =>
   expect(screen.getByText("Selected run projection")).toBeInTheDocument();
   expect(screen.getAllByText("Constraint evaluations").length).toBeGreaterThan(0);
   expect(screen.getAllByText("TIDE_WINDOW_MISSED").length).toBeGreaterThan(0);
-  expect(screen.getByText("OGV completion & demurrage")).toBeInTheDocument();
+  expect(screen.getByText((_content, element) => (
+    element?.tagName.toLowerCase() === "strong"
+    && element.textContent === "OGV completion & demurrage"
+  ))).toBeInTheDocument();
   expect(screen.getByText("Asset utilization")).toBeInTheDocument();
   expect(screen.getByText("BARGE DELAY")).toBeInTheDocument();
   expect(screen.getByText(/BRG-VAL-08/)).toBeInTheDocument();

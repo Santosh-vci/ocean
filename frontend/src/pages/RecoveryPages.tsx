@@ -73,6 +73,7 @@ type RecoveryPageProps = AssistantRecommendationSurfaceProps & {
   onGenerateRecoveryOptions?: (source: RecommendationSourceInput) => void;
   onMaterializeRecommendation?: (recommendationId: number) => void;
   onNavigate?: (path: string) => void;
+  onValidateRootCause?: (recommendationId: number) => void;
   onPublish?: () => void;
   onReject?: () => void;
   onRunSimulation?: (scenarioId?: number) => void;
@@ -229,6 +230,20 @@ function actionStateLabel(state: Record<string, unknown>) {
 function evidenceList(recommendation: RecoveryRecommendationRecord | undefined) {
   const evidence = recommendation?.evaluation?.metadata.hardConstraintEvidence;
   return Array.isArray(evidence) ? evidence.map((item) => String(item)) : [];
+}
+
+function residualRiskItems(recommendation: RecoveryRecommendationRecord | undefined) {
+  const items = recommendation?.root_cause_assessment?.residual_risk.items;
+  return Array.isArray(items) ? items as Array<Record<string, unknown>> : [];
+}
+
+function resolutionEvidenceItems(recommendation: RecoveryRecommendationRecord | undefined) {
+  const items = recommendation?.root_cause_assessment?.observed_resolution.resolutionEvidence;
+  return Array.isArray(items) ? items as Array<Record<string, unknown>> : [];
+}
+
+function evidenceDetail(item: Record<string, unknown>) {
+  return textValue(item.detail ?? item.message ?? item.kind, "No detail");
 }
 
 function assignmentChain(
@@ -454,6 +469,7 @@ function assumptionSummary(assumption: ScenarioAssumptionRecord) {
 export function ExceptionCenterPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -652,6 +668,7 @@ export function ExceptionCenterPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}
@@ -992,6 +1009,7 @@ export function ExceptionCenterPage({
 export function RecommendationConsolePage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -1000,6 +1018,7 @@ export function RecommendationConsolePage({
   onAssistantNavigate,
   onMaterializeRecommendation,
   onNavigate,
+  onValidateRootCause,
 }: RecoveryPageProps) {
   const optimizerRuns = overview?.optimizerRuns ?? EMPTY_OPTIMIZER_RUNS;
   const overviewRecommendations = overview?.recoveryRecommendations ?? EMPTY_RECOMMENDATIONS;
@@ -1023,6 +1042,9 @@ export function RecommendationConsolePage({
   );
   const snapshot = snapshots.find((item) => item.id === selectedRun?.input_snapshot);
   const evaluation = recommendation?.evaluation;
+  const rootCauseAssessment = recommendation?.root_cause_assessment ?? null;
+  const residualItems = residualRiskItems(recommendation);
+  const resolutionItems = resolutionEvidenceItems(recommendation);
   const hardEvidence = evidenceList(recommendation);
   const materialized = Boolean(recommendation?.scenario_ref)
     || recommendation?.status === "materialized";
@@ -1078,6 +1100,21 @@ export function RecommendationConsolePage({
             Back to triage
           </button>
           <DisabledReasonTooltip
+            actionId="VALIDATE_ROOT_CAUSE_REPAIR"
+            actions={assistantActions}
+            fallback={!recommendation ? "Select a recommendation before validation." : ""}
+          >
+            <button
+              disabled={!recommendation || !onValidateRootCause || isActionRunning}
+              onClick={() => {
+                if (recommendation) onValidateRootCause?.(recommendation.id);
+              }}
+              type="button"
+            >
+              {rootCauseAssessment ? "Re-run validation" : "Validate root cause"}
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
             actionId="MATERIALIZE_RECOVERY_RECOMMENDATION"
             actions={assistantActions}
             fallback={!canEdit
@@ -1112,6 +1149,7 @@ export function RecommendationConsolePage({
           ...(selectedRecommendationAssistant.data?.blockedActions ?? []),
         ]}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={[
           ...(assistantPageActions ?? []),
           ...(selectedRecommendationAssistant.data?.pageActions ?? []),
@@ -1249,6 +1287,41 @@ export function RecommendationConsolePage({
                 <strong>Why it ranks here</strong>
                 <p>{optionRiskExplanation}</p>
               </section>
+              <section className="recovery-box">
+                <strong>Root-cause validation</strong>
+                {rootCauseAssessment ? (
+                  <>
+                    <p>
+                      {short(rootCauseAssessment.source_cause_type)} / {short(rootCauseAssessment.status)}
+                    </p>
+                    <dl>
+                      <div><dt>Assessment</dt><dd>{rootCauseAssessment.assessment_id}</dd></div>
+                      <div><dt>Source</dt><dd>{rootCauseAssessment.source_ref || "-"}</dd></div>
+                      <div><dt>Residual risk</dt><dd>{short(textValue(rootCauseAssessment.residual_risk.level, "none"))}</dd></div>
+                    </dl>
+                    {resolutionItems.length ? (
+                      <ul className="compact-evidence-list">
+                        {resolutionItems.slice(0, 3).map((item, index) => (
+                          <li key={`${textValue(item.kind, "evidence")}-${index}`}>
+                            {evidenceDetail(item)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {residualItems.length ? (
+                      <ul className="compact-evidence-list">
+                        {residualItems.slice(0, 3).map((item, index) => (
+                          <li key={`${textValue(item.severity, "risk")}-${index}`}>
+                            {evidenceDetail(item)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </>
+                ) : (
+                  <p>Not validated for the selected recovery option.</p>
+                )}
+              </section>
               {materialized ? (
                 <button onClick={() => onNavigate?.("/simulation/workspace")} type="button">
                   Open simulation workspace
@@ -1318,6 +1391,7 @@ export function RecommendationConsolePage({
 export function SimulationWorkspacePage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -1619,6 +1693,7 @@ export function SimulationWorkspacePage({
           ...(selectedScenarioAssistant.data?.blockedActions ?? []),
         ]}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={[
           ...(assistantPageActions ?? []),
           ...(selectedScenarioAssistant.data?.pageActions ?? []),
@@ -2161,6 +2236,7 @@ export function SimulationWorkspacePage({
 export function ApprovalsPublishingPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -2214,6 +2290,7 @@ export function ApprovalsPublishingPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

@@ -1,11 +1,13 @@
 import type {
   ActionRecommendation,
   AssistantChecklistItem,
+  AssistantFlow,
   AssistantMode,
 } from "../../types/assistant";
 import { AbbrText } from "../Abbreviation";
 
 export type AssistantRecommendationSurfaceProps = {
+  assistantFlow?: AssistantFlow | null;
   assistantMode?: AssistantMode;
   assistantPageActions?: ActionRecommendation[];
   assistantRowActions?: ActionRecommendation[];
@@ -21,6 +23,7 @@ type RecommendationCardProps = AssistantRecommendationSurfaceProps & {
 export function RecommendationCard({
   assistantBlockedActions = [],
   assistantChecklist = [],
+  assistantFlow = null,
   assistantPageActions = [],
   assistantRowActions = [],
   onAssistantNavigate,
@@ -29,12 +32,14 @@ export function RecommendationCard({
   const enabledActions = uniqueActions([...assistantRowActions, ...assistantPageActions])
     .filter((action) => action.enabled);
   const blockedActions = uniqueActions(assistantBlockedActions).filter((action) => !action.enabled);
-  const primaryAction = enabledActions[0] ?? blockedActions[0] ?? null;
+  const primaryAction = preferredAction(enabledActions, assistantFlow?.expectedActionId)
+    ?? blockedActions[0]
+    ?? null;
 
   if (!primaryAction) return null;
 
   const secondaryActions = enabledActions
-    .filter((action) => action !== primaryAction)
+    .filter((action) => actionKey(action) !== actionKey(primaryAction))
     .slice(0, 3);
   const checklistItems = assistantChecklist.slice(0, 4);
 
@@ -97,6 +102,14 @@ function uniqueActions(actions: ActionRecommendation[]) {
     seen.add(key);
     return true;
   });
+}
+
+function preferredAction(
+  actions: ActionRecommendation[],
+  expectedActionId?: string,
+) {
+  if (!expectedActionId) return actions[0] ?? null;
+  return actions.find((action) => action.actionId === expectedActionId) ?? actions[0] ?? null;
 }
 
 function actionKey(action: ActionRecommendation) {

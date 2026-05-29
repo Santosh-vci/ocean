@@ -1,5 +1,17 @@
 export type AssistantMode = "off" | "assisted" | "guided" | "supervisor";
 export type AssistantPriority = "critical" | "warning" | "normal" | "info";
+export type AssistantFlowStatus =
+  | "not_started"
+  | "active"
+  | "blocked"
+  | "completed"
+  | "canceled";
+export type AssistantFlowStepStatus =
+  | "pending"
+  | "active"
+  | "blocked"
+  | "completed"
+  | "skipped";
 
 export type ActionRecommendation = {
   actionId: string;
@@ -33,6 +45,22 @@ export type AssistantChecklistItem = {
   reason?: string;
 };
 
+export type AssistantFlow = {
+  activeFlow: string;
+  flowRunId: string;
+  flowName: string;
+  flowStatus: AssistantFlowStatus | string;
+  currentStep: string;
+  currentStepLabel: string;
+  stepStatus: AssistantFlowStepStatus | string;
+  expectedRoute: string;
+  expectedActionId: string;
+  blockedReason: string;
+  trialPack: string | null;
+  evidenceRunId: string | null;
+  expectedActionIds: string[];
+};
+
 export type NextActionResponse = {
   generatedAt: string;
   mode: AssistantMode;
@@ -42,6 +70,7 @@ export type NextActionResponse = {
   rowActions: ActionRecommendation[];
   blockedActions: ActionRecommendation[];
   checklist: AssistantChecklistItem[];
+  flow: AssistantFlow | null;
 };
 
 const ASSISTANT_MODES = new Set<AssistantMode>([
@@ -64,6 +93,7 @@ export function normalizeNextActionResponse(raw: unknown): NextActionResponse {
     rowActions: arrayValue(value.row_actions).map(normalizeActionRecommendation),
     blockedActions: arrayValue(value.blocked_actions).map(normalizeActionRecommendation),
     checklist: arrayValue(value.checklist).map(normalizeChecklistItem),
+    flow: normalizeAssistantFlow(value.flow),
   };
 }
 
@@ -107,6 +137,29 @@ function normalizeChecklistItem(raw: unknown): AssistantChecklistItem {
   if (route) item.route = route;
   if (reason) item.reason = reason;
   return item;
+}
+
+function normalizeAssistantFlow(raw: unknown): AssistantFlow | null {
+  const value = asRecord(raw);
+  const flowRunId = stringValue(value.flow_run_id);
+  if (!flowRunId) return null;
+  return {
+    activeFlow: stringValue(value.active_flow),
+    flowRunId,
+    flowName: stringValue(value.flow_name),
+    flowStatus: stringValue(value.flow_status),
+    currentStep: stringValue(value.current_step),
+    currentStepLabel: stringValue(value.current_step_label),
+    stepStatus: stringValue(value.step_status),
+    expectedRoute: stringValue(value.expected_route),
+    expectedActionId: stringValue(value.expected_action_id),
+    blockedReason: stringValue(value.blocked_reason),
+    trialPack: nullableStringValue(value.trial_pack),
+    evidenceRunId: nullableStringValue(value.evidence_run_id),
+    expectedActionIds: arrayValue(value.expected_action_ids)
+      .map(stringValue)
+      .filter(Boolean),
+  };
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

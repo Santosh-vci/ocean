@@ -93,6 +93,7 @@ function stageLabel(step: CargoLayerStepRecord) {
 export function OgvDemandPage({
   assistantBlockedActions,
   assistantChecklist,
+  assistantFlow,
   assistantPageActions,
   assistantRowActions,
   overview,
@@ -204,6 +205,7 @@ export function OgvDemandPage({
       <RecommendationCard
         assistantBlockedActions={assistantBlockedActions}
         assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
         assistantPageActions={assistantPageActions}
         assistantRowActions={assistantRowActions}
         onAssistantNavigate={onAssistantNavigate}

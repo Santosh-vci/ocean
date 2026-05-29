@@ -24,6 +24,25 @@ function rawResponse() {
       route: "/recovery/recommendations",
       reason: "Recommendation review is ready.",
     }],
+    flow: {
+      active_flow: "phase5_plus_recovery_v1",
+      flow_run_id: "FLOW-123",
+      flow_name: "Phase 5+ recovery path",
+      flow_status: "active",
+      current_step: "materialize_recommendation",
+      current_step_label: "Materialize recommendation",
+      step_status: "active",
+      expected_route: "/recovery/recommendations",
+      expected_action_id: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      blocked_reason: "",
+      trial_pack: "operator_trial_phase5",
+      evidence_run_id: "operator-trial-recovery",
+      expected_action_ids: [
+        "OPEN_EXCEPTION_CENTER",
+        "GENERATE_RECOVERY_OPTIONS",
+        "OPEN_RECOMMENDATION_CONSOLE",
+      ],
+    },
   };
 }
 
@@ -72,6 +91,20 @@ test("normalizer maps assistant response fields to frontend shape", () => {
   expect(normalized.pageActions[0].actionId).toBe("OPEN_RECOMMENDATION_CONSOLE");
   expect(normalized.rowActions[0].actionId).toBe("MATERIALIZE_RECOVERY_RECOMMENDATION");
   expect(normalized.blockedActions[0].enabled).toBe(false);
+  expect(normalized.flow).toMatchObject({
+    activeFlow: "phase5_plus_recovery_v1",
+    flowRunId: "FLOW-123",
+    flowName: "Phase 5+ recovery path",
+    currentStep: "materialize_recommendation",
+    expectedActionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+    trialPack: "operator_trial_phase5",
+    evidenceRunId: "operator-trial-recovery",
+  });
+  expect(normalized.flow?.expectedActionIds).toEqual([
+    "OPEN_EXCEPTION_CENTER",
+    "GENERATE_RECOVERY_OPTIONS",
+    "OPEN_RECOMMENDATION_CONSOLE",
+  ]);
   expect(normalized.checklist[0]).toMatchObject({
     key: "review",
     actionId: "OPEN_RECOMMENDATION_CONSOLE",
@@ -93,6 +126,7 @@ test("normalizer defaults missing optional arrays and unknown mode safely", () =
   expect(normalized.rowActions).toEqual([]);
   expect(normalized.blockedActions).toEqual([]);
   expect(normalized.checklist).toEqual([]);
+  expect(normalized.flow).toBeNull();
 });
 
 test("fetchNextActions sends route, mode, limit, and Phase 5 object params", async () => {

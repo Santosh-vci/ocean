@@ -3,9 +3,14 @@ import { expect, test, vi } from "vitest";
 
 import { DashboardPage } from "../../pages/DashboardPage";
 import type { CurrentUser } from "../../types";
-import type { ActionRecommendation, AssistantChecklistItem } from "../../types/assistant";
+import type {
+  ActionRecommendation,
+  AssistantChecklistItem,
+  AssistantFlow,
+} from "../../types/assistant";
 import { ActionInboxPanel } from "./ActionInboxPanel";
 import { DisabledReasonTooltip } from "./DisabledReasonTooltip";
+import { GuidedChecklist } from "./GuidedChecklist";
 import { NextActionPill } from "./NextActionPill";
 import { RecommendationCard } from "./RecommendationCard";
 import { RowActionHint } from "./RowActionHint";
@@ -62,6 +67,22 @@ const checklist: AssistantChecklistItem[] = [
     reason: "Ranked recovery recommendations are ready.",
   },
 ];
+
+const assistantFlow: AssistantFlow = {
+  activeFlow: "phase5_plus_recovery_v1",
+  flowRunId: "FLOW-123",
+  flowName: "Phase 5+ recovery path",
+  flowStatus: "active",
+  currentStep: "materialize_recommendation",
+  currentStepLabel: "Materialize recommendation",
+  stepStatus: "active",
+  expectedRoute: "/recovery/recommendations",
+  expectedActionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+  blockedReason: "",
+  trialPack: "operator_trial_phase5",
+  evidenceRunId: "operator-trial-recovery",
+  expectedActionIds: ["MATERIALIZE_RECOVERY_RECOMMENDATION"],
+};
 
 test("next action pill is hidden when no action exists", () => {
   const { container } = render(<NextActionPill action={null} onNavigate={vi.fn()} />);
@@ -121,6 +142,29 @@ test("dashboard inbox renders Phase 5 assistant actions", () => {
   expect(screen.getByText("Test recommendation as scenario")).toBeInTheDocument();
 });
 
+test("dashboard inbox prioritizes the flow expected action", () => {
+  render(
+    <ActionInboxPanel
+      assistantFlow={assistantFlow}
+      blockedActions={[]}
+      globalAction={action()}
+      onNavigate={vi.fn()}
+      pageActions={[
+        action({
+          actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          ctaLabel: "Test as scenario",
+          label: "Test recommendation as scenario",
+          source: "flow.current_step",
+          targetObjectType: "recovery_recommendation",
+          targetObjectId: "801",
+        }),
+      ]}
+    />,
+  );
+
+  expect(screen.getAllByRole("button")[0]).toHaveTextContent("Test recommendation as scenario");
+});
+
 test("recommendation card CTA navigates with the action route", () => {
   const onNavigate = vi.fn();
 
@@ -133,6 +177,41 @@ test("recommendation card CTA navigates with the action route", () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Open recommendations" }));
   expect(onNavigate).toHaveBeenCalledWith("/recovery/recommendations");
+});
+
+test("recommendation card prefers the flow expected action", () => {
+  const onNavigate = vi.fn();
+
+  render(
+    <RecommendationCard
+      assistantFlow={assistantFlow}
+      assistantPageActions={[
+        action({ ctaLabel: "Open recommendations" }),
+        action({
+          actionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          ctaLabel: "Test as scenario",
+          label: "Test recommendation as scenario",
+          source: "flow.current_step",
+        }),
+      ]}
+      onAssistantNavigate={onNavigate}
+    />,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Test as scenario" }));
+  expect(onNavigate).toHaveBeenCalledWith("/recovery/recommendations");
+});
+
+test("guided checklist uses flow name as title when flow metadata is present", () => {
+  render(
+    <GuidedChecklist
+      assistantFlow={assistantFlow}
+      items={checklist}
+      mode="guided"
+    />,
+  );
+
+  expect(screen.getByText("Phase 5+ recovery path")).toBeInTheDocument();
 });
 
 test("disabled reason tooltip finds and shows the matching blocked action reason", () => {

@@ -56,6 +56,7 @@ class AssistantChecklistItem:
 
 VALID_ASSISTANT_MODES = {"off", "assisted", "guided", "supervisor"}
 RECOVERY_WORKFLOW_NEXT_ACTION_IDS = {
+    "VALIDATE_ROOT_CAUSE_REPAIR",
     "MATERIALIZE_RECOVERY_RECOMMENDATION",
     "RUN_SIMULATION",
     "PROMOTE_SCENARIO",
@@ -212,6 +213,23 @@ def _select_global_next_action(
     if not sorted_enabled:
         return None
 
+    flow_action = next(
+        (item for item in sorted_enabled if item.source == "flow.current_step"),
+        None,
+    )
+    if flow_action:
+        higher_critical_blocker = next(
+            (
+                item
+                for item in sorted_enabled
+                if item.priority == "critical" and item.rank_score > flow_action.rank_score
+            ),
+            None,
+        )
+        if higher_critical_blocker:
+            return higher_critical_blocker
+        return flow_action
+
     route_workflow_actions = [
         item
         for item in sorted_enabled
@@ -227,6 +245,8 @@ def _select_global_next_action(
 def build_checklist(ctx, shaped: ShapedRecommendations) -> list[dict[str, Any]]:
     if ctx.mode == "off":
         return []
+    if ctx.flow_checklist:
+        return ctx.flow_checklist
 
     blocked_by_action = {action.action_id: action for action in shaped.blocked_actions}
     stages = [
@@ -799,4 +819,25 @@ def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
         "row_actions": shaped.row_actions,
         "blocked_actions": shaped.blocked_actions,
         "checklist": build_checklist(ctx, shaped),
+        "flow": _flow_payload(ctx),
+    }
+
+
+def _flow_payload(ctx) -> dict[str, Any] | None:
+    if ctx.mode == "off" or not ctx.active_flow_run_id:
+        return None
+    return {
+        "active_flow": ctx.active_flow_key,
+        "flow_run_id": ctx.active_flow_run_id,
+        "flow_name": ctx.active_flow_name,
+        "flow_status": ctx.active_flow_status,
+        "current_step": ctx.current_flow_step_key,
+        "current_step_label": ctx.current_flow_step_label,
+        "step_status": ctx.current_flow_step_status,
+        "expected_route": ctx.expected_flow_route,
+        "expected_action_id": ctx.expected_flow_action_id,
+        "blocked_reason": ctx.flow_blocked_reason,
+        "trial_pack": ctx.flow_trial_pack,
+        "evidence_run_id": ctx.flow_evidence_run_id,
+        "expected_action_ids": ctx.flow_expected_action_ids,
     }

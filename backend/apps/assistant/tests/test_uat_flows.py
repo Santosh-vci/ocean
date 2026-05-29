@@ -236,6 +236,7 @@ def test_uat_phase5_recovery_recommendation_path():
         top_recovery_recommendation_status=RecoveryRecommendation.Status.CANDIDATE,
     )
     assert action_ids(recommendation_page.row_actions) == [
+        "VALIDATE_ROOT_CAUSE_REPAIR",
         "MATERIALIZE_RECOVERY_RECOMMENDATION",
         "DISMISS_RECOVERY_RECOMMENDATION",
     ]

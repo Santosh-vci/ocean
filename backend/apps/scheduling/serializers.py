@@ -31,6 +31,7 @@ from .models import (
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RootCauseRepairAssessment,
     ScenarioAssumption,
     ScenarioConstraintEvaluation,
     ScenarioEventProjection,
@@ -419,11 +420,41 @@ class RecommendationEvaluationSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class RootCauseRepairAssessmentSerializer(serializers.ModelSerializer):
+    recommendation_ref = serializers.CharField(
+        source="recommendation.recommendation_id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = RootCauseRepairAssessment
+        fields = (
+            "id",
+            "assessment_id",
+            "recommendation",
+            "recommendation_ref",
+            "source_kind",
+            "source_ref",
+            "source_cause_type",
+            "status",
+            "required_resolution",
+            "observed_resolution",
+            "residual_risk",
+            "evidence",
+            "assessed_at",
+            "assessed_by_algorithm_version",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
 class RecoveryRecommendationSerializer(serializers.ModelSerializer):
     optimizer_run_ref = serializers.CharField(source="optimizer_run.run_id", read_only=True)
     scenario_ref = serializers.CharField(source="scenario.scenario_id", read_only=True)
     actions = RecoveryActionSerializer(many=True, read_only=True)
     evaluation = RecommendationEvaluationSerializer(read_only=True)
+    root_cause_assessment = RootCauseRepairAssessmentSerializer(read_only=True)
 
     class Meta:
         model = RecoveryRecommendation
@@ -443,6 +474,7 @@ class RecoveryRecommendationSerializer(serializers.ModelSerializer):
             "metadata",
             "actions",
             "evaluation",
+            "root_cause_assessment",
             "created_at",
             "updated_at",
         )

@@ -1,13 +1,24 @@
-import type { ActionRecommendation } from "../../types/assistant";
+import type { ActionRecommendation, AssistantFlow } from "../../types/assistant";
 import { AbbrText } from "../Abbreviation";
 
 type NextActionPillProps = {
   action: ActionRecommendation | null;
+  assistantFlow?: AssistantFlow | null;
   onNavigate: (path: string) => void;
 };
 
-export function NextActionPill({ action, onNavigate }: NextActionPillProps) {
+export function NextActionPill({
+  action,
+  assistantFlow = null,
+  onNavigate,
+}: NextActionPillProps) {
   if (!action) return null;
+  const flowTitle = assistantFlow && action.actionId === assistantFlow.expectedActionId
+    ? `${assistantFlow.flowName}: ${assistantFlow.currentStepLabel}`
+    : "";
+  const title = flowTitle
+    ? `${flowTitle}. ${action.enabled ? action.reason : action.blockedReason || action.reason}`
+    : action.enabled ? action.reason : action.blockedReason || action.reason;
 
   return (
     <button
@@ -16,7 +27,7 @@ export function NextActionPill({ action, onNavigate }: NextActionPillProps) {
       onClick={() => {
         if (action.enabled) onNavigate(action.route);
       }}
-      title={action.enabled ? action.reason : action.blockedReason || action.reason}
+      title={title}
       type="button"
     >
       <span>Next Action</span>

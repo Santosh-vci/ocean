@@ -42,6 +42,7 @@ from .models import (
     SimulationScenario,
     Trip,
 )
+from .root_cause_services import root_cause_assessment_payload
 
 RECOVERY_INPUT_SNAPSHOT_ALGORITHM_VERSION = "phase5.1-input-snapshot-builder"
 RECOVERY_REPAIR_ALGORITHM_VERSION = "phase5.3-scored-deterministic-repair"
@@ -470,6 +471,7 @@ def build_recommendation_proof_pack(
             "scenario",
             "scenario__baseline_version",
             "scenario__scenario_version",
+            "root_cause_assessment",
         )
         .prefetch_related(
             "actions__target_trip",
@@ -540,6 +542,9 @@ def build_recommendation_proof_pack(
             "completedAt": _iso(optimizer_run.completed_at),
         },
         "evaluation": _recommendation_evaluation_payload(evaluation),
+        "rootCauseAssessment": root_cause_assessment_payload(
+            getattr(recommendation, "root_cause_assessment", None),
+        ),
         "actions": [
             _recommendation_action_payload(action)
             for action in recommendation.actions.order_by("sequence", "id")

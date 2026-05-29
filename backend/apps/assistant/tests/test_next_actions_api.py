@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.flows.definitions import seed_canonical_flow_definitions
+from apps.flows.models import FlowEvent, FlowRun, FlowStepRun
+from apps.flows.services import start_flow
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import (
@@ -133,6 +136,7 @@ def test_authenticated_next_actions_returns_contract_shape():
         "row_actions",
         "blocked_actions",
         "checklist",
+        "flow",
     }
     assert payload["mode"] == "assisted"
     assert payload["context"]["route"] == "/dashboard/situation"
@@ -142,6 +146,7 @@ def test_authenticated_next_actions_returns_contract_shape():
     assert isinstance(payload["row_actions"], list)
     assert isinstance(payload["blocked_actions"], list)
     assert isinstance(payload["checklist"], list)
+    assert payload["flow"] is None
     assert payload["checklist"][0]["key"] == "demand_imported"
     assert payload["checklist"][0]["action_id"] == "IMPORT_OGV_DEMAND"
 
@@ -163,6 +168,7 @@ def test_mode_off_returns_empty_recommendations():
     assert payload["row_actions"] == []
     assert payload["blocked_actions"] == []
     assert payload["checklist"] == []
+    assert payload["flow"] is None
 
 
 @pytest.mark.django_db
@@ -218,6 +224,59 @@ def test_unknown_object_returns_no_row_actions_without_crashing():
 
 
 @pytest.mark.django_db
+def test_active_flow_returns_flow_metadata_and_flow_checklist():
+    user, _org = make_user("assistant-api-flow-active")
+    seed_canonical_flow_definitions()
+    flow_run = start_flow("operator_happy_path_v1", actor=user)
+
+    response = client_for(user).get(
+        NEXT_ACTIONS_URL,
+        {"route": "/dashboard/situation", "mode": "guided"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["flow"] == {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": flow_run.run_id,
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "import_ogv_demand",
+        "current_step_label": "Import OGV demand",
+        "step_status": "active",
+        "expected_route": "/schedule/ogv-demand",
+        "expected_action_id": "IMPORT_OGV_DEMAND",
+        "blocked_reason": "",
+        "trial_pack": "",
+        "evidence_run_id": "",
+        "expected_action_ids": [],
+    }
+    assert payload["global_next_action"]["source"] == "flow.current_step"
+    assert payload["global_next_action"]["action_id"] == "IMPORT_OGV_DEMAND"
+    assert [item["key"] for item in payload["checklist"][:3]] == [
+        "import_ogv_demand",
+        "review_coal_sequence",
+        "enter_operating_windows",
+    ]
+
+
+@pytest.mark.django_db
+def test_next_actions_endpoint_does_not_mutate_flow_runtime_tables():
+    user, _org = make_user("assistant-api-flow-readonly")
+    seed_canonical_flow_definitions()
+    flow_run = start_flow("operator_happy_path_v1", actor=user)
+    before = _flow_counts(flow_run)
+
+    response = client_for(user).get(
+        NEXT_ACTIONS_URL,
+        {"route": "/schedule/ogv-demand"},
+    )
+
+    assert response.status_code == 200
+    assert _flow_counts(flow_run) == before
+
+
+@pytest.mark.django_db
 def test_recovery_route_returns_phase5_page_actions():
     user, org = make_user("assistant-api-phase5-page")
     make_phase5_recommendation(org)
@@ -251,6 +310,7 @@ def test_recovery_recommendation_object_returns_row_actions():
     assert response.status_code == 200
     row_action_ids = [item["action_id"] for item in response.json()["row_actions"]]
     assert row_action_ids == [
+        "VALIDATE_ROOT_CAUSE_REPAIR",
         "MATERIALIZE_RECOVERY_RECOMMENDATION",
         "DISMISS_RECOVERY_RECOMMENDATION",
     ]
@@ -305,4 +365,15 @@ def _business_counts():
         "snapshots": RecoveryInputSnapshot.objects.count(),
         "optimizer_runs": OptimizerRun.objects.count(),
         "recommendations": RecoveryRecommendation.objects.count(),
+    }
+
+
+def _flow_counts(flow_run):
+    flow_run.refresh_from_db()
+    return {
+        "flow_runs": FlowRun.objects.count(),
+        "step_runs": FlowStepRun.objects.count(),
+        "events": FlowEvent.objects.count(),
+        "status": flow_run.status,
+        "current_step_key": flow_run.current_step_key,
     }
