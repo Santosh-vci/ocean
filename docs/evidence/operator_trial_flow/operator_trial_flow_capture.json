@@ -1,0 +1,2226 @@
+{
+  "preparedAt": "2026-05-29T22:56:33.802Z",
+  "appUrl": "http://localhost:8080",
+  "preparedFlow": {
+    "currentStep": "import_ogv_demand",
+    "expectedActionIds": [
+      "IMPORT_OGV_DEMAND",
+      "REVIEW_COAL_SEQUENCE",
+      "ENTER_OPERATING_WINDOWS",
+      "GENERATE_PLAN",
+      "SUBMIT_APPROVAL",
+      "APPROVE_PLAN",
+      "RUN_PUBLISHABILITY_CHECK",
+      "PUBLISH_PLAN",
+      "GENERATE_EXPORT"
+    ],
+    "expectedRouteSequence": [
+      "/schedule/ogv-demand",
+      "/schedule/coal-grade-sequence",
+      "/constraints/tide-bridge",
+      "/operations/tug-barge-assignment",
+      "/schedule/published-plan",
+      "/approvals/publishing",
+      "/approvals/publishing",
+      "/approvals/publishing",
+      "/admin/export-handoff"
+    ],
+    "finalStateAssertions": {
+      "activePublishedSnapshotExists": true,
+      "approvalsComplete": true,
+      "flowCompleted": true,
+      "generatedExportExists": true
+    },
+    "flow": "happy-path",
+    "flowKey": "operator_happy_path_v1",
+    "flowName": "Operator happy path",
+    "flowRunId": "FLOW-4522345B5591",
+    "flowStatus": "active",
+    "meaning": "DB truth is prepared for a UI-only happy path run. Demand, windows, plans, approvals, published snapshots, and exports are empty.",
+    "startingCounts": {
+      "approvalRequests": 0,
+      "auditEvents": 0,
+      "bridgeWindows": 0,
+      "cargoLayerSteps": 0,
+      "cargoRequirements": 0,
+      "exports": 0,
+      "flowEvents": 1,
+      "flowRuns": 1,
+      "importJobs": 0,
+      "openConflicts": 0,
+      "openTrackingAlerts": 0,
+      "optimizerRuns": 0,
+      "pendingOperationalEvents": 0,
+      "planVersions": 0,
+      "plans": 0,
+      "publishabilityAssessments": 0,
+      "publishedSnapshots": 0,
+      "recommendations": 0,
+      "recoverySnapshots": 0,
+      "rootCauseAssessments": 0,
+      "scenarios": 0,
+      "tideWindows": 0,
+      "trips": 0,
+      "voyages": 0
+    },
+    "step": "prepare-db-truth",
+    "stepSequence": [
+      {
+        "expectedActionId": "IMPORT_OGV_DEMAND",
+        "expectedRoute": "/schedule/ogv-demand",
+        "status": "active",
+        "stepKey": "import_ogv_demand"
+      },
+      {
+        "expectedActionId": "REVIEW_COAL_SEQUENCE",
+        "expectedRoute": "/schedule/coal-grade-sequence",
+        "status": "pending",
+        "stepKey": "review_coal_sequence"
+      },
+      {
+        "expectedActionId": "ENTER_OPERATING_WINDOWS",
+        "expectedRoute": "/constraints/tide-bridge",
+        "status": "pending",
+        "stepKey": "enter_operating_windows"
+      },
+      {
+        "expectedActionId": "GENERATE_PLAN",
+        "expectedRoute": "/operations/tug-barge-assignment",
+        "status": "pending",
+        "stepKey": "generate_plan"
+      },
+      {
+        "expectedActionId": "SUBMIT_APPROVAL",
+        "expectedRoute": "/schedule/published-plan",
+        "status": "pending",
+        "stepKey": "submit_approval"
+      },
+      {
+        "expectedActionId": "APPROVE_PLAN",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "approve_plan"
+      },
+      {
+        "expectedActionId": "RUN_PUBLISHABILITY_CHECK",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "run_publishability_check"
+      },
+      {
+        "expectedActionId": "PUBLISH_PLAN",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "publish_plan"
+      },
+      {
+        "expectedActionId": "GENERATE_EXPORT",
+        "expectedRoute": "/admin/export-handoff",
+        "status": "pending",
+        "stepKey": "generate_export"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "step": "01",
+      "title": "Prepared operator trial flow",
+      "route": "/dashboard/situation",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\01_prepared_operator_trial_flow.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "import_ogv_demand",
+      "flowStepStatus": "active",
+      "expectedActionId": "IMPORT_OGV_DEMAND",
+      "actualGlobalActionId": "IMPORT_OGV_DEMAND",
+      "actualGlobalLabel": "Import OGV demand",
+      "clickedCtaLabel": null,
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "import_ogv_demand",
+        "current_step_label": "Import OGV demand",
+        "step_status": "active",
+        "expected_route": "/schedule/ogv-demand",
+        "expected_action_id": "IMPORT_OGV_DEMAND",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 0,
+        "voyages": 0,
+        "cargoLayerSteps": 0,
+        "sequenceViolations": 0,
+        "tideWindows": 0,
+        "bridgeWindows": 0,
+        "constraintChecks": 0,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 1,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "started",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "operator_happy_path_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "02",
+      "title": "Demand page opened",
+      "route": "/schedule/ogv-demand",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\02_demand_page_opened.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "import_ogv_demand",
+      "flowStepStatus": "active",
+      "expectedActionId": "IMPORT_OGV_DEMAND",
+      "actualGlobalActionId": "IMPORT_OGV_DEMAND",
+      "actualGlobalLabel": "Import OGV demand",
+      "clickedCtaLabel": "NEXT ACTION Import OGV demand",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "import_ogv_demand",
+        "current_step_label": "Import OGV demand",
+        "step_status": "active",
+        "expected_route": "/schedule/ogv-demand",
+        "expected_action_id": "IMPORT_OGV_DEMAND",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 0,
+        "voyages": 0,
+        "cargoLayerSteps": 0,
+        "sequenceViolations": 0,
+        "tideWindows": 0,
+        "bridgeWindows": 0,
+        "constraintChecks": 0,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 1,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "started",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "operator_happy_path_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "03",
+      "title": "Clean OGV demand imported",
+      "route": "/schedule/ogv-demand",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\03_clean_ogv_demand_imported.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "enter_operating_windows",
+      "flowStepStatus": "active",
+      "expectedActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalLabel": "Enter tide/bridge windows",
+      "clickedCtaLabel": "IMPORT DEMAND",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "enter_operating_windows",
+        "current_step_label": "Enter tide and bridge windows",
+        "step_status": "active",
+        "expected_route": "/constraints/tide-bridge",
+        "expected_action_id": "ENTER_OPERATING_WINDOWS",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 0,
+        "bridgeWindows": 0,
+        "constraintChecks": 0,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 4,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "demandCount": 2,
+              "importJobId": 191
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "import_ogv_demand",
+          "actionId": "IMPORT_OGV_DEMAND",
+          "route": "/schedule/ogv-demand",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "filename": "operator_happy_path_ogv_demand.xlsx",
+            "importJobId": 191
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "operator_happy_path_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "04",
+      "title": "Clean coal sequence reviewed",
+      "route": "/schedule/coal-grade-sequence",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\04_clean_coal_sequence_reviewed.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "enter_operating_windows",
+      "flowStepStatus": "active",
+      "expectedActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalLabel": "Enter tide/bridge windows",
+      "clickedCtaLabel": "Coal Grade Sequence",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "enter_operating_windows",
+        "current_step_label": "Enter tide and bridge windows",
+        "step_status": "active",
+        "expected_route": "/constraints/tide-bridge",
+        "expected_action_id": "ENTER_OPERATING_WINDOWS",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 0,
+        "bridgeWindows": 0,
+        "constraintChecks": 0,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 4,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "demandCount": 2,
+              "importJobId": 191
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "import_ogv_demand",
+          "actionId": "IMPORT_OGV_DEMAND",
+          "route": "/schedule/ogv-demand",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "filename": "operator_happy_path_ogv_demand.xlsx",
+            "importJobId": 191
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "operator_happy_path_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "05",
+      "title": "Operating-window page opened",
+      "route": "/constraints/tide-bridge",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\05_operating_window_page_opened.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "enter_operating_windows",
+      "flowStepStatus": "active",
+      "expectedActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalActionId": "ENTER_OPERATING_WINDOWS",
+      "actualGlobalLabel": "Enter tide/bridge windows",
+      "clickedCtaLabel": "NEXT ACTION Enter tide/bridge windows",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "enter_operating_windows",
+        "current_step_label": "Enter tide and bridge windows",
+        "step_status": "active",
+        "expected_route": "/constraints/tide-bridge",
+        "expected_action_id": "ENTER_OPERATING_WINDOWS",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 0,
+        "bridgeWindows": 0,
+        "constraintChecks": 0,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 4,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "demandCount": 2,
+              "importJobId": 191
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "import_ogv_demand",
+          "actionId": "IMPORT_OGV_DEMAND",
+          "route": "/schedule/ogv-demand",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "filename": "operator_happy_path_ogv_demand.xlsx",
+            "importJobId": 191
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "operator_happy_path_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "06",
+      "title": "Operating windows entered",
+      "route": "/constraints/tide-bridge",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\06_operating_windows_entered.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_plan",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_PLAN",
+      "actualGlobalActionId": "GENERATE_PLAN",
+      "actualGlobalLabel": "Generate plan",
+      "clickedCtaLabel": "ENTER OPERATING WINDOWS",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "generate_plan",
+        "current_step_label": "Generate plan",
+        "step_status": "active",
+        "expected_route": "/operations/tug-barge-assignment",
+        "expected_action_id": "GENERATE_PLAN",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 6,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "enter_operating_windows",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tideWindowCount": 2,
+              "bridgeWindowCount": 2
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "enter_operating_windows",
+          "actionId": "ENTER_OPERATING_WINDOWS",
+          "route": "/constraints/tide-bridge",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "tideWindows": [
+              "TIDE-UI-OPERATING-01",
+              "TIDE-UI-OPERATING-02"
+            ],
+            "bridgeWindows": [
+              "BRDG-UI-OPERATING-01",
+              "BRDG-UI-OPERATING-02"
+            ],
+            "constraintChecks": 6
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "demandCount": 2,
+              "importJobId": 191
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "import_ogv_demand",
+          "actionId": "IMPORT_OGV_DEMAND",
+          "route": "/schedule/ogv-demand",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "filename": "operator_happy_path_ogv_demand.xlsx",
+            "importJobId": 191
+          }
+        }
+      ]
+    },
+    {
+      "step": "07",
+      "title": "Assignment page opened",
+      "route": "/operations/tug-barge-assignment",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\07_assignment_page_opened.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_plan",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_PLAN",
+      "actualGlobalActionId": "GENERATE_PLAN",
+      "actualGlobalLabel": "Generate plan",
+      "clickedCtaLabel": "NEXT ACTION Generate plan",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "generate_plan",
+        "current_step_label": "Generate plan",
+        "step_status": "active",
+        "expected_route": "/operations/tug-barge-assignment",
+        "expected_action_id": "GENERATE_PLAN",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 0,
+        "planVersions": 0,
+        "activePlanVersionStatus": null,
+        "activePlanVersionValidation": null,
+        "trips": 0,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 6,
+        "dashboardPublishState": "No active plan version"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "enter_operating_windows",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tideWindowCount": 2,
+              "bridgeWindowCount": 2
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "enter_operating_windows",
+          "actionId": "ENTER_OPERATING_WINDOWS",
+          "route": "/constraints/tide-bridge",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "tideWindows": [
+              "TIDE-UI-OPERATING-01",
+              "TIDE-UI-OPERATING-02"
+            ],
+            "bridgeWindows": [
+              "BRDG-UI-OPERATING-01",
+              "BRDG-UI-OPERATING-02"
+            ],
+            "constraintChecks": 6
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "import_ogv_demand",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "demandCount": 2,
+              "importJobId": 191
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "import_ogv_demand",
+          "actionId": "IMPORT_OGV_DEMAND",
+          "route": "/schedule/ogv-demand",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "filename": "operator_happy_path_ogv_demand.xlsx",
+            "importJobId": 191
+          }
+        }
+      ]
+    },
+    {
+      "step": "08",
+      "title": "Plan generated from clean demand",
+      "route": "/operations/tug-barge-assignment",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\08_plan_generated_from_clean_demand.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "submit_approval",
+      "flowStepStatus": "active",
+      "expectedActionId": "SUBMIT_APPROVAL",
+      "actualGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalLabel": "Submit approval",
+      "clickedCtaLabel": "REGENERATE PLAN",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "submit_approval",
+        "current_step_label": "Submit approval",
+        "step_status": "active",
+        "expected_route": "/schedule/published-plan",
+        "expected_action_id": "SUBMIT_APPROVAL",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "validated",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 8,
+        "dashboardPublishState": "Latest validated"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tripCount": 3,
+              "planVersionId": 254
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_plan",
+          "actionId": "GENERATE_PLAN",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "enter_operating_windows",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tideWindowCount": 2,
+              "bridgeWindowCount": 2
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "enter_operating_windows",
+          "actionId": "ENTER_OPERATING_WINDOWS",
+          "route": "/constraints/tide-bridge",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "tideWindows": [
+              "TIDE-UI-OPERATING-01",
+              "TIDE-UI-OPERATING-02"
+            ],
+            "bridgeWindows": [
+              "BRDG-UI-OPERATING-01",
+              "BRDG-UI-OPERATING-02"
+            ],
+            "constraintChecks": 6
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "09",
+      "title": "Published-plan page opened",
+      "route": "/schedule/published-plan",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\09_published_plan_page_opened.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "submit_approval",
+      "flowStepStatus": "active",
+      "expectedActionId": "SUBMIT_APPROVAL",
+      "actualGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalLabel": "Submit approval",
+      "clickedCtaLabel": "NEXT ACTION Submit approval",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "submit_approval",
+        "current_step_label": "Submit approval",
+        "step_status": "active",
+        "expected_route": "/schedule/published-plan",
+        "expected_action_id": "SUBMIT_APPROVAL",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "validated",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 8,
+        "dashboardPublishState": "Latest validated"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tripCount": 3,
+              "planVersionId": 254
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_plan",
+          "actionId": "GENERATE_PLAN",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "enter_operating_windows",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tideWindowCount": 2,
+              "bridgeWindowCount": 2
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "enter_operating_windows",
+          "actionId": "ENTER_OPERATING_WINDOWS",
+          "route": "/constraints/tide-bridge",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "tideWindows": [
+              "TIDE-UI-OPERATING-01",
+              "TIDE-UI-OPERATING-02"
+            ],
+            "bridgeWindows": [
+              "BRDG-UI-OPERATING-01",
+              "BRDG-UI-OPERATING-02"
+            ],
+            "constraintChecks": 6
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_coal_sequence",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "cargoLayerIssueCount": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "10",
+      "title": "Approval request submitted",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\10_approval_request_submitted.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "blocked",
+      "currentStep": "approve_plan",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "APPROVE_PLAN",
+      "actualGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalLabel": "Approve plan",
+      "clickedCtaLabel": "SUBMIT APPROVAL",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "blocked",
+        "current_step": "approve_plan",
+        "current_step_label": "Approve plan",
+        "step_status": "blocked",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "APPROVE_PLAN",
+        "blocked_reason": "Required approval decisions are incomplete.",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "proposed",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 1,
+        "approvalDecisions": 0,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 11,
+        "dashboardPublishState": "Latest proposed"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "planVersionId": 254,
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tripCount": 3,
+              "planVersionId": 254
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_plan",
+          "actionId": "GENERATE_PLAN",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        }
+      ]
+    },
+    {
+      "step": "11",
+      "title": "First authority approved",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\11_first_authority_approved.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "blocked",
+      "currentStep": "approve_plan",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "APPROVE_PLAN",
+      "actualGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalLabel": "Approve plan",
+      "clickedCtaLabel": "Approve",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "blocked",
+        "current_step": "approve_plan",
+        "current_step_label": "Approve plan",
+        "step_status": "blocked",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "APPROVE_PLAN",
+        "blocked_reason": "Required approval decisions are incomplete.",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "proposed",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 1,
+        "approvalDecisions": 1,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 12,
+        "dashboardPublishState": "Latest proposed"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "planVersionId": 254,
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "tripCount": 3,
+              "planVersionId": 254
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "12",
+      "title": "All approvals complete",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\12_all_approvals_complete.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "run_publishability_check",
+      "flowStepStatus": "active",
+      "expectedActionId": "RUN_PUBLISHABILITY_CHECK",
+      "actualGlobalActionId": "RUN_PUBLISHABILITY_CHECK",
+      "actualGlobalLabel": "Run publishability check",
+      "clickedCtaLabel": "Approve",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "run_publishability_check",
+        "current_step_label": "Run publishability check",
+        "step_status": "active",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "RUN_PUBLISHABILITY_CHECK",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "approved",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "approvalsComplete": true,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 14,
+        "dashboardPublishState": "Latest approved"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "authorityRole": "abl_dispatcher",
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 247
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "13",
+      "title": "Publishability gate cleared",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\13_publishability_gate_cleared.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "publish_plan",
+      "flowStepStatus": "active",
+      "expectedActionId": "PUBLISH_PLAN",
+      "actualGlobalActionId": "PUBLISH_PLAN",
+      "actualGlobalLabel": "Publish plan",
+      "clickedCtaLabel": "CHECK PUBLISHABILITY",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "publish_plan",
+        "current_step_label": "Publish plan",
+        "step_status": "active",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "PUBLISH_PLAN",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "approved",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "approvalsComplete": true,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "flowEvents": 16,
+        "dashboardPublishState": "Latest approved"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_publishability_check",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "warningCount": 0,
+              "planVersionId": 254,
+              "blockingReasonCount": 0,
+              "publishabilityStatus": "publishable",
+              "publishabilityAssessmentId": 4,
+              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "run_publishability_check",
+          "actionId": "RUN_PUBLISHABILITY_CHECK",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "publishable",
+            "assessmentId": 4,
+            "warningCount": 0,
+            "assessmentRef": "PUB-B4F2C4048605",
+            "planVersionId": 254,
+            "blockingReasonCount": 0
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 247
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "authorityRole": "abl_dispatcher",
+            "approvalRequestId": 247
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-UI-95429353-V1",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 247
+          }
+        }
+      ]
+    },
+    {
+      "step": "14",
+      "title": "Plan manually published",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\14_plan_manually_published.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_export",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_EXPORT",
+      "actualGlobalActionId": "GENERATE_EXPORT",
+      "actualGlobalLabel": "Generate governed export",
+      "clickedCtaLabel": "PUBLISH PLAN",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "generate_export",
+        "current_step_label": "Generate governed export",
+        "step_status": "active",
+        "expected_route": "/admin/export-handoff",
+        "expected_action_id": "GENERATE_EXPORT",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "published",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "approvalsComplete": true,
+        "publishedSnapshots": 1,
+        "exports": 0,
+        "flowEvents": 18,
+        "dashboardPublishState": "Published / live"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "publish_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "publishedSnapshotId": 55
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "publish_plan",
+          "actionId": "PUBLISH_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_publishability_check",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "warningCount": 0,
+              "planVersionId": 254,
+              "blockingReasonCount": 0,
+              "publishabilityStatus": "publishable",
+              "publishabilityAssessmentId": 4,
+              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "run_publishability_check",
+          "actionId": "RUN_PUBLISHABILITY_CHECK",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "publishable",
+            "assessmentId": 4,
+            "warningCount": 0,
+            "assessmentRef": "PUB-B4F2C4048605",
+            "planVersionId": 254,
+            "blockingReasonCount": 0
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 247
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "15",
+      "title": "Export handoff page opened",
+      "route": "/admin/export-handoff",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\15_export_handoff_page_opened.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_export",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_EXPORT",
+      "actualGlobalActionId": "GENERATE_EXPORT",
+      "actualGlobalLabel": "Generate governed export",
+      "clickedCtaLabel": "NEXT ACTION Generate governed export",
+      "assistantFlow": {
+        "active_flow": "operator_happy_path_v1",
+        "flow_run_id": "FLOW-4522345B5591",
+        "flow_name": "Operator happy path",
+        "flow_status": "active",
+        "current_step": "generate_export",
+        "current_step_label": "Generate governed export",
+        "step_status": "active",
+        "expected_route": "/admin/export-handoff",
+        "expected_action_id": "GENERATE_EXPORT",
+        "blocked_reason": "",
+        "trial_pack": "operator_happy_path_v1",
+        "evidence_run_id": "operator-trial-happy-path",
+        "expected_action_ids": [
+          "IMPORT_OGV_DEMAND",
+          "REVIEW_COAL_SEQUENCE",
+          "ENTER_OPERATING_WINDOWS",
+          "GENERATE_PLAN",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN",
+          "GENERATE_EXPORT"
+        ]
+      },
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "published",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "approvalsComplete": true,
+        "publishedSnapshots": 1,
+        "exports": 0,
+        "flowEvents": 18,
+        "dashboardPublishState": "Published / live"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "publish_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "publishedSnapshotId": 55
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "publish_plan",
+          "actionId": "PUBLISH_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_publishability_check",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "warningCount": 0,
+              "planVersionId": 254,
+              "blockingReasonCount": 0,
+              "publishabilityStatus": "publishable",
+              "publishabilityAssessmentId": 4,
+              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "run_publishability_check",
+          "actionId": "RUN_PUBLISHABILITY_CHECK",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "publishable",
+            "assessmentId": 4,
+            "warningCount": 0,
+            "assessmentRef": "PUB-B4F2C4048605",
+            "planVersionId": 254,
+            "blockingReasonCount": 0
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 247
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "16",
+      "title": "Governed export generated",
+      "route": "/admin/export-handoff",
+      "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\16_governed_export_generated.png",
+      "flowRunId": "FLOW-4522345B5591",
+      "flowKey": "operator_happy_path_v1",
+      "flowStatus": "completed",
+      "currentStep": "",
+      "flowStepStatus": "completed",
+      "expectedActionId": null,
+      "actualGlobalActionId": "REVIEW_COMMERCIAL_PROJECTION",
+      "actualGlobalLabel": "Review commercial projection",
+      "clickedCtaLabel": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
+      "assistantFlow": null,
+      "domainState": {
+        "importJobs": 1,
+        "voyages": 2,
+        "cargoLayerSteps": 3,
+        "sequenceViolations": 0,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "constraintChecks": 6,
+        "plans": 1,
+        "planVersions": 1,
+        "activePlanVersionStatus": "published",
+        "activePlanVersionValidation": "feasible",
+        "trips": 3,
+        "blockingConflicts": 0,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "approvalsComplete": true,
+        "publishedSnapshots": 1,
+        "exports": 1,
+        "flowEvents": 20,
+        "dashboardPublishState": "Published / live"
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "completed",
+          "stepKey": "generate_export",
+          "actionId": "",
+          "route": "",
+          "metadata": {}
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_export",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "exportJobId": 61
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_export",
+          "actionId": "GENERATE_EXPORT",
+          "route": "/admin/export-handoff",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "exportType": "plan",
+            "exportJobId": 61,
+            "exportFormat": "print"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "publish_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "publishedSnapshotId": 55
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "publish_plan",
+          "actionId": "PUBLISH_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-UI-95429353",
+            "versionNo": 1,
+            "planVersionId": 254
+          }
+        }
+      ]
+    }
+  ],
+  "clicks": [
+    {
+      "purpose": "Set Assist to Super mode",
+      "target": "Super",
+      "text": "SUPER",
+      "matchCount": 1,
+      "route": "#/dashboard/situation",
+      "clickedAt": "2026-05-29T22:56:45.073Z"
+    },
+    {
+      "purpose": "Global Next Action opens demand import page",
+      "target": "Import OGV demand",
+      "text": "NEXT ACTION Import OGV demand",
+      "matchCount": 2,
+      "route": "#/dashboard/situation",
+      "clickedAt": "2026-05-29T22:56:48.330Z"
+    },
+    {
+      "purpose": "Visible page CTA imports clean happy-path OGV demand",
+      "target": "Import demand",
+      "text": "IMPORT DEMAND",
+      "matchCount": 2,
+      "route": "#/schedule/ogv-demand",
+      "clickedAt": "2026-05-29T22:56:51.543Z"
+    },
+    {
+      "purpose": "Operator reviews the clean cargo sequence before entering windows",
+      "target": "Coal Grade Sequence",
+      "text": "Coal Grade Sequence",
+      "matchCount": 1,
+      "route": "#/schedule/ogv-demand",
+      "clickedAt": "2026-05-29T22:56:55.265Z"
+    },
+    {
+      "purpose": "Global Next Action opens operating-window page",
+      "target": "Enter tide/bridge windows",
+      "text": "NEXT ACTION Enter tide/bridge windows",
+      "matchCount": 1,
+      "route": "#/schedule/coal-grade-sequence",
+      "clickedAt": "2026-05-29T22:56:58.833Z"
+    },
+    {
+      "purpose": "Visible page CTA creates tide, bridge, asset, and jetty windows",
+      "target": "Enter operating windows",
+      "text": "ENTER OPERATING WINDOWS",
+      "matchCount": 1,
+      "route": "#/constraints/tide-bridge",
+      "clickedAt": "2026-05-29T22:57:02.436Z"
+    },
+    {
+      "purpose": "Global Next Action opens tug-barge assignment page",
+      "target": "Generate plan",
+      "text": "NEXT ACTION Generate plan",
+      "matchCount": 2,
+      "route": "#/constraints/tide-bridge",
+      "clickedAt": "2026-05-29T22:57:05.865Z"
+    },
+    {
+      "purpose": "Visible page CTA generates the operator plan",
+      "target": "Regenerate plan",
+      "text": "REGENERATE PLAN",
+      "matchCount": 1,
+      "route": "#/operations/tug-barge-assignment",
+      "clickedAt": "2026-05-29T22:57:09.125Z"
+    },
+    {
+      "purpose": "Global Next Action opens approval-submission page",
+      "target": "Submit approval",
+      "text": "NEXT ACTION Submit approval",
+      "matchCount": 1,
+      "route": "#/operations/tug-barge-assignment",
+      "clickedAt": "2026-05-29T22:57:12.805Z"
+    },
+    {
+      "purpose": "Visible page CTA creates the approval request",
+      "target": "Submit approval",
+      "text": "SUBMIT APPROVAL",
+      "matchCount": 2,
+      "route": "#/schedule/published-plan",
+      "clickedAt": "2026-05-29T22:57:16.699Z"
+    },
+    {
+      "purpose": "Visible page CTA records first authority approval",
+      "target": "Approve",
+      "text": "Approve",
+      "matchCount": 1,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T22:57:20.800Z"
+    },
+    {
+      "purpose": "Visible page CTA records second authority approval",
+      "target": "Approve",
+      "text": "Approve",
+      "matchCount": 1,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T22:57:25.344Z"
+    },
+    {
+      "purpose": "Visible page CTA computes the publishability gate before manual publish",
+      "target": "Check publishability",
+      "text": "CHECK PUBLISHABILITY",
+      "matchCount": 3,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T22:57:29.289Z"
+    },
+    {
+      "purpose": "Visible page CTA manually publishes the plan",
+      "target": "Publish plan",
+      "text": "PUBLISH PLAN",
+      "matchCount": 2,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T22:57:33.542Z"
+    },
+    {
+      "purpose": "Global Next Action opens governed export page",
+      "target": "Generate governed export",
+      "text": "NEXT ACTION Generate governed export",
+      "matchCount": 1,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T22:57:38.331Z"
+    },
+    {
+      "purpose": "Visible page CTA generates the governed export",
+      "target": "Printable schedule",
+      "text": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
+      "matchCount": 1,
+      "route": "#/admin/export-handoff",
+      "clickedAt": "2026-05-29T22:57:42.309Z"
+    }
+  ],
+  "finalAssertions": {
+    "flowRunId": "FLOW-4522345B5591",
+    "flowKey": "operator_happy_path_v1",
+    "flowCompleted": true,
+    "activePublishedSnapshotExists": true,
+    "approvalsComplete": true,
+    "publishabilityAllowsPublish": true,
+    "generatedExportExists": true
+  }
+}

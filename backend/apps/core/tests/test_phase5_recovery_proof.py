@@ -250,6 +250,19 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
         )
         assert decide_response.status_code == 200
         flow = _record_current_step(flow, "APPROVE_PLAN", "/approvals/publishing", user)
+    assert flow.current_step_key == "run_publishability_check"
+
+    publishability_response = client.post(
+        f"/api/scheduling/plan-versions/{version_id}/publishability-assessment/",
+    )
+    assert publishability_response.status_code == 200
+    assert publishability_response.data["status"] in {"publishable", "warning"}
+    flow = _record_current_step(
+        flow,
+        "RUN_PUBLISHABILITY_CHECK",
+        "/approvals/publishing",
+        user,
+    )
     assert flow.current_step_key == "publish_plan"
 
     publish_response = client.post(f"/api/scheduling/plan-versions/{version_id}/publish/")

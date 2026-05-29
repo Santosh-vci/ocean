@@ -110,6 +110,8 @@ def evaluate_flow_run(flow_run: FlowRun, actor=None) -> FlowRun:
     active_step = None
 
     for step_run in ordered_steps:
+        if step_run.status == FlowStepRun.Status.COMPLETED:
+            continue
         definition_step = definition_steps.get(step_run.step_key, {})
         completion = evaluate_selector(definition_step.get("completion_selector", ""), flow_run)
         if completion.completed:

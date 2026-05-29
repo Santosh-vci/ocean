@@ -8,12 +8,13 @@ import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const APP_URL = process.env.OPERATOR_TRIAL_APP_URL ?? "http://localhost:8080";
-const USERNAME = process.env.OPERATOR_TRIAL_USER ?? "admin@coalflow.local";
-const PASSWORD = process.env.OPERATOR_TRIAL_PASSWORD ?? "admin12345";
-const EVIDENCE_DIR = path.join(ROOT, "docs/evidence/operator_trial_flow");
+const APP_URL = process.env.PHASE6_RECOVERY_APP_URL ?? "http://localhost:8080";
+const USERNAME = process.env.PHASE6_RECOVERY_USER ?? "admin@coalflow.local";
+const PASSWORD = process.env.PHASE6_RECOVERY_PASSWORD ?? "admin12345";
+const EVIDENCE_DIR = path.join(ROOT, "docs/evidence/phase6_recovery_flow");
 const SCREENSHOT_DIR = path.join(EVIDENCE_DIR, "screenshots");
-const EVIDENCE_JSON = path.join(EVIDENCE_DIR, "operator_trial_flow_capture.json");
+const EVIDENCE_JSON = path.join(EVIDENCE_DIR, "phase6_recovery_flow_capture.json");
+const FINAL_STATE_JSON = path.join(EVIDENCE_DIR, "phase6_recovery_final_state.json");
 
 const evidence = {
   preparedAt: new Date().toISOString(),
@@ -29,11 +30,11 @@ async function main() {
   await waitForHttpOk(APP_URL);
 
   evidence.preparedFlow = prepareDbTruth();
-  await rm(path.join(ROOT, ".tmp/chrome-operator-trial-flow"), { recursive: true, force: true });
 
   const browserPath = findBrowser();
   const port = await getFreePort();
-  const profile = path.join(os.tmpdir(), `coalflow-operator-trial-${Date.now()}`);
+  const profile = path.join(os.tmpdir(), `coalflow-phase6-recovery-${Date.now()}`);
+  await rm(profile, { recursive: true, force: true });
   const chrome = spawn(
     browserPath,
     [
@@ -68,177 +69,248 @@ async function main() {
     await waitForText(cdp, "COALFLOW TOWER", 15_000);
     await waitForText(cdp, "Super", 15_000);
     await clickButton(cdp, "Super", { purpose: "Set Assist to Super mode", exact: true });
-    await waitForAssistantNext(cdp, "IMPORT_OGV_DEMAND", "/dashboard/situation");
+    await waitForAssistantNext(cdp, "OPEN_EXCEPTION_CENTER", "/dashboard/situation");
 
     await captureStep(cdp, {
       step: "01",
-      title: "Prepared operator trial flow",
+      title: "Prepared Phase 5 plus recovery flow",
       route: "/dashboard/situation",
-      expectedActionId: "IMPORT_OGV_DEMAND",
-      expectedCurrentStep: "import_ogv_demand",
+      expectedActionId: "GENERATE_RECOVERY_OPTIONS",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "generate_recovery_options",
       expectedFlowStatus: "active",
       clickedCtaLabel: null,
       expectations: {
-        voyages: 0,
-        plans: 0,
-        publishedSnapshots: 0,
-        exports: 0,
+        minVoyages: 3,
+        minTrips: 6,
+        minOpenConflicts: 2,
+        recommendations: 0,
+        rootCauseAssessments: 0,
+        scenarios: 0,
       },
     });
 
-    let clicked = await clickButton(cdp, "Import OGV demand", {
-      purpose: "Global Next Action opens demand import page",
+    let clicked = await clickButton(cdp, "Open Exception Center", {
+      purpose: "Global Next Action opens Exception Center for recovery option generation",
     });
-    await waitForHash(cdp, "/schedule/ogv-demand");
+    await waitForHash(cdp, "/exceptions/center");
     await captureStep(cdp, {
       step: "02",
-      title: "Demand page opened",
-      route: "/schedule/ogv-demand",
-      expectedActionId: "IMPORT_OGV_DEMAND",
-      expectedCurrentStep: "import_ogv_demand",
+      title: "Exception Center opened from Next Action",
+      route: "/exceptions/center",
+      expectedActionId: "GENERATE_RECOVERY_OPTIONS",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "generate_recovery_options",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
+      expectations: { minOpenConflicts: 2 },
     });
 
-    clicked = await clickButton(cdp, "Import demand", {
-      purpose: "Visible page CTA imports clean happy-path OGV demand",
+    clicked = await clickButton(cdp, "Generate recovery options", {
+      purpose: "Visible page CTA creates recovery snapshot and optimizer run",
       exact: true,
     });
-    await waitForText(cdp, "Import committed", 20_000);
-    await waitForFlowState(cdp, { currentStep: "enter_operating_windows", status: "active" });
-    await waitForAssistantNext(cdp, "ENTER_OPERATING_WINDOWS", "/schedule/ogv-demand");
+    await waitForHash(cdp, "/recovery/recommendations");
+    await waitForText(cdp, "Ranked recovery options", 25_000);
+    await waitForFlowState(cdp, { currentStep: "validate_root_cause", status: "active" });
     await captureStep(cdp, {
       step: "03",
-      title: "Clean OGV demand imported",
-      route: "/schedule/ogv-demand",
-      expectedActionId: "ENTER_OPERATING_WINDOWS",
-      expectedCurrentStep: "enter_operating_windows",
+      title: "Recovery recommendations generated",
+      route: "/recovery/recommendations",
+      expectedActionId: "VALIDATE_ROOT_CAUSE_REPAIR",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "validate_root_cause",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minVoyages: 2,
-        sequenceViolations: 0,
-        minFlowEvents: 2,
+        minRecoverySnapshots: 1,
+        minOptimizerRuns: 1,
+        minRecommendations: 1,
       },
     });
 
-    clicked = await clickButton(cdp, "Coal Grade Sequence", {
-      purpose: "Operator reviews the clean cargo sequence before entering windows",
+    clicked = await clickButton(cdp, "Validate root cause", {
+      purpose: "Visible page CTA records root-cause repair assessment",
       exact: true,
     });
-    await waitForHash(cdp, "/schedule/coal-grade-sequence");
-    await waitForText(cdp, "Coal Grade Sequence", 20_000);
+    await waitForText(cdp, "Root-cause validation recorded", 25_000);
+    await waitForFlowState(cdp, { currentStep: "materialize_recommendation", status: "active" });
     await captureStep(cdp, {
       step: "04",
-      title: "Clean coal sequence reviewed",
-      route: "/schedule/coal-grade-sequence",
-      expectedActionId: "ENTER_OPERATING_WINDOWS",
-      expectedCurrentStep: "enter_operating_windows",
+      title: "Root-cause validation recorded",
+      route: "/recovery/recommendations",
+      expectedActionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "materialize_recommendation",
+      expectedFlowStatus: "active",
+      clickedCtaLabel: clicked.text,
+      expectations: { minRootCauseAssessments: 1 },
+    });
+
+    clicked = await clickButton(cdp, "Test as scenario", {
+      purpose: "Visible page CTA materializes recommendation into a governed scenario",
+      exact: true,
+    });
+    await waitForHash(cdp, "/simulation/workspace");
+    await waitForText(cdp, "Simulation Workspace", 25_000);
+    await waitForFlowState(cdp, { currentStep: "promote_scenario", status: "active" });
+    await captureStep(cdp, {
+      step: "05",
+      title: "Scenario materialized with simulation result",
+      route: "/simulation/workspace",
+      expectedActionId: "PROMOTE_SCENARIO",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "promote_scenario",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minCargoLayerSteps: 1,
-        sequenceViolations: 0,
+        minScenarios: 1,
+        minScenarioRuns: 1,
       },
     });
 
-    clicked = await clickButton(cdp, "Enter tide/bridge windows", {
-      purpose: "Global Next Action opens operating-window page",
+    clicked = await clickButton(cdp, "Run simulation", {
+      purpose: "Visible page CTA reruns the scenario before promotion",
+      exact: true,
+    });
+    await waitForText(cdp, "Simulation complete", 25_000);
+    await captureStep(cdp, {
+      step: "06",
+      title: "Scenario simulation rerun visible",
+      route: "/simulation/workspace",
+      expectedActionId: "PROMOTE_SCENARIO",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "promote_scenario",
+      expectedFlowStatus: "active",
+      clickedCtaLabel: clicked.text,
+      expectations: { minScenarioRuns: 1 },
+    });
+
+    clicked = await clickButton(cdp, "Promote to proposed", {
+      purpose: "Visible page CTA promotes scenario into a proposed recovery plan",
+      exact: true,
+    });
+    await waitForText(cdp, "Scenario promoted", 25_000);
+    await waitForFlowState(cdp, { currentStep: "repair_remaining_conflicts", status: "blocked" });
+    await waitForAssistantNext(cdp, "OPEN_EXCEPTION_CENTER", "/simulation/workspace");
+    await captureStep(cdp, {
+      step: "07",
+      title: "Promoted scenario returns to remaining blockers",
+      route: "/simulation/workspace",
+      expectedActionId: "REPAIR_PLAN_CONFLICTS",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "repair_remaining_conflicts",
+      expectedFlowStatus: "blocked",
+      clickedCtaLabel: clicked.text,
+      expectations: {
+        minScenarios: 1,
+        minOpenConflicts: 1,
+      },
+    });
+
+    clicked = await clickButton(cdp, "Open Exception Center", {
+      purpose: "Next Action routes operator back to blockers for repair",
+    });
+    await waitForHash(cdp, "/exceptions/center");
+    await captureStep(cdp, {
+      step: "08",
+      title: "Exception Center shows remaining repair work",
+      route: "/exceptions/center",
+      expectedActionId: "REPAIR_PLAN_CONFLICTS",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "repair_remaining_conflicts",
+      expectedFlowStatus: "blocked",
+      clickedCtaLabel: clicked.text,
+      expectations: { minOpenConflicts: 1 },
+    });
+
+    clicked = await clickButton(cdp, "Tide & Bridge Window", {
+      purpose: "Operator opens operating windows to repair remaining navigation blockers",
+      exact: true,
     });
     await waitForHash(cdp, "/constraints/tide-bridge");
+    await waitForText(cdp, "Tide", 15_000);
     await captureStep(cdp, {
-      step: "05",
-      title: "Operating-window page opened",
+      step: "09",
+      title: "Operating windows opened for conflict repair",
       route: "/constraints/tide-bridge",
-      expectedActionId: "ENTER_OPERATING_WINDOWS",
-      expectedCurrentStep: "enter_operating_windows",
-      expectedFlowStatus: "active",
+      expectedActionId: "REPAIR_PLAN_CONFLICTS",
+      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedCurrentStep: "repair_remaining_conflicts",
+      expectedFlowStatus: "blocked",
       clickedCtaLabel: clicked.text,
     });
 
     clicked = await clickButton(cdp, "Enter operating windows", {
-      purpose: "Visible page CTA creates tide, bridge, asset, and jetty windows",
+      purpose: "Visible page CTA applies corrected operating windows",
       exact: true,
     });
-    await waitForText(cdp, "Operating windows entered", 20_000);
-    await waitForFlowState(cdp, { currentStep: "generate_plan", status: "active" });
-    await waitForAssistantNext(cdp, "GENERATE_PLAN", "/constraints/tide-bridge");
+    await waitForText(cdp, "Operating windows entered", 25_000);
     await captureStep(cdp, {
-      step: "06",
-      title: "Operating windows entered",
+      step: "10",
+      title: "Corrected operating windows entered",
       route: "/constraints/tide-bridge",
-      expectedActionId: "GENERATE_PLAN",
-      expectedCurrentStep: "generate_plan",
-      expectedFlowStatus: "active",
+      expectedActionId: "REPAIR_PLAN_CONFLICTS",
+      expectedGlobalActionId: "REGENERATE_PLAN",
+      expectedCurrentStep: "repair_remaining_conflicts",
+      expectedFlowStatus: "blocked",
       clickedCtaLabel: clicked.text,
       expectations: {
         minTideWindows: 1,
         minBridgeWindows: 1,
-        minConstraintChecks: 1,
       },
     });
 
-    clicked = await clickButton(cdp, "Generate plan", {
-      purpose: "Global Next Action opens tug-barge assignment page",
-    });
-    await waitForHash(cdp, "/operations/tug-barge-assignment");
-    await captureStep(cdp, {
-      step: "07",
-      title: "Assignment page opened",
-      route: "/operations/tug-barge-assignment",
-      expectedActionId: "GENERATE_PLAN",
-      expectedCurrentStep: "generate_plan",
-      expectedFlowStatus: "active",
-      clickedCtaLabel: clicked.text,
-    });
-
-    clicked = await clickButton(cdp, "Regenerate plan", {
-      purpose: "Visible page CTA generates the operator plan",
+    clicked = await clickButton(cdp, "Tug/Barge Assignment", {
+      purpose: "Operator opens assignment board to regenerate against repaired constraints",
       exact: true,
     });
-    await waitForText(cdp, "Schedule generated", 25_000);
-    await waitForFlowState(cdp, { currentStep: "submit_approval", status: "active" });
+    await waitForHash(cdp, "/operations/tug-barge-assignment");
+    clicked = await clickButton(cdp, "Regenerate plan", {
+      purpose: "Visible page CTA regenerates the recovery plan and clears blockers",
+      exact: true,
+    });
+    await waitForFlowState(cdp, { currentStep: "submit_approval", status: "active" }, 30_000);
     await waitForAssistantNext(cdp, "SUBMIT_APPROVAL", "/operations/tug-barge-assignment");
     await captureStep(cdp, {
-      step: "08",
-      title: "Plan generated from clean demand",
+      step: "11",
+      title: "Recovery plan regenerated feasible",
       route: "/operations/tug-barge-assignment",
       expectedActionId: "SUBMIT_APPROVAL",
       expectedCurrentStep: "submit_approval",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minPlanVersions: 1,
-        minTrips: 1,
         blockingConflicts: 0,
+        minPlanVersions: 1,
       },
     });
 
     clicked = await clickButton(cdp, "Submit approval", {
-      purpose: "Global Next Action opens approval-submission page",
+      purpose: "Next Action opens published-plan page for approval submission",
     });
     await waitForHash(cdp, "/schedule/published-plan");
     await captureStep(cdp, {
-      step: "09",
-      title: "Published-plan page opened",
+      step: "12",
+      title: "Recovery candidate ready for approval submission",
       route: "/schedule/published-plan",
       expectedActionId: "SUBMIT_APPROVAL",
       expectedCurrentStep: "submit_approval",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
+      expectations: { blockingConflicts: 0 },
     });
 
     clicked = await clickButton(cdp, "Submit approval", {
-      purpose: "Visible page CTA creates the approval request",
+      purpose: "Visible page CTA submits recovery plan for approval",
       exact: true,
     });
     await waitForHash(cdp, "/approvals/publishing");
-    await waitForText(cdp, "Approve", 20_000);
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "10",
-      title: "Approval request submitted",
+      step: "13",
+      title: "Recovery approval request submitted",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
       expectedCurrentStep: "approve_plan",
@@ -251,35 +323,32 @@ async function main() {
     });
 
     clicked = await clickButton(cdp, "Approve", {
-      purpose: "Visible page CTA records first authority approval",
+      purpose: "Visible page CTA records first approval authority",
       exact: true,
     });
-    await waitForText(cdp, "Approved", 20_000);
+    await waitForText(cdp, "Approved", 25_000);
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "11",
-      title: "First authority approved",
+      step: "14",
+      title: "First recovery approval recorded",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
       expectedCurrentStep: "approve_plan",
       expectedFlowStatus: "blocked",
       clickedCtaLabel: clicked.text,
-      expectations: {
-        minApprovalDecisions: 1,
-      },
+      expectations: { minApprovalDecisions: 1 },
     });
 
     clicked = await clickButton(cdp, "Approve", {
-      purpose: "Visible page CTA records second authority approval",
+      purpose: "Visible page CTA records second approval authority",
       exact: true,
     });
-    await waitForText(cdp, "Publish plan", 20_000);
     await waitForFlowState(cdp, { currentStep: "run_publishability_check", status: "active" });
     await waitForAssistantNext(cdp, "RUN_PUBLISHABILITY_CHECK", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "12",
-      title: "All approvals complete",
+      step: "15",
+      title: "Dual recovery approval complete",
       route: "/approvals/publishing",
       expectedActionId: "RUN_PUBLISHABILITY_CHECK",
       expectedCurrentStep: "run_publishability_check",
@@ -292,7 +361,7 @@ async function main() {
     });
 
     clicked = await clickButton(cdp, "Check publishability", {
-      purpose: "Visible page CTA computes the publishability gate before manual publish",
+      purpose: "Visible page CTA computes publishability gate for recovery plan",
       domClick: true,
       exact: true,
     });
@@ -300,72 +369,37 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "publish_plan", status: "active" });
     await waitForAssistantNext(cdp, "PUBLISH_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "13",
-      title: "Publishability gate cleared",
+      step: "16",
+      title: "Recovery publishability gate cleared",
       route: "/approvals/publishing",
       expectedActionId: "PUBLISH_PLAN",
       expectedCurrentStep: "publish_plan",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        approvalsComplete: true,
         minPublishabilityAssessments: 1,
         publishabilityAllowsPublish: true,
       },
     });
 
     clicked = await clickButton(cdp, "Publish plan", {
-      purpose: "Visible page CTA manually publishes the plan",
+      purpose: "Visible page CTA manually publishes approved recovery plan",
       exact: true,
     });
-    await waitForText(cdp, "Published", 25_000);
-    await waitForFlowState(cdp, { currentStep: "generate_export", status: "active" });
-    await waitForAssistantNext(cdp, "GENERATE_EXPORT", "/approvals/publishing");
-    await captureStep(cdp, {
-      step: "14",
-      title: "Plan manually published",
-      route: "/approvals/publishing",
-      expectedActionId: "GENERATE_EXPORT",
-      expectedCurrentStep: "generate_export",
-      expectedFlowStatus: "active",
-      clickedCtaLabel: clicked.text,
-      expectations: {
-        minPublishedSnapshots: 1,
-      },
-    });
-
-    clicked = await clickButton(cdp, "Generate governed export", {
-      purpose: "Global Next Action opens governed export page",
-    });
-    await waitForHash(cdp, "/admin/export-handoff");
-    await captureStep(cdp, {
-      step: "15",
-      title: "Export handoff page opened",
-      route: "/admin/export-handoff",
-      expectedActionId: "GENERATE_EXPORT",
-      expectedCurrentStep: "generate_export",
-      expectedFlowStatus: "active",
-      clickedCtaLabel: clicked.text,
-    });
-
-    clicked = await clickButton(cdp, "Printable schedule", {
-      purpose: "Visible page CTA generates the governed export",
-      domClick: true,
-    });
-    await waitForText(cdp, "Export generated", 25_000);
+    await waitForText(cdp, "Published", 30_000);
     await waitForFlowState(cdp, { currentStep: "", status: "completed" });
     await captureStep(cdp, {
-      step: "16",
-      title: "Governed export generated",
-      route: "/admin/export-handoff",
+      step: "17",
+      title: "Recovery plan manually published",
+      route: "/approvals/publishing",
       expectedActionId: null,
       expectedCurrentStep: "",
       expectedFlowStatus: "completed",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minExports: 1,
         minPublishedSnapshots: 1,
         approvalsComplete: true,
+        publishabilityAllowsPublish: true,
       },
     });
 
@@ -375,35 +409,25 @@ async function main() {
       flowRunId: evidence.preparedFlow.flowRunId,
       flowKey: evidence.preparedFlow.flowKey,
       flowCompleted: finalFlow.status === "completed",
-      activePublishedSnapshotExists: finalDomain.publishedSnapshots >= 1,
+      recommendationsCreatedByUi: finalDomain.recommendations >= 1,
+      rootCauseAssessmentExists: finalDomain.rootCauseAssessments >= 1,
+      scenarioMaterializedByUi: finalDomain.scenarios >= 1,
+      publishabilityAssessmentExists: finalDomain.publishabilityAssessments >= 1,
       approvalsComplete: finalDomain.approvalsComplete,
-      publishabilityAllowsPublish: finalDomain.publishabilityAllowsPublish,
-      generatedExportExists: finalDomain.exports >= 1,
+      activePublishedSnapshotExists: finalDomain.publishedSnapshots >= 1,
     };
-    assertCondition(evidence.finalAssertions.flowCompleted, "Final flow is not completed.");
-    assertCondition(
-      evidence.finalAssertions.activePublishedSnapshotExists,
-      "No published snapshot exists after publish CTA.",
-    );
-    assertCondition(
-      evidence.finalAssertions.approvalsComplete,
-      "Approvals are not complete after approval CTAs.",
-    );
-    assertCondition(
-      evidence.finalAssertions.publishabilityAllowsPublish,
-      "Publishability was not clear before publish CTA.",
-    );
-    assertCondition(
-      evidence.finalAssertions.generatedExportExists,
-      "No export exists after export CTA.",
-    );
-
+    for (const [key, passed] of Object.entries(evidence.finalAssertions)) {
+      if (key.endsWith("Id") || key === "flowKey") continue;
+      assertCondition(Boolean(passed), `Final assertion failed: ${key}`);
+    }
     await writeFile(EVIDENCE_JSON, JSON.stringify(evidence, null, 2));
+    await writeFile(FINAL_STATE_JSON, JSON.stringify(finalDomain, null, 2));
     console.log(JSON.stringify({
       ok: true,
       flowRunId: evidence.preparedFlow.flowRunId,
       steps: evidence.steps.length,
       evidenceJson: EVIDENCE_JSON,
+      finalStateJson: FINAL_STATE_JSON,
       screenshots: SCREENSHOT_DIR,
     }, null, 2));
   } finally {
@@ -417,7 +441,7 @@ function prepareDbTruth() {
     "operator_trial_practice",
     "prepare-db-truth",
     "--flow",
-    "happy-path",
+    "recovery",
     "--json",
   ]);
   return parseJsonPayload(output);
@@ -457,6 +481,7 @@ async function captureStep(
     title,
     route,
     expectedActionId,
+    expectedGlobalActionId,
     expectedCurrentStep,
     expectedFlowStatus,
     clickedCtaLabel,
@@ -474,6 +499,7 @@ async function captureStep(
     assistant,
     flow,
     expectedActionId,
+    expectedGlobalActionId,
     expectedCurrentStep,
     expectedFlowStatus,
   });
@@ -498,12 +524,13 @@ async function captureStep(
     currentStep: flow.current_step_key,
     flowStepStatus: currentStep?.status ?? (flow.status === "completed" ? "completed" : null),
     expectedActionId,
+    expectedGlobalActionId: expectedGlobalActionId ?? expectedActionId,
     actualGlobalActionId: assistant.global_next_action?.action_id ?? null,
     actualGlobalLabel: assistant.global_next_action?.label ?? null,
     clickedCtaLabel,
     assistantFlow: assistant.flow ?? null,
     domainState: domain,
-    recentFlowEvents: flow.recent_events?.slice(0, 5).map((event) => ({
+    recentFlowEvents: flow.recent_events?.slice(0, 8).map((event) => ({
       eventType: event.event_type,
       stepKey: event.step_key,
       actionId: event.action_id,
@@ -517,6 +544,7 @@ function assertFlowAndAssistant({
   assistant,
   flow,
   expectedActionId,
+  expectedGlobalActionId,
   expectedCurrentStep,
   expectedFlowStatus,
 }) {
@@ -525,8 +553,8 @@ function assertFlowAndAssistant({
     `Expected flow ${evidence.preparedFlow.flowRunId}, got ${flow.run_id}.`,
   );
   assertCondition(
-    flow.flow_definition?.flow_key === "operator_happy_path_v1",
-    `Expected operator_happy_path_v1, got ${flow.flow_definition?.flow_key}.`,
+    flow.flow_definition?.flow_key === "phase5_plus_recovery_v1",
+    `Expected phase5_plus_recovery_v1, got ${flow.flow_definition?.flow_key}.`,
   );
   assertCondition(
     flow.status === expectedFlowStatus,
@@ -540,44 +568,45 @@ function assertFlowAndAssistant({
     assistant.flow === null || assistant.flow?.flow_run_id === flow.run_id,
     `Assistant flow run mismatch: ${assistant.flow?.flow_run_id}.`,
   );
-  if (expectedActionId) {
+  const expectedGlobal = expectedGlobalActionId ?? expectedActionId;
+  if (expectedGlobal) {
     assertCondition(
-      assistant.global_next_action?.action_id === expectedActionId,
-      `Expected assistant action ${expectedActionId}, got ${assistant.global_next_action?.action_id}.`,
+      assistant.global_next_action?.action_id === expectedGlobal,
+      `Expected assistant action ${expectedGlobal}, got ${assistant.global_next_action?.action_id}.`,
     );
   }
 }
 
 function assertDomainState(domain, expectations) {
-  const checks = [
-    ["voyages", domain.voyages],
-    ["plans", domain.plans],
-    ["publishedSnapshots", domain.publishedSnapshots],
-    ["exports", domain.exports],
-    ["cargoLayerSteps", domain.cargoLayerSteps],
-    ["sequenceViolations", domain.sequenceViolations],
+  const exacts = [
+    ["recommendations", domain.recommendations],
+    ["rootCauseAssessments", domain.rootCauseAssessments],
+    ["scenarios", domain.scenarios],
     ["blockingConflicts", domain.blockingConflicts],
   ];
-  for (const [key, actual] of checks) {
+  for (const [key, actual] of exacts) {
     if (expectations[key] !== undefined) {
       assertCondition(actual === expectations[key], `Expected ${key}=${expectations[key]}, got ${actual}.`);
     }
   }
   const minimums = [
     ["minVoyages", "voyages"],
-    ["minCargoLayerSteps", "cargoLayerSteps"],
-    ["minFlowEvents", "flowEvents"],
+    ["minTrips", "trips"],
+    ["minOpenConflicts", "openConflicts"],
+    ["minRecoverySnapshots", "recoverySnapshots"],
+    ["minOptimizerRuns", "optimizerRuns"],
+    ["minRecommendations", "recommendations"],
+    ["minRootCauseAssessments", "rootCauseAssessments"],
+    ["minScenarios", "scenarios"],
+    ["minScenarioRuns", "scenarioRuns"],
     ["minTideWindows", "tideWindows"],
     ["minBridgeWindows", "bridgeWindows"],
-    ["minConstraintChecks", "constraintChecks"],
     ["minPlanVersions", "planVersions"],
-    ["minTrips", "trips"],
     ["minApprovalRequests", "approvalRequests"],
     ["minPendingApprovals", "pendingApprovals"],
     ["minApprovalDecisions", "approvalDecisions"],
     ["minPublishabilityAssessments", "publishabilityAssessments"],
     ["minPublishedSnapshots", "publishedSnapshots"],
-    ["minExports", "exports"],
   ];
   for (const [expectationKey, domainKey] of minimums) {
     if (expectations[expectationKey] !== undefined) {
@@ -613,34 +642,42 @@ async function getFlow(cdp) {
 }
 
 async function domainState(cdp) {
-  const [planning, scheduling, exportsOverview, dashboard] = await Promise.all([
+  const [planning, scheduling, exportsOverview] = await Promise.all([
     pageFetchJson(cdp, "/api/planning/overview/").catch(() => null),
     pageFetchJson(cdp, "/api/scheduling/overview/").catch(() => null),
     pageFetchJson(cdp, "/api/exports/overview/").catch(() => null),
-    pageFetchJson(cdp, "/api/dashboard/situation/").catch(() => null),
   ]);
   const approvalRequests = scheduling?.approvalRequests ?? [];
   const approvalDecisions = approvalRequests.reduce(
     (total, request) => total + (request.decisions?.length ?? 0),
     0,
   );
+  const scenarioRuns = (scheduling?.simulationScenarios ?? []).reduce(
+    (total, scenario) => total + (scenario.runs?.length ?? 0),
+    0,
+  );
   return {
-    importJobs: planning?.importJobs?.length ?? 0,
     voyages: planning?.voyages?.length ?? 0,
     cargoLayerSteps: planning?.cargoLayerSteps?.length ?? 0,
-    sequenceViolations: planning?.validation?.sequenceViolations ?? 0,
     tideWindows: planning?.tideWindows?.length ?? 0,
     bridgeWindows: planning?.bridgeWindows?.length ?? 0,
-    constraintChecks: planning?.constraintChecks?.length ?? 0,
     plans: scheduling?.plans?.length ?? 0,
     planVersions: scheduling?.planVersions?.length ?? 0,
-    activePlanVersionStatus: scheduling?.activePlanVersion?.status ?? null,
-    activePlanVersionValidation: scheduling?.activePlanVersion?.validation_status ?? null,
     trips: scheduling?.trips?.length ?? 0,
+    openConflicts: (scheduling?.conflicts ?? []).filter((conflict) => !conflict.resolved_at).length,
     blockingConflicts: scheduling?.validation?.blockingConflictCount ?? 0,
+    recoverySnapshots: scheduling?.recoveryInputSnapshots?.length ?? 0,
+    optimizerRuns: scheduling?.optimizerRuns?.length ?? 0,
+    recommendations: scheduling?.recoveryRecommendations?.length ?? 0,
+    rootCauseAssessments: (scheduling?.recoveryRecommendations ?? [])
+      .filter((recommendation) => recommendation.root_cause_assessment).length,
+    scenarios: scheduling?.simulationScenarios?.length ?? 0,
+    scenarioRuns,
     approvalRequests: approvalRequests.length,
     pendingApprovals: scheduling?.validation?.approvalPendingCount ?? 0,
     approvalDecisions,
+    approvalsComplete: approvalRequests.some((request) => request.status === "approved")
+      || approvalRequests.some((request) => request.status === "published"),
     publishabilityStatus: scheduling?.publishabilityAssessment?.status ?? null,
     publishabilityBlockers: scheduling?.publishabilityAssessment?.blocking_reason_count ?? 0,
     publishabilityWarnings: scheduling?.publishabilityAssessment?.warning_count ?? 0,
@@ -648,12 +685,16 @@ async function domainState(cdp) {
     publishabilityAllowsPublish: ["publishable", "warning"].includes(
       scheduling?.publishabilityAssessment?.status ?? "",
     ),
-    approvalsComplete: approvalRequests.some((request) => request.status === "approved")
-      || approvalRequests.some((request) => request.status === "published"),
     publishedSnapshots: scheduling?.publishedSnapshots?.length ?? 0,
     exports: exportsOverview?.exports?.length ?? 0,
-    flowEvents: (await getFlow(cdp)).recent_events?.length ?? 0,
-    dashboardPublishState: dashboard?.planRisk?.publishState ?? null,
+    activePlanVersion: scheduling?.activePlanVersion
+      ? {
+        planCode: scheduling.activePlanVersion.plan_code,
+        versionNo: scheduling.activePlanVersion.version_no,
+        status: scheduling.activePlanVersion.status,
+        validationStatus: scheduling.activePlanVersion.validation_status,
+      }
+      : null,
   };
 }
 
@@ -842,7 +883,7 @@ async function pageFetchJson(cdp, apiPath) {
   return evalAsync(
     cdp,
     `
-      await fetch(${JSON.stringify(apiPath)}, { credentials: 'include' })
+      await fetch(${JSON.stringify(apiPath)}, { credentials: 'include', cache: 'no-store' })
         .then(async (response) => {
           if (!response.ok) throw new Error(String(response.status));
           return response.json();
@@ -1007,43 +1048,39 @@ class CdpClient {
     this.ws = ws;
     this.nextId = 1;
     this.pending = new Map();
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (!message.id) return;
-      const pending = this.pending.get(message.id);
+    ws.addEventListener("message", (event) => {
+      const payload = JSON.parse(event.data);
+      if (!payload.id) return;
+      const pending = this.pending.get(payload.id);
       if (!pending) return;
-      this.pending.delete(message.id);
-      if (message.error) {
-        pending.reject(new Error(message.error.message));
+      this.pending.delete(payload.id);
+      if (payload.error) {
+        pending.reject(new Error(payload.error.message));
       } else {
-        pending.resolve(message.result ?? {});
+        pending.resolve(payload.result);
       }
-    };
+    });
   }
 
   static async connect(wsUrl) {
     const ws = new WebSocket(wsUrl);
     await new Promise((resolve, reject) => {
-      ws.onopen = resolve;
-      ws.onerror = reject;
+      ws.addEventListener("open", resolve, { once: true });
+      ws.addEventListener("error", reject, { once: true });
     });
     return new CdpClient(ws);
   }
 
   send(method, params = {}) {
     const id = this.nextId++;
-    const payload = JSON.stringify({ id, method, params });
+    this.ws.send(JSON.stringify({ id, method, params }));
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
-      setTimeout(() => {
-        if (this.pending.has(id)) {
-          this.pending.delete(id);
-          reject(new Error(`CDP timeout: ${method}`));
-        }
-      }, 30_000);
     });
   }
 }
 
-await main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

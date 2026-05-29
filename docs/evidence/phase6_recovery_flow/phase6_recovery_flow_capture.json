@@ -1,0 +1,3162 @@
+{
+  "preparedAt": "2026-05-29T23:05:33.394Z",
+  "appUrl": "http://localhost:8080",
+  "preparedFlow": {
+    "currentStep": "generate_recovery_options",
+    "expectedActionIds": [
+      "OPEN_EXCEPTION_CENTER",
+      "GENERATE_RECOVERY_OPTIONS",
+      "OPEN_RECOMMENDATION_CONSOLE",
+      "VALIDATE_ROOT_CAUSE_REPAIR",
+      "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      "RUN_SIMULATION",
+      "PROMOTE_SCENARIO",
+      "REPAIR_PLAN_CONFLICTS",
+      "SUBMIT_APPROVAL",
+      "APPROVE_PLAN",
+      "RUN_PUBLISHABILITY_CHECK",
+      "PUBLISH_PLAN"
+    ],
+    "expectedRouteSequence": [
+      "/exceptions/center",
+      "/exceptions/center",
+      "/recovery/recommendations",
+      "/recovery/recommendations",
+      "/recovery/recommendations",
+      "/simulation/workspace",
+      "/simulation/workspace",
+      "/exceptions/center",
+      "/schedule/published-plan",
+      "/approvals/publishing",
+      "/approvals/publishing",
+      "/approvals/publishing"
+    ],
+    "finalStateAssertions": {
+      "activePublishedSnapshotExists": true,
+      "flowCompleted": true,
+      "recommendationsCreatedByUi": true,
+      "scenarioMaterializedByUi": true
+    },
+    "flow": "recovery",
+    "flowKey": "phase5_plus_recovery_v1",
+    "flowName": "Phase 5+ recovery path",
+    "flowRunId": "FLOW-EB769B8A262F",
+    "flowStatus": "active",
+    "meaning": "DB truth is prepared for a UI-only recovery run. Disrupted demand and a blocked plan exist; recommendations and scenarios do not.",
+    "seedSummary": {
+      "blockingConflictCount": 2,
+      "cargoLayerCount": 6,
+      "conflictCount": 3,
+      "conflicts": [
+        {
+          "code": "BRIDGE_WINDOW_MISSED",
+          "is_blocking": true,
+          "message": "Bridge gate missed; use recovery loop to resequence or shift window.",
+          "object_id": "1208",
+          "object_type": "bridge",
+          "severity": "critical"
+        },
+        {
+          "code": "TIDE_WINDOW_MISSED",
+          "is_blocking": true,
+          "message": "Missed Rantau tide gate; generate recovery options before dispatch.",
+          "object_id": "1207",
+          "object_type": "tide",
+          "severity": "critical"
+        },
+        {
+          "code": "TIDE_WINDOW_MISSED",
+          "is_blocking": false,
+          "message": "Marginal tide margin; monitor after recovery candidate is simulated.",
+          "object_id": "1209",
+          "object_type": "tide",
+          "severity": "warning"
+        }
+      ],
+      "missedCheckCount": 2,
+      "navigationCheckCount": 4,
+      "planStatus": "generated",
+      "planVersion": "PLAN-RECOVERY-PRACTICE-20260530 V1",
+      "planVersionId": 261,
+      "tripCount": 6,
+      "validationStatus": "blocked",
+      "voyageCount": 3
+    },
+    "startingCounts": {
+      "approvalRequests": 0,
+      "auditEvents": 0,
+      "bridgeWindows": 2,
+      "cargoLayerSteps": 6,
+      "cargoRequirements": 6,
+      "exports": 0,
+      "flowEvents": 2,
+      "flowRuns": 1,
+      "importJobs": 1,
+      "openConflicts": 3,
+      "openTrackingAlerts": 0,
+      "optimizerRuns": 0,
+      "pendingOperationalEvents": 0,
+      "planVersions": 1,
+      "plans": 1,
+      "publishabilityAssessments": 0,
+      "publishedSnapshots": 0,
+      "recommendations": 0,
+      "recoverySnapshots": 0,
+      "rootCauseAssessments": 0,
+      "scenarios": 0,
+      "tideWindows": 2,
+      "trips": 6,
+      "voyages": 3
+    },
+    "step": "prepare-db-truth",
+    "stepSequence": [
+      {
+        "expectedActionId": "OPEN_EXCEPTION_CENTER",
+        "expectedRoute": "/exceptions/center",
+        "status": "completed",
+        "stepKey": "open_exception_center"
+      },
+      {
+        "expectedActionId": "GENERATE_RECOVERY_OPTIONS",
+        "expectedRoute": "/exceptions/center",
+        "status": "active",
+        "stepKey": "generate_recovery_options"
+      },
+      {
+        "expectedActionId": "OPEN_RECOMMENDATION_CONSOLE",
+        "expectedRoute": "/recovery/recommendations",
+        "status": "pending",
+        "stepKey": "review_recommendations"
+      },
+      {
+        "expectedActionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+        "expectedRoute": "/recovery/recommendations",
+        "status": "pending",
+        "stepKey": "validate_root_cause"
+      },
+      {
+        "expectedActionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+        "expectedRoute": "/recovery/recommendations",
+        "status": "pending",
+        "stepKey": "materialize_recommendation"
+      },
+      {
+        "expectedActionId": "RUN_SIMULATION",
+        "expectedRoute": "/simulation/workspace",
+        "status": "pending",
+        "stepKey": "run_simulation"
+      },
+      {
+        "expectedActionId": "PROMOTE_SCENARIO",
+        "expectedRoute": "/simulation/workspace",
+        "status": "pending",
+        "stepKey": "promote_scenario"
+      },
+      {
+        "expectedActionId": "REPAIR_PLAN_CONFLICTS",
+        "expectedRoute": "/exceptions/center",
+        "status": "pending",
+        "stepKey": "repair_remaining_conflicts"
+      },
+      {
+        "expectedActionId": "SUBMIT_APPROVAL",
+        "expectedRoute": "/schedule/published-plan",
+        "status": "pending",
+        "stepKey": "submit_approval"
+      },
+      {
+        "expectedActionId": "APPROVE_PLAN",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "approve_plan"
+      },
+      {
+        "expectedActionId": "RUN_PUBLISHABILITY_CHECK",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "run_publishability_check"
+      },
+      {
+        "expectedActionId": "PUBLISH_PLAN",
+        "expectedRoute": "/approvals/publishing",
+        "status": "pending",
+        "stepKey": "publish_plan"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "step": "01",
+      "title": "Prepared Phase 5 plus recovery flow",
+      "route": "/dashboard/situation",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\01_prepared_phase_5_plus_recovery_flow.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_recovery_options",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_RECOVERY_OPTIONS",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": null,
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "generate_recovery_options",
+        "current_step_label": "Generate recovery options",
+        "step_status": "active",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "GENERATE_RECOVERY_OPTIONS",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 0,
+        "optimizerRuns": 0,
+        "recommendations": 0,
+        "rootCauseAssessments": 0,
+        "scenarios": 0,
+        "scenarioRuns": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "openConflictCount": 3,
+              "openTrackingAlertCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "phase5_plus_recovery_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "02",
+      "title": "Exception Center opened from Next Action",
+      "route": "/exceptions/center",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\02_exception_center_opened_from_next_action.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "generate_recovery_options",
+      "flowStepStatus": "active",
+      "expectedActionId": "GENERATE_RECOVERY_OPTIONS",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "NEXT ACTION Open Exception Center",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "generate_recovery_options",
+        "current_step_label": "Generate recovery options",
+        "step_status": "active",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "GENERATE_RECOVERY_OPTIONS",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 0,
+        "optimizerRuns": 0,
+        "recommendations": 0,
+        "rootCauseAssessments": 0,
+        "scenarios": 0,
+        "scenarioRuns": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "openConflictCount": 3,
+              "openTrackingAlertCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "phase5_plus_recovery_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "03",
+      "title": "Recovery recommendations generated",
+      "route": "/recovery/recommendations",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\03_recovery_recommendations_generated.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "validate_root_cause",
+      "flowStepStatus": "active",
+      "expectedActionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "GENERATE RECOVERY OPTIONS",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "validate_root_cause",
+        "current_step_label": "Validate root-cause repair",
+        "step_status": "active",
+        "expected_route": "/recovery/recommendations",
+        "expected_action_id": "VALIDATE_ROOT_CAUSE_REPAIR",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 0,
+        "scenarios": 0,
+        "scenarioRuns": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_recommendations",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "recommendationCount": 5
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_recovery_options",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "snapshotId": 106,
+              "optimizerRunId": 106
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_recovery_options",
+          "actionId": "GENERATE_RECOVERY_OPTIONS",
+          "route": "/exceptions/center",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "sourceRef": "BRIDGE_WINDOW_MISSED",
+            "snapshotId": 106,
+            "optimizerRunId": 106,
+            "recommendationCount": 5
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "openConflictCount": 3,
+              "openTrackingAlertCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "phase5_plus_recovery_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "04",
+      "title": "Root-cause validation recorded",
+      "route": "/recovery/recommendations",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\04_root_cause_validation_recorded.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "materialize_recommendation",
+      "flowStepStatus": "active",
+      "expectedActionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "VALIDATE ROOT CAUSE",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "materialize_recommendation",
+        "current_step_label": "Materialize recommendation",
+        "step_status": "active",
+        "expected_route": "/recovery/recommendations",
+        "expected_action_id": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 0,
+        "scenarioRuns": 0,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_recommendations",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "recommendationCount": 5
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_recovery_options",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "snapshotId": 106,
+              "optimizerRunId": 106
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_recovery_options",
+          "actionId": "GENERATE_RECOVERY_OPTIONS",
+          "route": "/exceptions/center",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "sourceRef": "BRIDGE_WINDOW_MISSED",
+            "snapshotId": 106,
+            "optimizerRunId": 106,
+            "recommendationCount": 5
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "openConflictCount": 3,
+              "openTrackingAlertCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "started",
+          "stepKey": "open_exception_center",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "flowKey": "phase5_plus_recovery_v1"
+          }
+        }
+      ]
+    },
+    {
+      "step": "05",
+      "title": "Scenario materialized with simulation result",
+      "route": "/simulation/workspace",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\05_scenario_materialized_with_simulation_result.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "promote_scenario",
+      "flowStepStatus": "active",
+      "expectedActionId": "PROMOTE_SCENARIO",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "TEST AS SCENARIO",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "promote_scenario",
+        "current_step_label": "Promote scenario",
+        "step_status": "active",
+        "expected_route": "/simulation/workspace",
+        "expected_action_id": "PROMOTE_SCENARIO",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 1,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_recommendations",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "recommendationCount": 5
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_recovery_options",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "snapshotId": 106,
+              "optimizerRunId": 106
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_recovery_options",
+          "actionId": "GENERATE_RECOVERY_OPTIONS",
+          "route": "/exceptions/center",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "sourceRef": "BRIDGE_WINDOW_MISSED",
+            "snapshotId": 106,
+            "optimizerRunId": 106,
+            "recommendationCount": 5
+          }
+        }
+      ]
+    },
+    {
+      "step": "06",
+      "title": "Scenario simulation rerun visible",
+      "route": "/simulation/workspace",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\06_scenario_simulation_rerun_visible.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "promote_scenario",
+      "flowStepStatus": "active",
+      "expectedActionId": "PROMOTE_SCENARIO",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "RUN SIMULATION",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "promote_scenario",
+        "current_step_label": "Promote scenario",
+        "step_status": "active",
+        "expected_route": "/simulation/workspace",
+        "expected_action_id": "PROMOTE_SCENARIO",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 1,
+        "trips": 6,
+        "openConflicts": 3,
+        "blockingConflicts": 2,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 1,
+          "status": "generated",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "review_recommendations",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "recommendationCount": 5
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "generate_recovery_options",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "snapshotId": 106,
+              "optimizerRunId": 106
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "generate_recovery_options",
+          "actionId": "GENERATE_RECOVERY_OPTIONS",
+          "route": "/exceptions/center",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "sourceRef": "BRIDGE_WINDOW_MISSED",
+            "snapshotId": 106,
+            "optimizerRunId": 106,
+            "recommendationCount": 5
+          }
+        }
+      ]
+    },
+    {
+      "step": "07",
+      "title": "Promoted scenario returns to remaining blockers",
+      "route": "/simulation/workspace",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\07_promoted_scenario_returns_to_remaining_blockers.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "repair_remaining_conflicts",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "REPAIR_PLAN_CONFLICTS",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "PROMOTE TO PROPOSED",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "repair_remaining_conflicts",
+        "current_step_label": "Repair remaining conflicts",
+        "step_status": "blocked",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "REPAIR_PLAN_CONFLICTS",
+        "blocked_reason": "6 blocking conflict(s) remain.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 12,
+        "blockingConflicts": 6,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "08",
+      "title": "Exception Center shows remaining repair work",
+      "route": "/exceptions/center",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\08_exception_center_shows_remaining_repair_work.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "repair_remaining_conflicts",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "REPAIR_PLAN_CONFLICTS",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "NEXT ACTION Open Exception Center",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "repair_remaining_conflicts",
+        "current_step_label": "Repair remaining conflicts",
+        "step_status": "blocked",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "REPAIR_PLAN_CONFLICTS",
+        "blocked_reason": "6 blocking conflict(s) remain.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 12,
+        "blockingConflicts": 6,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "09",
+      "title": "Operating windows opened for conflict repair",
+      "route": "/constraints/tide-bridge",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\09_operating_windows_opened_for_conflict_repair.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "repair_remaining_conflicts",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "REPAIR_PLAN_CONFLICTS",
+      "expectedGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalActionId": "OPEN_EXCEPTION_CENTER",
+      "actualGlobalLabel": "Open Exception Center",
+      "clickedCtaLabel": "Tide & Bridge Window",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "repair_remaining_conflicts",
+        "current_step_label": "Repair remaining conflicts",
+        "step_status": "blocked",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "REPAIR_PLAN_CONFLICTS",
+        "blocked_reason": "6 blocking conflict(s) remain.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 2,
+        "bridgeWindows": 2,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 12,
+        "blockingConflicts": 6,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "10",
+      "title": "Corrected operating windows entered",
+      "route": "/constraints/tide-bridge",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\10_corrected_operating_windows_entered.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "repair_remaining_conflicts",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "REPAIR_PLAN_CONFLICTS",
+      "expectedGlobalActionId": "REGENERATE_PLAN",
+      "actualGlobalActionId": "REGENERATE_PLAN",
+      "actualGlobalLabel": "Regenerate plan",
+      "clickedCtaLabel": "ENTER OPERATING WINDOWS",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "repair_remaining_conflicts",
+        "current_step_label": "Repair remaining conflicts",
+        "step_status": "blocked",
+        "expected_route": "/exceptions/center",
+        "expected_action_id": "REPAIR_PLAN_CONFLICTS",
+        "blocked_reason": "6 blocking conflict(s) remain.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 12,
+        "blockingConflicts": 6,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "blocked"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "validate_root_cause",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+              "recommendationId": 567,
+              "recommendationRef": "REC-612D64486D41",
+              "rootCauseAssessmentId": 3,
+              "rootCauseAssessmentStatus": "does_not_address_cause"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "validate_root_cause",
+          "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "does_not_address_cause",
+            "assessmentId": 3,
+            "assessmentRef": "RCA-126C3A6E651A",
+            "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "11",
+      "title": "Recovery plan regenerated feasible",
+      "route": "/operations/tug-barge-assignment",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\11_recovery_plan_regenerated_feasible.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "submit_approval",
+      "flowStepStatus": "active",
+      "expectedActionId": "SUBMIT_APPROVAL",
+      "expectedGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalLabel": "Submit approval",
+      "clickedCtaLabel": "REGENERATE PLAN",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "submit_approval",
+        "current_step_label": "Submit approval",
+        "step_status": "active",
+        "expected_route": "/schedule/published-plan",
+        "expected_action_id": "SUBMIT_APPROVAL",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "validated",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "blockingConflictCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "REPAIR_PLAN_CONFLICTS",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "repairAction": "regenerate_plan",
+            "planVersionId": 262
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "12",
+      "title": "Recovery candidate ready for approval submission",
+      "route": "/schedule/published-plan",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\12_recovery_candidate_ready_for_approval_submission.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "submit_approval",
+      "flowStepStatus": "active",
+      "expectedActionId": "SUBMIT_APPROVAL",
+      "expectedGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalActionId": "SUBMIT_APPROVAL",
+      "actualGlobalLabel": "Submit approval",
+      "clickedCtaLabel": "NEXT ACTION Submit approval",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "submit_approval",
+        "current_step_label": "Submit approval",
+        "step_status": "active",
+        "expected_route": "/schedule/published-plan",
+        "expected_action_id": "SUBMIT_APPROVAL",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 0,
+        "pendingApprovals": 0,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "validated",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "blockingConflictCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "REPAIR_PLAN_CONFLICTS",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "repairAction": "regenerate_plan",
+            "planVersionId": 262
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_simulation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioRunId": 830
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "materialize_recommendation",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "recommendationId": 567
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "materialize_recommendation",
+          "actionId": "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "route": "/recovery/recommendations",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "recommendationId": 567
+          }
+        }
+      ]
+    },
+    {
+      "step": "13",
+      "title": "Recovery approval request submitted",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\13_recovery_approval_request_submitted.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "approve_plan",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "APPROVE_PLAN",
+      "expectedGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalLabel": "Approve plan",
+      "clickedCtaLabel": "SUBMIT APPROVAL",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "approve_plan",
+        "current_step_label": "Approve plan",
+        "step_status": "blocked",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "APPROVE_PLAN",
+        "blocked_reason": "Required approval decisions are incomplete.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 1,
+        "pendingApprovals": 1,
+        "approvalDecisions": 0,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "planVersionId": 262,
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "blockingConflictCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "REPAIR_PLAN_CONFLICTS",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "repairAction": "regenerate_plan",
+            "planVersionId": 262
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "promote_scenario",
+          "actionId": "PROMOTE_SCENARIO",
+          "route": "/simulation/workspace",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "scenarioId": 757,
+            "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
+            "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
+          }
+        }
+      ]
+    },
+    {
+      "step": "14",
+      "title": "First recovery approval recorded",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\14_first_recovery_approval_recorded.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "blocked",
+      "currentStep": "approve_plan",
+      "flowStepStatus": "blocked",
+      "expectedActionId": "APPROVE_PLAN",
+      "expectedGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalActionId": "APPROVE_PLAN",
+      "actualGlobalLabel": "Approve plan",
+      "clickedCtaLabel": "Approve",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "blocked",
+        "current_step": "approve_plan",
+        "current_step_label": "Approve plan",
+        "step_status": "blocked",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "APPROVE_PLAN",
+        "blocked_reason": "Required approval decisions are incomplete.",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 1,
+        "pendingApprovals": 1,
+        "approvalDecisions": 1,
+        "approvalsComplete": false,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "proposed",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "planVersionId": 262,
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "blockingConflictCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "REPAIR_PLAN_CONFLICTS",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "repairAction": "regenerate_plan",
+            "planVersionId": 262
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "6 blocking conflict(s) remain.",
+            "evidence": {
+              "blockingConflictCount": 6
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "promote_scenario",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "scenarioId": 757,
+              "scenarioVersionId": 262
+            }
+          }
+        }
+      ]
+    },
+    {
+      "step": "15",
+      "title": "Dual recovery approval complete",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\15_dual_recovery_approval_complete.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "run_publishability_check",
+      "flowStepStatus": "active",
+      "expectedActionId": "RUN_PUBLISHABILITY_CHECK",
+      "expectedGlobalActionId": "RUN_PUBLISHABILITY_CHECK",
+      "actualGlobalActionId": "RUN_PUBLISHABILITY_CHECK",
+      "actualGlobalLabel": "Run publishability check",
+      "clickedCtaLabel": "Approve",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "run_publishability_check",
+        "current_step_label": "Run publishability check",
+        "step_status": "active",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "RUN_PUBLISHABILITY_CHECK",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "approvalsComplete": true,
+        "publishabilityStatus": null,
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 0,
+        "publishabilityAllowsPublish": false,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "approved",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "abl_dispatcher",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "planVersionId": 262,
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "blockingConflictCount": 0
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "repair_remaining_conflicts",
+          "actionId": "REPAIR_PLAN_CONFLICTS",
+          "route": "/operations/tug-barge-assignment",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "repairAction": "regenerate_plan",
+            "planVersionId": 262
+          }
+        }
+      ]
+    },
+    {
+      "step": "16",
+      "title": "Recovery publishability gate cleared",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\16_recovery_publishability_gate_cleared.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "active",
+      "currentStep": "publish_plan",
+      "flowStepStatus": "active",
+      "expectedActionId": "PUBLISH_PLAN",
+      "expectedGlobalActionId": "PUBLISH_PLAN",
+      "actualGlobalActionId": "PUBLISH_PLAN",
+      "actualGlobalLabel": "Publish plan",
+      "clickedCtaLabel": "CHECK PUBLISHABILITY",
+      "assistantFlow": {
+        "active_flow": "phase5_plus_recovery_v1",
+        "flow_run_id": "FLOW-EB769B8A262F",
+        "flow_name": "Phase 5+ recovery path",
+        "flow_status": "active",
+        "current_step": "publish_plan",
+        "current_step_label": "Publish plan",
+        "step_status": "active",
+        "expected_route": "/approvals/publishing",
+        "expected_action_id": "PUBLISH_PLAN",
+        "blocked_reason": "",
+        "trial_pack": "operator_trial_phase5",
+        "evidence_run_id": "operator-trial-recovery",
+        "expected_action_ids": [
+          "OPEN_EXCEPTION_CENTER",
+          "GENERATE_RECOVERY_OPTIONS",
+          "OPEN_RECOMMENDATION_CONSOLE",
+          "VALIDATE_ROOT_CAUSE_REPAIR",
+          "MATERIALIZE_RECOVERY_RECOMMENDATION",
+          "RUN_SIMULATION",
+          "PROMOTE_SCENARIO",
+          "REPAIR_PLAN_CONFLICTS",
+          "SUBMIT_APPROVAL",
+          "APPROVE_PLAN",
+          "RUN_PUBLISHABILITY_CHECK",
+          "PUBLISH_PLAN"
+        ]
+      },
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "approvalsComplete": true,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "publishedSnapshots": 0,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "approved",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_publishability_check",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "warningCount": 0,
+              "planVersionId": 262,
+              "blockingReasonCount": 0,
+              "publishabilityStatus": "publishable",
+              "publishabilityAssessmentId": 6,
+              "publishabilityAssessmentRef": "PUB-9D62FFB0B92F"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "run_publishability_check",
+          "actionId": "RUN_PUBLISHABILITY_CHECK",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "publishable",
+            "assessmentId": 6,
+            "warningCount": 0,
+            "assessmentRef": "PUB-9D62FFB0B92F",
+            "planVersionId": 262,
+            "blockingReasonCount": 0
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "abl_dispatcher",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "blocked",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "reason": "Required approval decisions are incomplete.",
+            "evidence": {
+              "missingRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvedRoles": [],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "submit_approval",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "submit_approval",
+          "actionId": "SUBMIT_APPROVAL",
+          "route": "/schedule/published-plan",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "planVersionId": 262,
+            "approvalRequestId": 249
+          }
+        }
+      ]
+    },
+    {
+      "step": "17",
+      "title": "Recovery plan manually published",
+      "route": "/approvals/publishing",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\17_recovery_plan_manually_published.png",
+      "flowRunId": "FLOW-EB769B8A262F",
+      "flowKey": "phase5_plus_recovery_v1",
+      "flowStatus": "completed",
+      "currentStep": "",
+      "flowStepStatus": "completed",
+      "expectedActionId": null,
+      "expectedGlobalActionId": null,
+      "actualGlobalActionId": "GENERATE_EXPORT",
+      "actualGlobalLabel": "Generate governed export",
+      "clickedCtaLabel": "PUBLISH PLAN",
+      "assistantFlow": null,
+      "domainState": {
+        "voyages": 3,
+        "cargoLayerSteps": 6,
+        "tideWindows": 4,
+        "bridgeWindows": 4,
+        "plans": 1,
+        "planVersions": 2,
+        "trips": 6,
+        "openConflicts": 0,
+        "blockingConflicts": 0,
+        "recoverySnapshots": 1,
+        "optimizerRuns": 1,
+        "recommendations": 5,
+        "rootCauseAssessments": 1,
+        "scenarios": 1,
+        "scenarioRuns": 2,
+        "approvalRequests": 1,
+        "pendingApprovals": 0,
+        "approvalDecisions": 2,
+        "approvalsComplete": true,
+        "publishabilityStatus": "publishable",
+        "publishabilityBlockers": 0,
+        "publishabilityWarnings": 0,
+        "publishabilityAssessments": 1,
+        "publishabilityAllowsPublish": true,
+        "publishedSnapshots": 1,
+        "exports": 0,
+        "activePlanVersion": {
+          "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+          "versionNo": 2,
+          "status": "published",
+          "validationStatus": "feasible"
+        }
+      },
+      "recentFlowEvents": [
+        {
+          "eventType": "completed",
+          "stepKey": "publish_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {}
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "publish_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "publishedSnapshotId": 56
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "publish_plan",
+          "actionId": "PUBLISH_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
+            "versionNo": 2,
+            "planVersionId": 262
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "run_publishability_check",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "warningCount": 0,
+              "planVersionId": 262,
+              "blockingReasonCount": 0,
+              "publishabilityStatus": "publishable",
+              "publishabilityAssessmentId": 6,
+              "publishabilityAssessmentRef": "PUB-9D62FFB0B92F"
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "run_publishability_check",
+          "actionId": "RUN_PUBLISHABILITY_CHECK",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "status": "publishable",
+            "assessmentId": 6,
+            "warningCount": 0,
+            "assessmentRef": "PUB-9D62FFB0B92F",
+            "planVersionId": 262,
+            "blockingReasonCount": 0
+          }
+        },
+        {
+          "eventType": "domain_completed",
+          "stepKey": "approve_plan",
+          "actionId": "",
+          "route": "",
+          "metadata": {
+            "evidence": {
+              "missingRoles": [],
+              "approvedRoles": [
+                "abl_dispatcher",
+                "berau_scheduler"
+              ],
+              "approvalRequestId": 249
+            }
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "abl_dispatcher",
+            "approvalRequestId": 249
+          }
+        },
+        {
+          "eventType": "cta_intent",
+          "stepKey": "approve_plan",
+          "actionId": "APPROVE_PLAN",
+          "route": "/approvals/publishing",
+          "metadata": {
+            "source": "operator_ui_cta",
+            "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
+            "authorityRole": "berau_scheduler",
+            "approvalRequestId": 249
+          }
+        }
+      ]
+    }
+  ],
+  "clicks": [
+    {
+      "purpose": "Set Assist to Super mode",
+      "target": "Super",
+      "text": "SUPER",
+      "matchCount": 1,
+      "route": "#/dashboard/situation",
+      "clickedAt": "2026-05-29T23:05:54.951Z"
+    },
+    {
+      "purpose": "Global Next Action opens Exception Center for recovery option generation",
+      "target": "Open Exception Center",
+      "text": "NEXT ACTION Open Exception Center",
+      "matchCount": 2,
+      "route": "#/dashboard/situation",
+      "clickedAt": "2026-05-29T23:05:58.999Z"
+    },
+    {
+      "purpose": "Visible page CTA creates recovery snapshot and optimizer run",
+      "target": "Generate recovery options",
+      "text": "GENERATE RECOVERY OPTIONS",
+      "matchCount": 1,
+      "route": "#/exceptions/center",
+      "clickedAt": "2026-05-29T23:06:02.853Z"
+    },
+    {
+      "purpose": "Visible page CTA records root-cause repair assessment",
+      "target": "Validate root cause",
+      "text": "VALIDATE ROOT CAUSE",
+      "matchCount": 1,
+      "route": "#/recovery/recommendations",
+      "clickedAt": "2026-05-29T23:06:09.266Z"
+    },
+    {
+      "purpose": "Visible page CTA materializes recommendation into a governed scenario",
+      "target": "Test as scenario",
+      "text": "TEST AS SCENARIO",
+      "matchCount": 2,
+      "route": "#/recovery/recommendations",
+      "clickedAt": "2026-05-29T23:06:13.311Z"
+    },
+    {
+      "purpose": "Visible page CTA reruns the scenario before promotion",
+      "target": "Run simulation",
+      "text": "RUN SIMULATION",
+      "matchCount": 1,
+      "route": "#/simulation/workspace",
+      "clickedAt": "2026-05-29T23:06:18.655Z"
+    },
+    {
+      "purpose": "Visible page CTA promotes scenario into a proposed recovery plan",
+      "target": "Promote to proposed",
+      "text": "PROMOTE TO PROPOSED",
+      "matchCount": 1,
+      "route": "#/simulation/workspace",
+      "clickedAt": "2026-05-29T23:06:22.907Z"
+    },
+    {
+      "purpose": "Next Action routes operator back to blockers for repair",
+      "target": "Open Exception Center",
+      "text": "NEXT ACTION Open Exception Center",
+      "matchCount": 1,
+      "route": "#/simulation/workspace",
+      "clickedAt": "2026-05-29T23:06:27.701Z"
+    },
+    {
+      "purpose": "Operator opens operating windows to repair remaining navigation blockers",
+      "target": "Tide & Bridge Window",
+      "text": "Tide & Bridge Window",
+      "matchCount": 1,
+      "route": "#/exceptions/center",
+      "clickedAt": "2026-05-29T23:06:31.794Z"
+    },
+    {
+      "purpose": "Visible page CTA applies corrected operating windows",
+      "target": "Enter operating windows",
+      "text": "ENTER OPERATING WINDOWS",
+      "matchCount": 1,
+      "route": "#/constraints/tide-bridge",
+      "clickedAt": "2026-05-29T23:06:36.358Z"
+    },
+    {
+      "purpose": "Operator opens assignment board to regenerate against repaired constraints",
+      "target": "Tug/Barge Assignment",
+      "text": "Tug/Barge Assignment",
+      "matchCount": 1,
+      "route": "#/constraints/tide-bridge",
+      "clickedAt": "2026-05-29T23:06:40.408Z"
+    },
+    {
+      "purpose": "Visible page CTA regenerates the recovery plan and clears blockers",
+      "target": "Regenerate plan",
+      "text": "REGENERATE PLAN",
+      "matchCount": 2,
+      "route": "#/operations/tug-barge-assignment",
+      "clickedAt": "2026-05-29T23:06:42.813Z"
+    },
+    {
+      "purpose": "Next Action opens published-plan page for approval submission",
+      "target": "Submit approval",
+      "text": "NEXT ACTION Submit approval",
+      "matchCount": 1,
+      "route": "#/operations/tug-barge-assignment",
+      "clickedAt": "2026-05-29T23:06:47.398Z"
+    },
+    {
+      "purpose": "Visible page CTA submits recovery plan for approval",
+      "target": "Submit approval",
+      "text": "SUBMIT APPROVAL",
+      "matchCount": 2,
+      "route": "#/schedule/published-plan",
+      "clickedAt": "2026-05-29T23:06:51.436Z"
+    },
+    {
+      "purpose": "Visible page CTA records first approval authority",
+      "target": "Approve",
+      "text": "Approve",
+      "matchCount": 1,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T23:06:56.663Z"
+    },
+    {
+      "purpose": "Visible page CTA records second approval authority",
+      "target": "Approve",
+      "text": "Approve",
+      "matchCount": 1,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T23:07:00.904Z"
+    },
+    {
+      "purpose": "Visible page CTA computes publishability gate for recovery plan",
+      "target": "Check publishability",
+      "text": "CHECK PUBLISHABILITY",
+      "matchCount": 3,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T23:07:05.731Z"
+    },
+    {
+      "purpose": "Visible page CTA manually publishes approved recovery plan",
+      "target": "Publish plan",
+      "text": "PUBLISH PLAN",
+      "matchCount": 2,
+      "route": "#/approvals/publishing",
+      "clickedAt": "2026-05-29T23:07:09.974Z"
+    }
+  ],
+  "finalAssertions": {
+    "flowRunId": "FLOW-EB769B8A262F",
+    "flowKey": "phase5_plus_recovery_v1",
+    "flowCompleted": true,
+    "recommendationsCreatedByUi": true,
+    "rootCauseAssessmentExists": true,
+    "scenarioMaterializedByUi": true,
+    "publishabilityAssessmentExists": true,
+    "approvalsComplete": true,
+    "activePublishedSnapshotExists": true
+  }
+}

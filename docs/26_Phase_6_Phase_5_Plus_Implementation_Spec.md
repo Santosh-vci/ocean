@@ -1,6 +1,6 @@
 # 26 - Phase 6 / Phase 5+ Implementation Spec
 
-**Status:** implementation-ready specification
+**Status:** implemented and closed by Chunk 6.7 evidence
 
 **Purpose:** define the next governed decision-support layer after Phase 5. This spec turns the known Phase 5 gaps into buildable work while keeping the operator experience UI-driven, approval-governed, and aligned with Next Action Assist.
 
@@ -140,6 +140,7 @@ Implement services with deterministic behavior:
 | `generate_plan` | `GENERATE_PLAN` | `/operations/tug-barge-assignment` | active plan version has generated trips |
 | `submit_approval` | `SUBMIT_APPROVAL` | `/schedule/published-plan` | approval request exists |
 | `approve_plan` | `APPROVE_PLAN` | `/approvals/publishing` | all required approvals complete |
+| `run_publishability_check` | `RUN_PUBLISHABILITY_CHECK` | `/approvals/publishing` | latest publishability assessment is publishable or warning |
 | `publish_plan` | `PUBLISH_PLAN` | `/approvals/publishing` | active published snapshot exists |
 | `generate_export` | `GENERATE_EXPORT` | `/admin/export-handoff` | governed export exists; optional terminal step |
 
@@ -155,9 +156,9 @@ Implement services with deterministic behavior:
 | `run_simulation` | `RUN_SIMULATION` | `/simulation/workspace` | scenario run succeeded |
 | `promote_scenario` | `PROMOTE_SCENARIO` | `/simulation/workspace` | proposed plan version exists |
 | `repair_remaining_conflicts` | `REPAIR_PLAN_CONFLICTS` | `/exceptions/center` | no unresolved blocking conflict remains |
-| `run_publishability_check` | `RUN_PUBLISHABILITY_CHECK` | `/approvals/publishing` | latest assessment is publishable or explains blocker |
 | `submit_approval` | `SUBMIT_APPROVAL` | `/schedule/published-plan` | approval request exists |
 | `approve_plan` | `APPROVE_PLAN` | `/approvals/publishing` | all required approvals complete |
+| `run_publishability_check` | `RUN_PUBLISHABILITY_CHECK` | `/approvals/publishing` | latest assessment is publishable or warning |
 | `publish_plan` | `PUBLISH_PLAN` | `/approvals/publishing` | manual published snapshot exists |
 
 ## Flow-Aware Next Action Assist
@@ -476,33 +477,58 @@ docker compose exec -T api pytest apps/core/tests/test_phase5_recovery_proof.py 
 
 Add flow models, serializers, services, admin/read APIs, seed definitions, and backend tests.
 
+Status: complete.
+
 ### Chunk 6.1 - Flow-Aware Next Action
 
 Extend assistant selectors, rules, response contract, frontend normalization, and assistant components.
+
+Status: complete.
 
 ### Chunk 6.2 - Operator Trial DB Truth
 
 Add deterministic DB-truth preparation for operator trial and UI CTA evidence assertions.
 
+Status: complete.
+
 ### Chunk 6.3 - Root-Cause Repair Validation
 
 Add recovery repair orchestration and root-cause assessment for core conflict families.
+
+Status: complete.
 
 ### Chunk 6.4 - Publishability Gate
 
 Add publishability service, Approvals/Publishing surface, and assistant guidance.
 
+Status: complete.
+
 ### Chunk 6.5 - Global Optimizer Scaffold
 
 Add global candidate contracts, objective weight configuration, audit lineage, and read-only review UI.
+
+Status: complete.
 
 ### Chunk 6.6 - Telemetry Trust And Commercial Projection
 
 Add telemetry trust profiles and projection-only customer-safe commercial outputs.
 
+Status: complete.
+
 ### Chunk 6.7 - Evidence And Runbook Closure
 
 Add UI CTA browser evidence, update operator runbooks, and document known remaining business decisions.
+
+Status: complete. Closure evidence is recorded in `27_Phase_6_Completion_Evidence.md`.
+
+## Closure Evidence
+
+Chunk 6.7 closes this specification with repeatable browser evidence and documentation updates:
+
+- clean operator happy path UI CTA evidence: `docs/evidence/operator_trial_flow/operator_trial_flow_capture.json`;
+- Phase 5+ recovery UI CTA evidence: `docs/evidence/phase6_recovery_flow/phase6_recovery_flow_capture.json`;
+- read-only global optimizer, telemetry trust, and commercial projection surface evidence: `docs/evidence/phase6_review_surfaces/phase6_review_surface_capture.json`;
+- completion runbook and remaining business decisions: `27_Phase_6_Completion_Evidence.md`.
 
 ## Exit Criteria
 

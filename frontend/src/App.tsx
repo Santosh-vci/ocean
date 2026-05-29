@@ -854,6 +854,12 @@ function App() {
         planCode: version.plan_code,
         versionNo: version.version_no,
       });
+      await recordActiveFlowCta("REPAIR_PLAN_CONFLICTS", "/operations/tug-barge-assignment", {
+        planVersionId: version.id,
+        planCode: version.plan_code,
+        versionNo: version.version_no,
+        repairAction: "regenerate_plan",
+      });
       return `Schedule generated: ${version.plan_code} V${version.version_no}`;
     });
   }

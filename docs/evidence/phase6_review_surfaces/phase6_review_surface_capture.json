@@ -1,0 +1,100 @@
+{
+  "preparedAt": "2026-05-29T23:07:22.385Z",
+  "appUrl": "http://localhost:8080",
+  "setup": {
+    "mode": "review-surface visibility setup",
+    "note": "Backend setup/generation is allowed here because these are read-only review surfaces, not the operator happy-path execution.",
+    "seedOutput": "Seeded Phase 1 pilot organizations, roles, planning data, schedule, governance loop, dashboard context, and export handoff permissions.\n",
+    "generated": {
+      "globalOptimizationRunId": "GOPT-FF95CDF2326F",
+      "globalOptimizationCandidateCount": 3,
+      "telemetryTrustAssessmentCount": 9,
+      "commercialProjectionRunId": "CPR-20A7D4715F31",
+      "commercialProjectionCount": 4,
+      "activePlanVersion": "PLAN-2026-05-31"
+    }
+  },
+  "surfaces": [
+    {
+      "key": "global_optimization",
+      "title": "Global Optimization Review",
+      "route": "/optimization/global",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_review_surfaces\\screenshots\\01_global_optimization_review.png",
+      "requiredText": [
+        "Read-only candidates",
+        "Ranked global candidates",
+        "Candidate contract",
+        "Audit lineage",
+        "Advisory only"
+      ],
+      "forbiddenWorkspaceButtons": [
+        "Materialize",
+        "Promote",
+        "Approve",
+        "Publish"
+      ],
+      "assertions": {
+        "globalRunCount": 1,
+        "globalCandidateCount": 3,
+        "hasCandidates": true,
+        "candidatesReadOnly": true
+      },
+      "capturedAt": "2026-05-29T23:07:42.737Z"
+    },
+    {
+      "key": "telemetry_trust",
+      "title": "Live Map Telemetry Trust",
+      "route": "/map/live",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_review_surfaces\\screenshots\\02_live_map_telemetry_trust.png",
+      "requiredText": [
+        "Telemetry",
+        "Trust"
+      ],
+      "forbiddenWorkspaceButtons": [],
+      "assertions": {
+        "profileKey": "telemetry_trust_default_v1",
+        "latestAssessmentCount": 8,
+        "trustedCount": 3,
+        "degradedCount": 0,
+        "blockingCount": 5,
+        "hasTrustAssessment": true
+      },
+      "capturedAt": "2026-05-29T23:07:45.325Z"
+    },
+    {
+      "key": "commercial_projection",
+      "title": "Commercial Projection Review",
+      "route": "/commercial/projections",
+      "screenshot": "F:\\ocean\\docs\\evidence\\phase6_review_surfaces\\screenshots\\03_commercial_projection_review.png",
+      "requiredText": [
+        "Commercial Projections",
+        "Projection only",
+        "not settlement",
+        "not a customer commitment",
+        "invoice",
+        "laytime"
+      ],
+      "forbiddenWorkspaceButtons": [
+        "Settle",
+        "Invoice",
+        "Commit",
+        "Approve",
+        "Publish",
+        "Materialize"
+      ],
+      "assertions": {
+        "commercialRunId": "CPR-20A7D4715F31",
+        "projectionCount": 4,
+        "projectionOnly": true,
+        "hasCommercialProjectionRun": true
+      },
+      "capturedAt": "2026-05-29T23:07:47.986Z"
+    }
+  ],
+  "finalAssertions": {
+    "globalOptimizerCandidatesVisible": true,
+    "telemetryTrustVisible": true,
+    "commercialProjectionVisible": true,
+    "commercialProjectionOnly": true
+  }
+}

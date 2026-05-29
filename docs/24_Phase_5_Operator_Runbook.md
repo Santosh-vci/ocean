@@ -99,7 +99,7 @@ Availability was checked in the running `api` container with `python manage.py h
 | `seed_phase0` | Yes | Baseline local-development seed. | Supports `--master-data-only` and `--reset-operational-data`. `--master-data-only` clears planning/scheduling/export/audit records and keeps users, roles, permissions, and master data. |
 | `seed_phase3_replay` | Yes | Deterministic Phase 3 synthetic replay runs. | Supports `--preserve-status`. |
 | `seed_assistant_recovery_practice` | Yes | Multi-OGV Assist Super recovery practice case. | Supports `--skip-reset` and `--json`. This is a recovery practice seed, not the clean happy path. |
-| `operator_trial_practice` | Yes | Staged Phase 5 operator recovery practice. | Supports `reset`, `import-demand`, `enter-windows`, `generate-plan`, and `status`, plus `--json`. It intentionally creates the blocked trial case, so it is not the happy path. |
+| `operator_trial_practice` | Yes | Staged Phase 5 operator recovery practice and Phase 6 DB-truth trial preparation. | Supports `reset`, `import-demand`, `enter-windows`, `generate-plan`, `status`, and `prepare-db-truth --flow happy-path\|recovery`, plus `--json`. Preparation commands set deterministic DB truth only; accepted operator evidence still comes from visible UI CTAs assisted by Next Action. |
 | `phase1_e2e_proof` | Yes | Automated clean-transaction regression proof. | Supports `--json` and `--skip-seed`. Use it for evidence/CI, not as the operator happy-path definition. |
 | `phase2_scenario_proof` | Yes | Phase 2 scenario proof. | Supports `--json` and `--skip-seed`. |
 | `phase3_tracking_proof` | Yes | Phase 3 synthetic tracking proof. | Supports `--json` and `--skip-seed`. |
@@ -795,9 +795,9 @@ Phase 5 can:
 - block publication when unresolved critical risk remains;
 - provide proof-pack and audit evidence.
 
-## What Phase 5 Does Not Do Yet
+## What Original Phase 5 Did Not Do Yet
 
-Phase 5 does not yet:
+Original Phase 5 did not yet:
 
 - automatically repair every conflict in the plan;
 - guarantee that the top option fully removes the original physical cause, such as an unavailable barge;
@@ -808,7 +808,15 @@ Phase 5 does not yet:
 - consume live third-party GPS/AIS feeds as production truth;
 - calculate final customer commitment or demurrage settlement.
 
-The Phase 6 / Phase 5+ implementation specification in `26_Phase_6_Phase_5_Plus_Implementation_Spec.md` turns these gaps into the next governed build plan. It keeps automatic publishing, approval replacement, and final demurrage settlement out of scope while specifying persistent flow runtime, flow-aware Next Action guidance, root-cause repair validation, publishability assessment, DB-truth operator-trial seeding, telemetry trust, global optimization scaffolding, and projection-only commercial outputs.
+Phase 6 / Phase 5+ now closes part of that gap with persistent flow runtime, flow-aware Next Action guidance, UI CTA operator-trial evidence, root-cause repair assessment, explicit publishability checks, global optimizer review candidates, telemetry trust assessment, and projection-only commercial outputs. The closure evidence is documented in `27_Phase_6_Completion_Evidence.md`.
+
+The following limitations still remain deliberate business boundaries:
+
+- automatic publishing remains out of scope; the operator must still click the visible `Publish plan` CTA;
+- Berau and ABL approval remains required and is not replaced by optimizer, assistant, flow, telemetry, or commercial outputs;
+- global optimizer objective weights are configurable defaults pending commercial sign-off;
+- GPS/AIS is evidence gated by trust assessment, not unconditional production truth;
+- commercial output remains projection-only and excludes final customer commitment, NOR/SOF, laytime, demurrage settlement, invoicing, and despatch settlement.
 
 ## How To Judge Successful Phase 5 Practice
 

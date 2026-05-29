@@ -86,6 +86,9 @@ The pack is based on:
 26. `26_Phase_6_Phase_5_Plus_Implementation_Spec.md`
     Phase 6 / Phase 5+ implementation specification for persistent flow runtime, flow-aware Next Action guidance, stronger recovery repair, publishability validation, DB-truth operator trial seeding, live telemetry trust, global optimization scaffolding, and projection-only commercial outputs.
 
+27. `27_Phase_6_Completion_Evidence.md`
+    Closure evidence for Phase 6 / Phase 5+, including UI CTA happy-path and recovery browser evidence, read-only review-surface evidence, verification commands, and remaining business decisions.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

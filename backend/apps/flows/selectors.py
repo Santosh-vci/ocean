@@ -79,16 +79,14 @@ def _unknown_selector(flow_run, selector_name: str) -> SelectorResult:
 
 def _active_plan_version() -> PlanVersion | None:
     return (
-        PlanVersion.objects.filter(status=PlanVersion.Status.APPROVED)
-        .order_by("-created_at", "-id")
-        .first()
-        or PlanVersion.objects.filter(
+        PlanVersion.objects.filter(
             status__in=[
                 PlanVersion.Status.DRAFT,
                 PlanVersion.Status.GENERATED,
                 PlanVersion.Status.VALIDATED,
                 PlanVersion.Status.PROPOSED,
-            ]
+                PlanVersion.Status.APPROVED,
+            ],
         )
         .order_by("-created_at", "-id")
         .first()
