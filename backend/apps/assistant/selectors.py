@@ -35,6 +35,12 @@ from apps.scheduling.models import (
     ScenarioRun,
     SimulationScenario,
 )
+from apps.scheduling.publishability_services import (
+    is_publishability_assessment_stale,
+    latest_publishability_assessment,
+    resolver_action_for_publishability,
+    top_publishability_blocker,
+)
 from apps.scheduling.services import REQUIRED_APPROVAL_AUTHORITIES
 from apps.telemetry.models import TrackingAlert
 
@@ -96,6 +102,16 @@ class AssistantContext:
     top_recovery_root_cause_status: str | None = None
     top_recovery_root_cause_source_type: str = ""
     top_recovery_root_cause_residual_risk_count: int = 0
+    publishability_assessment_id: int | None = None
+    publishability_assessment_ref: str = ""
+    publishability_status: str | None = None
+    publishability_blocking_reason_count: int = 0
+    publishability_warning_count: int = 0
+    publishability_top_blocker: str = ""
+    publishability_top_blocker_key: str = ""
+    publishability_top_blocker_group: str = ""
+    publishability_expected_resolver_action_id: str = ""
+    publishability_is_stale: bool = True
     recent_governed_mutation_count: int = 0
     active_flow_run_id: str = ""
     active_flow_key: str = ""
@@ -579,6 +595,39 @@ def select_operational_actualization_risks(
     }
 
 
+def select_publishability_status(
+    user: AbstractBaseUser | None,
+    active_plan_version: PlanVersion | None,
+) -> dict[str, Any]:
+    assessment = latest_publishability_assessment(active_plan_version)
+    blocker = top_publishability_blocker(assessment)
+    return {
+        "publishability_assessment_id": assessment.id if assessment else None,
+        "publishability_assessment_ref": assessment.assessment_id if assessment else "",
+        "publishability_status": assessment.status if assessment else None,
+        "publishability_blocking_reason_count": (
+            assessment.blocking_reason_count if assessment else 0
+        ),
+        "publishability_warning_count": assessment.warning_count if assessment else 0,
+        "publishability_top_blocker": (
+            str(blocker.get("message") or "") if isinstance(blocker, dict) else ""
+        ),
+        "publishability_top_blocker_key": (
+            str(blocker.get("key") or "") if isinstance(blocker, dict) else ""
+        ),
+        "publishability_top_blocker_group": (
+            str(blocker.get("group") or "") if isinstance(blocker, dict) else ""
+        ),
+        "publishability_expected_resolver_action_id": (
+            resolver_action_for_publishability(assessment) if assessment else ""
+        ),
+        "publishability_is_stale": is_publishability_assessment_stale(
+            assessment,
+            active_plan_version,
+        ),
+    }
+
+
 def select_recent_audit_counts(user: AbstractBaseUser | None = None) -> dict[str, int]:
     governed_prefixes = (
         "approval.",
@@ -674,6 +723,7 @@ def build_assistant_context(
         object_id=object_id,
     )
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
+    publishability_status = select_publishability_status(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
     flow_status = select_flow_status(
         user,
@@ -721,6 +771,7 @@ def build_assistant_context(
         **simulation_counts,
         **phase5_status,
         **operational_risks,
+        **publishability_status,
         **audit_counts,
         **flow_status,
     )

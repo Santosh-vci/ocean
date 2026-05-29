@@ -244,6 +244,62 @@ def test_blocked_flow_step_emits_approval_resolver():
     assert shaped.global_next_action.source == "flow.current_step"
 
 
+def test_blocked_publishability_flow_step_emits_resolver_action():
+    ctx = context(
+        active_flow_run_id="FLOW-PUB",
+        active_flow_key="operator_happy_path_v1",
+        active_flow_name="Operator happy path",
+        active_flow_status="blocked",
+        current_flow_step_key="run_publishability_check",
+        current_flow_step_label="Run publishability check",
+        current_flow_step_status="blocked",
+        expected_flow_route="/approvals/publishing",
+        expected_flow_action_id="RUN_PUBLISHABILITY_CHECK",
+        flow_blocked_reason="Unresolved critical or warning telemetry alerts remain.",
+        publishability_status="blocked",
+        publishability_assessment_id=7,
+        publishability_top_blocker_group="telemetry",
+        publishability_expected_resolver_action_id="REVIEW_SIGNAL_HEALTH",
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "REVIEW_SIGNAL_HEALTH"
+
+
+def test_publishability_check_needed_precedes_publish_ready():
+    ctx = context(
+        active_plan_status=PlanVersion.Status.APPROVED,
+        active_plan_is_editable=False,
+        all_required_approvals_complete=True,
+        blocking_conflict_count=0,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "RUN_PUBLISHABILITY_CHECK"
+
+
+def test_publish_ready_requires_clear_publishability_gate():
+    ctx = context(
+        active_plan_status=PlanVersion.Status.APPROVED,
+        active_plan_is_editable=False,
+        all_required_approvals_complete=True,
+        blocking_conflict_count=0,
+        publishability_status="warning",
+        publishability_assessment_id=5,
+        publishability_is_stale=False,
+        demand_count=2,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "PUBLISH_PLAN"
+
+
 def test_recovery_recommendation_route_prioritizes_testing_over_generic_exception():
     ctx = context(
         route="/recovery/recommendations",

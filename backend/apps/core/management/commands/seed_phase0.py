@@ -61,6 +61,7 @@ from apps.scheduling.models import (
     OverrideRequest,
     Plan,
     PlanVersion,
+    PublishabilityAssessment,
     PublishedPlanSnapshot,
     RecommendationEvaluation,
     RecoveryAction,
@@ -485,6 +486,7 @@ class Command(BaseCommand):
 
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
+        PublishabilityAssessment.objects.all().delete()
         RootCauseRepairAssessment.objects.all().delete()
         RecommendationEvaluation.objects.all().delete()
         RecoveryAction.objects.all().delete()

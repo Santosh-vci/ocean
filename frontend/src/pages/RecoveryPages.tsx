@@ -73,6 +73,7 @@ type RecoveryPageProps = AssistantRecommendationSurfaceProps & {
   onGenerateRecoveryOptions?: (source: RecommendationSourceInput) => void;
   onMaterializeRecommendation?: (recommendationId: number) => void;
   onNavigate?: (path: string) => void;
+  onCheckPublishability?: () => void;
   onValidateRootCause?: (recommendationId: number) => void;
   onPublish?: () => void;
   onReject?: () => void;
@@ -2244,6 +2245,7 @@ export function ApprovalsPublishingPage({
   isActionRunning = false,
   onAssistantNavigate,
   onApprove,
+  onCheckPublishability,
   onPublish,
   onReject,
   canPublish = false,
@@ -2252,9 +2254,18 @@ export function ApprovalsPublishingPage({
   const snapshots = overview?.publishedSnapshots ?? [];
   const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const request = requests[0];
+  const publishability = overview?.publishabilityAssessment ?? null;
+  const publishabilityAllowsPublish = publishability
+    ? ["publishable", "warning"].includes(publishability.status)
+    : false;
   const published = request?.status === "published" || overview?.activePlanVersion?.status === "published";
   const readyToPublish =
-    request?.status === "approved" && (overview?.validation.blockingConflictCount ?? 0) === 0;
+    request?.status === "approved"
+    && (overview?.validation.blockingConflictCount ?? 0) === 0
+    && publishabilityAllowsPublish;
+  const publishabilityFallback = publishability
+    ? "Resolve publishability blockers before manual publish."
+    : "Run publishability check before manual publish.";
   const assistantActions = [
     ...(assistantRowActions ?? []),
     ...(assistantPageActions ?? []),
@@ -2273,9 +2284,22 @@ export function ApprovalsPublishingPage({
             {published ? "Published" : readyToPublish ? "Ready to publish" : "Publish blocked"}
           </span>
           <DisabledReasonTooltip
+            actionId="RUN_PUBLISHABILITY_CHECK"
+            actions={assistantActions}
+            fallback={!overview?.activePlanVersion ? "No active plan version is available." : ""}
+          >
+            <button
+              disabled={!overview?.activePlanVersion || !onCheckPublishability || isActionRunning}
+              onClick={onCheckPublishability}
+              type="button"
+            >
+              Check publishability
+            </button>
+          </DisabledReasonTooltip>
+          <DisabledReasonTooltip
             actionId="PUBLISH_PLAN"
             actions={assistantActions}
-            fallback={!readyToPublish ? "Publishing requires approved plan state and no blocking conflicts." : ""}
+            fallback={!readyToPublish ? publishabilityFallback : ""}
           >
             <button
               disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}
@@ -2299,7 +2323,7 @@ export function ApprovalsPublishingPage({
       <div className="metric-strip seven-up recovery-kpis">
         <div><span>Pending approvals</span><strong>{requests.filter((item) => item.status === "pending").length}</strong></div>
         <div><span>Critical</span><strong className="critical-text">{overview?.validation.criticalConflictCount ?? 0}</strong></div>
-        <div><span>Overrides</span><strong className="warning-text">{overview?.validation.overrideCount ?? 0}</strong></div>
+        <div><span>Publishability</span><strong className={statusTone(publishability?.status ?? "blocked")}>{short(publishability?.status ?? "not checked")}</strong></div>
         <div><span>Simulation promos</span><strong>{overview?.validation.scenarioCount ?? 0}</strong></div>
         <div>
           <span>{published ? "Published" : "Ready to publish"}</span>
@@ -2369,6 +2393,29 @@ export function ApprovalsPublishingPage({
                 </section>
               ) : null}
               <section className="recovery-box">
+                <strong>Publishability gate</strong>
+                {publishability ? (
+                  <>
+                    <dl>
+                      <div><dt>Status</dt><dd>{short(publishability.status)}</dd></div>
+                      <div><dt>Blockers</dt><dd>{publishability.blocking_reason_count}</dd></div>
+                      <div><dt>Warnings</dt><dd>{publishability.warning_count}</dd></div>
+                      <div><dt>Checked</dt><dd><GridDate value={publishability.checked_at} /></dd></div>
+                    </dl>
+                    <ul className="validation-list">
+                      {publishability.details.map((detail) => (
+                        <li key={detail.key}>
+                          {detail.status === "clear" ? "OK" : "!"}{" "}
+                          {detail.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p>No publishability assessment has been recorded for the active plan.</p>
+                )}
+              </section>
+              <section className="recovery-box">
                 <strong>Constraint checklist</strong>
                 <ul className="validation-list">
                   <li>{conflicts.some((conflict) => conflict.code.includes("TIDE")) ? "!" : "✓"} Tide window compatibility</li>
@@ -2406,10 +2453,19 @@ export function ApprovalsPublishingPage({
                     Reject
                   </button>
                 </DisabledReasonTooltip>
+                <DisabledReasonTooltip actionId="RUN_PUBLISHABILITY_CHECK" actions={assistantActions}>
+                  <button
+                    disabled={!overview?.activePlanVersion || !onCheckPublishability || isActionRunning}
+                    onClick={onCheckPublishability}
+                    type="button"
+                  >
+                    Check publishability
+                  </button>
+                </DisabledReasonTooltip>
                 <DisabledReasonTooltip
                   actionId="PUBLISH_PLAN"
                   actions={assistantActions}
-                  fallback={!readyToPublish ? "Publishing requires approved plan state and no blocking conflicts." : ""}
+                  fallback={!readyToPublish ? publishabilityFallback : ""}
                 >
                   <button
                     disabled={!canPublish || !readyToPublish || !onPublish || isActionRunning}

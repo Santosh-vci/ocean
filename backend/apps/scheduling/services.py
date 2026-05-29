@@ -703,6 +703,8 @@ def record_approval_decision(
 
 
 def publish_plan_version(*, plan_version: PlanVersion, actor) -> PublishedPlanSnapshot:
+    from .publishability_services import assess_plan_publishability, top_publishability_blocker
+
     if plan_version.status == PlanVersion.Status.PUBLISHED:
         raise ValidationError("This plan version is already published.")
     approval_request = (
@@ -716,6 +718,19 @@ def publish_plan_version(*, plan_version: PlanVersion, actor) -> PublishedPlanSn
         raise ValidationError("Publish is blocked while unresolved blocking conflicts remain.")
     if not _required_approvals_complete(approval_request):
         raise ValidationError("Dual-party Berau and ABL approvals are required.")
+    publishability = assess_plan_publishability(
+        plan_version=plan_version,
+        actor=actor,
+        persist=True,
+    )
+    if publishability.status == "blocked":
+        blocker = top_publishability_blocker(publishability)
+        message = (
+            blocker.get("message")
+            if isinstance(blocker, dict) and blocker.get("message")
+            else "Publishability assessment is blocked."
+        )
+        raise ValidationError(f"Publish is blocked by publishability gate: {message}")
 
     with transaction.atomic():
         PlanVersion.objects.filter(

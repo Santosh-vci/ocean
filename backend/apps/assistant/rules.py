@@ -5,6 +5,7 @@ from collections.abc import Callable
 from apps.scheduling.models import (
     OptimizerRun,
     PlanVersion,
+    PublishabilityAssessment,
     RecoveryRecommendation,
     RootCauseRepairAssessment,
     SimulationScenario,
@@ -74,6 +75,8 @@ def _flow_step_action_id(ctx: AssistantContext) -> str:
         return "RUN_SIMULATION"
     if step_key == "run_simulation":
         return "MATERIALIZE_RECOVERY_RECOMMENDATION"
+    if step_key == "run_publishability_check" and ctx.publishability_expected_resolver_action_id:
+        return ctx.publishability_expected_resolver_action_id
     if step_key in {"validate_root_cause", "run_publishability_check"}:
         return ctx.expected_flow_action_id
     if "recovery run" in reason:
@@ -335,6 +338,11 @@ def rule_publish_ready(ctx: AssistantContext) -> list[ActionRecommendation]:
         ctx.all_required_approvals_complete
         and ctx.active_plan_status != PlanVersion.Status.PUBLISHED
         and ctx.blocking_conflict_count == 0
+        and ctx.publishability_status
+        in {
+            PublishabilityAssessment.Status.PUBLISHABLE,
+            PublishabilityAssessment.Status.WARNING,
+        }
     ):
         return [
             build_recommendation(
@@ -348,6 +356,95 @@ def rule_publish_ready(ctx: AssistantContext) -> list[ActionRecommendation]:
             )
         ]
     return []
+
+
+def rule_publishability_check_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if (
+        ctx.all_required_approvals_complete
+        and ctx.active_plan_status == PlanVersion.Status.APPROVED
+        and ctx.blocking_conflict_count == 0
+        and (
+            ctx.publishability_assessment_id is None
+            or ctx.publishability_is_stale
+        )
+    ):
+        return [
+            build_recommendation(
+                "RUN_PUBLISHABILITY_CHECK",
+                priority="warning",
+                rank_score=900,
+                enabled=True,
+                reason=(
+                    "Run the publishability gate before manual publication."
+                    if ctx.publishability_assessment_id is None
+                    else "Publishability assessment is stale after planning state changed."
+                ),
+                source="publishability.check_needed",
+                impact_if_ignored=(
+                    "Manual publish remains unavailable until the gate is checked."
+                ),
+                metadata={
+                    "planVersionId": ctx.active_plan_version_id,
+                    "publishabilityAssessmentId": ctx.publishability_assessment_id,
+                    "stale": ctx.publishability_is_stale,
+                },
+            )
+        ]
+    return []
+
+
+def rule_publishability_blocked(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if ctx.publishability_status != PublishabilityAssessment.Status.BLOCKED:
+        return []
+    action_id = _publishability_resolver_action(ctx)
+    return [
+        build_recommendation(
+            action_id,
+            priority="critical",
+            rank_score=985,
+            enabled=True,
+            reason=(
+                ctx.publishability_top_blocker
+                or "Publishability gate is blocked before manual publication."
+            ),
+            source="publishability.blocked",
+            impact_if_ignored="The backend publish guard will reject this plan.",
+            metadata={
+                "publishabilityAssessmentId": ctx.publishability_assessment_id,
+                "publishabilityAssessmentRef": ctx.publishability_assessment_ref,
+                "status": ctx.publishability_status,
+                "blockerCount": ctx.publishability_blocking_reason_count,
+                "warningCount": ctx.publishability_warning_count,
+                "topBlockerKey": ctx.publishability_top_blocker_key,
+                "topBlockerGroup": ctx.publishability_top_blocker_group,
+            },
+        )
+    ]
+
+
+def _publishability_resolver_action(ctx: AssistantContext) -> str:
+    if ctx.publishability_expected_resolver_action_id:
+        if (
+            ctx.publishability_expected_resolver_action_id == "APPROVE_PLAN"
+            and ctx.pending_approval_count == 0
+            and not ctx.all_required_approvals_complete
+        ):
+            return "SUBMIT_APPROVAL"
+        return ctx.publishability_expected_resolver_action_id
+    group = ctx.publishability_top_blocker_group
+    if group == "approval":
+        return "APPROVE_PLAN" if ctx.pending_approval_count > 0 else "SUBMIT_APPROVAL"
+    if group == "conflict":
+        return "OPEN_EXCEPTION_CENTER"
+    if group == "cargo_sequence":
+        return "REVIEW_COAL_SEQUENCE"
+    if group == "operating_window":
+        return "ENTER_OPERATING_WINDOWS"
+    if group == "recommendation_origin":
+        return "VALIDATE_ROOT_CAUSE_REPAIR"
+    if group == "telemetry":
+        return "REVIEW_SIGNAL_HEALTH"
+    return "RUN_PUBLISHABILITY_CHECK"
 
 
 def rule_export_published_without_export(ctx: AssistantContext) -> list[ActionRecommendation]:
@@ -811,6 +908,8 @@ RULES: tuple[Rule, ...] = (
     rule_scenario_promotable,
     rule_approval_ready_to_submit,
     rule_approval_user_decision_pending,
+    rule_publishability_check_needed,
+    rule_publishability_blocked,
     rule_publish_ready,
     rule_export_published_without_export,
     rule_high_confidence_event,

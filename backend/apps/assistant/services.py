@@ -813,6 +813,13 @@ def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
             "blocking_conflict_count": ctx.blocking_conflict_count,
             "latest_optimizer_run_id": ctx.latest_optimizer_run_id,
             "top_recovery_recommendation_id": ctx.top_recovery_recommendation_id,
+            "publishability_status": ctx.publishability_status,
+            "publishability_assessment_id": ctx.publishability_assessment_id,
+            "publishability_blocking_reason_count": (
+                ctx.publishability_blocking_reason_count
+            ),
+            "publishability_warning_count": ctx.publishability_warning_count,
+            "publishability_top_blocker": ctx.publishability_top_blocker,
         },
         "global_next_action": shaped.global_next_action,
         "page_actions": shaped.page_actions,

@@ -50,6 +50,7 @@ from .recovery_services import (
     materialize_recommendation_as_scenario,
 )
 from .root_cause_services import assess_recommendation_root_cause
+from .publishability_services import assess_plan_publishability, latest_publishability_assessment
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
@@ -61,6 +62,7 @@ from .serializers import (
     OverrideRequestSerializer,
     PlanSerializer,
     PlanVersionSerializer,
+    PublishabilityAssessmentSerializer,
     PublishedPlanSnapshotSerializer,
     RecommendationEvaluationSerializer,
     RecoveryActionSerializer,
@@ -160,6 +162,7 @@ class SchedulingViewSet(AuditMutationMixin, ModelViewSet):
         "request_approval": "schedule.edit",
         "decide": "schedule.approve",
         "publish": "schedule.publish",
+        "publishability_assessment": "schedule.view",
         "diff": "schedule.view",
         "create_scenario": "schedule.edit",
         "simulate": "schedule.edit",
@@ -278,6 +281,26 @@ class PlanVersionViewSet(SchedulingViewSet):
             PublishedPlanSnapshotSerializer(snapshot).data,
             status=status.HTTP_201_CREATED,
         )
+
+    @action(
+        detail=True,
+        methods=["get", "post"],
+        url_path="publishability-assessment",
+    )
+    def publishability_assessment(self, request, pk=None):
+        version = self.get_object()
+        if request.method.lower() == "get":
+            assessment = latest_publishability_assessment(version)
+            if assessment is None:
+                return Response(None)
+            return Response(PublishabilityAssessmentSerializer(assessment).data)
+
+        assessment = assess_plan_publishability(
+            plan_version=version,
+            actor=request.user,
+            persist=True,
+        )
+        return Response(PublishabilityAssessmentSerializer(assessment).data)
 
     @action(detail=True, methods=["get"], url_path="diff")
     def diff(self, request, pk=None):
@@ -1061,6 +1084,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         recovery_recommendations = RecoveryRecommendation.objects.none()
         eta_projections = LiveEtaProjection.objects.none()
         tracking_alerts = TrackingAlert.objects.none()
+        publishability_assessment = None
 
         if active_version:
             trips = (
@@ -1203,6 +1227,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "eta_projection",
                 "created_scenario",
             )
+            publishability_assessment = latest_publishability_assessment(active_version)
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -1273,6 +1298,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     tracking_alerts,
                     many=True,
                 ).data,
+                "publishabilityAssessment": (
+                    PublishabilityAssessmentSerializer(publishability_assessment).data
+                    if publishability_assessment
+                    else None
+                ),
                 "trackingSummary": {
                     "projectionCount": eta_projections.count(),
                     "openAlertCount": tracking_alerts.filter(

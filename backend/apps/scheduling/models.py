@@ -37,6 +37,10 @@ def root_cause_assessment_reference() -> str:
     return _reference("RCA")
 
 
+def publishability_assessment_reference() -> str:
+    return _reference("PUB")
+
+
 class Plan(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -836,6 +840,66 @@ class RootCauseRepairAssessment(models.Model):
     @property
     def organization(self):
         return self.recommendation.organization
+
+    def __str__(self) -> str:
+        return self.assessment_id
+
+
+class PublishabilityAssessment(models.Model):
+    class Status(models.TextChoices):
+        PUBLISHABLE = "publishable", "Publishable"
+        WARNING = "warning", "Warning"
+        BLOCKED = "blocked", "Blocked"
+
+    assessment_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=publishability_assessment_reference,
+    )
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        related_name="publishability_assessments",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.BLOCKED,
+    )
+    blocking_reason_count = models.PositiveIntegerField(default=0)
+    warning_count = models.PositiveIntegerField(default=0)
+    approval_status = models.CharField(max_length=40, blank=True)
+    conflict_status = models.CharField(max_length=40, blank=True)
+    telemetry_status = models.CharField(max_length=40, blank=True)
+    cargo_sequence_status = models.CharField(max_length=40, blank=True)
+    operating_window_status = models.CharField(max_length=40, blank=True)
+    recommendation_origin_status = models.CharField(max_length=40, blank=True)
+    checked_at = models.DateTimeField(default=timezone.now)
+    checked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="checked_publishability_assessments",
+    )
+    algorithm_version = models.CharField(max_length=96)
+    details = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-checked_at", "-id"]
+        indexes = [
+            models.Index(fields=("plan_version", "status", "checked_at")),
+            models.Index(fields=("status", "checked_at")),
+            models.Index(fields=("checked_at",)),
+            models.Index(fields=("approval_status", "conflict_status")),
+            models.Index(fields=("recommendation_origin_status", "telemetry_status")),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization
 
     def __str__(self) -> str:
         return self.assessment_id

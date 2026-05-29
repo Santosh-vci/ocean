@@ -12,11 +12,16 @@ from apps.scheduling.models import (
     OptimizerRun,
     PlanVersion,
     PublishedPlanSnapshot,
+    PublishabilityAssessment,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
     RootCauseRepairAssessment,
     ScenarioRun,
     SimulationScenario,
+)
+from apps.scheduling.publishability_services import (
+    latest_publishability_assessment,
+    top_publishability_blocker,
 )
 from apps.scheduling.services import REQUIRED_APPROVAL_AUTHORITIES
 from apps.telemetry.models import TrackingAlert
@@ -57,7 +62,8 @@ def evaluate_selector(selector_name: str, flow_run=None) -> SelectorResult:
         "scenario_promoted": _scenario_promoted,
         "blocking_conflicts_clear": _blocking_conflicts_clear,
         "blocking_conflicts_present": _blocking_conflicts_present,
-        "future_publishability_assessment": _future_publishability_assessment,
+        "publishability_assessment_clear": _publishability_assessment_clear,
+        "publishability_assessment_blocked": _publishability_assessment_blocked,
     }
     evaluator = selectors.get(selector_name, _unknown_selector)
     return evaluator(flow_run, selector_name)
@@ -69,10 +75,6 @@ def _none(flow_run, selector_name: str) -> SelectorResult:
 
 def _unknown_selector(flow_run, selector_name: str) -> SelectorResult:
     return SelectorResult(reason=f"Selector '{selector_name}' is not registered.")
-
-
-def _future_publishability_assessment(flow_run, selector_name: str) -> SelectorResult:
-    return SelectorResult(reason="Publishability assessment is planned for Chunk 6.4.")
 
 
 def _active_plan_version() -> PlanVersion | None:
@@ -446,3 +448,65 @@ def _blocking_conflicts_present(flow_run, selector_name: str) -> SelectorResult:
         reason=clear.reason,
         evidence=clear.evidence,
     )
+
+
+def _publishability_assessment_clear(flow_run, selector_name: str) -> SelectorResult:
+    version = _active_plan_version()
+    assessment = latest_publishability_assessment(version)
+    if version is None:
+        return SelectorResult(reason="No active plan version is available.")
+    if assessment is None:
+        return SelectorResult(
+            reason="Publishability assessment has not been recorded.",
+            evidence={"planVersionId": version.id, "publishabilityAssessmentId": None},
+        )
+    completed = assessment.status in {
+        PublishabilityAssessment.Status.PUBLISHABLE,
+        PublishabilityAssessment.Status.WARNING,
+    }
+    return SelectorResult(
+        completed=completed,
+        reason=(
+            ""
+            if completed
+            else _publishability_blocked_reason(assessment)
+        ),
+        evidence={
+            "planVersionId": version.id,
+            "publishabilityAssessmentId": assessment.id,
+            "publishabilityAssessmentRef": assessment.assessment_id,
+            "publishabilityStatus": assessment.status,
+            "blockingReasonCount": assessment.blocking_reason_count,
+            "warningCount": assessment.warning_count,
+        },
+    )
+
+
+def _publishability_assessment_blocked(flow_run, selector_name: str) -> SelectorResult:
+    version = _active_plan_version()
+    assessment = latest_publishability_assessment(version)
+    if version is None or assessment is None:
+        return SelectorResult(
+            reason="Publishability assessment has not been recorded.",
+            evidence={"planVersionId": version.id if version else None},
+        )
+    blocked = assessment.status == PublishabilityAssessment.Status.BLOCKED
+    return SelectorResult(
+        blocked=blocked,
+        reason=_publishability_blocked_reason(assessment) if blocked else "",
+        evidence={
+            "planVersionId": version.id,
+            "publishabilityAssessmentId": assessment.id,
+            "publishabilityAssessmentRef": assessment.assessment_id,
+            "publishabilityStatus": assessment.status,
+            "blockingReasonCount": assessment.blocking_reason_count,
+            "warningCount": assessment.warning_count,
+        },
+    )
+
+
+def _publishability_blocked_reason(assessment: PublishabilityAssessment) -> str:
+    blocker = top_publishability_blocker(assessment)
+    if isinstance(blocker, dict) and blocker.get("message"):
+        return str(blocker["message"])
+    return "Publishability assessment is blocked."

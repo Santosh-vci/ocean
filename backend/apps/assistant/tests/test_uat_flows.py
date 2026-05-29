@@ -78,11 +78,22 @@ def test_uat_happy_path_action_sequence():
                 },
             ),
             (
+                "RUN_PUBLISHABILITY_CHECK",
+                {
+                    "active_plan_status": PlanVersion.Status.APPROVED,
+                    "active_plan_is_editable": False,
+                    "all_required_approvals_complete": True,
+                },
+            ),
+            (
                 "PUBLISH_PLAN",
                 {
                     "active_plan_status": PlanVersion.Status.APPROVED,
                     "active_plan_is_editable": False,
                     "all_required_approvals_complete": True,
+                    "publishability_status": "publishable",
+                    "publishability_assessment_id": 10,
+                    "publishability_is_stale": False,
                 },
             ),
             (
@@ -190,11 +201,22 @@ def test_uat_published_plan_change_path():
         [
             ("SUBMIT_APPROVAL", {}),
             (
+                "RUN_PUBLISHABILITY_CHECK",
+                {
+                    "active_plan_status": PlanVersion.Status.APPROVED,
+                    "active_plan_is_editable": False,
+                    "all_required_approvals_complete": True,
+                },
+            ),
+            (
                 "PUBLISH_PLAN",
                 {
                     "active_plan_status": PlanVersion.Status.APPROVED,
                     "active_plan_is_editable": False,
                     "all_required_approvals_complete": True,
+                    "publishability_status": "publishable",
+                    "publishability_assessment_id": 10,
+                    "publishability_is_stale": False,
                 },
             ),
             (
@@ -285,6 +307,20 @@ def test_uat_phase5_recovery_recommendation_path():
         latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
         latest_optimizer_run_candidate_count=3,
         materialized_recovery_recommendation_count=1,
+    ) == "RUN_PUBLISHABILITY_CHECK"
+    assert top_action_id(
+        active_plan_status=PlanVersion.Status.APPROVED,
+        active_plan_is_editable=False,
+        validation_status=PlanVersion.ValidationStatus.FEASIBLE,
+        cargo_layer_issue_count=2,
+        all_required_approvals_complete=True,
+        latest_optimizer_run_id=12,
+        latest_optimizer_run_status=OptimizerRun.Status.SUCCEEDED,
+        latest_optimizer_run_candidate_count=3,
+        materialized_recovery_recommendation_count=1,
+        publishability_status="publishable",
+        publishability_assessment_id=10,
+        publishability_is_stale=False,
     ) == "PUBLISH_PLAN"
     assert top_action_id(
         active_plan_status=PlanVersion.Status.PUBLISHED,

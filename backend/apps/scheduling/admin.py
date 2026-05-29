@@ -11,6 +11,7 @@ from .models import (
     OptimizerRun,
     Plan,
     PlanVersion,
+    PublishabilityAssessment,
     PublishedPlanSnapshot,
     RecommendationEvaluation,
     RecoveryAction,
@@ -173,6 +174,44 @@ class RootCauseRepairAssessmentAdmin(admin.ModelAdmin):
         "residual_risk",
         "evidence",
         "assessed_at",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(PublishabilityAssessment)
+class PublishabilityAssessmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "assessment_id",
+        "plan_version",
+        "status",
+        "blocking_reason_count",
+        "warning_count",
+        "checked_at",
+    )
+    list_filter = (
+        "status",
+        "approval_status",
+        "conflict_status",
+        "telemetry_status",
+        "cargo_sequence_status",
+        "operating_window_status",
+        "recommendation_origin_status",
+        "algorithm_version",
+    )
+    search_fields = ("assessment_id", "plan_version__plan__code")
+    readonly_fields = (
+        "assessment_id",
+        "blocking_reason_count",
+        "warning_count",
+        "approval_status",
+        "conflict_status",
+        "telemetry_status",
+        "cargo_sequence_status",
+        "operating_window_status",
+        "recommendation_origin_status",
+        "details",
+        "checked_at",
         "created_at",
         "updated_at",
     )

@@ -62,6 +62,7 @@ import type {
   PlanRecord,
   PlanVersionRecord,
   PlanningOverview,
+  PublishabilityAssessmentRecord,
   RbacOverview,
   RecoveryInputSnapshotRecord,
   RecoveryRecommendationRecord,
@@ -1272,6 +1273,34 @@ function App() {
     });
   }
 
+  async function handleCheckPublishability() {
+    await runWorkspaceAction("Check publishability", async () => {
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion;
+      if (!activeVersion) {
+        throw new Error("No active plan version");
+      }
+      const csrfToken = await getCsrfToken();
+      const assessment = await apiFetch<PublishabilityAssessmentRecord>(
+        `/scheduling/plan-versions/${activeVersion.id}/publishability-assessment/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      await recordActiveFlowCta("RUN_PUBLISHABILITY_CHECK", "/approvals/publishing", {
+        planVersionId: activeVersion.id,
+        assessmentId: assessment.id,
+        assessmentRef: assessment.assessment_id,
+        status: assessment.status,
+        blockingReasonCount: assessment.blocking_reason_count,
+        warningCount: assessment.warning_count,
+      });
+      return `Publishability checked: ${assessment.status.replaceAll("_", " ")}`;
+    });
+  }
+
   async function handlePublishPlan() {
     await runWorkspaceAction("Publish plan", async () => {
       const activeVersion = liveSchedulingOverview()?.activePlanVersion;
@@ -1523,6 +1552,7 @@ function App() {
             canPublish={canPublishSchedule}
             isActionRunning={isWorkspaceActionRunning}
             onApprove={handleApprovePlan}
+            onCheckPublishability={handleCheckPublishability}
             onPublish={handlePublishPlan}
             onReject={handleRejectPlan}
             overview={schedulingOverview}

@@ -766,6 +766,39 @@ export type RootCauseRepairAssessmentRecord = {
   updated_at: string;
 };
 
+export type PublishabilityAssessmentDetailRecord = {
+  key: string;
+  group: string;
+  status: string;
+  severity: string;
+  message: string;
+  actionId?: string;
+  evidence: Record<string, unknown>;
+};
+
+export type PublishabilityAssessmentRecord = {
+  id: number;
+  assessment_id: string;
+  plan_version: number;
+  plan_version_ref: string;
+  status: "publishable" | "warning" | "blocked" | string;
+  blocking_reason_count: number;
+  warning_count: number;
+  approval_status: string;
+  conflict_status: string;
+  telemetry_status: string;
+  cargo_sequence_status: string;
+  operating_window_status: string;
+  recommendation_origin_status: string;
+  checked_at: string;
+  checked_by: number | null;
+  checked_by_email: string | null;
+  algorithm_version: string;
+  details: PublishabilityAssessmentDetailRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
 export type RecommendationExplanationNodeRecord = {
   id: string;
   sortOrder: number;
@@ -1298,6 +1331,7 @@ export type SchedulingOverview = {
   recoveryRecommendations: RecoveryRecommendationRecord[];
   liveEtaProjections: LiveEtaProjectionRecord[];
   trackingAlerts: TrackingAlertRecord[];
+  publishabilityAssessment: PublishabilityAssessmentRecord | null;
   trackingSummary: {
     projectionCount: number;
     openAlertCount: number;

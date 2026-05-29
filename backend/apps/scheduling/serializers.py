@@ -26,6 +26,7 @@ from .models import (
     OverrideRequest,
     Plan,
     PlanVersion,
+    PublishabilityAssessment,
     PublishedPlanSnapshot,
     RecommendationEvaluation,
     RecoveryAction,
@@ -443,6 +444,37 @@ class RootCauseRepairAssessmentSerializer(serializers.ModelSerializer):
             "evidence",
             "assessed_at",
             "assessed_by_algorithm_version",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class PublishabilityAssessmentSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    checked_by_email = serializers.EmailField(source="checked_by.email", read_only=True)
+
+    class Meta:
+        model = PublishabilityAssessment
+        fields = (
+            "id",
+            "assessment_id",
+            "plan_version",
+            "plan_version_ref",
+            "status",
+            "blocking_reason_count",
+            "warning_count",
+            "approval_status",
+            "conflict_status",
+            "telemetry_status",
+            "cargo_sequence_status",
+            "operating_window_status",
+            "recommendation_origin_status",
+            "checked_at",
+            "checked_by",
+            "checked_by_email",
+            "algorithm_version",
+            "details",
             "created_at",
             "updated_at",
         )

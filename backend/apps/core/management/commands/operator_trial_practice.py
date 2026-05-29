@@ -25,6 +25,7 @@ from apps.scheduling.models import (
     ApprovalRequest,
     ExportJob,
     OptimizerRun,
+    PublishabilityAssessment,
     PublishedPlanSnapshot,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
@@ -317,6 +318,7 @@ class OperatorTrialPracticeRunner:
             "optimizerRuns": OptimizerRun.objects.count(),
             "recommendations": RecoveryRecommendation.objects.count(),
             "rootCauseAssessments": RootCauseRepairAssessment.objects.count(),
+            "publishabilityAssessments": PublishabilityAssessment.objects.count(),
             "scenarios": SimulationScenario.objects.count(),
             "openConflicts": Conflict.objects.filter(resolved_at__isnull=True).count(),
             "openTrackingAlerts": TrackingAlert.objects.filter(

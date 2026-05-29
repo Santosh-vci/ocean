@@ -24,6 +24,7 @@ from apps.scheduling.models import (
     PublishedPlanSnapshot,
     Trip,
 )
+from apps.scheduling.publishability_services import assess_plan_publishability
 
 
 def make_org(slug="flows-org"):
@@ -141,7 +142,7 @@ def create_plan_chain(user, org, voyage):
     version = PlanVersion.objects.create(
         plan=plan,
         version_no=1,
-        status=PlanVersion.Status.GENERATED,
+        status=PlanVersion.Status.APPROVED,
         generated_at=now,
         created_by=user,
     )
@@ -205,6 +206,7 @@ def create_plan_chain(user, org, voyage):
         record_count=1,
         created_by=user,
     )
+    assess_plan_publishability(plan_version=version, actor=user)
     return version
 
 
