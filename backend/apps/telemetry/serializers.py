@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.scheduling.models import PlanVersion
+
 from .models import (
     AssetIdentity,
     GeofenceZone,
@@ -12,6 +14,8 @@ from .models import (
     PositionPing,
     TelemetrySource,
     TelemetryReplayRun,
+    TelemetryTrustAssessment,
+    TelemetryTrustProfile,
     TrackingAlert,
 )
 
@@ -342,6 +346,85 @@ class TrackingAlertSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+
+class TelemetryTrustProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelemetryTrustProfile
+        fields = [
+            "id",
+            "profile_key",
+            "name",
+            "version",
+            "status",
+            "source_hierarchy",
+            "freshness_thresholds",
+            "confidence_thresholds",
+            "identity_rules",
+            "quarantine_rules",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class TelemetryTrustAssessmentSerializer(serializers.ModelSerializer):
+    profile_ref = serializers.CharField(source="profile.profile_key", read_only=True)
+    source_id = serializers.CharField(source="source.source_id", read_only=True)
+    external_id = serializers.CharField(source="asset_identity.external_id", read_only=True)
+    external_id_type = serializers.CharField(
+        source="asset_identity.external_id_type",
+        read_only=True,
+    )
+    latest_state_ref = serializers.CharField(source="latest_state.asset_code", read_only=True)
+
+    class Meta:
+        model = TelemetryTrustAssessment
+        fields = [
+            "id",
+            "assessment_id",
+            "profile",
+            "profile_ref",
+            "source",
+            "source_id",
+            "asset_identity",
+            "external_id",
+            "external_id_type",
+            "latest_state",
+            "latest_state_ref",
+            "asset_type",
+            "asset_code",
+            "trust_status",
+            "freshness_status",
+            "confidence_score",
+            "identity_match_status",
+            "source_rank",
+            "reasons",
+            "evidence",
+            "assessed_at",
+            "algorithm_version",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class TelemetryTrustAssessSerializer(serializers.Serializer):
+    latest_state = serializers.PrimaryKeyRelatedField(
+        queryset=LatestAssetState.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    plan_version = serializers.PrimaryKeyRelatedField(
+        queryset=PlanVersion.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    profile = serializers.PrimaryKeyRelatedField(
+        queryset=TelemetryTrustProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
 
 class TelemetryReplayRunSerializer(serializers.ModelSerializer):

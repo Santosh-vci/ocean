@@ -29,6 +29,7 @@ import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import { RbacPage } from "./pages/RbacPage";
 import {
   ApprovalsPublishingPage,
+  CommercialProjectionPage,
   ExceptionCenterPage,
   GlobalOptimizationReviewPage,
   RecommendationConsolePage,
@@ -72,6 +73,7 @@ import type {
   SchedulingOverview,
   SimulationScenarioRecord,
   TelemetryReplayRunRecord,
+  TelemetryTrustAssessmentRecord,
   TrackingAlertRecord,
 } from "./types";
 
@@ -152,6 +154,7 @@ function App() {
   const [etaProjections, setEtaProjections] = useState<LiveEtaProjectionRecord[]>([]);
   const [trackingAlerts, setTrackingAlerts] = useState<TrackingAlertRecord[]>([]);
   const [telemetryReplayRuns, setTelemetryReplayRuns] = useState<TelemetryReplayRunRecord[]>([]);
+  const [telemetryTrustAssessments, setTelemetryTrustAssessments] = useState<TelemetryTrustAssessmentRecord[]>([]);
   const [dashboardReadModel, setDashboardReadModel] = useState<DashboardReadModel | null>(null);
   const [exportOverview, setExportOverview] = useState<ExportOverview | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -199,7 +202,6 @@ function App() {
   const canGenerateExports = currentUser
     ? canAccess(currentUser.permissions, "export.generate")
     : false;
-  const canViewFleet = currentUser ? canAccess(currentUser.permissions, "fleet.view") : false;
   const canViewTelemetry = currentUser
     ? canAccess(currentUser.permissions, "telemetry.view")
     : false;
@@ -330,6 +332,9 @@ function App() {
       refreshes.push(apiFetch<TelemetryReplayRunRecord[]>("/telemetry/replay-runs/")
         .then(setTelemetryReplayRuns)
         .catch(() => setTelemetryReplayRuns([])));
+      refreshes.push(apiFetch<TelemetryTrustAssessmentRecord[]>("/telemetry/trust-assessments/?limit=120")
+        .then(setTelemetryTrustAssessments)
+        .catch(() => setTelemetryTrustAssessments([])));
     } else {
       setLatestAssetStates([]);
       setGeofenceZones([]);
@@ -337,6 +342,7 @@ function App() {
       setEtaProjections([]);
       setTrackingAlerts([]);
       setTelemetryReplayRuns([]);
+      setTelemetryTrustAssessments([]);
     }
 
     if (canViewOperations) {
@@ -1565,7 +1571,13 @@ function App() {
             overview={schedulingOverview}
           />
         ) : null}
-        {route === "/map/live" && canViewFleet ? (
+        {route === "/commercial/projections" && canViewSchedule ? (
+          <CommercialProjectionPage
+            {...assistantPageProps}
+            overview={schedulingOverview}
+          />
+        ) : null}
+        {route === "/map/live" && canViewTelemetry ? (
           <LiveResourceMapPage
             {...assistantPageProps}
             canRunReplay={canRunTelemetryReplay}
@@ -1582,6 +1594,7 @@ function App() {
             onStartReplay={handleStartTelemetryReplay}
             overview={schedulingOverview}
             replayRuns={telemetryReplayRuns}
+            telemetryTrustAssessments={telemetryTrustAssessments}
             trackingAlerts={trackingAlerts}
           />
         ) : null}

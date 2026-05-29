@@ -14,7 +14,12 @@ from apps.core.object_storage import read_export_object
 from apps.operations.services import operations_health_summary
 from apps.rbac.permissions import RequiresAccessPermission
 from apps.telemetry.models import LiveEtaProjection, TrackingAlert
-from apps.telemetry.serializers import LiveEtaProjectionSerializer, TrackingAlertSerializer
+from apps.telemetry.serializers import (
+    LiveEtaProjectionSerializer,
+    TelemetryTrustAssessmentSerializer,
+    TrackingAlertSerializer,
+)
+from apps.telemetry.telemetry_trust_services import latest_trust_assessment_summary
 
 from .export_services import (
     create_governed_export,
@@ -26,6 +31,8 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    CommercialProjectionRun,
+    CustomerSafeCommercialProjection,
     ExportJob,
     GlobalOptimizationCandidate,
     GlobalOptimizationRun,
@@ -57,11 +64,19 @@ from .global_optimizer_services import (
     generate_global_optimization_candidates,
     latest_global_optimization_run,
 )
+from .commercial_projection_services import (
+    commercial_projection_summary_payload,
+    generate_customer_safe_commercial_projections,
+    latest_commercial_projection_run,
+)
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
     AssignmentSerializer,
+    CommercialProjectionRunGenerateSerializer,
+    CommercialProjectionRunSerializer,
     ConflictSerializer,
+    CustomerSafeCommercialProjectionSerializer,
     ExportJobSerializer,
     GlobalOptimizationCandidateSerializer,
     GlobalOptimizationRunGenerateSerializer,
@@ -759,6 +774,81 @@ class GlobalOptimizationCandidateViewSet(ReadOnlyModelViewSet):
     serializer_class = GlobalOptimizationCandidateSerializer
 
 
+class CommercialProjectionRunViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "create": "schedule.view",
+        "generate": "schedule.view",
+    }
+    queryset = CommercialProjectionRun.objects.select_related(
+        "plan_version",
+        "plan_version__plan",
+        "telemetry_trust_profile",
+        "generated_by",
+    ).prefetch_related(
+        "projections",
+        "projections__voyage",
+        "projections__trip",
+    )
+    serializer_class = CommercialProjectionRunSerializer
+
+    def create(self, request):
+        return self._generate_commercial_run(request)
+
+    @action(detail=False, methods=["post"], url_path="generate")
+    def generate(self, request):
+        return self._generate_commercial_run(request)
+
+    def _generate_commercial_run(self, request):
+        generate_serializer = CommercialProjectionRunGenerateSerializer(data=request.data)
+        generate_serializer.is_valid(raise_exception=True)
+        run = generate_customer_safe_commercial_projections(
+            plan_version=generate_serializer.validated_data.get("plan_version"),
+            actor=request.user,
+        )
+        run = self.get_queryset().get(pk=run.pk)
+        record_audit_event(
+            actor=request.user,
+            organization=run.organization,
+            action="commercial_projection.run.generate",
+            object_type="commercial_projection_run",
+            object_id=str(run.pk),
+            object_repr=run.run_id,
+            metadata={
+                "run_id": run.run_id,
+                "plan_version_id": run.plan_version_id,
+                "input_signature": run.input_signature,
+                "projection_count": run.projections.count(),
+                "algorithm_version": run.algorithm_version,
+                "projection_only": True,
+                "final_settlement": False,
+            },
+            request=request,
+        )
+        return Response(
+            CommercialProjectionRunSerializer(run).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class CustomerSafeCommercialProjectionViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+    }
+    queryset = CustomerSafeCommercialProjection.objects.select_related(
+        "run",
+        "run__plan_version",
+        "run__plan_version__plan",
+        "voyage",
+        "trip",
+    ).all()
+    serializer_class = CustomerSafeCommercialProjectionSerializer
+
+
 class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
@@ -1172,6 +1262,9 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         publishability_assessment = None
         global_optimization_runs = GlobalOptimizationRun.objects.none()
         global_optimization_candidates = GlobalOptimizationCandidate.objects.none()
+        commercial_projection_run = None
+        commercial_projections = CustomerSafeCommercialProjection.objects.none()
+        telemetry_trust_summary = latest_trust_assessment_summary(None)
 
         if active_version:
             trips = (
@@ -1329,6 +1422,14 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
             latest_global_run = latest_global_optimization_run(active_version)
             if latest_global_run:
                 global_optimization_candidates = latest_global_run.candidates.all()
+            commercial_projection_run = latest_commercial_projection_run(active_version)
+            if commercial_projection_run:
+                commercial_projections = commercial_projection_run.projections.select_related(
+                    "run",
+                    "voyage",
+                    "trip",
+                )
+            telemetry_trust_summary = latest_trust_assessment_summary(active_version)
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -1412,6 +1513,35 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     global_optimization_candidates,
                     many=True,
                 ).data,
+                "commercialProjectionRun": (
+                    CommercialProjectionRunSerializer(commercial_projection_run).data
+                    if commercial_projection_run
+                    else None
+                ),
+                "commercialProjections": CustomerSafeCommercialProjectionSerializer(
+                    commercial_projections,
+                    many=True,
+                ).data,
+                "commercialProjectionSummary": commercial_projection_summary_payload(
+                    commercial_projection_run,
+                ),
+                "telemetryTrustSummary": {
+                    "profileKey": telemetry_trust_summary.profile_key,
+                    "latestAssessmentCount": telemetry_trust_summary.latest_assessment_count,
+                    "trustedCount": telemetry_trust_summary.trusted_count,
+                    "degradedCount": telemetry_trust_summary.degraded_count,
+                    "blockingCount": telemetry_trust_summary.blocking_count,
+                    "unknownCount": telemetry_trust_summary.unknown_count,
+                    "latestAssessedAt": (
+                        telemetry_trust_summary.latest_assessed_at.isoformat()
+                        if telemetry_trust_summary.latest_assessed_at
+                        else None
+                    ),
+                    "latestAssessments": TelemetryTrustAssessmentSerializer(
+                        telemetry_trust_summary.latest_assessments,
+                        many=True,
+                    ).data,
+                },
                 "trackingSummary": {
                     "projectionCount": eta_projections.count(),
                     "openAlertCount": tracking_alerts.filter(

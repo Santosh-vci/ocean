@@ -55,7 +55,9 @@ from apps.scheduling.models import (
     ApprovalDecision,
     ApprovalRequest,
     Assignment,
+    CommercialProjectionRun,
     Conflict,
+    CustomerSafeCommercialProjection,
     ExportJob,
     GlobalOptimizationRun,
     OptimizerRun,
@@ -99,9 +101,11 @@ from apps.telemetry.models import (
     PositionPing,
     TelemetryReplayRun,
     TelemetrySource,
+    TelemetryTrustAssessment,
     TrackingAlert,
 )
 from apps.telemetry.services import ensure_missing_latest_state, ingest_position_ping
+from apps.telemetry.telemetry_trust_services import seed_telemetry_trust_profiles
 
 
 class Command(BaseCommand):
@@ -394,6 +398,7 @@ class Command(BaseCommand):
         self._seed_operations_foundation()
         seed_canonical_flow_definitions()
         seed_global_objective_profiles()
+        seed_telemetry_trust_profiles()
         if options["master_data_only"]:
             self.stdout.write(
                 self.style.SUCCESS(
@@ -481,6 +486,7 @@ class Command(BaseCommand):
         IntegrationFeed.objects.all().delete()
 
         TelemetryReplayRun.objects.all().delete()
+        TelemetryTrustAssessment.objects.all().delete()
         LatestAssetState.objects.all().delete()
         TrackingAlert.objects.all().delete()
         LiveEtaProjection.objects.all().delete()
@@ -489,6 +495,8 @@ class Command(BaseCommand):
 
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
+        CustomerSafeCommercialProjection.objects.all().delete()
+        CommercialProjectionRun.objects.all().delete()
         PublishabilityAssessment.objects.all().delete()
         GlobalOptimizationRun.objects.all().delete()
         RootCauseRepairAssessment.objects.all().delete()

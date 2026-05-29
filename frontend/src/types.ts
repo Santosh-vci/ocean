@@ -896,6 +896,120 @@ export type GlobalOptimizationRunRecord = {
   updated_at: string;
 };
 
+export type TelemetryTrustProfileRecord = {
+  id: number;
+  profile_key: string;
+  name: string;
+  version: number;
+  status: string;
+  source_hierarchy: Array<Record<string, unknown>>;
+  freshness_thresholds: Record<string, unknown>;
+  confidence_thresholds: Record<string, unknown>;
+  identity_rules: Record<string, unknown>;
+  quarantine_rules: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TelemetryTrustAssessmentRecord = {
+  id: number;
+  assessment_id: string;
+  profile: number;
+  profile_ref: string;
+  source: number;
+  source_id: string;
+  asset_identity: number;
+  external_id: string;
+  external_id_type: string;
+  latest_state: number | null;
+  latest_state_ref: string | null;
+  asset_type: string;
+  asset_code: string;
+  trust_status: string;
+  freshness_status: string;
+  confidence_score: string;
+  identity_match_status: string;
+  source_rank: number;
+  reasons: string[];
+  evidence: Record<string, unknown>;
+  assessed_at: string;
+  algorithm_version: string;
+  created_at: string;
+};
+
+export type TelemetryTrustSummaryRecord = {
+  profileKey: string;
+  latestAssessmentCount: number;
+  trustedCount: number;
+  degradedCount: number;
+  blockingCount: number;
+  unknownCount: number;
+  latestAssessedAt: string | null;
+  latestAssessments: TelemetryTrustAssessmentRecord[];
+};
+
+export type CustomerSafeCommercialProjectionRecord = {
+  id: number;
+  projection_id: string;
+  run: number;
+  run_ref: string;
+  voyage: number;
+  voyage_ref: string;
+  vessel_name: string;
+  customer_name: string;
+  trip: number | null;
+  trip_ref: string | null;
+  status: string;
+  customer_safe_eta: string | null;
+  eta_band_start: string | null;
+  eta_band_end: string | null;
+  laycan_status: string;
+  laycan_variance_minutes: number;
+  projected_demurrage_exposure_minutes: number;
+  projected_demurrage_exposure_usd: string;
+  commitment_risk_level: string;
+  telemetry_trust_status: string;
+  confidence_score: string;
+  customer_safe_to_share: boolean;
+  projection_only_disclaimer: string;
+  details: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommercialProjectionRunRecord = {
+  id: number;
+  run_id: string;
+  status: string;
+  plan_version: number | null;
+  plan_version_ref: string | null;
+  telemetry_trust_profile: number | null;
+  telemetry_trust_profile_ref: string | null;
+  input_signature: string;
+  input_summary: Record<string, unknown>;
+  summary: Record<string, unknown>;
+  algorithm_version: string;
+  audit_lineage: Record<string, unknown>;
+  generated_by: number | null;
+  generated_by_email: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string;
+  projections: CustomerSafeCommercialProjectionRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommercialProjectionSummaryRecord = {
+  runId: string;
+  status: string;
+  projectionCount: number;
+  atRiskCount: number;
+  customerSafeToShareCount: number;
+  projectionOnly: boolean;
+} | null;
+
 export type OverrideRequestRecord = {
   id: number;
   plan_version: number;
@@ -1374,6 +1488,10 @@ export type SchedulingOverview = {
   recoveryRecommendations: RecoveryRecommendationRecord[];
   globalOptimizationRuns: GlobalOptimizationRunRecord[];
   globalOptimizationCandidates: GlobalOptimizationCandidateRecord[];
+  commercialProjectionRun: CommercialProjectionRunRecord | null;
+  commercialProjections: CustomerSafeCommercialProjectionRecord[];
+  commercialProjectionSummary: CommercialProjectionSummaryRecord;
+  telemetryTrustSummary: TelemetryTrustSummaryRecord | null;
   liveEtaProjections: LiveEtaProjectionRecord[];
   trackingAlerts: TrackingAlertRecord[];
   publishabilityAssessment: PublishabilityAssessmentRecord | null;

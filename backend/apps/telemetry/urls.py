@@ -9,6 +9,8 @@ from .views import (
     PositionPingViewSet,
     TelemetryReplayRunViewSet,
     TelemetrySourceViewSet,
+    TelemetryTrustAssessmentViewSet,
+    TelemetryTrustProfileViewSet,
     TrackingAlertViewSet,
 )
 
@@ -25,6 +27,12 @@ router.register(
 router.register("telemetry/movement-events", MovementEventViewSet, basename="movement-event")
 router.register("telemetry/eta-projections", LiveEtaProjectionViewSet, basename="eta-projection")
 router.register("telemetry/alerts", TrackingAlertViewSet, basename="tracking-alert")
+router.register("telemetry/trust-profiles", TelemetryTrustProfileViewSet, basename="telemetry-trust-profile")
+router.register(
+    "telemetry/trust-assessments",
+    TelemetryTrustAssessmentViewSet,
+    basename="telemetry-trust-assessment",
+)
 router.register("telemetry/replay-runs", TelemetryReplayRunViewSet, basename="replay-run")
 
 urlpatterns = router.urls

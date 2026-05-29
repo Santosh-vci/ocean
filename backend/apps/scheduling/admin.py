@@ -5,6 +5,8 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    CommercialProjectionRun,
+    CustomerSafeCommercialProjection,
     ExportJob,
     GlobalObjectiveProfile,
     GlobalOptimizationCandidate,
@@ -258,6 +260,56 @@ class GlobalOptimizationCandidateAdmin(admin.ModelAdmin):
         "unresolved_risks",
         "approval_lineage",
         "metadata",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(CommercialProjectionRun)
+class CommercialProjectionRunAdmin(admin.ModelAdmin):
+    list_display = (
+        "run_id",
+        "plan_version",
+        "status",
+        "telemetry_trust_profile",
+        "generated_by",
+    )
+    list_filter = ("status", "algorithm_version", "telemetry_trust_profile")
+    search_fields = ("run_id", "plan_version__plan__code", "input_signature")
+    readonly_fields = (
+        "run_id",
+        "input_signature",
+        "input_summary",
+        "summary",
+        "audit_lineage",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(CustomerSafeCommercialProjection)
+class CustomerSafeCommercialProjectionAdmin(admin.ModelAdmin):
+    list_display = (
+        "projection_id",
+        "run",
+        "voyage",
+        "status",
+        "laycan_status",
+        "commitment_risk_level",
+        "customer_safe_to_share",
+    )
+    list_filter = (
+        "status",
+        "laycan_status",
+        "commitment_risk_level",
+        "telemetry_trust_status",
+        "customer_safe_to_share",
+    )
+    search_fields = ("projection_id", "run__run_id", "voyage__voyage_id", "voyage__vessel_name")
+    readonly_fields = (
+        "projection_id",
+        "details",
+        "projection_only_disclaimer",
         "created_at",
         "updated_at",
     )

@@ -9,6 +9,7 @@ import { LiveResourceMapPage } from "./pages/MapPage";
 import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import {
+  CommercialProjectionPage,
   ExceptionCenterPage,
   GlobalOptimizationReviewPage,
   RecommendationConsolePage,
@@ -19,6 +20,7 @@ import type { ActionRecommendation } from "./types/assistant";
 import type {
   ConfirmedOperationalEventRecord,
   DeviceEndpointRecord,
+  LatestAssetStateRecord,
   OperationalEventCandidateRecord,
   PlanningOverview,
   SchedulingOverview,
@@ -101,6 +103,7 @@ test("shows implemented admin submodules without exposing future locked routes",
     "Exception Center",
     "Recommendation Console",
     "Global Optimization Review",
+    "Commercial Projections",
     "Master Data Console",
   ]);
 });
@@ -144,10 +147,21 @@ test("exposes recovery routes by workflow permission", () => {
       "schedule.approve",
     ]).map((item) => item.label),
   ).toContain("Approvals & Publishing");
+  expect(
+    visibleNavItems([
+      "dashboard.view",
+      "schedule.view",
+      "schedule.edit",
+      "schedule.approve",
+    ]).map((item) => item.label),
+  ).toContain("Commercial Projections");
 });
 
-test("exposes live map through fleet visibility", () => {
-  expect(visibleNavItems(["dashboard.view", "fleet.view"]).map((item) => item.label)).toContain(
+test("exposes live map through telemetry visibility", () => {
+  expect(visibleNavItems(["dashboard.view", "telemetry.view"]).map((item) => item.label)).toContain(
+    "Live Resource Map",
+  );
+  expect(visibleNavItems(["dashboard.view", "fleet.view"]).map((item) => item.label)).not.toContain(
     "Live Resource Map",
   );
 });
@@ -707,6 +721,103 @@ test("live map exposes seeded replay controls", () => {
   expect(screen.getByRole("option", { name: "TRACK-ON-TIME" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Start replay" }));
   expect(onStartReplay).toHaveBeenCalledWith("RPL-TRACK-ON-TIME");
+});
+
+test("live map renders telemetry trust state", () => {
+  const now = "2026-05-18T00:00:00.000Z";
+  const overview = {
+    assignments: [],
+    conflicts: [],
+    telemetryTrustSummary: {
+      profileKey: "telemetry_trust_default_v1",
+      latestAssessmentCount: 1,
+      trustedCount: 0,
+      degradedCount: 0,
+      blockingCount: 1,
+      unknownCount: 0,
+      latestAssessedAt: now,
+      latestAssessments: [{
+        id: 1,
+        assessment_id: "TTA-UI-001",
+        profile: 1,
+        profile_ref: "telemetry_trust_default_v1",
+        source: 1,
+        source_id: "GPS-GW",
+        asset_identity: 1,
+        external_id: "BRG-TRUST-01",
+        external_id_type: "internal",
+        latest_state: 1,
+        latest_state_ref: "BRG-TRUST-01",
+        asset_type: "barge",
+        asset_code: "BRG-TRUST-01",
+        trust_status: "quarantined",
+        freshness_status: "fresh",
+        confidence_score: "18.00",
+        identity_match_status: "matched",
+        source_rank: 2,
+        reasons: ["Low confidence signal quarantined."],
+        evidence: {},
+        assessed_at: now,
+        algorithm_version: "phase6.6-telemetry-trust",
+        created_at: now,
+      }],
+    },
+  } as unknown as SchedulingOverview;
+
+  render(
+    <LiveResourceMapPage
+      canRunReplay={false}
+      canRunSimulation={false}
+      etaProjections={[]}
+      geofenceZones={[]}
+      isActionRunning={false}
+      latestAssetStates={[{
+        id: 1,
+        asset_type: "barge",
+        asset_code: "BRG-TRUST-01",
+        source: 1,
+        source_id: "GPS-GW",
+        source_type: "device_gateway",
+        asset_identity: 1,
+        external_id: "BRG-TRUST-01",
+        external_id_type: "internal",
+        latitude: "-3.2100",
+        longitude: "115.6100",
+        speed_knots: "0.0",
+        heading_degrees: "90.0",
+        last_seen_at: now,
+        freshness_status: "fresh",
+        age_seconds: 30,
+        current_geofence_ref: null,
+        current_geofence_name: null,
+        last_movement_event_type: null,
+        last_ping: null,
+        last_ping_ref: null,
+        derived_status: "active",
+        current_geofence: null,
+        current_geofence_type: null,
+        last_movement_event: null,
+        last_movement_event_ref: null,
+        last_movement_event_at: null,
+        confidence_score: "18.00",
+        paired_asset_code: "",
+        metadata: {},
+        created_at: now,
+        updated_at: now,
+      } as unknown as LatestAssetStateRecord]}
+      movementEvents={[]}
+      onNavigate={vi.fn()}
+      onStartReplay={vi.fn()}
+      overview={overview}
+      replayRuns={[]}
+      trackingAlerts={[]}
+    />,
+  );
+
+  expect(screen.getByText("Telemetry trust")).toBeInTheDocument();
+  expect(screen.getByText("telemetry_trust_default_v1")).toBeInTheDocument();
+  expect(screen.getAllByText("QUARANTINED").length).toBeGreaterThan(0);
+  expect(screen.getByText("Low confidence signal quarantined.")).toBeInTheDocument();
 });
 
 test("renders the role-aware dashboard shell", async () => {
@@ -1749,6 +1860,93 @@ test("global optimization review renders candidate contracts read-only", () => {
   expect(screen.getByText("Read-only candidates")).toBeInTheDocument();
   expect(screen.getByText(/does not create a plan, approval, or publish event/)).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Generate|Promote|Publish|Approve|Materialize/i }))
+    .not.toBeInTheDocument();
+});
+
+test("commercial projection page renders projection-only customer-safe output", () => {
+  const overview = stageSevenOverview();
+  overview.telemetryTrustSummary = {
+    profileKey: "telemetry_trust_default_v1",
+    latestAssessmentCount: 1,
+    trustedCount: 1,
+    degradedCount: 0,
+    blockingCount: 0,
+    unknownCount: 0,
+    latestAssessedAt: "2026-05-18T03:32:00.000Z",
+    latestAssessments: [],
+  };
+  overview.commercialProjectionRun = {
+    id: 1001,
+    run_id: "CPR-PHASE6-UI",
+    status: "succeeded",
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    telemetry_trust_profile: 1,
+    telemetry_trust_profile_ref: "telemetry_trust_default_v1",
+    input_signature: "commercialabcdef123",
+    input_summary: {},
+    summary: {
+      projectedDemurrageExposureUsd: "12500.00",
+    },
+    algorithm_version: "phase6.6-commercial-projection",
+    audit_lineage: {
+      eventAction: "commercial_projection.run.generate",
+    },
+    generated_by: 1,
+    generated_by_email: "berau.scheduler@coalflow.local",
+    started_at: "2026-05-18T03:31:00.000Z",
+    completed_at: "2026-05-18T03:31:10.000Z",
+    error_message: "",
+    projections: [{
+      id: 1002,
+      projection_id: "CSP-PHASE6-UI",
+      run: 1001,
+      run_ref: "CPR-PHASE6-UI",
+      voyage: 501,
+      voyage_ref: "OGV-UI-001",
+      vessel_name: "MV Customer Safe",
+      customer_name: "North Asia Utility",
+      trip: 201,
+      trip_ref: "PI-PLAN-UI-0001",
+      status: "at_risk",
+      customer_safe_eta: "2026-05-19T10:00:00.000Z",
+      eta_band_start: "2026-05-19T08:00:00.000Z",
+      eta_band_end: "2026-05-19T12:00:00.000Z",
+      laycan_status: "late",
+      laycan_variance_minutes: 180,
+      projected_demurrage_exposure_minutes: 180,
+      projected_demurrage_exposure_usd: "12500.00",
+      commitment_risk_level: "high",
+      telemetry_trust_status: "trusted",
+      confidence_score: "88.00",
+      customer_safe_to_share: true,
+      projection_only_disclaimer: "Projection only: not a customer commitment, invoice, laytime calculation, NOR/SOF determination, demurrage settlement, or despatch settlement.",
+      details: {
+        etaSource: "live_eta_projection",
+      },
+      created_at: "2026-05-18T03:31:10.000Z",
+      updated_at: "2026-05-18T03:31:10.000Z",
+    }],
+    created_at: "2026-05-18T03:31:00.000Z",
+    updated_at: "2026-05-18T03:31:10.000Z",
+  };
+  overview.commercialProjections = overview.commercialProjectionRun.projections;
+  overview.commercialProjectionSummary = {
+    runId: "CPR-PHASE6-UI",
+    status: "succeeded",
+    projectionCount: 1,
+    atRiskCount: 1,
+    customerSafeToShareCount: 1,
+    projectionOnly: true,
+  };
+
+  render(<CommercialProjectionPage overview={overview} />);
+
+  expect(screen.getByRole("heading", { name: "Commercial Projections" })).toBeInTheDocument();
+  expect(screen.getAllByText("MV Customer Safe").length).toBeGreaterThan(0);
+  expect(screen.getByText(/exposure proxies only/)).toBeInTheDocument();
+  expect(screen.getByText(/not a customer commitment/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Settle|Invoice|Commit|Publish|Materialize|Approve/i }))
     .not.toBeInTheDocument();
 });
 

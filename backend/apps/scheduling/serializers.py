@@ -20,6 +20,8 @@ from .models import (
     ApprovalRequest,
     Assignment,
     Conflict,
+    CommercialProjectionRun,
+    CustomerSafeCommercialProjection,
     ExportJob,
     GlobalObjectiveProfile,
     GlobalOptimizationCandidate,
@@ -574,6 +576,90 @@ class GlobalOptimizationRunSerializer(serializers.ModelSerializer):
             "completed_at",
             "error_message",
             "candidates",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class CustomerSafeCommercialProjectionSerializer(serializers.ModelSerializer):
+    run_ref = serializers.CharField(source="run.run_id", read_only=True)
+    voyage_ref = serializers.CharField(source="voyage.voyage_id", read_only=True)
+    vessel_name = serializers.CharField(source="voyage.vessel_name", read_only=True)
+    customer_name = serializers.CharField(source="voyage.customer_name", read_only=True)
+    trip_ref = serializers.CharField(source="trip.trip_id", read_only=True)
+
+    class Meta:
+        model = CustomerSafeCommercialProjection
+        fields = (
+            "id",
+            "projection_id",
+            "run",
+            "run_ref",
+            "voyage",
+            "voyage_ref",
+            "vessel_name",
+            "customer_name",
+            "trip",
+            "trip_ref",
+            "status",
+            "customer_safe_eta",
+            "eta_band_start",
+            "eta_band_end",
+            "laycan_status",
+            "laycan_variance_minutes",
+            "projected_demurrage_exposure_minutes",
+            "projected_demurrage_exposure_usd",
+            "commitment_risk_level",
+            "telemetry_trust_status",
+            "confidence_score",
+            "customer_safe_to_share",
+            "projection_only_disclaimer",
+            "details",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class CommercialProjectionRunGenerateSerializer(serializers.Serializer):
+    plan_version = serializers.PrimaryKeyRelatedField(
+        queryset=PlanVersion.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+
+class CommercialProjectionRunSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    telemetry_trust_profile_ref = serializers.CharField(
+        source="telemetry_trust_profile.profile_key",
+        read_only=True,
+    )
+    generated_by_email = serializers.EmailField(source="generated_by.email", read_only=True)
+    projections = CustomerSafeCommercialProjectionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CommercialProjectionRun
+        fields = (
+            "id",
+            "run_id",
+            "status",
+            "plan_version",
+            "plan_version_ref",
+            "telemetry_trust_profile",
+            "telemetry_trust_profile_ref",
+            "input_signature",
+            "input_summary",
+            "summary",
+            "algorithm_version",
+            "audit_lineage",
+            "generated_by",
+            "generated_by_email",
+            "started_at",
+            "completed_at",
+            "error_message",
+            "projections",
             "created_at",
             "updated_at",
         )

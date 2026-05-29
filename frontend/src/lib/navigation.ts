@@ -174,6 +174,13 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.view",
         icon: "account-tree",
       },
+      {
+        path: "/commercial/projections",
+        label: "Commercial Projections",
+        module: "Recovery Loop",
+        requiredPermission: "schedule.view",
+        icon: "schedule",
+      },
     ],
   },
   {
@@ -186,7 +193,7 @@ export const NAV_MODULES: NavModule[] = [
         path: "/map/live",
         label: "Live Resource Map",
         module: "Map & Signals",
-        requiredPermission: "fleet.view",
+        requiredPermission: "telemetry.view",
         icon: "map",
       },
     ],

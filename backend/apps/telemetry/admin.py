@@ -9,6 +9,8 @@ from .models import (
     PositionPing,
     TelemetryReplayRun,
     TelemetrySource,
+    TelemetryTrustAssessment,
+    TelemetryTrustProfile,
     TrackingAlert,
 )
 
@@ -103,6 +105,58 @@ class TrackingAlertAdmin(admin.ModelAdmin):
     )
     search_fields = ("alert_id", "asset_code", "trip__trip_id", "message")
     list_filter = ("alert_type", "severity", "status", "source_kind")
+
+
+@admin.register(TelemetryTrustProfile)
+class TelemetryTrustProfileAdmin(admin.ModelAdmin):
+    list_display = ("profile_key", "name", "version", "status")
+    search_fields = ("profile_key", "name")
+    list_filter = ("status", "version")
+    readonly_fields = (
+        "source_hierarchy",
+        "freshness_thresholds",
+        "confidence_thresholds",
+        "identity_rules",
+        "quarantine_rules",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(TelemetryTrustAssessment)
+class TelemetryTrustAssessmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "assessment_id",
+        "asset_code",
+        "asset_type",
+        "source",
+        "trust_status",
+        "freshness_status",
+        "confidence_score",
+        "assessed_at",
+    )
+    search_fields = (
+        "assessment_id",
+        "asset_code",
+        "source__source_id",
+        "asset_identity__external_id",
+    )
+    list_filter = (
+        "trust_status",
+        "freshness_status",
+        "identity_match_status",
+        "profile",
+        "source",
+    )
+    readonly_fields = (
+        "assessment_id",
+        "reasons",
+        "evidence",
+        "assessed_at",
+        "algorithm_version",
+        "created_at",
+    )
 
 
 @admin.register(TelemetryReplayRun)

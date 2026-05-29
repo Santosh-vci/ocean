@@ -5,7 +5,9 @@ from .views import (
     ApprovalDecisionViewSet,
     ApprovalRequestViewSet,
     AssignmentViewSet,
+    CommercialProjectionRunViewSet,
     ConflictViewSet,
+    CustomerSafeCommercialProjectionViewSet,
     DashboardSituationView,
     ExportJobViewSet,
     GlobalOptimizationCandidateViewSet,
@@ -64,6 +66,16 @@ router.register(
     "scheduling/global-optimization-candidates",
     GlobalOptimizationCandidateViewSet,
     basename="global-optimization-candidate",
+)
+router.register(
+    "scheduling/commercial-projection-runs",
+    CommercialProjectionRunViewSet,
+    basename="commercial-projection-run",
+)
+router.register(
+    "scheduling/commercial-projections",
+    CustomerSafeCommercialProjectionViewSet,
+    basename="commercial-projection",
 )
 router.register(
     "scheduling/recovery-recommendations",

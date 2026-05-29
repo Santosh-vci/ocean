@@ -36,6 +36,10 @@ from apps.scheduling.models import (
     ScenarioRun,
     SimulationScenario,
 )
+from apps.scheduling.commercial_projection_services import (
+    is_commercial_projection_stale,
+    latest_commercial_projection_run,
+)
 from apps.scheduling.publishability_services import (
     is_publishability_assessment_stale,
     latest_publishability_assessment,
@@ -44,6 +48,9 @@ from apps.scheduling.publishability_services import (
 )
 from apps.scheduling.services import REQUIRED_APPROVAL_AUTHORITIES
 from apps.telemetry.models import TrackingAlert
+from apps.telemetry.telemetry_trust_services import (
+    latest_trust_assessment_summary,
+)
 
 
 @dataclass(slots=True)
@@ -119,6 +126,18 @@ class AssistantContext:
     latest_global_optimization_candidate_ref: str = ""
     latest_global_optimization_candidate_count: int = 0
     latest_global_optimization_candidate_summary: str = ""
+    telemetry_trust_blocking_count: int = 0
+    telemetry_trust_degraded_count: int = 0
+    telemetry_trust_latest_assessment_id: int | None = None
+    telemetry_trust_latest_assessment_ref: str = ""
+    telemetry_trust_latest_status: str = ""
+    telemetry_trust_profile_key: str = ""
+    commercial_projection_run_id: int | None = None
+    commercial_projection_run_ref: str = ""
+    commercial_projection_status: str | None = None
+    commercial_projection_count: int = 0
+    commercial_projection_at_risk_count: int = 0
+    commercial_projection_is_stale: bool = True
     recent_governed_mutation_count: int = 0
     active_flow_run_id: str = ""
     active_flow_key: str = ""
@@ -678,6 +697,50 @@ def select_global_optimizer_status(
     }
 
 
+def select_telemetry_trust_status(
+    user: AbstractBaseUser | None,
+    active_plan_version: PlanVersion | None,
+) -> dict[str, Any]:
+    summary = latest_trust_assessment_summary(active_plan_version)
+    latest = (
+        sorted(summary.latest_assessments, key=lambda item: (item.assessed_at, item.id))[-1]
+        if summary.latest_assessments
+        else None
+    )
+    return {
+        "telemetry_trust_blocking_count": summary.blocking_count,
+        "telemetry_trust_degraded_count": summary.degraded_count,
+        "telemetry_trust_latest_assessment_id": latest.id if latest else None,
+        "telemetry_trust_latest_assessment_ref": latest.assessment_id if latest else "",
+        "telemetry_trust_latest_status": latest.trust_status if latest else "",
+        "telemetry_trust_profile_key": summary.profile_key,
+    }
+
+
+def select_commercial_projection_status(
+    user: AbstractBaseUser | None,
+    active_plan_version: PlanVersion | None,
+) -> dict[str, Any]:
+    run = latest_commercial_projection_run(active_plan_version)
+    projections = list(run.projections.all()) if run else []
+    at_risk = [
+        projection
+        for projection in projections
+        if projection.status in {"at_risk", "blocked"}
+    ]
+    return {
+        "commercial_projection_run_id": run.id if run else None,
+        "commercial_projection_run_ref": run.run_id if run else "",
+        "commercial_projection_status": run.status if run else None,
+        "commercial_projection_count": len(projections),
+        "commercial_projection_at_risk_count": len(at_risk),
+        "commercial_projection_is_stale": is_commercial_projection_stale(
+            run,
+            active_plan_version,
+        ),
+    }
+
+
 def select_recent_audit_counts(user: AbstractBaseUser | None = None) -> dict[str, int]:
     governed_prefixes = (
         "approval.",
@@ -776,6 +839,8 @@ def build_assistant_context(
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
     publishability_status = select_publishability_status(user, active_plan_version)
     global_optimizer_status = select_global_optimizer_status(user, active_plan_version)
+    telemetry_trust_status = select_telemetry_trust_status(user, active_plan_version)
+    commercial_projection_status = select_commercial_projection_status(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
     flow_status = select_flow_status(
         user,
@@ -825,6 +890,8 @@ def build_assistant_context(
         **operational_risks,
         **publishability_status,
         **global_optimizer_status,
+        **telemetry_trust_status,
+        **commercial_projection_status,
         **audit_counts,
         **flow_status,
     )

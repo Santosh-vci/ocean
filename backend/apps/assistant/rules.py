@@ -392,6 +392,76 @@ def rule_global_optimizer_candidate_ready(ctx: AssistantContext) -> list[ActionR
     return []
 
 
+def rule_telemetry_trust_review_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
+    trust_risk_count = ctx.telemetry_trust_blocking_count + ctx.telemetry_trust_degraded_count
+    if trust_risk_count <= 0:
+        return []
+    return [
+        build_recommendation(
+            "REVIEW_TELEMETRY_TRUST_STATE",
+            priority="warning",
+            rank_score=515,
+            enabled=True,
+            reason=(
+                "Telemetry trust has quarantine or manual confirmation risk."
+                if ctx.telemetry_trust_blocking_count
+                else "Telemetry trust is degraded for active-plan assets."
+            ),
+            source="telemetry.trust_review_needed",
+            target_object_type="telemetry_trust_assessment",
+            target_object_id=ctx.telemetry_trust_latest_assessment_id,
+            impact_if_ignored=(
+                "GPS/AIS evidence may be treated with the wrong confidence in operator review."
+            ),
+            metadata={
+                "assessmentRef": ctx.telemetry_trust_latest_assessment_ref,
+                "status": ctx.telemetry_trust_latest_status,
+                "profileKey": ctx.telemetry_trust_profile_key,
+                "blockingCount": ctx.telemetry_trust_blocking_count,
+                "degradedCount": ctx.telemetry_trust_degraded_count,
+            },
+        )
+    ]
+
+
+def rule_commercial_projection_review_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if not ctx.active_plan_version_id:
+        return []
+    if (
+        not ctx.commercial_projection_run_id
+        or ctx.commercial_projection_is_stale
+        or ctx.commercial_projection_at_risk_count > 0
+    ):
+        return [
+            build_recommendation(
+                "REVIEW_COMMERCIAL_PROJECTION",
+                priority="info",
+                rank_score=505,
+                enabled=True,
+                reason=(
+                    "Customer-safe commercial projections are missing or stale."
+                    if not ctx.commercial_projection_run_id or ctx.commercial_projection_is_stale
+                    else "Commercial projections show laycan or exposure risk for review."
+                ),
+                source="commercial_projection.review_needed",
+                target_object_type="commercial_projection_run",
+                target_object_id=ctx.commercial_projection_run_id,
+                impact_if_ignored=(
+                    "Customer-safe ETA, laycan, and exposure projections remain unreviewed."
+                ),
+                metadata={
+                    "runRef": ctx.commercial_projection_run_ref,
+                    "status": ctx.commercial_projection_status,
+                    "projectionCount": ctx.commercial_projection_count,
+                    "atRiskCount": ctx.commercial_projection_at_risk_count,
+                    "stale": ctx.commercial_projection_is_stale,
+                    "projectionOnly": True,
+                },
+            )
+        ]
+    return []
+
+
 def rule_publishability_check_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
     if (
         ctx.all_required_approvals_complete
@@ -946,6 +1016,8 @@ RULES: tuple[Rule, ...] = (
     rule_publishability_blocked,
     rule_publish_ready,
     rule_global_optimizer_candidate_ready,
+    rule_telemetry_trust_review_needed,
+    rule_commercial_projection_review_needed,
     rule_export_published_without_export,
     rule_high_confidence_event,
     rule_noisy_event,

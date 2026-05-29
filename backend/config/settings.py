@@ -163,6 +163,41 @@ GLOBAL_OPTIMIZER_OBJECTIVE_PROFILES = [
     }
 ]
 
+TELEMETRY_TRUST_PROFILES = [
+    {
+        "profile_key": "telemetry_trust_default_v1",
+        "name": "Telemetry trust default",
+        "version": 1,
+        "status": "active",
+        "source_hierarchy": [
+            {"source_type": "manual", "rank": 1, "label": "Manual confirmed"},
+            {"source_type": "device_gateway", "rank": 2, "label": "Owned GPS tracker"},
+            {"source_type": "vendor_api", "rank": 3, "label": "Vendor GPS/AIS"},
+            {"source_type": "synthetic_gps", "rank": 4, "label": "Synthetic GPS"},
+            {"source_type": "synthetic_ais", "rank": 5, "label": "Synthetic AIS"},
+        ],
+        "freshness_thresholds": {
+            "trusted_statuses": ["fresh"],
+            "degraded_statuses": ["aging", "stale"],
+            "manual_confirmation_statuses": ["missing"],
+        },
+        "confidence_thresholds": {
+            "trusted_min": 80,
+            "degraded_min": 50,
+            "quarantine_below": 25,
+        },
+        "identity_rules": {
+            "require_primary_identity": False,
+            "require_asset_object_id": False,
+        },
+        "quarantine_rules": {
+            "quarantine_source_statuses": ["paused", "retired"],
+            "quarantine_signal_qualities": ["invalid"],
+        },
+        "metadata": {"source": "settings/default"},
+    }
+]
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

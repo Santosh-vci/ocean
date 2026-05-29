@@ -16,6 +16,8 @@ from .models import (
     PositionPing,
     TelemetrySource,
     TelemetryReplayRun,
+    TelemetryTrustAssessment,
+    TelemetryTrustProfile,
     TrackingAlert,
 )
 from .serializers import (
@@ -29,10 +31,14 @@ from .serializers import (
     PositionPingSerializer,
     TelemetryReplayRunSerializer,
     TelemetrySourceSerializer,
+    TelemetryTrustAssessSerializer,
+    TelemetryTrustAssessmentSerializer,
+    TelemetryTrustProfileSerializer,
     TrackingAlertSerializer,
 )
 from .replay import cancel_synthetic_replay, start_synthetic_replay
 from .services import ingest_position_ping, refresh_signal_health
+from .telemetry_trust_services import assess_telemetry_trust
 
 
 def _bounded_list_limit(request, *, default: int = 120, maximum: int = 250) -> int:
@@ -225,6 +231,54 @@ class TrackingAlertViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
         )
         return Response(
             SimulationScenarioSerializer(scenario).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class TelemetryTrustProfileViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+    }
+    queryset = TelemetryTrustProfile.objects.all()
+    serializer_class = TelemetryTrustProfileSerializer
+    lookup_field = "profile_key"
+
+
+class TelemetryTrustAssessmentViewSet(BoundedRecentListMixin, ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "telemetry.view",
+        "retrieve": "telemetry.view",
+        "assess": "telemetry.view",
+    }
+    queryset = TelemetryTrustAssessment.objects.select_related(
+        "profile",
+        "source",
+        "asset_identity",
+        "latest_state",
+    ).all()
+    serializer_class = TelemetryTrustAssessmentSerializer
+
+    @action(detail=False, methods=["post"], url_path="assess")
+    def assess(self, request):
+        serializer = TelemetryTrustAssessSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = assess_telemetry_trust(
+            latest_state=serializer.validated_data.get("latest_state"),
+            plan_version=serializer.validated_data.get("plan_version"),
+            profile=serializer.validated_data.get("profile"),
+            actor=request.user,
+            persist=True,
+        )
+        if isinstance(result, list):
+            return Response(
+                TelemetryTrustAssessmentSerializer(result, many=True).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(
+            TelemetryTrustAssessmentSerializer(result).data,
             status=status.HTTP_201_CREATED,
         )
 

@@ -8,6 +8,10 @@ from django.utils import timezone
 
 from apps.planning.models import BridgeWindow, CargoLayerStep, TideWindow
 from apps.telemetry.models import TrackingAlert
+from apps.telemetry.telemetry_trust_services import (
+    latest_trust_assessments_for_plan,
+    trust_assessment_is_blocking,
+)
 
 from .models import (
     ApprovalDecision,
@@ -461,6 +465,10 @@ def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, 
 
 
 def _telemetry_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
+    trust_details = _telemetry_trust_details(plan_version)
+    if any(detail.get("status") == _BLOCKED for detail in trust_details):
+        return trust_details
+
     alerts = TrackingAlert.objects.filter(trip__plan_version=plan_version).exclude(
         status__in=[
             TrackingAlert.Status.RESOLVED,
@@ -483,7 +491,7 @@ def _telemetry_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
             warning_alerts.append(alert)
 
     if blocking_alerts:
-        return [
+        return trust_details + [
             _detail(
                 "telemetry_alerts_clear",
                 "telemetry",
@@ -497,7 +505,7 @@ def _telemetry_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
             )
         ]
     if warning_alerts:
-        return [
+        return trust_details + [
             _detail(
                 "telemetry_alerts_clear",
                 "telemetry",
@@ -511,12 +519,68 @@ def _telemetry_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
             )
         ]
     return [
+        *trust_details,
         _detail(
             "telemetry_alerts_clear",
             "telemetry",
             _PASS,
             "No unresolved telemetry alerts block publication.",
             evidence={"blockingAlertCount": 0},
+        )
+    ]
+
+
+def _telemetry_trust_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
+    assessments = latest_trust_assessments_for_plan(plan_version)
+    if not assessments:
+        return []
+
+    blocking = [assessment for assessment in assessments if trust_assessment_is_blocking(assessment)]
+    degraded = [
+        assessment
+        for assessment in assessments
+        if assessment.trust_status == "degraded"
+    ]
+    if blocking:
+        return [
+            _detail(
+                "telemetry_trust_clear",
+                "telemetry",
+                _BLOCKED,
+                "Telemetry trust requires quarantine or manual confirmation review.",
+                action_id="REVIEW_TELEMETRY_TRUST_STATE",
+                evidence={
+                    "blockingTrustCount": len(blocking),
+                    "assessmentRefs": [
+                        assessment.assessment_id for assessment in blocking[:5]
+                    ],
+                    "statuses": sorted({assessment.trust_status for assessment in blocking}),
+                },
+            )
+        ]
+    if degraded:
+        return [
+            _detail(
+                "telemetry_trust_clear",
+                "telemetry",
+                _WARNING,
+                "Telemetry trust is degraded and remains visible for manual publish judgment.",
+                action_id="REVIEW_TELEMETRY_TRUST_STATE",
+                evidence={
+                    "degradedTrustCount": len(degraded),
+                    "assessmentRefs": [
+                        assessment.assessment_id for assessment in degraded[:5]
+                    ],
+                },
+            )
+        ]
+    return [
+        _detail(
+            "telemetry_trust_clear",
+            "telemetry",
+            _PASS,
+            "Latest telemetry trust assessments are clear.",
+            evidence={"assessmentCount": len(assessments)},
         )
     ]
 
@@ -550,6 +614,9 @@ def _resolver_action_for_detail(detail: dict[str, Any]) -> str:
     if group == "recommendation_origin":
         return "VALIDATE_ROOT_CAUSE_REPAIR"
     if group == "telemetry":
+        key = detail.get("key")
+        if key == "telemetry_trust_clear":
+            return "REVIEW_TELEMETRY_TRUST_STATE"
         return "REVIEW_SIGNAL_HEALTH"
     return "RUN_PUBLISHABILITY_CHECK"
 
@@ -575,6 +642,15 @@ def _latest_publishability_input_time(plan_version: PlanVersion):
             TrackingAlert.objects.filter(trip__plan_version=plan_version).aggregate(
                 value=Max("updated_at")
             )["value"],
+            (
+                max(
+                    (
+                        assessment.assessed_at
+                        for assessment in latest_trust_assessments_for_plan(plan_version)
+                    ),
+                    default=None,
+                )
+            ),
             (
                 RootCauseRepairAssessment.objects.filter(
                     recommendation__scenario_id=scenario_pk,

@@ -19,6 +19,7 @@ import type {
   MovementEventRecord,
   OperationalEventCandidateRecord,
   SchedulingOverview,
+  TelemetryTrustAssessmentRecord,
   TelemetryReplayRunRecord,
   TrackingAlertRecord,
 } from "../types";
@@ -38,6 +39,7 @@ type LiveResourceMapPageProps = AssistantRecommendationSurfaceProps & {
   onNavigate: (path: string) => void;
   onStartReplay: (replayId: string) => Promise<void>;
   replayRuns: TelemetryReplayRunRecord[];
+  telemetryTrustAssessments?: TelemetryTrustAssessmentRecord[];
   trackingAlerts: TrackingAlertRecord[];
 };
 
@@ -106,6 +108,18 @@ function projectionTone(projection: LiveEtaProjectionRecord | undefined) {
   return "ok";
 }
 
+function trustTone(status: string | undefined) {
+  if (
+    status === "quarantined"
+    || status === "manual_confirmation_required"
+    || status === "unknown"
+  ) {
+    return "critical";
+  }
+  if (status === "degraded") return "pending";
+  return "ok";
+}
+
 function varianceLabel(projection: LiveEtaProjectionRecord | undefined) {
   if (!projection || projection.variance_minutes === null) return "No ETA";
   const sign = projection.variance_minutes > 0 ? "+" : "";
@@ -152,6 +166,7 @@ export function LiveResourceMapPage({
   onNavigate,
   onStartReplay,
   replayRuns,
+  telemetryTrustAssessments = [],
   trackingAlerts,
 }: LiveResourceMapPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
@@ -208,6 +223,20 @@ export function LiveResourceMapPage({
     });
     return rows;
   }, [confirmedOperationalEvents]);
+  const overviewTrustSummary = overview?.telemetryTrustSummary ?? null;
+  const trustAssessments = overviewTrustSummary?.latestAssessments.length
+    ? overviewTrustSummary.latestAssessments
+    : telemetryTrustAssessments;
+  const trustSummary = overviewTrustSummary ?? (
+    trustAssessments.length
+      ? {
+        profileKey: trustAssessments[0].profile_ref,
+        trustedCount: trustAssessments.filter((item) => item.trust_status === "trusted").length,
+        degradedCount: trustAssessments.filter((item) => item.trust_status === "degraded").length,
+        blockingCount: trustAssessments.filter((item) => trustTone(item.trust_status) === "critical").length,
+      }
+      : null
+  );
   const [selectedAssetCode, setSelectedAssetCode] = useState<string | null>(null);
   const [mapMode, setMapMode] = useState<"manual" | "tide" | "exception">("manual");
   const activeReplay = replayRuns.find((run) => run.status === "running")
@@ -511,6 +540,25 @@ export function LiveResourceMapPage({
             ))}
             {!latestAssetStates.length ? <span>No telemetry state</span> : null}
           </section>
+          <section className="signal-health-list">
+            <h2>Telemetry trust</h2>
+            <span>Profile <strong>{trustSummary?.profileKey ?? "No profile"}</strong></span>
+            <span>Trusted <strong className="ok-text">{trustSummary?.trustedCount ?? 0}</strong></span>
+            <span>Degraded <strong className="pending-text">{trustSummary?.degradedCount ?? 0}</strong></span>
+            <span>Quarantine / manual <strong className="critical-text">{trustSummary?.blockingCount ?? 0}</strong></span>
+            {trustAssessments.slice(0, 4).map((assessment) => (
+              <button
+                className={trustTone(assessment.trust_status)}
+                key={assessment.assessment_id}
+                onClick={() => setSelectedAssetCode(assessment.asset_code)}
+                type="button"
+              >
+                <span>{assessment.asset_code}</span>
+                <em>{short(assessment.trust_status)}</em>
+              </button>
+            ))}
+            {!trustAssessments.length ? <span>Raw GPS/AIS evidence is awaiting trust assessment</span> : null}
+          </section>
         </aside>
 
         <section className="board-surface map-radar-panel">
@@ -629,6 +677,8 @@ export function LiveResourceMapPage({
                 <div><dt>Observed <Abbr term="ETA">ETA</Abbr></dt><dd>{selectedProjection?.observed_eta ? formatGridDateLabel(selectedProjection.observed_eta) : "Not calculated"}</dd></div>
                 <div><dt><Abbr term="ETA">ETA</Abbr> variance</dt><dd className={`${projectionTone(selectedProjection)}-text`}>{varianceLabel(selectedProjection)}</dd></div>
                 <div><dt>Open alerts</dt><dd>{selectedAlerts.length ? selectedAlerts.map((alert) => short(alert.alert_type)).join(", ") : "None"}</dd></div>
+                <div><dt>Trust state</dt><dd>{short(trustAssessments.find((item) => item.asset_code === selectedState?.asset_code)?.trust_status)}</dd></div>
+                <div><dt>Trust reasons</dt><dd>{trustAssessments.find((item) => item.asset_code === selectedState?.asset_code)?.reasons.join(", ") || "No trust assessment"}</dd></div>
                 <div><dt>Ops event</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.event_kind ?? selectedOperationalConfirmed?.event_kind)}</dd></div>
                 <div><dt>Ops state</dt><dd>{shortOperationalLabel(selectedOperationalCandidate?.status ?? selectedOperationalConfirmed?.confirmation_mode)}</dd></div>
                 <div><dt>Ops actual</dt><dd>{selectedOperationalCandidate?.event_at

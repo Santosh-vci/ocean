@@ -107,6 +107,7 @@ const EMPTY_OPTIMIZER_RUNS: OptimizerRunRecord[] = [];
 const EMPTY_RECOMMENDATIONS: RecoveryRecommendationRecord[] = [];
 const EMPTY_GLOBAL_OPTIMIZER_RUNS: GlobalOptimizationRunRecord[] = [];
 const EMPTY_GLOBAL_OPTIMIZER_CANDIDATES: GlobalOptimizationCandidateRecord[] = [];
+const EMPTY_COMMERCIAL_PROJECTIONS: NonNullable<SchedulingOverview["commercialProjections"]> = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
 const EMPTY_RESOURCE_UTILIZATIONS: ScenarioResourceUtilizationRecord[] = [];
@@ -1615,6 +1616,200 @@ export function GlobalOptimizationReviewPage({
             <li>Objective profile: {selectedRun?.objective_profile_ref ?? "-"}</li>
             <li>Algorithm: {selectedRun?.algorithm_version ?? "-"}</li>
             <li>Manual publish required: {lineage.manualPublishRequired === false ? "NO" : "YES"}</li>
+          </ul>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+export function CommercialProjectionPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantFlow,
+  assistantPageActions,
+  assistantRowActions,
+  overview,
+  onAssistantNavigate,
+}: RecoveryPageProps) {
+  const run = overview?.commercialProjectionRun ?? null;
+  const projections = run?.projections.length
+    ? run.projections
+    : overview?.commercialProjections ?? EMPTY_COMMERCIAL_PROJECTIONS;
+  const summary = overview?.commercialProjectionSummary ?? null;
+  const trustSummary = overview?.telemetryTrustSummary ?? null;
+  const [selectedProjectionId, setSelectedProjectionId] = useState<number | null>(null);
+  const selectedProjection = useMemo(
+    () => projections.find((projection) => projection.id === selectedProjectionId)
+      ?? projections[0],
+    [projections, selectedProjectionId],
+  );
+  const runSummary = recordValue(run?.summary);
+  const exposureTotal = valueNum(
+    runSummary.projectedDemurrageExposureUsd ?? runSummary.totalProjectedDemurrageExposureUsd,
+    0,
+  );
+  const projectionOnly = summary?.projectionOnly ?? true;
+
+  return (
+    <section className="workspace-page recovery-board recommendation-board commercial-projection-board">
+      <header className="page-heading planning-heading">
+        <div>
+          <p>Recovery Loop / Commercial Projection</p>
+          <h1>Commercial Projections</h1>
+        </div>
+        <div className="planning-actions">
+          <span className="phase-chip">Projection only</span>
+        </div>
+      </header>
+
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+        title="Commercial guidance"
+      />
+
+      <div className="metric-strip six-up recovery-kpis">
+        <div><span>Latest run</span><strong>{run?.run_id ?? "NONE"}</strong></div>
+        <div><span>Projections</span><strong>{summary?.projectionCount ?? projections.length}</strong></div>
+        <div><span>At risk</span><strong className={statusTone((summary?.atRiskCount ?? 0) ? "warning" : "ok")}>{summary?.atRiskCount ?? 0}</strong></div>
+        <div><span>Shareable</span><strong>{summary?.customerSafeToShareCount ?? 0}</strong></div>
+        <div><span>Exposure proxy</span><strong>{money(exposureTotal)}</strong></div>
+        <div><span>Trust blockers</span><strong className={statusTone((trustSummary?.blockingCount ?? 0) ? "critical" : "ok")}>{trustSummary?.blockingCount ?? 0}</strong></div>
+      </div>
+
+      <div className="recommendation-layout">
+        <aside className="board-surface recommendation-run-rail">
+          <div className="grid-header">
+            <div><SvgIcon name="schedule" /><strong>Run lineage</strong></div>
+            <span>{run?.status ? short(run.status) : "NO RUN"}</span>
+          </div>
+          <dl>
+            <div><dt>Run id</dt><dd>{run?.run_id ?? "-"}</dd></div>
+            <div><dt>Plan version</dt><dd>{run?.plan_version_ref ?? "-"}</dd></div>
+            <div><dt>Trust profile</dt><dd>{run?.telemetry_trust_profile_ref ?? trustSummary?.profileKey ?? "-"}</dd></div>
+            <div><dt>Input signature</dt><dd>{run?.input_signature.slice(0, 12) ?? "-"}</dd></div>
+            <div><dt>Algorithm</dt><dd>{run?.algorithm_version ?? "-"}</dd></div>
+            <div><dt>Completed</dt><dd>{dt(run?.completed_at)}</dd></div>
+          </dl>
+          <section className="recovery-box">
+            <strong>Projection boundary</strong>
+            <p>
+              Customer-safe values are exposure proxies only; they are not settlement, invoice,
+              final commitment, laytime, NOR, or SOF calculations.
+            </p>
+          </section>
+        </aside>
+
+        <section className="board-surface recommendation-grid-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="audit" /><strong>Customer-safe projection rows</strong></div>
+            <span>{projectionOnly ? "Projection-only contract" : "Review run flags"}</span>
+          </div>
+          <div className="grid-scroll">
+            <table className="planning-table logistics-table">
+              <thead>
+                <tr>
+                  <th>Voyage</th><th>Customer</th><th>Status</th><th>ETA</th>
+                  <th>Laycan</th><th>Variance</th><th>Exposure</th><th>Risk</th><th>Trust</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projections.map((projection) => (
+                  <tr
+                    className={selectedProjection?.id === projection.id ? "selected-row" : ""}
+                    key={projection.id}
+                    onClick={() => setSelectedProjectionId(projection.id)}
+                  >
+                    <td>{projection.vessel_name || projection.voyage_ref}</td>
+                    <td>{projection.customer_name || "-"}</td>
+                    <td><span className={`status-chip ${statusTone(projection.status)}`}>{short(projection.status)}</span></td>
+                    <td>{dt(projection.customer_safe_eta)}</td>
+                    <td>{short(projection.laycan_status)}</td>
+                    <td>{signedMinutes(projection.laycan_variance_minutes)}</td>
+                    <td>{money(projection.projected_demurrage_exposure_usd)}</td>
+                    <td>{short(projection.commitment_risk_level)}</td>
+                    <td>{short(projection.telemetry_trust_status)}</td>
+                  </tr>
+                ))}
+                {!projections.length ? (
+                  <tr>
+                    <td colSpan={9}>No customer-safe commercial projection run has been generated for the active plan.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="board-surface logistics-inspector recommendation-inspector">
+          <div className="grid-header">
+            <div><SvgIcon name="rule" /><strong>Projection detail</strong></div>
+            <span>{selectedProjection?.projection_id ?? "No projection"}</span>
+          </div>
+          {selectedProjection ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedProjection.status)}`}>
+                {short(selectedProjection.status)}
+              </span>
+              <h2>{selectedProjection.vessel_name || selectedProjection.voyage_ref}</h2>
+              <p>{selectedProjection.projection_only_disclaimer}</p>
+              <dl>
+                <div><dt>Customer</dt><dd>{selectedProjection.customer_name || "-"}</dd></div>
+                <div><dt>Trip</dt><dd>{selectedProjection.trip_ref ?? "-"}</dd></div>
+                <div><dt>ETA band</dt><dd>{dt(selectedProjection.eta_band_start)} - {dt(selectedProjection.eta_band_end)}</dd></div>
+                <div><dt>Exposure minutes</dt><dd>{selectedProjection.projected_demurrage_exposure_minutes}m</dd></div>
+                <div><dt>Exposure USD</dt><dd>{money(selectedProjection.projected_demurrage_exposure_usd)}</dd></div>
+                <div><dt>Safe to share</dt><dd>{selectedProjection.customer_safe_to_share ? "YES" : "NO"}</dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Confidence and trust</strong>
+                <p>
+                  {short(selectedProjection.telemetry_trust_status)} trust with confidence
+                  {" "}{valueNum(selectedProjection.confidence_score, 0).toFixed(1)}.
+                </p>
+              </section>
+              <section className="recovery-box">
+                <strong>Details</strong>
+                <ul className="compact-evidence-list">
+                  {Object.entries(selectedProjection.details).map(([key, value]) => (
+                    <li key={key}>{short(key)}: {textValue(value)}</li>
+                  ))}
+                  {!Object.keys(selectedProjection.details).length ? <li>No additional projection detail recorded.</li> : null}
+                </ul>
+              </section>
+            </div>
+          ) : null}
+        </aside>
+      </div>
+
+      <div className="recommendation-proof-grid">
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="fleet" /><strong>Trust state</strong></div>
+            <span>{trustSummary?.profileKey ?? "No profile"}</span>
+          </div>
+          <ul className="compact-evidence-list">
+            <li>Trusted: {trustSummary?.trustedCount ?? 0}</li>
+            <li>Degraded: {trustSummary?.degradedCount ?? 0}</li>
+            <li>Blocking: {trustSummary?.blockingCount ?? 0}</li>
+            <li>Latest assessment: {dt(trustSummary?.latestAssessedAt)}</li>
+          </ul>
+        </section>
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="audit" /><strong>Audit lineage</strong></div>
+            <span>{textValue(run?.audit_lineage.eventAction, "No lineage")}</span>
+          </div>
+          <ul className="compact-evidence-list">
+            <li>Input signature: {run?.input_signature ?? "-"}</li>
+            <li>Algorithm: {run?.algorithm_version ?? "-"}</li>
+            <li>Generated by: {run?.generated_by_email ?? "-"}</li>
+            <li>Projection-only: {projectionOnly ? "YES" : "NO"}</li>
           </ul>
         </section>
       </div>

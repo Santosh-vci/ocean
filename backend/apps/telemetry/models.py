@@ -1,7 +1,17 @@
+import uuid
+
 from django.db import models
 
 from apps.masters.models import Location
 from apps.scheduling.models import ScheduleEvent, SimulationScenario, Trip
+
+
+def _reference(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:12].upper()}"
+
+
+def telemetry_trust_assessment_reference() -> str:
+    return _reference("TTA")
 
 
 class TelemetrySource(models.Model):
@@ -519,6 +529,113 @@ class TrackingAlert(models.Model):
         from .services import convert_tracking_alert_to_scenario
 
         return convert_tracking_alert_to_scenario(alert=self, actor=actor)
+
+
+class TelemetryTrustProfile(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        DEPRECATED = "deprecated", "Deprecated"
+
+    profile_key = models.CharField(max_length=96, unique=True)
+    name = models.CharField(max_length=160)
+    version = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACTIVE)
+    source_hierarchy = models.JSONField(default=list, blank=True)
+    freshness_thresholds = models.JSONField(default=dict, blank=True)
+    confidence_thresholds = models.JSONField(default=dict, blank=True)
+    identity_rules = models.JSONField(default=dict, blank=True)
+    quarantine_rules = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["profile_key", "-version"]
+        indexes = [
+            models.Index(fields=("profile_key", "status")),
+            models.Index(fields=("status", "version")),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.profile_key} v{self.version}"
+
+
+class TelemetryTrustAssessment(models.Model):
+    class TrustStatus(models.TextChoices):
+        TRUSTED = "trusted", "Trusted"
+        DEGRADED = "degraded", "Degraded"
+        QUARANTINED = "quarantined", "Quarantined"
+        MANUAL_CONFIRMATION_REQUIRED = (
+            "manual_confirmation_required",
+            "Manual confirmation required",
+        )
+        UNKNOWN = "unknown", "Unknown"
+
+    class IdentityMatchStatus(models.TextChoices):
+        MATCHED = "matched", "Matched"
+        AMBIGUOUS = "ambiguous", "Ambiguous"
+        UNMAPPED = "unmapped", "Unmapped"
+        UNKNOWN = "unknown", "Unknown"
+
+    assessment_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=telemetry_trust_assessment_reference,
+    )
+    profile = models.ForeignKey(
+        TelemetryTrustProfile,
+        on_delete=models.PROTECT,
+        related_name="assessments",
+    )
+    source = models.ForeignKey(
+        TelemetrySource,
+        on_delete=models.PROTECT,
+        related_name="trust_assessments",
+    )
+    asset_identity = models.ForeignKey(
+        AssetIdentity,
+        on_delete=models.PROTECT,
+        related_name="trust_assessments",
+    )
+    latest_state = models.ForeignKey(
+        LatestAssetState,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="trust_assessments",
+    )
+    asset_type = models.CharField(max_length=32, choices=AssetIdentity.AssetType.choices)
+    asset_code = models.CharField(max_length=80)
+    trust_status = models.CharField(
+        max_length=48,
+        choices=TrustStatus.choices,
+        default=TrustStatus.UNKNOWN,
+    )
+    freshness_status = models.CharField(max_length=32, blank=True)
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    identity_match_status = models.CharField(
+        max_length=32,
+        choices=IdentityMatchStatus.choices,
+        default=IdentityMatchStatus.UNKNOWN,
+    )
+    source_rank = models.PositiveIntegerField(default=999)
+    reasons = models.JSONField(default=list, blank=True)
+    evidence = models.JSONField(default=dict, blank=True)
+    assessed_at = models.DateTimeField()
+    algorithm_version = models.CharField(max_length=96)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-assessed_at", "-id"]
+        indexes = [
+            models.Index(fields=("trust_status", "assessed_at")),
+            models.Index(fields=("asset_type", "asset_code", "assessed_at")),
+            models.Index(fields=("source", "trust_status")),
+            models.Index(fields=("profile", "trust_status")),
+        ]
+
+    def __str__(self) -> str:
+        return self.assessment_id
 
 
 class TelemetryReplayRun(models.Model):

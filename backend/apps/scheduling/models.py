@@ -49,6 +49,14 @@ def global_optimization_candidate_reference() -> str:
     return _reference("GCAN")
 
 
+def commercial_projection_run_reference() -> str:
+    return _reference("CPR")
+
+
+def customer_safe_commercial_projection_reference() -> str:
+    return _reference("CSP")
+
+
 class Plan(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -1061,6 +1069,161 @@ class GlobalOptimizationCandidate(models.Model):
 
     def __str__(self) -> str:
         return self.candidate_id
+
+
+class CommercialProjectionRun(models.Model):
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    run_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=commercial_projection_run_reference,
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.QUEUED)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="commercial_projection_runs",
+    )
+    telemetry_trust_profile = models.ForeignKey(
+        "telemetry.TelemetryTrustProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commercial_projection_runs",
+    )
+    input_signature = models.CharField(max_length=64, blank=True)
+    input_summary = models.JSONField(default=dict, blank=True)
+    summary = models.JSONField(default=dict, blank=True)
+    algorithm_version = models.CharField(
+        max_length=96,
+        default="phase6.6-commercial-projection",
+    )
+    audit_lineage = models.JSONField(default=dict, blank=True)
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_commercial_projection_runs",
+    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=("status", "created_at")),
+            models.Index(fields=("plan_version", "status", "created_at")),
+            models.Index(fields=("telemetry_trust_profile", "status")),
+            models.Index(fields=("algorithm_version", "status")),
+            models.Index(fields=("input_signature",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization if self.plan_version else None
+
+    def __str__(self) -> str:
+        return self.run_id
+
+
+class CustomerSafeCommercialProjection(models.Model):
+    class Status(models.TextChoices):
+        ON_TRACK = "on_track", "On track"
+        WATCH = "watch", "Watch"
+        AT_RISK = "at_risk", "At risk"
+        BLOCKED = "blocked", "Blocked"
+        UNKNOWN = "unknown", "Unknown"
+
+    class CommitmentRiskLevel(models.TextChoices):
+        LOW = "low", "Low"
+        WARNING = "warning", "Warning"
+        CRITICAL = "critical", "Critical"
+        UNKNOWN = "unknown", "Unknown"
+
+    projection_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=customer_safe_commercial_projection_reference,
+    )
+    run = models.ForeignKey(
+        CommercialProjectionRun,
+        on_delete=models.CASCADE,
+        related_name="projections",
+    )
+    voyage = models.ForeignKey(
+        OGVVoyage,
+        on_delete=models.CASCADE,
+        related_name="commercial_projections",
+    )
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="commercial_projections",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.UNKNOWN,
+    )
+    customer_safe_eta = models.DateTimeField(null=True, blank=True)
+    eta_band_start = models.DateTimeField(null=True, blank=True)
+    eta_band_end = models.DateTimeField(null=True, blank=True)
+    laycan_status = models.CharField(max_length=32, blank=True)
+    laycan_variance_minutes = models.IntegerField(default=0)
+    projected_demurrage_exposure_minutes = models.PositiveIntegerField(default=0)
+    projected_demurrage_exposure_usd = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+    )
+    commitment_risk_level = models.CharField(
+        max_length=32,
+        choices=CommitmentRiskLevel.choices,
+        default=CommitmentRiskLevel.UNKNOWN,
+    )
+    telemetry_trust_status = models.CharField(max_length=48, blank=True)
+    confidence_score = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    customer_safe_to_share = models.BooleanField(default=False)
+    projection_only_disclaimer = models.CharField(max_length=255)
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["voyage__laycan_start", "voyage__voyage_id", "id"]
+        indexes = [
+            models.Index(fields=("run", "status")),
+            models.Index(fields=("voyage", "run")),
+            models.Index(fields=("commitment_risk_level", "status")),
+            models.Index(fields=("customer_safe_to_share", "status")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "voyage"),
+                name="unique_commercial_projection_run_voyage",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return self.projection_id
 
 
 class ApprovalRequest(models.Model):
