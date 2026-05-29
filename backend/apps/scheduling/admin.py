@@ -6,6 +6,9 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
+    GlobalObjectiveProfile,
+    GlobalOptimizationCandidate,
+    GlobalOptimizationRun,
     ImpactChainAssessment,
     OverrideRequest,
     OptimizerRun,
@@ -212,6 +215,49 @@ class PublishabilityAssessmentAdmin(admin.ModelAdmin):
         "recommendation_origin_status",
         "details",
         "checked_at",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(GlobalObjectiveProfile)
+class GlobalObjectiveProfileAdmin(admin.ModelAdmin):
+    list_display = ("profile_key", "name", "version", "status", "source")
+    list_filter = ("status", "source")
+    search_fields = ("profile_key", "name")
+    readonly_fields = ("weights", "constraints", "created_at", "updated_at")
+
+
+@admin.register(GlobalOptimizationRun)
+class GlobalOptimizationRunAdmin(admin.ModelAdmin):
+    list_display = ("run_id", "plan_version", "status", "objective_profile", "started_by")
+    list_filter = ("status", "algorithm_version", "objective_profile")
+    search_fields = ("run_id", "plan_version__plan__code", "input_signature")
+    readonly_fields = (
+        "run_id",
+        "objective_weights",
+        "input_summary",
+        "audit_lineage",
+        "input_signature",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(GlobalOptimizationCandidate)
+class GlobalOptimizationCandidateAdmin(admin.ModelAdmin):
+    list_display = ("candidate_id", "run", "rank", "score", "risk_level")
+    list_filter = ("risk_level", "run__status")
+    search_fields = ("candidate_id", "run__run_id", "summary")
+    readonly_fields = (
+        "candidate_id",
+        "objective_score_breakdown",
+        "changed_assignments",
+        "trip_sequence_changes",
+        "projected_impacts",
+        "unresolved_risks",
+        "approval_lineage",
+        "metadata",
         "created_at",
         "updated_at",
     )

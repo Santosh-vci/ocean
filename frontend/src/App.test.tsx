@@ -10,6 +10,7 @@ import { OgvDemandPage } from "./pages/OgvDemandPage";
 import { OperationsEventConsolePage } from "./pages/OperationsEventConsolePage";
 import {
   ExceptionCenterPage,
+  GlobalOptimizationReviewPage,
   RecommendationConsolePage,
   SimulationWorkspacePage,
 } from "./pages/RecoveryPages";
@@ -99,6 +100,7 @@ test("shows implemented admin submodules without exposing future locked routes",
     "Published Plan & Schedule",
     "Exception Center",
     "Recommendation Console",
+    "Global Optimization Review",
     "Master Data Console",
   ]);
 });
@@ -126,6 +128,14 @@ test("exposes recovery routes by workflow permission", () => {
       "schedule.approve",
     ]).map((item) => item.label),
   ).toContain("Recommendation Console");
+  expect(
+    visibleNavItems([
+      "dashboard.view",
+      "schedule.view",
+      "schedule.edit",
+      "schedule.approve",
+    ]).map((item) => item.label),
+  ).toContain("Global Optimization Review");
   expect(
     visibleNavItems([
       "dashboard.view",
@@ -741,8 +751,11 @@ test("operator trial import CTA refreshes DB-truth flow metadata before selectin
     recoveryInputSnapshots: [],
     optimizerRuns: [],
     recoveryRecommendations: [],
+    globalOptimizationRuns: [],
+    globalOptimizationCandidates: [],
     liveEtaProjections: [],
     trackingAlerts: [],
+    publishabilityAssessment: null,
     trackingSummary: {
       projectionCount: 0,
       openAlertCount: 0,
@@ -1658,6 +1671,85 @@ test("recommendation console validates and renders root-cause assessment", () =>
 
   fireEvent.click(screen.getByRole("button", { name: "Re-run validation" }));
   expect(onValidateRootCause).toHaveBeenCalledWith(801);
+});
+
+test("global optimization review renders candidate contracts read-only", () => {
+  const overview = stageSevenOverview();
+  overview.globalOptimizationRuns = [{
+    id: 901,
+    run_id: "GOPT-PHASE6-UI",
+    status: "succeeded",
+    plan_version: 1,
+    plan_version_ref: "PLAN-UI V1",
+    objective_profile: 1,
+    objective_profile_ref: "global_optimizer_default_v1",
+    objective_weights: {
+      delay_minutes: 0.3,
+      laycan_risk: 0.25,
+      asset_balance: 0.2,
+      demurrage_exposure: 0.15,
+      residual_risk: 0.1,
+    },
+    input_signature: "abcdef1234567890",
+    input_summary: {},
+    algorithm_version: "phase6.5-global-optimizer-scaffold",
+    audit_lineage: {
+      eventAction: "global_optimizer.run.generate",
+      candidateCount: 1,
+    },
+    started_by: 1,
+    started_by_email: "berau.scheduler@coalflow.local",
+    started_at: "2026-05-18T03:31:00.000Z",
+    completed_at: "2026-05-18T03:31:10.000Z",
+    error_message: "",
+    candidates: [{
+      id: 902,
+      candidate_id: "GCAN-PHASE6-UI-01",
+      run: 901,
+      run_ref: "GOPT-PHASE6-UI",
+      rank: 1,
+      score: "88.500",
+      risk_level: "low",
+      summary: "Prioritize earliest laycan and highest priority OGVs.",
+      objective_score_breakdown: {
+        weights: { delay_minutes: 0.3, laycan_risk: 0.25 },
+      },
+      changed_assignments: [{
+        kind: "candidate_priority_shift",
+        voyageId: "OGV-001",
+        reason: "Laycan priority receives earlier network attention.",
+      }],
+      trip_sequence_changes: [{
+        kind: "candidate_sequence_priority",
+        voyageId: "OGV-001",
+      }],
+      projected_impacts: {
+        delayMinutesDelta: -30,
+        laycanRiskDelta: -1,
+        demurrageExposureDeltaUsd: -5000,
+      },
+      unresolved_risks: [],
+      approval_lineage: {
+        approvalCreated: false,
+        manualPublishRequired: true,
+      },
+      metadata: { candidateKind: "laycan_priority" },
+      created_at: "2026-05-18T03:31:10.000Z",
+      updated_at: "2026-05-18T03:31:10.000Z",
+    }],
+    created_at: "2026-05-18T03:31:00.000Z",
+    updated_at: "2026-05-18T03:31:10.000Z",
+  }];
+  overview.globalOptimizationCandidates = overview.globalOptimizationRuns[0].candidates;
+
+  render(<GlobalOptimizationReviewPage overview={overview} />);
+
+  expect(screen.getByRole("heading", { name: "Global Optimization Review" })).toBeInTheDocument();
+  expect(screen.getAllByText("GCAN-PHASE6-UI-01").length).toBeGreaterThan(0);
+  expect(screen.getByText("Read-only candidates")).toBeInTheDocument();
+  expect(screen.getByText(/does not create a plan, approval, or publish event/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Generate|Promote|Publish|Approve|Materialize/i }))
+    .not.toBeInTheDocument();
 });
 
 test("simulation workspace renders computed run results and impact nodes", () => {

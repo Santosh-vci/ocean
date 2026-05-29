@@ -41,6 +41,14 @@ def publishability_assessment_reference() -> str:
     return _reference("PUB")
 
 
+def global_optimization_run_reference() -> str:
+    return _reference("GOPT")
+
+
+def global_optimization_candidate_reference() -> str:
+    return _reference("GCAN")
+
+
 class Plan(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -903,6 +911,156 @@ class PublishabilityAssessment(models.Model):
 
     def __str__(self) -> str:
         return self.assessment_id
+
+
+class GlobalObjectiveProfile(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        DEPRECATED = "deprecated", "Deprecated"
+
+    profile_key = models.CharField(max_length=96, unique=True)
+    name = models.CharField(max_length=160)
+    version = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.ACTIVE)
+    weights = models.JSONField(default=dict, blank=True)
+    constraints = models.JSONField(default=dict, blank=True)
+    source = models.CharField(max_length=80, default="settings")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["profile_key", "-version"]
+        indexes = [
+            models.Index(fields=("profile_key", "status")),
+            models.Index(fields=("status", "version")),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.profile_key} v{self.version}"
+
+
+class GlobalOptimizationRun(models.Model):
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    run_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=global_optimization_run_reference,
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.QUEUED)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="global_optimization_runs",
+    )
+    objective_profile = models.ForeignKey(
+        GlobalObjectiveProfile,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="runs",
+    )
+    objective_weights = models.JSONField(default=dict, blank=True)
+    input_signature = models.CharField(max_length=64, blank=True)
+    input_summary = models.JSONField(default=dict, blank=True)
+    algorithm_version = models.CharField(
+        max_length=96,
+        default="phase6.5-global-optimizer-scaffold",
+    )
+    audit_lineage = models.JSONField(default=dict, blank=True)
+    started_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="started_global_optimization_runs",
+    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=("status", "created_at")),
+            models.Index(fields=("plan_version", "status", "created_at")),
+            models.Index(fields=("objective_profile", "status")),
+            models.Index(fields=("algorithm_version", "status")),
+            models.Index(fields=("input_signature",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization if self.plan_version else None
+
+    def __str__(self) -> str:
+        return self.run_id
+
+
+class GlobalOptimizationCandidate(models.Model):
+    class RiskLevel(models.TextChoices):
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+        CRITICAL = "critical", "Critical"
+
+    candidate_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=global_optimization_candidate_reference,
+    )
+    run = models.ForeignKey(
+        GlobalOptimizationRun,
+        on_delete=models.CASCADE,
+        related_name="candidates",
+    )
+    rank = models.PositiveIntegerField()
+    score = models.DecimalField(max_digits=9, decimal_places=3, default=0)
+    risk_level = models.CharField(
+        max_length=32,
+        choices=RiskLevel.choices,
+        default=RiskLevel.MEDIUM,
+    )
+    summary = models.CharField(max_length=255)
+    objective_score_breakdown = models.JSONField(default=dict, blank=True)
+    changed_assignments = models.JSONField(default=list, blank=True)
+    trip_sequence_changes = models.JSONField(default=list, blank=True)
+    projected_impacts = models.JSONField(default=dict, blank=True)
+    unresolved_risks = models.JSONField(default=list, blank=True)
+    approval_lineage = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["run", "rank", "id"]
+        indexes = [
+            models.Index(fields=("run", "rank")),
+            models.Index(fields=("risk_level", "score")),
+            models.Index(fields=("created_at",)),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "rank"),
+                name="unique_global_optimization_candidate_rank",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return self.candidate_id
 
 
 class ApprovalRequest(models.Model):

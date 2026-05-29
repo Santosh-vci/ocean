@@ -820,6 +820,13 @@ def _response_payload(ctx, shaped: ShapedRecommendations) -> dict[str, Any]:
             ),
             "publishability_warning_count": ctx.publishability_warning_count,
             "publishability_top_blocker": ctx.publishability_top_blocker,
+            "latest_global_optimization_run_id": ctx.latest_global_optimization_run_id,
+            "latest_global_optimization_candidate_id": (
+                ctx.latest_global_optimization_candidate_id
+            ),
+            "latest_global_optimization_candidate_count": (
+                ctx.latest_global_optimization_candidate_count
+            ),
         },
         "global_next_action": shaped.global_next_action,
         "page_actions": shaped.page_actions,

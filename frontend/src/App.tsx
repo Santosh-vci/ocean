@@ -30,6 +30,7 @@ import { RbacPage } from "./pages/RbacPage";
 import {
   ApprovalsPublishingPage,
   ExceptionCenterPage,
+  GlobalOptimizationReviewPage,
   RecommendationConsolePage,
   type RecommendationSourceInput,
   type ScenarioAssumptionDraft,
@@ -1555,6 +1556,12 @@ function App() {
             onCheckPublishability={handleCheckPublishability}
             onPublish={handlePublishPlan}
             onReject={handleRejectPlan}
+            overview={schedulingOverview}
+          />
+        ) : null}
+        {route === "/optimization/global" && canViewSchedule ? (
+          <GlobalOptimizationReviewPage
+            {...assistantPageProps}
             overview={schedulingOverview}
           />
         ) : null}

@@ -358,6 +358,40 @@ def rule_publish_ready(ctx: AssistantContext) -> list[ActionRecommendation]:
     return []
 
 
+def rule_global_optimizer_candidate_ready(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if (
+        ctx.latest_global_optimization_run_id
+        and ctx.latest_global_optimization_candidate_id
+        and ctx.latest_global_optimization_candidate_count > 0
+    ):
+        return [
+            build_recommendation(
+                "REVIEW_GLOBAL_OPTIMIZATION_CANDIDATE",
+                priority="info",
+                rank_score=500,
+                enabled=True,
+                reason=(
+                    "A global optimization run has advisory candidate contracts ready "
+                    "for review."
+                ),
+                source="global_optimizer.candidate_ready",
+                target_object_type="global_optimization_candidate",
+                target_object_id=ctx.latest_global_optimization_candidate_id,
+                impact_if_ignored=(
+                    "Network-wide candidate tradeoffs and lineage will remain unreviewed."
+                ),
+                metadata={
+                    "runId": ctx.latest_global_optimization_run_id,
+                    "runRef": ctx.latest_global_optimization_run_ref,
+                    "candidateRef": ctx.latest_global_optimization_candidate_ref,
+                    "candidateCount": ctx.latest_global_optimization_candidate_count,
+                    "summary": ctx.latest_global_optimization_candidate_summary,
+                },
+            )
+        ]
+    return []
+
+
 def rule_publishability_check_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
     if (
         ctx.all_required_approvals_complete
@@ -911,6 +945,7 @@ RULES: tuple[Rule, ...] = (
     rule_publishability_check_needed,
     rule_publishability_blocked,
     rule_publish_ready,
+    rule_global_optimizer_candidate_ready,
     rule_export_published_without_export,
     rule_high_confidence_event,
     rule_noisy_event,

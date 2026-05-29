@@ -27,6 +27,8 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
+    GlobalOptimizationCandidate,
+    GlobalOptimizationRun,
     OptimizerRun,
     OverrideRequest,
     Plan,
@@ -51,12 +53,19 @@ from .recovery_services import (
 )
 from .root_cause_services import assess_recommendation_root_cause
 from .publishability_services import assess_plan_publishability, latest_publishability_assessment
+from .global_optimizer_services import (
+    generate_global_optimization_candidates,
+    latest_global_optimization_run,
+)
 from .serializers import (
     ApprovalDecisionSerializer,
     ApprovalRequestSerializer,
     AssignmentSerializer,
     ConflictSerializer,
     ExportJobSerializer,
+    GlobalOptimizationCandidateSerializer,
+    GlobalOptimizationRunGenerateSerializer,
+    GlobalOptimizationRunSerializer,
     OptimizerRunGenerateSerializer,
     OptimizerRunSerializer,
     OverrideRequestSerializer,
@@ -674,6 +683,82 @@ class OptimizerRunViewSet(ReadOnlyModelViewSet):
         )
 
 
+class GlobalOptimizationRunViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "create": "schedule.edit",
+        "generate": "schedule.edit",
+    }
+    queryset = GlobalOptimizationRun.objects.select_related(
+        "plan_version",
+        "plan_version__plan",
+        "objective_profile",
+        "started_by",
+    ).prefetch_related("candidates")
+    serializer_class = GlobalOptimizationRunSerializer
+
+    def create(self, request):
+        return self._generate_global_run(request)
+
+    @action(detail=False, methods=["post"], url_path="generate")
+    def generate(self, request):
+        return self._generate_global_run(request)
+
+    def _generate_global_run(self, request):
+        generate_serializer = GlobalOptimizationRunGenerateSerializer(data=request.data)
+        generate_serializer.is_valid(raise_exception=True)
+        run = generate_global_optimization_candidates(
+            plan_version=generate_serializer.validated_data.get("plan_version"),
+            objective_profile=generate_serializer.validated_data.get("objective_profile"),
+            objective_weights=generate_serializer.validated_data.get("objective_weights", {}),
+            max_candidates=generate_serializer.validated_data.get("max_candidates", 3),
+            actor=request.user,
+        )
+        run = self.get_queryset().get(pk=run.pk)
+        record_audit_event(
+            actor=request.user,
+            organization=run.organization,
+            action="global_optimizer.run.generate",
+            object_type="global_optimization_run",
+            object_id=str(run.pk),
+            object_repr=run.run_id,
+            metadata={
+                "run_id": run.run_id,
+                "plan_version_id": run.plan_version_id,
+                "objective_profile_key": (
+                    run.objective_profile.profile_key if run.objective_profile else ""
+                ),
+                "objective_profile_version": (
+                    run.objective_profile.version if run.objective_profile else None
+                ),
+                "input_signature": run.input_signature,
+                "candidate_count": run.candidates.count(),
+                "algorithm_version": run.algorithm_version,
+            },
+            request=request,
+        )
+        return Response(
+            GlobalOptimizationRunSerializer(run).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class GlobalOptimizationCandidateViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+    }
+    queryset = GlobalOptimizationCandidate.objects.select_related(
+        "run",
+        "run__plan_version",
+        "run__plan_version__plan",
+    ).all()
+    serializer_class = GlobalOptimizationCandidateSerializer
+
+
 class RecoveryRecommendationViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
@@ -1085,6 +1170,8 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         eta_projections = LiveEtaProjection.objects.none()
         tracking_alerts = TrackingAlert.objects.none()
         publishability_assessment = None
+        global_optimization_runs = GlobalOptimizationRun.objects.none()
+        global_optimization_candidates = GlobalOptimizationCandidate.objects.none()
 
         if active_version:
             trips = (
@@ -1228,6 +1315,20 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "created_scenario",
             )
             publishability_assessment = latest_publishability_assessment(active_version)
+            global_run_plan_versions = [active_version.id]
+            if active_version.source_version_id:
+                global_run_plan_versions.append(active_version.source_version_id)
+            global_optimization_runs = GlobalOptimizationRun.objects.filter(
+                plan_version_id__in=global_run_plan_versions,
+            ).select_related(
+                "plan_version",
+                "plan_version__plan",
+                "objective_profile",
+                "started_by",
+            ).prefetch_related("candidates")
+            latest_global_run = latest_global_optimization_run(active_version)
+            if latest_global_run:
+                global_optimization_candidates = latest_global_run.candidates.all()
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -1303,6 +1404,14 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     if publishability_assessment
                     else None
                 ),
+                "globalOptimizationRuns": GlobalOptimizationRunSerializer(
+                    global_optimization_runs,
+                    many=True,
+                ).data,
+                "globalOptimizationCandidates": GlobalOptimizationCandidateSerializer(
+                    global_optimization_candidates,
+                    many=True,
+                ).data,
                 "trackingSummary": {
                     "projectionCount": eta_projections.count(),
                     "openAlertCount": tracking_alerts.filter(

@@ -24,6 +24,7 @@ from apps.scheduling.models import (
     ApprovalRequest,
     Conflict,
     ExportJob,
+    GlobalOptimizationRun,
     ImpactChainAssessment,
     OptimizerRun,
     OverrideRequest,
@@ -112,6 +113,12 @@ class AssistantContext:
     publishability_top_blocker_group: str = ""
     publishability_expected_resolver_action_id: str = ""
     publishability_is_stale: bool = True
+    latest_global_optimization_run_id: int | None = None
+    latest_global_optimization_run_ref: str = ""
+    latest_global_optimization_candidate_id: int | None = None
+    latest_global_optimization_candidate_ref: str = ""
+    latest_global_optimization_candidate_count: int = 0
+    latest_global_optimization_candidate_summary: str = ""
     recent_governed_mutation_count: int = 0
     active_flow_run_id: str = ""
     active_flow_key: str = ""
@@ -628,6 +635,49 @@ def select_publishability_status(
     }
 
 
+def select_global_optimizer_status(
+    user: AbstractBaseUser | None,
+    active_plan_version: PlanVersion | None,
+) -> dict[str, Any]:
+    if active_plan_version is None:
+        return {
+            "latest_global_optimization_run_id": None,
+            "latest_global_optimization_run_ref": "",
+            "latest_global_optimization_candidate_id": None,
+            "latest_global_optimization_candidate_ref": "",
+            "latest_global_optimization_candidate_count": 0,
+            "latest_global_optimization_candidate_summary": "",
+        }
+
+    plan_version_ids = [active_plan_version.id]
+    if active_plan_version.source_version_id:
+        plan_version_ids.append(active_plan_version.source_version_id)
+    run = (
+        GlobalOptimizationRun.objects.filter(
+            plan_version_id__in=plan_version_ids,
+            status=GlobalOptimizationRun.Status.SUCCEEDED,
+        )
+        .prefetch_related("candidates")
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    candidate = (
+        run.candidates.order_by("rank", "id").first() if run else None
+    )
+    return {
+        "latest_global_optimization_run_id": run.id if run else None,
+        "latest_global_optimization_run_ref": run.run_id if run else "",
+        "latest_global_optimization_candidate_id": candidate.id if candidate else None,
+        "latest_global_optimization_candidate_ref": (
+            candidate.candidate_id if candidate else ""
+        ),
+        "latest_global_optimization_candidate_count": (
+            run.candidates.count() if run else 0
+        ),
+        "latest_global_optimization_candidate_summary": candidate.summary if candidate else "",
+    }
+
+
 def select_recent_audit_counts(user: AbstractBaseUser | None = None) -> dict[str, int]:
     governed_prefixes = (
         "approval.",
@@ -635,6 +685,7 @@ def select_recent_audit_counts(user: AbstractBaseUser | None = None) -> dict[str
         "recovery.",
         "simulation.",
         "phase5.",
+        "global_optimizer.",
     )
     query = Q()
     for prefix in governed_prefixes:
@@ -724,6 +775,7 @@ def build_assistant_context(
     )
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
     publishability_status = select_publishability_status(user, active_plan_version)
+    global_optimizer_status = select_global_optimizer_status(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
     flow_status = select_flow_status(
         user,
@@ -772,6 +824,7 @@ def build_assistant_context(
         **phase5_status,
         **operational_risks,
         **publishability_status,
+        **global_optimizer_status,
         **audit_counts,
         **flow_status,
     )

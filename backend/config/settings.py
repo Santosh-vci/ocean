@@ -141,6 +141,28 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+GLOBAL_OPTIMIZER_OBJECTIVE_PROFILES = [
+    {
+        "profile_key": "global_optimizer_default_v1",
+        "name": "Global optimizer default",
+        "version": 1,
+        "status": "active",
+        "source": "settings/default",
+        "weights": {
+            "delay_minutes": 0.30,
+            "laycan_risk": 0.25,
+            "asset_balance": 0.20,
+            "demurrage_exposure": 0.15,
+            "residual_risk": 0.10,
+        },
+        "constraints": {
+            "respect_approvals": True,
+            "respect_operating_windows": True,
+            "publish_candidate_only": True,
+        },
+    }
+]
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

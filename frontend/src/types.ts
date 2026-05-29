@@ -853,6 +853,49 @@ export type OptimizerRunRecord = {
   updated_at: string;
 };
 
+export type GlobalOptimizationCandidateRecord = {
+  id: number;
+  candidate_id: string;
+  run: number;
+  run_ref: string;
+  rank: number;
+  score: string;
+  risk_level: string;
+  summary: string;
+  objective_score_breakdown: Record<string, unknown>;
+  changed_assignments: Array<Record<string, unknown>>;
+  trip_sequence_changes: Array<Record<string, unknown>>;
+  projected_impacts: Record<string, unknown>;
+  unresolved_risks: Array<Record<string, unknown>>;
+  approval_lineage: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GlobalOptimizationRunRecord = {
+  id: number;
+  run_id: string;
+  status: string;
+  plan_version: number | null;
+  plan_version_ref: string | null;
+  objective_profile: number | null;
+  objective_profile_ref: string | null;
+  objective_weights: Record<string, unknown>;
+  input_signature: string;
+  input_summary: Record<string, unknown>;
+  algorithm_version: string;
+  audit_lineage: Record<string, unknown>;
+  started_by: number | null;
+  started_by_email: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string;
+  candidates: GlobalOptimizationCandidateRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
 export type OverrideRequestRecord = {
   id: number;
   plan_version: number;
@@ -1329,6 +1372,8 @@ export type SchedulingOverview = {
   recoveryInputSnapshots: RecoveryInputSnapshotRecord[];
   optimizerRuns: OptimizerRunRecord[];
   recoveryRecommendations: RecoveryRecommendationRecord[];
+  globalOptimizationRuns: GlobalOptimizationRunRecord[];
+  globalOptimizationCandidates: GlobalOptimizationCandidateRecord[];
   liveEtaProjections: LiveEtaProjectionRecord[];
   trackingAlerts: TrackingAlertRecord[];
   publishabilityAssessment: PublishabilityAssessmentRecord | null;

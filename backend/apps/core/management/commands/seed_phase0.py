@@ -57,6 +57,7 @@ from apps.scheduling.models import (
     Assignment,
     Conflict,
     ExportJob,
+    GlobalOptimizationRun,
     OptimizerRun,
     OverrideRequest,
     Plan,
@@ -79,6 +80,7 @@ from apps.scheduling.models import (
     SimulationScenario,
     Trip,
 )
+from apps.scheduling.global_optimizer_services import seed_global_objective_profiles
 from apps.scheduling.services import (
     create_scenario_assumption,
     generate_plan_version,
@@ -391,6 +393,7 @@ class Command(BaseCommand):
         self._seed_telemetry_foundation()
         self._seed_operations_foundation()
         seed_canonical_flow_definitions()
+        seed_global_objective_profiles()
         if options["master_data_only"]:
             self.stdout.write(
                 self.style.SUCCESS(
@@ -487,6 +490,7 @@ class Command(BaseCommand):
         ExportJob.objects.all().delete()
         PublishedPlanSnapshot.objects.all().delete()
         PublishabilityAssessment.objects.all().delete()
+        GlobalOptimizationRun.objects.all().delete()
         RootCauseRepairAssessment.objects.all().delete()
         RecommendationEvaluation.objects.all().delete()
         RecoveryAction.objects.all().delete()

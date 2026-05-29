@@ -11,12 +11,14 @@ from apps.flows.services import start_flow
 from apps.organizations.models import Organization
 from apps.rbac.models import AccessPermission, DataScope, Role, UserRoleAssignment
 from apps.scheduling.models import (
+    GlobalOptimizationRun,
     OptimizerRun,
     Plan,
     PlanVersion,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
 )
+from apps.scheduling.global_optimizer_services import generate_global_optimization_candidates
 
 NEXT_ACTIONS_URL = "/api/assistant/next-actions/"
 
@@ -329,6 +331,38 @@ def test_repeated_next_actions_are_deterministic_for_same_state():
     assert [item["action_id"] for item in first["page_actions"]] == [
         item["action_id"] for item in second["page_actions"]
     ]
+
+
+@pytest.mark.django_db
+def test_global_optimizer_candidate_review_action_is_available_read_only():
+    user, org = make_user("assistant-api-global-review", permissions=("schedule.view",))
+    version = make_plan_version(org)
+    run = generate_global_optimization_candidates(plan_version=version, actor=user)
+    candidate = run.candidates.order_by("rank").first()
+
+    response = client_for(user).get(
+        NEXT_ACTIONS_URL,
+        {"route": "/optimization/global"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    action_ids = [
+        payload["global_next_action"]["action_id"],
+        *[item["action_id"] for item in payload["page_actions"]],
+    ]
+    assert "REVIEW_GLOBAL_OPTIMIZATION_CANDIDATE" in action_ids
+    review_action = next(
+        item
+        for item in [payload["global_next_action"], *payload["page_actions"]]
+        if item["action_id"] == "REVIEW_GLOBAL_OPTIMIZATION_CANDIDATE"
+    )
+    assert review_action["route"] == "/optimization/global"
+    assert review_action["required_permission"] == "schedule.view"
+    assert review_action["audit_required"] is False
+    assert review_action["target_object_type"] == "global_optimization_candidate"
+    assert review_action["target_object_id"] == str(candidate.id)
+    assert GlobalOptimizationRun.objects.count() == 1
 
 
 @pytest.mark.django_db

@@ -167,6 +167,13 @@ export const NAV_MODULES: NavModule[] = [
         requiredPermission: "schedule.approve",
         icon: "audit",
       },
+      {
+        path: "/optimization/global",
+        label: "Global Optimization Review",
+        module: "Recovery Loop",
+        requiredPermission: "schedule.view",
+        icon: "account-tree",
+      },
     ],
   },
   {

@@ -21,6 +21,9 @@ from .models import (
     Assignment,
     Conflict,
     ExportJob,
+    GlobalObjectiveProfile,
+    GlobalOptimizationCandidate,
+    GlobalOptimizationRun,
     ImpactChainAssessment,
     OptimizerRun,
     OverrideRequest,
@@ -475,6 +478,102 @@ class PublishabilityAssessmentSerializer(serializers.ModelSerializer):
             "checked_by_email",
             "algorithm_version",
             "details",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class GlobalObjectiveProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalObjectiveProfile
+        fields = (
+            "id",
+            "profile_key",
+            "name",
+            "version",
+            "status",
+            "weights",
+            "constraints",
+            "source",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class GlobalOptimizationCandidateSerializer(serializers.ModelSerializer):
+    run_ref = serializers.CharField(source="run.run_id", read_only=True)
+
+    class Meta:
+        model = GlobalOptimizationCandidate
+        fields = (
+            "id",
+            "candidate_id",
+            "run",
+            "run_ref",
+            "rank",
+            "score",
+            "risk_level",
+            "summary",
+            "objective_score_breakdown",
+            "changed_assignments",
+            "trip_sequence_changes",
+            "projected_impacts",
+            "unresolved_risks",
+            "approval_lineage",
+            "metadata",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class GlobalOptimizationRunGenerateSerializer(serializers.Serializer):
+    plan_version = serializers.PrimaryKeyRelatedField(
+        queryset=PlanVersion.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    objective_profile = serializers.PrimaryKeyRelatedField(
+        queryset=GlobalObjectiveProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    objective_weights = serializers.JSONField(required=False, default=dict)
+    max_candidates = serializers.IntegerField(required=False, min_value=1, max_value=5, default=3)
+
+
+class GlobalOptimizationRunSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    objective_profile_ref = serializers.CharField(
+        source="objective_profile.profile_key",
+        read_only=True,
+    )
+    started_by_email = serializers.EmailField(source="started_by.email", read_only=True)
+    candidates = GlobalOptimizationCandidateSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = GlobalOptimizationRun
+        fields = (
+            "id",
+            "run_id",
+            "status",
+            "plan_version",
+            "plan_version_ref",
+            "objective_profile",
+            "objective_profile_ref",
+            "objective_weights",
+            "input_signature",
+            "input_summary",
+            "algorithm_version",
+            "audit_lineage",
+            "started_by",
+            "started_by_email",
+            "started_at",
+            "completed_at",
+            "error_message",
+            "candidates",
             "created_at",
             "updated_at",
         )

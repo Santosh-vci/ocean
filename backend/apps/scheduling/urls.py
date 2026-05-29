@@ -8,6 +8,8 @@ from .views import (
     ConflictViewSet,
     DashboardSituationView,
     ExportJobViewSet,
+    GlobalOptimizationCandidateViewSet,
+    GlobalOptimizationRunViewSet,
     OptimizerRunViewSet,
     OverrideRequestViewSet,
     PlanVersionViewSet,
@@ -53,6 +55,16 @@ router.register(
 )
 router.register("scheduling/optimizer-runs", OptimizerRunViewSet, basename="optimizer-run")
 router.register("scheduling/recovery-runs", OptimizerRunViewSet, basename="recovery-run")
+router.register(
+    "scheduling/global-optimization-runs",
+    GlobalOptimizationRunViewSet,
+    basename="global-optimization-run",
+)
+router.register(
+    "scheduling/global-optimization-candidates",
+    GlobalOptimizationCandidateViewSet,
+    basename="global-optimization-candidate",
+)
 router.register(
     "scheduling/recovery-recommendations",
     RecoveryRecommendationViewSet,

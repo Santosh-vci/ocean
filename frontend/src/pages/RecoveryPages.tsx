@@ -36,6 +36,8 @@ import type {
   ScenarioTripProjectionRecord,
   OperationsHealthRiskRecord,
   ConfirmedOperationalEventRecord,
+  GlobalOptimizationCandidateRecord,
+  GlobalOptimizationRunRecord,
   OperationalEventCandidateRecord,
   SchedulingOverview,
   SimulationScenarioRecord,
@@ -103,6 +105,8 @@ const EMPTY_CONFIRMED_OPERATIONAL_EVENTS: ConfirmedOperationalEventRecord[] = []
 const EMPTY_ASSUMPTIONS: ScenarioAssumptionRecord[] = [];
 const EMPTY_OPTIMIZER_RUNS: OptimizerRunRecord[] = [];
 const EMPTY_RECOMMENDATIONS: RecoveryRecommendationRecord[] = [];
+const EMPTY_GLOBAL_OPTIMIZER_RUNS: GlobalOptimizationRunRecord[] = [];
+const EMPTY_GLOBAL_OPTIMIZER_CANDIDATES: GlobalOptimizationCandidateRecord[] = [];
 const EMPTY_CONSTRAINT_EVALUATIONS: ScenarioConstraintEvaluationRecord[] = [];
 const EMPTY_OGV_PROJECTIONS: ScenarioOgvProjectionRecord[] = [];
 const EMPTY_RESOURCE_UTILIZATIONS: ScenarioResourceUtilizationRecord[] = [];
@@ -186,6 +190,12 @@ function textValue(value: unknown, fallback = "-") {
   if (typeof value === "string" && value.trim()) return value;
   if (typeof value === "number") return String(value);
   return fallback;
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
 }
 
 function signedMinutes(value: unknown) {
@@ -1383,6 +1393,229 @@ export function RecommendationConsolePage({
               </span>
             )) : <span className="recommendation-explanation-node"><strong>No explanation</strong><em>-</em><small>Generate a recovery run to inspect ranking evidence.</small></span>}
           </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+export function GlobalOptimizationReviewPage({
+  assistantBlockedActions,
+  assistantChecklist,
+  assistantFlow,
+  assistantPageActions,
+  assistantRowActions,
+  overview,
+  onAssistantNavigate,
+}: RecoveryPageProps) {
+  const runs = overview?.globalOptimizationRuns ?? EMPTY_GLOBAL_OPTIMIZER_RUNS;
+  const overviewCandidates = overview?.globalOptimizationCandidates
+    ?? EMPTY_GLOBAL_OPTIMIZER_CANDIDATES;
+  const [selectedRunId, setSelectedRunId] = useState<number | null>(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
+  const selectedRun = useMemo(
+    () => runs.find((run) => run.id === selectedRunId) ?? runs[0],
+    [runs, selectedRunId],
+  );
+  const candidates = useMemo(
+    () => selectedRun?.candidates.length
+      ? selectedRun.candidates
+      : overviewCandidates.filter((candidate) => candidate.run === selectedRun?.id),
+    [overviewCandidates, selectedRun],
+  );
+  const selectedCandidate = useMemo(
+    () => candidates.find((candidate) => candidate.id === selectedCandidateId)
+      ?? candidates[0],
+    [candidates, selectedCandidateId],
+  );
+  const objectiveEntries = Object.entries(selectedRun?.objective_weights ?? {});
+  const scoreWeights = recordValue(
+    recordValue(selectedCandidate?.objective_score_breakdown).weights,
+  );
+  const scoreEntries = Object.entries(
+    Object.keys(scoreWeights).length ? scoreWeights : selectedRun?.objective_weights ?? {},
+  );
+  const impacts = selectedCandidate?.projected_impacts ?? {};
+  const lineage = selectedCandidate?.approval_lineage ?? {};
+
+  return (
+    <section className="workspace-page recovery-board recommendation-board global-optimizer-board">
+      <header className="page-heading planning-heading">
+        <div>
+          <p>Recovery Loop / Global Optimization</p>
+          <h1>Global Optimization Review</h1>
+        </div>
+        <div className="planning-actions">
+          <span className="phase-chip">Read-only candidates</span>
+        </div>
+      </header>
+      <RecommendationCard
+        assistantBlockedActions={assistantBlockedActions}
+        assistantChecklist={assistantChecklist}
+        assistantFlow={assistantFlow}
+        assistantPageActions={assistantPageActions}
+        assistantRowActions={assistantRowActions}
+        onAssistantNavigate={onAssistantNavigate}
+        title="Optimization guidance"
+      />
+
+      <div className="metric-strip six-up recovery-kpis">
+        <div><span>Latest run</span><strong>{selectedRun?.run_id ?? "NONE"}</strong></div>
+        <div><span>Candidates</span><strong>{candidates.length}</strong></div>
+        <div><span>Top score</span><strong>{valueNum(selectedCandidate?.score, 0).toFixed(1)}</strong></div>
+        <div><span>Risk</span><strong className={statusTone(selectedCandidate?.risk_level)}>{short(selectedCandidate?.risk_level)}</strong></div>
+        <div><span>Profile</span><strong>{selectedRun?.objective_profile_ref ?? "-"}</strong></div>
+        <div><span>Algorithm</span><strong>{selectedRun?.algorithm_version ?? "-"}</strong></div>
+      </div>
+
+      <div className="recommendation-layout">
+        <aside className="board-surface recommendation-run-rail">
+          <div className="grid-header">
+            <div><SvgIcon name="schedule" /><strong>Global runs</strong></div>
+          </div>
+          <section className="recommendation-run-list">
+            {runs.length ? runs.map((run) => (
+              <button
+                className={selectedRun?.id === run.id ? "active" : ""}
+                key={run.id}
+                onClick={() => {
+                  setSelectedRunId(run.id);
+                  setSelectedCandidateId(null);
+                }}
+                type="button"
+              >
+                <strong>{run.run_id}</strong>
+                <span>{short(run.status)} / {run.candidates.length} candidates</span>
+              </button>
+            )) : <span>No global optimizer runs yet</span>}
+          </section>
+          <dl>
+            <div><dt>Plan version</dt><dd>{selectedRun?.plan_version_ref ?? "-"}</dd></div>
+            <div><dt>Input signature</dt><dd>{selectedRun?.input_signature.slice(0, 12) ?? "-"}</dd></div>
+            <div><dt>Started by</dt><dd>{selectedRun?.started_by_email ?? "-"}</dd></div>
+            <div><dt>Completed</dt><dd>{dt(selectedRun?.completed_at)}</dd></div>
+          </dl>
+        </aside>
+
+        <section className="board-surface recommendation-grid-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="account-tree" /><strong>Ranked global candidates</strong></div>
+            <span>Advisory only - no plan mutation, approval, or publish action</span>
+          </div>
+          <div className="grid-scroll">
+            <table className="planning-table logistics-table">
+              <thead>
+                <tr>
+                  <th>Rank</th><th>Candidate</th><th>Summary</th><th>Score</th>
+                  <th>Risk</th><th>Delay</th><th>Laycan</th><th>Exposure</th><th>Risks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.map((candidate) => (
+                  <tr
+                    className={selectedCandidate?.id === candidate.id ? "selected-row" : ""}
+                    key={candidate.id}
+                    onClick={() => setSelectedCandidateId(candidate.id)}
+                  >
+                    <td>#{candidate.rank}</td>
+                    <td>{candidate.candidate_id}</td>
+                    <td>{candidate.summary}</td>
+                    <td>{valueNum(candidate.score, 0).toFixed(1)}</td>
+                    <td><span className={`status-chip ${statusTone(candidate.risk_level)}`}>{short(candidate.risk_level)}</span></td>
+                    <td>{signedMinutes(candidate.projected_impacts.delayMinutesDelta)}</td>
+                    <td>{signedMinutes(candidate.projected_impacts.laycanRiskDelta)}</td>
+                    <td>{money(candidate.projected_impacts.demurrageExposureDeltaUsd)}</td>
+                    <td>{candidate.unresolved_risks.length}</td>
+                  </tr>
+                ))}
+                {!candidates.length ? (
+                  <tr>
+                    <td colSpan={9}>No global optimization candidates have been generated for the active plan.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside className="board-surface logistics-inspector recommendation-inspector">
+          <div className="grid-header">
+            <div><SvgIcon name="rule" /><strong>Candidate contract</strong></div>
+            <span>{selectedCandidate?.candidate_id ?? "No candidate"}</span>
+          </div>
+          {selectedCandidate ? (
+            <div className="inspector-body">
+              <span className={`status-chip ${statusTone(selectedCandidate.risk_level)}`}>
+                {short(selectedCandidate.risk_level)}
+              </span>
+              <h2>{selectedCandidate.summary}</h2>
+              <p>This contract is advisory and read-only; it does not create a plan, approval, or publish event.</p>
+              <dl>
+                <div><dt>Rank</dt><dd>#{selectedCandidate.rank}</dd></div>
+                <div><dt>Score</dt><dd>{valueNum(selectedCandidate.score, 0).toFixed(1)} / 100</dd></div>
+                <div><dt>Profile</dt><dd>{selectedRun?.objective_profile_ref ?? "-"}</dd></div>
+                <div><dt>Changed assignments</dt><dd>{selectedCandidate.changed_assignments.length}</dd></div>
+                <div><dt>Sequence shifts</dt><dd>{selectedCandidate.trip_sequence_changes.length}</dd></div>
+                <div><dt>Approval created</dt><dd>{lineage.approvalCreated ? "YES" : "NO"}</dd></div>
+              </dl>
+              <section className="recovery-box">
+                <strong>Projected impact</strong>
+                <p>
+                  Delay {signedMinutes(impacts.delayMinutesDelta)} / laycan {signedMinutes(impacts.laycanRiskDelta)}
+                  {" "} / exposure {money(impacts.demurrageExposureDeltaUsd)}
+                </p>
+              </section>
+              <section className="recovery-box">
+                <strong>Objective weights</strong>
+                <ul className="compact-evidence-list">
+                  {(scoreEntries.length ? scoreEntries : objectiveEntries).map(([key, value]) => (
+                    <li key={key}>{short(key)}: {valueNum(value, 0).toFixed(2)}</li>
+                  ))}
+                </ul>
+              </section>
+              <section className="recovery-box">
+                <strong>Unresolved risks</strong>
+                {selectedCandidate.unresolved_risks.length ? (
+                  <ul className="compact-evidence-list">
+                    {selectedCandidate.unresolved_risks.map((risk, index) => (
+                      <li key={`${textValue(risk.kind, "risk")}-${index}`}>
+                        {textValue(risk.message, textValue(risk.kind, "Risk"))}
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p>No unresolved risk recorded on this candidate.</p>}
+              </section>
+            </div>
+          ) : null}
+        </aside>
+      </div>
+
+      <div className="recommendation-proof-grid">
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="fleet" /><strong>Changed assignments</strong></div>
+            <span>{selectedCandidate?.changed_assignments.length ?? 0} advisory changes</span>
+          </div>
+          <ul className="compact-evidence-list">
+            {selectedCandidate?.changed_assignments.map((item, index) => (
+              <li key={`${textValue(item.kind, "assignment")}-${index}`}>
+                {textValue(item.tripId ?? item.voyageId, "Network")} - {textValue(item.reason, "Review candidate change")}
+              </li>
+            ))}
+            {!selectedCandidate?.changed_assignments.length ? <li>No assignment changes proposed.</li> : null}
+          </ul>
+        </section>
+        <section className="board-surface recommendation-proof-panel">
+          <div className="grid-header">
+            <div><SvgIcon name="audit" /><strong>Audit lineage</strong></div>
+            <span>{textValue(selectedRun?.audit_lineage.eventAction, "No lineage")}</span>
+          </div>
+          <ul className="compact-evidence-list">
+            <li>Input signature: {selectedRun?.input_signature ?? "-"}</li>
+            <li>Objective profile: {selectedRun?.objective_profile_ref ?? "-"}</li>
+            <li>Algorithm: {selectedRun?.algorithm_version ?? "-"}</li>
+            <li>Manual publish required: {lineage.manualPublishRequired === false ? "NO" : "YES"}</li>
+          </ul>
         </section>
       </div>
     </section>
