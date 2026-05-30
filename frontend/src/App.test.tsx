@@ -157,6 +157,400 @@ test("exposes recovery routes by workflow permission", () => {
   ).toContain("Commercial Projections");
 });
 
+test("submenu navigation is not blocked by workspace refresh", async () => {
+  window.location.hash = "#/operations/jetty-loading";
+  const neverSettles = new Promise(() => {});
+  const nextActions = {
+    generated_at: "2026-05-29T00:00:00.000Z",
+    mode: "assisted",
+    context: {},
+    global_next_action: null,
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: null,
+  };
+  const fetchMock = vi.fn().mockImplementation((input: string) => {
+    if (input.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: ["dashboard.view", "schedule.view", "schedule.edit"],
+        }),
+      });
+    }
+    if (input.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (input.endsWith("/planning/overview/") || input.includes("/scheduling/overview/")) {
+      return neverSettles;
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  expect(await screen.findByRole("heading", { name: "Jetty Loading" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Tug/Barge Assignment" }));
+
+  expect(await screen.findByRole("heading", { name: "Tug/Barge Assignment" })).toBeInTheDocument();
+  expect(window.location.hash).toBe("#/operations/tug-barge-assignment");
+});
+
+test("initial workspace refresh is scoped to the active route", async () => {
+  window.location.hash = "#/operations/jetty-loading";
+  const calls: string[] = [];
+  const nextActions = {
+    generated_at: "2026-05-29T00:00:00.000Z",
+    mode: "assisted",
+    context: {},
+    global_next_action: null,
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: null,
+  };
+  const fetchMock = vi.fn().mockImplementation((input: string) => {
+    calls.push(input);
+    if (input.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: [
+            "dashboard.view",
+            "schedule.view",
+            "operations.view",
+            "telemetry.view",
+            "audit.view",
+            "export.view",
+            "admin.view",
+            "masterdata.view",
+          ],
+        }),
+      });
+    }
+    if (input.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (input.includes("/scheduling/overview/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          assignments: [],
+          trips: [],
+          conflicts: [],
+          validation: {},
+        }),
+      });
+    }
+    if (input.includes("/operations/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  expect(await screen.findByRole("heading", { name: "Jetty Loading" })).toBeInTheDocument();
+  await waitFor(() => expect(calls.some((call) => call.includes("/scheduling/overview/"))).toBe(true));
+
+  expect(calls.some((call) => call.endsWith("/planning/overview/"))).toBe(false);
+  expect(calls.some((call) => call.includes("/scheduling/overview/?scope=operations"))).toBe(true);
+  expect(calls.some((call) => call.includes("/telemetry/"))).toBe(false);
+  expect(calls.some((call) => call.endsWith("/rbac/overview/"))).toBe(false);
+  expect(calls.some((call) => call.endsWith("/master-data/overview/"))).toBe(false);
+  expect(calls.some((call) => call.endsWith("/audit-events/"))).toBe(false);
+  expect(calls.some((call) => call.endsWith("/exports/overview/"))).toBe(false);
+});
+
+test("route navigation refreshes the newly opened planning page even while operations data is loading", async () => {
+  window.location.hash = "#/operations/jetty-loading";
+  const calls: string[] = [];
+  const nextActions = {
+    generated_at: "2026-05-29T00:00:00.000Z",
+    mode: "assisted",
+    context: {},
+    global_next_action: null,
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: null,
+  };
+  const slowOperationsOverview = new Promise(() => {});
+  const fetchMock = vi.fn().mockImplementation((input: string) => {
+    calls.push(input);
+    if (input.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: ["dashboard.view", "schedule.view", "schedule.edit", "operations.view"],
+        }),
+      });
+    }
+    if (input.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (input.includes("/scheduling/overview/?scope=operations")) {
+      return slowOperationsOverview;
+    }
+    if (input.includes("/scheduling/overview/?scope=approvals")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          activePlanVersion: { plan_code: "PLAN-FULL", status: "generated", version_no: 1 },
+          assignments: [],
+          trips: [],
+          conflicts: [],
+          validation: {},
+        }),
+      });
+    }
+    if (input.endsWith("/planning/overview/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          voyages: [],
+          cargoRequirements: [],
+          cargoLayerSteps: [],
+          assetAvailability: [],
+          jettyAvailability: [],
+          tideWindows: [],
+          bridgeWindows: [],
+          constraintChecks: [],
+          importJobs: [],
+          validation: {
+            highRiskVoyages: 0,
+            sequenceViolations: 0,
+            missedWindows: 0,
+            activeDemandMt: 0,
+            remainingDemandMt: 0,
+          },
+        }),
+      });
+    }
+    if (input.includes("/operations/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  expect(await screen.findByRole("heading", { name: "Jetty Loading" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Coal Grade Sequence" }));
+
+  expect(await screen.findByRole("heading", { name: "Coal Grade Sequence" })).toBeInTheDocument();
+  await waitFor(() => {
+    expect(calls.some((call) => call.endsWith("/planning/overview/"))).toBe(true);
+    expect(calls.some((call) => call.includes("/scheduling/overview/?scope=planning"))).toBe(true);
+  });
+  expect(window.location.hash).toBe("#/schedule/coal-grade-sequence");
+});
+
+test("approval actions update from mutation responses while overview refresh is slow", async () => {
+  window.location.hash = "#/approvals/publishing";
+  const nextActions = {
+    generated_at: "2026-05-31T00:00:00.000Z",
+    mode: "assisted",
+    context: {},
+    global_next_action: null,
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: null,
+  };
+  const decisionBodies: Array<Record<string, unknown>> = [];
+  let overviewCall = 0;
+  const slowOverviewRefresh = new Promise(() => {});
+  const approvalRequest = (decisions: Array<Record<string, unknown>>, status = "pending") => ({
+    id: 51,
+    request_id: "APR-51",
+    plan_version: 99,
+    plan_version_ref: "PLAN-UI V1",
+    status,
+    required_authorities: ["berau_scheduler", "abl_dispatcher"],
+    reason: "Operator approval.",
+    requested_by: 1,
+    requested_by_email: "admin@coalflow.local",
+    decided_at: null,
+    created_at: "2026-05-31T00:00:00.000Z",
+    updated_at: "2026-05-31T00:00:00.000Z",
+    decisions,
+    scenario_lineage: null,
+    scenario_diff_summary: null,
+  });
+  const approvalDecision = (authorityRole: string) => ({
+    id: authorityRole === "berau_scheduler" ? 1 : 2,
+    approval_request: 51,
+    decision: "approve",
+    authority_role: authorityRole,
+    comments: "Approved",
+    actor: 1,
+    actor_email: "admin@coalflow.local",
+    organization: null,
+    organization_name: "",
+    created_at: "2026-05-31T00:00:00.000Z",
+  });
+  const schedulingOverviewFor = () => {
+    const decisions: Array<Record<string, unknown>> = [];
+    return {
+      plans: [],
+      planVersions: [],
+      activePlanVersion: {
+        id: 99,
+        plan_code: "PLAN-UI",
+        version_no: 1,
+        status: "proposed",
+        validation_status: "feasible",
+      },
+      trips: [],
+      assignments: [],
+      events: [],
+      conflicts: [],
+      overrideRequests: [],
+      approvalRequests: [approvalRequest(decisions, decisions.length === 2 ? "approved" : "pending")],
+      publishedSnapshots: [],
+      simulationScenarios: [],
+      recoveryInputSnapshots: [],
+      optimizerRuns: [],
+      recoveryRecommendations: [],
+      globalOptimizationRuns: [],
+      globalOptimizationCandidates: [],
+      liveEtaProjections: [],
+      trackingAlerts: [],
+      publishabilityAssessment: null,
+      movementAssignmentCandidateRun: null,
+      movementAssignmentCandidates: [],
+      commercialProjectionRun: null,
+      commercialProjections: [],
+      commercialProjectionSummary: { projectionOnly: true },
+      telemetryTrustSummary: null,
+      trackingSummary: {
+        projectionCount: 0,
+        openAlertCount: 0,
+        criticalAlertCount: 0,
+        highestVarianceMinutes: 0,
+      },
+      operationsHealthSummary: {},
+      validation: {
+        tripCount: 0,
+        assignmentCount: 0,
+        eventCount: 0,
+        conflictCount: 0,
+        blockingConflictCount: 0,
+        criticalConflictCount: 0,
+        overrideCount: 0,
+        approvalPendingCount: decisions.length === 2 ? 0 : 1,
+        scenarioCount: 0,
+        optimizerRunCount: 0,
+        recoveryRecommendationCount: 0,
+        trackingAlertCount: 0,
+        openTrackingAlertCount: 0,
+        plannedMt: 0,
+        loadedMt: 0,
+      },
+    };
+  };
+  const fetchMock = vi.fn().mockImplementation((input: string, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: ["dashboard.view", "schedule.view", "schedule.approve", "schedule.publish"],
+        }),
+      });
+    }
+    if (url.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (url.endsWith("/auth/csrf/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ csrfToken: "csrf" }) });
+    }
+    if (url.endsWith("/flows/active/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ flow: null }) });
+    }
+    if (url.includes("/scheduling/approval-requests/51/decide/")) {
+      const body = JSON.parse(String(init?.body));
+      decisionBodies.push(body);
+      const decisions = decisionBodies.map((item) => approvalDecision(String(item.authority_role)));
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => approvalRequest(decisions, decisions.length === 2 ? "approved" : "pending"),
+      });
+    }
+    if (url.includes("/scheduling/overview")) {
+      overviewCall += 1;
+      if (overviewCall > 1) {
+        return slowOverviewRefresh;
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => schedulingOverviewFor(),
+      });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  expect(await screen.findByRole("heading", { name: "Plan Approvals & Publishing" })).toBeInTheDocument();
+  expect(await screen.findByText("0/2")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+  expect(await screen.findByText("1/2")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
+
+  fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+  expect(await screen.findByText("2/2")).toBeInTheDocument();
+
+  expect(decisionBodies.map((item) => item.authority_role)).toEqual([
+    "berau_scheduler",
+    "abl_dispatcher",
+  ]);
+});
+
 test("exposes live map through telemetry visibility", () => {
   expect(visibleNavItems(["dashboard.view", "telemetry.view"]).map((item) => item.label)).toContain(
     "Live Resource Map",
@@ -896,45 +1290,12 @@ test("operator trial import CTA refreshes DB-truth flow metadata before selectin
     generated_at: "2026-05-29T00:00:00.000Z",
     mode: "supervisor",
     context: {},
-    global_next_action: {
-      action_id: "IMPORT_OGV_DEMAND",
-      label: "Import OGV demand",
-      priority: "normal",
-      rank_score: 970,
-      enabled: true,
-      route: "/schedule/ogv-demand",
-      cta_label: "Import demand",
-      reason: "Operator happy path is waiting at Import OGV demand.",
-      hover_hint: "",
-      detail_text: "",
-      impact_if_ignored: "",
-      owner_role: "berau-scheduler",
-      required_permission: "schedule.edit",
-      audit_required: true,
-      target_object_type: null,
-      target_object_id: null,
-      blocked_reason: "",
-      source: "flow.current_step",
-      expires_at: null,
-      metadata: {},
-    },
+    global_next_action: null,
     page_actions: [],
     row_actions: [],
     blocked_actions: [],
     checklist: [],
-    flow: {
-      active_flow: "operator_happy_path_v1",
-      flow_run_id: "FLOW-123",
-      flow_name: "Operator happy path",
-      flow_status: "active",
-      current_step: "import_ogv_demand",
-      current_step_label: "Import OGV demand",
-      step_status: "active",
-      expected_route: "/schedule/ogv-demand",
-      expected_action_id: "IMPORT_OGV_DEMAND",
-      blocked_reason: "",
-      expected_action_ids: ["IMPORT_OGV_DEMAND"],
-    },
+    flow: null,
   };
   const fetchMock = vi.fn().mockImplementation((input: string, init?: RequestInit) => {
     if (input.endsWith("/me/")) {
@@ -990,22 +1351,25 @@ test("operator trial import CTA refreshes DB-truth flow metadata before selectin
     if (input.endsWith("/planning/overview/")) {
       return Promise.resolve({ ok: true, status: 200, json: async () => planningOverview });
     }
-    if (input.endsWith("/scheduling/overview/")) {
+    if (input.includes("/scheduling/overview/")) {
       return Promise.resolve({ ok: true, status: 200, json: async () => schedulingOverview });
     }
     if (input.endsWith("/dashboard/situation/")) {
       return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
     }
     if (input.endsWith("/planning/import-jobs/import-trial-demand/")) {
-      expect(JSON.parse(String(init?.body))).toMatchObject({ pack: "operator_happy_path_v1" });
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        pack: "operator_happy_path_v1",
+        source: "operator-trial-flow-ui",
+      });
       return Promise.resolve({
         ok: true,
         status: 201,
         json: async () => ({
           id: 9,
-          filename: "operator_happy_path_ogv_demand.xlsx",
-          valid_rows: 2,
-          total_rows: 2,
+          filename: "operator_happy_path_v1_ogv_demand.xlsx",
+          valid_rows: 5,
+          total_rows: 5,
         }),
       });
     }
@@ -1029,6 +1393,161 @@ test("operator trial import CTA refreshes DB-truth flow metadata before selectin
       expect.objectContaining({
         method: "POST",
       }),
+    );
+  });
+  expect(fetchMock).not.toHaveBeenCalledWith(
+    "/api/planning/import-jobs/validate-ogv-demand/",
+    expect.anything(),
+  );
+});
+
+test("operator practice import CTA defaults to the clean happy-path pack without active flow", async () => {
+  window.location.hash = "#/schedule/ogv-demand";
+  const planningOverview = {
+    voyages: [],
+    cargoRequirements: [],
+    cargoLayerSteps: [],
+    assetAvailability: [],
+    jettyAvailability: [],
+    tideWindows: [],
+    bridgeWindows: [],
+    constraintChecks: [],
+    importJobs: [],
+    validation: {
+      highRiskVoyages: 0,
+      sequenceViolations: 0,
+      missedWindows: 0,
+      activeDemandMt: 0,
+      remainingDemandMt: 0,
+    },
+  };
+  const schedulingOverview = {
+    plans: [],
+    planVersions: [],
+    activePlanVersion: null,
+    trips: [],
+    assignments: [],
+    events: [],
+    conflicts: [],
+    overrideRequests: [],
+    approvalRequests: [],
+    publishedSnapshots: [],
+    simulationScenarios: [],
+    recoveryInputSnapshots: [],
+    optimizerRuns: [],
+    recoveryRecommendations: [],
+    globalOptimizationRuns: [],
+    globalOptimizationCandidates: [],
+    liveEtaProjections: [],
+    trackingAlerts: [],
+    publishabilityAssessment: null,
+    movementAssignmentCandidateRun: null,
+    movementAssignmentCandidates: [],
+    commercialProjectionRun: null,
+    commercialProjections: [],
+    commercialProjectionSummary: { projectionOnly: true },
+    telemetryTrustSummary: null,
+    trackingSummary: {
+      projectionCount: 0,
+      openAlertCount: 0,
+      criticalAlertCount: 0,
+      highestVarianceMinutes: 0,
+    },
+    operationsHealthSummary: {},
+    validation: {
+      tripCount: 0,
+      assignmentCount: 0,
+      eventCount: 0,
+      conflictCount: 0,
+      blockingConflictCount: 0,
+      criticalConflictCount: 0,
+      overrideCount: 0,
+      approvalPendingCount: 0,
+      scenarioCount: 0,
+      optimizerRunCount: 0,
+      recoveryRecommendationCount: 0,
+      trackingAlertCount: 0,
+      openTrackingAlertCount: 0,
+      plannedMt: 0,
+      loadedMt: 0,
+    },
+  };
+  const nextActions = {
+    generated_at: "2026-05-29T00:00:00.000Z",
+    mode: "supervisor",
+    context: {},
+    global_next_action: null,
+    page_actions: [],
+    row_actions: [],
+    blocked_actions: [],
+    checklist: [],
+    flow: null,
+  };
+  const fetchMock = vi.fn().mockImplementation((input: string, init?: RequestInit) => {
+    if (input.endsWith("/me/")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: 1,
+          username: "admin@coalflow.local",
+          email: "admin@coalflow.local",
+          is_active: true,
+          memberships: [],
+          assignments: [],
+          permissions: ["dashboard.view", "schedule.view", "schedule.edit"],
+        }),
+      });
+    }
+    if (input.includes("/assistant/next-actions/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => nextActions });
+    }
+    if (input.endsWith("/flows/active/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ flow: null }) });
+    }
+    if (input.endsWith("/auth/csrf/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ csrfToken: "csrf" }) });
+    }
+    if (input.endsWith("/planning/overview/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => planningOverview });
+    }
+    if (input.includes("/scheduling/overview/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => schedulingOverview });
+    }
+    if (input.endsWith("/dashboard/situation/")) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+    }
+    if (input.endsWith("/planning/import-jobs/import-trial-demand/")) {
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        pack: "operator_happy_path_v1",
+        source: "operator-trial-practice-ui",
+      });
+      return Promise.resolve({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          id: 10,
+          filename: "operator_happy_path_v1_ogv_demand.xlsx",
+          valid_rows: 5,
+          total_rows: 5,
+        }),
+      });
+    }
+    if (input.endsWith("/planning/import-jobs/validate-ogv-demand/")) {
+      return Promise.resolve({ ok: false, status: 599, json: async () => ({}) });
+    }
+    return Promise.resolve({ ok: true, status: 200, json: async () => [] });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  render(<App />);
+
+  fireEvent.click(await screen.findByRole("button", { name: /^Import demand$/i }));
+
+  await waitFor(() => {
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/planning/import-jobs/import-trial-demand/",
+      expect.objectContaining({ method: "POST" }),
     );
   });
   expect(fetchMock).not.toHaveBeenCalledWith(

@@ -51,20 +51,97 @@ button {
   cursor: pointer;
 }
 
-.boot-screen,
-.login-shell {
+.boot-screen {
   min-height: 100vh;
   display: grid;
   place-items: center;
 }
 
-.login-panel {
-  width: min(28rem, calc(100vw - 2rem));
-  border-top: 1px solid rgba(137, 206, 255, 0.55);
-  padding-top: 1rem;
+.login-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  justify-items: center;
+  gap: 1.85rem;
+  overflow: hidden;
+  padding: 1.5rem;
+  background:
+    linear-gradient(rgba(48, 69, 104, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48, 69, 104, 0.16) 1px, transparent 1px),
+    #07101f;
+  background-size: 5.75rem 5.75rem, 5.75rem 5.75rem, auto;
 }
 
-.login-panel p,
+.login-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(6, 13, 27, 0.16), rgba(6, 13, 27, 0.66));
+  content: "";
+}
+
+.login-brand-lockup {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  animation: login-rise 420ms ease-out both;
+}
+
+.login-brand-lockup span {
+  color: rgba(218, 226, 253, 0.58);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.login-brand-lockup img {
+  width: min(11.75rem, 48vw);
+  height: auto;
+  display: block;
+}
+
+.login-brand-lockup strong {
+  color: var(--primary);
+  font-size: 1rem;
+  line-height: 1.1;
+  text-shadow: 0 0 1.25rem rgba(137, 206, 255, 0.26);
+}
+
+.login-panel {
+  width: min(29.25rem, calc(100vw - 2rem));
+  border: 1px solid rgba(87, 105, 138, 0.36);
+  border-radius: 6px;
+  background: rgba(31, 41, 61, 0.86);
+  box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.28);
+  padding: clamp(2rem, 5vw, 2.35rem);
+  animation: login-rise 520ms 80ms ease-out both;
+  backdrop-filter: blur(12px);
+}
+
+.login-panel-heading {
+  margin-bottom: 2.25rem;
+}
+
+.login-panel-heading h1 {
+  margin: 0;
+  color: #f1f5ff;
+  font-size: clamp(1.45rem, 5vw, 1.62rem);
+  line-height: 1.12;
+}
+
+.login-panel-heading p {
+  margin: 0.7rem 0 0;
+  color: rgba(218, 226, 253, 0.72);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .workspace-page header p,
 .nav-group p,
 .topbar span,
@@ -78,7 +155,6 @@ button {
   text-transform: uppercase;
 }
 
-.login-panel h1,
 .workspace-page h1 {
   margin: 0.35rem 0 1rem;
   font-size: 1.25rem;
@@ -87,24 +163,116 @@ button {
 
 .login-panel form {
   display: grid;
-  gap: 0.75rem;
+  gap: 1.55rem;
 }
 
-.login-panel label {
+.login-field {
   display: grid;
-  gap: 0.25rem;
-  color: var(--on-surface-variant);
+  gap: 0.45rem;
+}
+
+.login-field label,
+.login-label-row {
+  color: rgba(218, 226, 253, 0.76);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.login-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.login-input-shell {
+  min-height: 2.7rem;
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(72, 88, 118, 0.86);
+  background: #0b1326;
+  color: rgba(218, 226, 253, 0.74);
+  padding: 0 0.75rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.login-input-shell:focus-within {
+  border-color: rgba(137, 206, 255, 0.72);
+  background: #0a1223;
+  box-shadow: 0 0 0 3px rgba(137, 206, 255, 0.12);
+}
+
+.login-input-shell > svg,
+.login-icon-button svg {
+  width: 1.12rem;
+  height: 1.12rem;
+  color: rgba(218, 226, 253, 0.72);
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.login-icon-button svg circle {
+  fill: none;
+}
+
+.login-input-shell input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e8eefc;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.75rem 0;
+}
+
+.login-link-button,
+.login-icon-button {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  padding: 0;
+}
+
+.login-link-button {
   font-size: 0.75rem;
+  font-weight: 800;
 }
 
-.login-panel input {
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-charcoal);
-  color: var(--on-surface);
-  padding: 0.5rem 0.65rem;
+.login-icon-button {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
 }
 
-.login-panel button,
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: rgba(218, 226, 253, 0.68);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.login-remember input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.login-panel form > button,
 .topbar button {
   border: 0;
   border-radius: 0.25rem;
@@ -113,9 +281,24 @@ button {
   font-weight: 700;
 }
 
-.login-panel button {
-  margin-top: 0.25rem;
-  padding: 0.55rem 0.75rem;
+.login-panel form > button {
+  min-height: 2.95rem;
+  margin-top: 0.35rem;
+  border-radius: 3px;
+  color: #123348;
+  font-size: 1.02rem;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+
+.login-panel form > button:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 0.8rem 1.6rem rgba(69, 170, 229, 0.18);
+  transform: translateY(-1px);
+}
+
+.login-panel form > button:disabled {
+  cursor: wait;
+  filter: grayscale(0.25);
 }
 
 .form-error {
@@ -123,6 +306,56 @@ button {
   margin-top: 0.75rem;
   color: #ffb4ab;
   font-size: 0.75rem;
+}
+
+.login-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2.35rem;
+  border-top: 1px solid rgba(87, 105, 138, 0.42);
+  padding-top: 1.85rem;
+  color: rgba(218, 226, 253, 0.42);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.login-panel-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.login-panel-footer i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--status-success);
+  box-shadow: 0 0 0.8rem rgba(16, 185, 129, 0.55);
+}
+
+.login-compliance {
+  margin: 0;
+  color: rgba(218, 226, 253, 0.52);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  animation: login-rise 580ms 150ms ease-out both;
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .operations-shell {

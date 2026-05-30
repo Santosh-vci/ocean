@@ -35,6 +35,7 @@ SUPPORTED_CAUSE_TYPES = {
     "TUG_UNAVAILABLE",
     "CTS_UNAVAILABLE",
     "JETTY_OVERLAP",
+    "MOVEMENT_ASSIGNMENT_BLOCKED",
     "TIDE_WINDOW_MISSED",
     "BRIDGE_WINDOW_MISSED",
     "LAYER_SEQUENCE_VIOLATION",
@@ -220,6 +221,11 @@ def _assess_supported_family(
         )
     if source_cause_type == "JETTY_OVERLAP":
         return _assess_jetty_overlap(snapshot=snapshot, actions=actions)
+    if source_cause_type == "MOVEMENT_ASSIGNMENT_BLOCKED":
+        return _assess_movement_assignment_blocked(
+            recommendation=recommendation,
+            actions=actions,
+        )
     if source_cause_type in {"TIDE_WINDOW_MISSED", "BRIDGE_WINDOW_MISSED"}:
         return _assess_navigation_window(
             recommendation=recommendation,
@@ -421,6 +427,63 @@ def _assess_navigation_window(
     return AssessmentEvidence(addressing, mitigating, unrelated, unknown)
 
 
+def _assess_movement_assignment_blocked(
+    *,
+    recommendation: RecoveryRecommendation,
+    actions: list[RecoveryAction],
+) -> AssessmentEvidence:
+    evaluation = getattr(recommendation, "evaluation", None)
+    addressing: list[dict[str, Any]] = []
+    mitigating: list[dict[str, Any]] = []
+    unrelated: list[dict[str, Any]] = []
+    unknown: list[dict[str, Any]] = []
+
+    for action in actions:
+        if not _is_assignment_repair_action(action):
+            unrelated.append(
+                _resolution(
+                    action,
+                    "unrelated_action_family",
+                    f"{action.action_type} does not repair movement assignment feasibility.",
+                )
+            )
+            continue
+
+        if evaluation is None:
+            unknown.append(
+                _resolution(
+                    action,
+                    "missing_recommendation_evaluation",
+                    "No recommendation evaluation exists to prove movement assignment feasibility.",
+                )
+            )
+            continue
+
+        if (
+            evaluation.hard_constraints_passed
+            and evaluation.missed_windows == 0
+            and evaluation.resource_conflicts == 0
+        ):
+            addressing.append(
+                _resolution(
+                    action,
+                    "movement_assignment_feasible",
+                    "Recommendation evaluation clears movement assignment hard constraints.",
+                )
+            )
+            continue
+
+        mitigating.append(
+            _resolution(
+                action,
+                "movement_assignment_residual_risk",
+                "Recommendation changes assignment feasibility but leaves residual hard-constraint risk.",
+            )
+        )
+
+    return AssessmentEvidence(addressing, mitigating, unrelated, unknown)
+
+
 def _assess_layer_sequence(*, actions: list[RecoveryAction]) -> AssessmentEvidence:
     addressing: list[dict[str, Any]] = []
     mitigating: list[dict[str, Any]] = []
@@ -550,6 +613,16 @@ def _required_resolution(source_cause_type: str) -> dict[str, Any]:
             **common,
             "family": "jetty_overlap",
             "requiredEvidence": ["trip timing avoids non-working jetty window"],
+        }
+    if source_cause_type == "MOVEMENT_ASSIGNMENT_BLOCKED":
+        return {
+            **common,
+            "family": "movement_assignment_candidate",
+            "requiredEvidence": [
+                "recommendation action changes timing or tug/barge/jetty/CTS assignment",
+                "recommendation evaluation passes hard constraints",
+                "no residual missed tide/bridge windows or resource conflicts remain",
+            ],
         }
     if source_cause_type in {"TIDE_WINDOW_MISSED", "BRIDGE_WINDOW_MISSED"}:
         return {
@@ -834,6 +907,31 @@ def _operator_approved_mitigation(action: RecoveryAction) -> bool:
         metadata.get("operatorApprovedMitigation")
         or metadata.get("explicitOperationalMitigation")
     )
+
+
+def _is_assignment_repair_action(action: RecoveryAction) -> bool:
+    if action.action_type in {
+        *TIMING_ACTIONS,
+        RecoveryAction.ActionType.REASSIGN_BARGE,
+        RecoveryAction.ActionType.REASSIGN_TUG,
+        RecoveryAction.ActionType.REASSIGN_CTS,
+    }:
+        return True
+    checked = {
+        str(value).lower()
+        for value in (action.constraints_checked if isinstance(action.constraints_checked, list) else [])
+    }
+    return bool(checked.intersection({
+        "asset_availability",
+        "bridge_window_evaluated",
+        "candidate_feasible",
+        "cts_available",
+        "cts_queue_overlap_review",
+        "jetty_availability",
+        "resource_availability",
+        "tide_window_evaluated",
+        "tug_barge_compatibility",
+    }))
 
 
 def _action_summary(action: RecoveryAction) -> dict[str, Any]:

@@ -1,5 +1,5 @@
 {
-  "preparedAt": "2026-05-30T03:55:53.208Z",
+  "preparedAt": "2026-05-30T14:38:03.747Z",
   "appUrl": "http://localhost:8080",
   "preparedFlow": {
     "currentStep": "generate_recovery_options",
@@ -40,27 +40,43 @@
     "flow": "recovery",
     "flowKey": "phase5_plus_recovery_v1",
     "flowName": "Phase 5+ recovery path",
-    "flowRunId": "FLOW-D835DB54649D",
+    "flowRunId": "FLOW-97E7F00D1FDD",
     "flowStatus": "active",
     "meaning": "DB truth is prepared for a UI-only recovery run. Disrupted demand and a blocked plan exist; recommendations and scenarios do not.",
     "seedSummary": {
-      "blockingConflictCount": 2,
+      "blockingConflictCount": 4,
       "cargoLayerCount": 6,
-      "conflictCount": 3,
+      "conflictCount": 5,
       "conflicts": [
         {
           "code": "BRIDGE_WINDOW_MISSED",
           "is_blocking": true,
           "message": "Bridge gate missed; use recovery loop to resequence or shift window.",
-          "object_id": "1395",
+          "object_id": "1593",
           "object_type": "bridge",
+          "severity": "critical"
+        },
+        {
+          "code": "MOVEMENT_ASSIGNMENT_BLOCKED",
+          "is_blocking": true,
+          "message": "Tide/bridge missed; recovery recommendation required",
+          "object_id": "16849",
+          "object_type": "movement_assignment_candidate",
+          "severity": "critical"
+        },
+        {
+          "code": "MOVEMENT_ASSIGNMENT_BLOCKED",
+          "is_blocking": true,
+          "message": "Tide/bridge missed; recovery recommendation required",
+          "object_id": "17011",
+          "object_type": "movement_assignment_candidate",
           "severity": "critical"
         },
         {
           "code": "TIDE_WINDOW_MISSED",
           "is_blocking": true,
           "message": "Missed Rantau tide gate; generate recovery options before dispatch.",
-          "object_id": "1394",
+          "object_id": "1592",
           "object_type": "tide",
           "severity": "critical"
         },
@@ -68,7 +84,7 @@
           "code": "TIDE_WINDOW_MISSED",
           "is_blocking": false,
           "message": "Marginal tide margin; monitor after recovery candidate is simulated.",
-          "object_id": "1396",
+          "object_id": "1594",
           "object_type": "tide",
           "severity": "warning"
         }
@@ -77,7 +93,7 @@
       "navigationCheckCount": 4,
       "planStatus": "generated",
       "planVersion": "PLAN-RECOVERY-PRACTICE-20260530 V1",
-      "planVersionId": 318,
+      "planVersionId": 369,
       "tripCount": 6,
       "validationStatus": "blocked",
       "voyageCount": 3
@@ -92,7 +108,8 @@
       "flowEvents": 2,
       "flowRuns": 1,
       "importJobs": 1,
-      "openConflicts": 3,
+      "movementAssignmentCandidateRuns": 1,
+      "openConflicts": 5,
       "openTrackingAlerts": 0,
       "optimizerRuns": 0,
       "pendingOperationalEvents": 0,
@@ -185,9 +202,9 @@
     ]
   },
   "negativeGate": {
-    "planVersionId": 316,
-    "recommendationId": 665,
-    "rootCauseAssessmentId": 30,
+    "planVersionId": 367,
+    "recommendationId": 779,
+    "rootCauseAssessmentId": 44,
     "rootCauseStatus": "does_not_address_cause",
     "publishabilityStatus": "blocked",
     "publishabilityDetails": [
@@ -210,7 +227,7 @@
         "message": "Required approval decisions are complete.",
         "actionId": "",
         "evidence": {
-          "approvalRequestId": 277,
+          "approvalRequestId": 308,
           "requestStatus": "approved",
           "approvedRoles": [
             "abl_dispatcher",
@@ -250,8 +267,8 @@
         "message": "Active tide and bridge windows are available.",
         "actionId": "",
         "evidence": {
-          "tideWindowCount": 5,
-          "bridgeWindowCount": 5,
+          "tideWindowCount": 8,
+          "bridgeWindowCount": 7,
           "missing": []
         }
       },
@@ -275,15 +292,15 @@
         "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
         "evidence": {
           "recoveryOrigin": true,
-          "recommendationPk": 665,
-          "recommendationRef": "REC-FBD57AD7824D",
-          "scenarioPk": 803,
-          "scenarioId": "SCN-NEG-316",
-          "baselineVersionId": 317,
-          "selectedRunRef": "OPT-59D8D3CA2540",
-          "recommendationId": 665,
-          "rootCauseAssessmentId": 30,
-          "rootCauseAssessmentRef": "RCA-95679047B9E3",
+          "recommendationPk": 779,
+          "recommendationRef": "REC-ACE950A91EB0",
+          "scenarioPk": 903,
+          "scenarioId": "SCN-NEG-367",
+          "baselineVersionId": 368,
+          "selectedRunRef": "OPT-EBB17766220F",
+          "recommendationId": 779,
+          "rootCauseAssessmentId": 44,
+          "rootCauseAssessmentRef": "RCA-E2729A5EFC64",
           "rootCauseStatus": "does_not_address_cause",
           "sourceCauseType": "BARGE_UNAVAILABLE",
           "residualRisk": {
@@ -314,7 +331,7 @@
       "title": "Prepared Phase 5 plus recovery flow",
       "route": "/dashboard/situation",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\01_prepared_phase_5_plus_recovery_flow.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "generate_recovery_options",
@@ -326,7 +343,7 @@
       "clickedCtaLabel": null,
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "generate_recovery_options",
@@ -360,8 +377,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 0,
         "optimizerRuns": 0,
         "recommendations": 0,
@@ -399,7 +416,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "openConflictCount": 3,
+              "openConflictCount": 5,
               "openTrackingAlertCount": 0
             }
           }
@@ -420,7 +437,7 @@
       "title": "Exception Center opened from Next Action",
       "route": "/exceptions/center",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\02_exception_center_opened_from_next_action.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "generate_recovery_options",
@@ -432,7 +449,7 @@
       "clickedCtaLabel": "NEXT ACTION Open Exception Center",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "generate_recovery_options",
@@ -466,8 +483,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 0,
         "optimizerRuns": 0,
         "recommendations": 0,
@@ -505,7 +522,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "openConflictCount": 3,
+              "openConflictCount": 5,
               "openTrackingAlertCount": 0
             }
           }
@@ -526,7 +543,7 @@
       "title": "Recovery recommendations generated",
       "route": "/recovery/recommendations",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\03_recovery_recommendations_generated.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "validate_root_cause",
@@ -538,7 +555,7 @@
       "clickedCtaLabel": "GENERATE RECOVERY OPTIONS",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "validate_root_cause",
@@ -572,8 +589,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 1,
         "optimizerRuns": 1,
         "recommendations": 5,
@@ -622,8 +639,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "snapshotId": 137,
-              "optimizerRunId": 137
+              "snapshotId": 161,
+              "optimizerRunId": 161
             }
           }
         },
@@ -635,8 +652,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "sourceRef": "BRIDGE_WINDOW_MISSED",
-            "snapshotId": 137,
-            "optimizerRunId": 137,
+            "snapshotId": 161,
+            "optimizerRunId": 161,
             "recommendationCount": 5
           }
         },
@@ -647,7 +664,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "openConflictCount": 3,
+              "openConflictCount": 5,
               "openTrackingAlertCount": 0
             }
           }
@@ -668,7 +685,7 @@
       "title": "Root-cause validation recorded",
       "route": "/recovery/recommendations",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\04_root_cause_validation_recorded.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "materialize_recommendation",
@@ -680,7 +697,7 @@
       "clickedCtaLabel": "VALIDATE ROOT CAUSE",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "materialize_recommendation",
@@ -714,8 +731,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 1,
         "optimizerRuns": 1,
         "recommendations": 5,
@@ -756,9 +773,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -771,10 +788,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -795,8 +812,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "snapshotId": 137,
-              "optimizerRunId": 137
+              "snapshotId": 161,
+              "optimizerRunId": 161
             }
           }
         },
@@ -808,8 +825,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "sourceRef": "BRIDGE_WINDOW_MISSED",
-            "snapshotId": 137,
-            "optimizerRunId": 137,
+            "snapshotId": 161,
+            "optimizerRunId": 161,
             "recommendationCount": 5
           }
         },
@@ -820,7 +837,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "openConflictCount": 3,
+              "openConflictCount": 5,
               "openTrackingAlertCount": 0
             }
           }
@@ -841,7 +858,7 @@
       "title": "Scenario materialized with simulation result",
       "route": "/simulation/workspace",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\05_scenario_materialized_with_simulation_result.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "promote_scenario",
@@ -853,7 +870,7 @@
       "clickedCtaLabel": "TEST AS SCENARIO",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "promote_scenario",
@@ -887,8 +904,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 1,
         "optimizerRuns": 1,
         "recommendations": 5,
@@ -928,7 +945,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -939,8 +956,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -951,9 +968,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -964,9 +981,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -979,10 +996,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1003,8 +1020,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "snapshotId": 137,
-              "optimizerRunId": 137
+              "snapshotId": 161,
+              "optimizerRunId": 161
             }
           }
         },
@@ -1016,8 +1033,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "sourceRef": "BRIDGE_WINDOW_MISSED",
-            "snapshotId": 137,
-            "optimizerRunId": 137,
+            "snapshotId": 161,
+            "optimizerRunId": 161,
             "recommendationCount": 5
           }
         }
@@ -1028,7 +1045,7 @@
       "title": "Scenario simulation rerun visible",
       "route": "/simulation/workspace",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\06_scenario_simulation_rerun_visible.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "promote_scenario",
@@ -1040,7 +1057,7 @@
       "clickedCtaLabel": "RUN SIMULATION",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "promote_scenario",
@@ -1074,8 +1091,8 @@
         "plans": 1,
         "planVersions": 1,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 1,
         "optimizerRuns": 1,
         "recommendations": 5,
@@ -1115,7 +1132,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -1126,8 +1143,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -1138,9 +1155,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1151,9 +1168,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -1166,10 +1183,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1190,8 +1207,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "snapshotId": 137,
-              "optimizerRunId": 137
+              "snapshotId": 161,
+              "optimizerRunId": 161
             }
           }
         },
@@ -1203,8 +1220,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "sourceRef": "BRIDGE_WINDOW_MISSED",
-            "snapshotId": 137,
-            "optimizerRunId": 137,
+            "snapshotId": 161,
+            "optimizerRunId": 161,
             "recommendationCount": 5
           }
         }
@@ -1215,7 +1232,7 @@
       "title": "Promoted scenario returns to remaining blockers",
       "route": "/simulation/workspace",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\07_promoted_scenario_returns_to_remaining_blockers.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "repair_remaining_conflicts",
@@ -1227,7 +1244,7 @@
       "clickedCtaLabel": "PROMOTE TO PROPOSED",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "repair_remaining_conflicts",
@@ -1314,8 +1331,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -1326,9 +1343,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -1339,7 +1356,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -1350,8 +1367,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -1362,9 +1379,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1375,9 +1392,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -1390,10 +1407,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -1403,7 +1420,7 @@
       "title": "Exception Center shows remaining repair work",
       "route": "/exceptions/center",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\08_exception_center_shows_remaining_repair_work.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "repair_remaining_conflicts",
@@ -1415,7 +1432,7 @@
       "clickedCtaLabel": "NEXT ACTION Open Exception Center",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "repair_remaining_conflicts",
@@ -1502,8 +1519,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -1514,9 +1531,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -1527,7 +1544,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -1538,8 +1555,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -1550,9 +1567,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1563,9 +1580,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -1578,10 +1595,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -1591,7 +1608,7 @@
       "title": "Operating windows opened for conflict repair",
       "route": "/constraints/tide-bridge",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\09_operating_windows_opened_for_conflict_repair.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "repair_remaining_conflicts",
@@ -1603,7 +1620,7 @@
       "clickedCtaLabel": "Tide & Bridge Window",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "repair_remaining_conflicts",
@@ -1690,8 +1707,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -1702,9 +1719,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -1715,7 +1732,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -1726,8 +1743,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -1738,9 +1755,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1751,9 +1768,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -1766,10 +1783,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -1779,7 +1796,7 @@
       "title": "Corrected operating windows entered",
       "route": "/constraints/tide-bridge",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\10_corrected_operating_windows_entered.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "repair_remaining_conflicts",
@@ -1791,7 +1808,7 @@
       "clickedCtaLabel": "ENTER OPERATING WINDOWS",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "repair_remaining_conflicts",
@@ -1878,8 +1895,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -1890,9 +1907,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -1903,7 +1920,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -1914,8 +1931,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -1926,9 +1943,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         },
         {
@@ -1939,9 +1956,9 @@
           "metadata": {
             "evidence": {
               "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-              "recommendationId": 669,
-              "recommendationRef": "REC-8466A1F69E7B",
-              "rootCauseAssessmentId": 31,
+              "recommendationId": 783,
+              "recommendationRef": "REC-382A371E1023",
+              "rootCauseAssessmentId": 45,
               "rootCauseAssessmentStatus": "mitigates_cause"
             }
           }
@@ -1954,10 +1971,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "mitigates_cause",
-            "assessmentId": 31,
-            "assessmentRef": "RCA-1F9430B00C15",
+            "assessmentId": 45,
+            "assessmentRef": "RCA-BC04DEE56A71",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -1967,7 +1984,7 @@
       "title": "Recovery plan regenerated feasible",
       "route": "/operations/tug-barge-assignment",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\11_recovery_plan_regenerated_feasible.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "submit_approval",
@@ -1979,7 +1996,7 @@
       "clickedCtaLabel": "REGENERATE PLAN",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "submit_approval",
@@ -2068,7 +2085,7 @@
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
             "repairAction": "regenerate_plan",
-            "planVersionId": 319
+            "planVersionId": 370
           }
         },
         {
@@ -2090,8 +2107,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -2102,9 +2119,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -2115,7 +2132,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -2126,8 +2143,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -2138,9 +2155,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -2150,7 +2167,7 @@
       "title": "Recovery candidate ready for approval submission",
       "route": "/schedule/published-plan",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\12_recovery_candidate_ready_for_approval_submission.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "submit_approval",
@@ -2162,7 +2179,7 @@
       "clickedCtaLabel": "NEXT ACTION Submit approval",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "submit_approval",
@@ -2251,7 +2268,7 @@
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
             "repairAction": "regenerate_plan",
-            "planVersionId": 319
+            "planVersionId": 370
           }
         },
         {
@@ -2273,8 +2290,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -2285,9 +2302,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         },
@@ -2298,7 +2315,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioRunId": 877
+              "scenarioRunId": 988
             }
           }
         },
@@ -2309,8 +2326,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "recommendationId": 669
+              "scenarioId": 904,
+              "recommendationId": 783
             }
           }
         },
@@ -2321,9 +2338,9 @@
           "route": "/recovery/recommendations",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "recommendationId": 669
+            "recommendationId": 783
           }
         }
       ]
@@ -2333,7 +2350,7 @@
       "title": "Recovery approval request submitted",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\13_recovery_approval_request_submitted.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "approve_plan",
@@ -2345,7 +2362,7 @@
       "clickedCtaLabel": "SUBMIT APPROVAL",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "approve_plan",
@@ -2426,7 +2443,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2437,7 +2454,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2449,8 +2466,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
-            "planVersionId": 319,
-            "approvalRequestId": 278
+            "planVersionId": 370,
+            "approvalRequestId": 309
           }
         },
         {
@@ -2474,7 +2491,7 @@
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
             "repairAction": "regenerate_plan",
-            "planVersionId": 319
+            "planVersionId": 370
           }
         },
         {
@@ -2496,8 +2513,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         },
@@ -2508,9 +2525,9 @@
           "route": "/simulation/workspace",
           "metadata": {
             "source": "operator_ui_cta",
-            "scenarioId": 804,
+            "scenarioId": 904,
             "scenarioRef": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioVersionId": 319,
+            "scenarioVersionId": 370,
             "scenarioVersionRef": "PLAN-RECOVERY-PRACTICE-20260530 V2"
           }
         }
@@ -2521,7 +2538,7 @@
       "title": "First recovery approval recorded",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\14_first_recovery_approval_recorded.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "blocked",
       "currentStep": "approve_plan",
@@ -2533,7 +2550,7 @@
       "clickedCtaLabel": "Approve",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "blocked",
         "current_step": "approve_plan",
@@ -2610,7 +2627,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -2626,7 +2643,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2637,7 +2654,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2649,8 +2666,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
-            "planVersionId": 319,
-            "approvalRequestId": 278
+            "planVersionId": 370,
+            "approvalRequestId": 309
           }
         },
         {
@@ -2674,7 +2691,7 @@
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
             "repairAction": "regenerate_plan",
-            "planVersionId": 319
+            "planVersionId": 370
           }
         },
         {
@@ -2696,8 +2713,8 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "scenarioId": 804,
-              "scenarioVersionId": 319
+              "scenarioId": 904,
+              "scenarioVersionId": 370
             }
           }
         }
@@ -2708,7 +2725,7 @@
       "title": "Dual recovery approval complete",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\15_dual_recovery_approval_complete.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "run_publishability_check",
@@ -2720,7 +2737,7 @@
       "clickedCtaLabel": "Approve",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "run_publishability_check",
@@ -2800,7 +2817,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2813,7 +2830,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "abl_dispatcher",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -2825,7 +2842,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -2841,7 +2858,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2852,7 +2869,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -2864,8 +2881,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
-            "planVersionId": 319,
-            "approvalRequestId": 278
+            "planVersionId": 370,
+            "approvalRequestId": 309
           }
         },
         {
@@ -2889,7 +2906,7 @@
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
             "repairAction": "regenerate_plan",
-            "planVersionId": 319
+            "planVersionId": 370
           }
         }
       ]
@@ -2899,7 +2916,7 @@
       "title": "Recovery publishability gate cleared",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\16_recovery_publishability_gate_cleared.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "active",
       "currentStep": "publish_plan",
@@ -2911,7 +2928,7 @@
       "clickedCtaLabel": "CHECK PUBLISHABILITY",
       "assistantFlow": {
         "active_flow": "phase5_plus_recovery_v1",
-        "flow_run_id": "FLOW-D835DB54649D",
+        "flow_run_id": "FLOW-97E7F00D1FDD",
         "flow_name": "Phase 5+ recovery path",
         "flow_status": "active",
         "current_step": "publish_plan",
@@ -2975,7 +2992,7 @@
           "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
           "evidence": {
             "scenarioId": "SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01",
-            "scenarioPk": 804,
+            "scenarioPk": 904,
             "residualRisk": {
               "count": 1,
               "items": [
@@ -2986,20 +3003,20 @@
               ],
               "level": "medium"
             },
-            "selectedRunId": 878,
-            "optimizerRunPk": 137,
+            "selectedRunId": 989,
+            "optimizerRunPk": 161,
             "recoveryOrigin": true,
             "selectedRunRef": "RUN-SIM-PLAN-RECOVERY-PRACTICE-20260530-V1-01-02",
-            "optimizerRunRef": "OPT-17C7A067AC04",
+            "optimizerRunRef": "OPT-DACC1AFFA8D5",
             "rootCauseStatus": "mitigates_cause",
             "sourceCauseType": "BRIDGE_WINDOW_MISSED",
-            "recommendationId": 669,
-            "recommendationPk": 669,
-            "baselineVersionId": 318,
-            "recommendationRef": "REC-8466A1F69E7B",
-            "rootCauseAssessmentId": 31,
-            "rootCauseAssessmentPk": 31,
-            "rootCauseAssessmentRef": "RCA-1F9430B00C15"
+            "recommendationId": 783,
+            "recommendationPk": 783,
+            "baselineVersionId": 369,
+            "recommendationRef": "REC-382A371E1023",
+            "rootCauseAssessmentId": 45,
+            "rootCauseAssessmentPk": 45,
+            "rootCauseAssessmentRef": "RCA-BC04DEE56A71"
           },
           "severity": "warning"
         },
@@ -3022,11 +3039,11 @@
           "metadata": {
             "evidence": {
               "warningCount": 1,
-              "planVersionId": 319,
+              "planVersionId": 370,
               "blockingReasonCount": 0,
               "publishabilityStatus": "warning",
-              "publishabilityAssessmentId": 55,
-              "publishabilityAssessmentRef": "PUB-DEAAC8F2774D"
+              "publishabilityAssessmentId": 92,
+              "publishabilityAssessmentRef": "PUB-E79AB4E9DA72"
             }
           }
         },
@@ -3038,10 +3055,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "warning",
-            "assessmentId": 55,
+            "assessmentId": 92,
             "warningCount": 1,
-            "assessmentRef": "PUB-DEAAC8F2774D",
-            "planVersionId": 319,
+            "assessmentRef": "PUB-E79AB4E9DA72",
+            "planVersionId": 370,
             "blockingReasonCount": 0
           }
         },
@@ -3057,7 +3074,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -3070,7 +3087,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "abl_dispatcher",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -3082,7 +3099,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -3098,7 +3115,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -3109,7 +3126,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -3121,8 +3138,8 @@
           "metadata": {
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
-            "planVersionId": 319,
-            "approvalRequestId": 278
+            "planVersionId": 370,
+            "approvalRequestId": 309
           }
         }
       ]
@@ -3132,7 +3149,7 @@
       "title": "Recovery plan manually published",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\phase6_recovery_flow\\screenshots\\17_recovery_plan_manually_published.png",
-      "flowRunId": "FLOW-D835DB54649D",
+      "flowRunId": "FLOW-97E7F00D1FDD",
       "flowKey": "phase5_plus_recovery_v1",
       "flowStatus": "completed",
       "currentStep": "",
@@ -3151,8 +3168,8 @@
         "plans": 1,
         "planVersions": 2,
         "trips": 6,
-        "openConflicts": 3,
-        "blockingConflicts": 2,
+        "openConflicts": 5,
+        "blockingConflicts": 4,
         "recoverySnapshots": 1,
         "optimizerRuns": 1,
         "recommendations": 5,
@@ -3199,7 +3216,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "publishedSnapshotId": 65
+              "publishedSnapshotId": 74
             }
           }
         },
@@ -3212,8 +3229,8 @@
             "source": "operator_ui_cta",
             "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
             "versionNo": 2,
-            "planVersionId": 319,
-            "publishedSnapshotId": 65,
+            "planVersionId": 370,
+            "publishedSnapshotId": 74,
             "publishedSnapshotRef": "LIVE-PLAN-RECOVERY-PRACTICE-20260530-V2"
           }
         },
@@ -3225,11 +3242,11 @@
           "metadata": {
             "evidence": {
               "warningCount": 1,
-              "planVersionId": 319,
+              "planVersionId": 370,
               "blockingReasonCount": 0,
               "publishabilityStatus": "warning",
-              "publishabilityAssessmentId": 55,
-              "publishabilityAssessmentRef": "PUB-DEAAC8F2774D"
+              "publishabilityAssessmentId": 92,
+              "publishabilityAssessmentRef": "PUB-E79AB4E9DA72"
             }
           }
         },
@@ -3241,10 +3258,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "warning",
-            "assessmentId": 55,
+            "assessmentId": 92,
             "warningCount": 1,
-            "assessmentRef": "PUB-DEAAC8F2774D",
-            "planVersionId": 319,
+            "assessmentRef": "PUB-E79AB4E9DA72",
+            "planVersionId": 370,
             "blockingReasonCount": 0
           }
         },
@@ -3260,7 +3277,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 278
+              "approvalRequestId": 309
             }
           }
         },
@@ -3273,7 +3290,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "abl_dispatcher",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         },
         {
@@ -3285,7 +3302,7 @@
             "source": "operator_ui_cta",
             "requestId": "APR-PLAN-RECOVERY-PRACTICE-20260530-V2",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 278
+            "approvalRequestId": 309
           }
         }
       ]
@@ -3298,15 +3315,15 @@
       "text": "SUPER",
       "matchCount": 1,
       "route": "#/dashboard/situation",
-      "clickedAt": "2026-05-30T03:56:18.058Z"
+      "clickedAt": "2026-05-30T14:38:31.344Z"
     },
     {
       "purpose": "Global Next Action opens Exception Center for recovery option generation",
       "target": "Open Exception Center",
       "text": "NEXT ACTION Open Exception Center",
       "matchCount": 2,
-      "route": "#/dashboard/situation",
-      "clickedAt": "2026-05-30T03:56:22.788Z"
+      "route": "#/exceptions/center",
+      "clickedAt": "2026-05-30T14:38:52.246Z"
     },
     {
       "purpose": "Visible page CTA creates recovery snapshot and optimizer run",
@@ -3314,14 +3331,14 @@
       "text": "GENERATE RECOVERY OPTIONS",
       "matchCount": 1,
       "route": "#/exceptions/center",
-      "clickedAt": "2026-05-30T03:56:27.257Z"
+      "clickedAt": "2026-05-30T14:39:08.144Z"
     },
     {
       "purpose": "Select recovery recommendation expected to pass or warn root-cause validation",
       "target": "positive root-cause recommendation row",
-      "text": "#4 | REC-8466A1F69E7B | NEXT WINDOW REPAIR | 49.7 | HIGH | +1200m | 2 | 0 | CANDIDATE | ",
+      "text": "#4 | REC-382A371E1023 | NEXT WINDOW REPAIR | 49.7 | HIGH | +1200m | 2 | 0 | CANDIDATE | ",
       "route": "#/recovery/recommendations",
-      "clickedAt": "2026-05-30T03:56:36.749Z"
+      "clickedAt": "2026-05-30T14:39:24.502Z"
     },
     {
       "purpose": "Visible page CTA records root-cause repair assessment",
@@ -3329,7 +3346,7 @@
       "text": "VALIDATE ROOT CAUSE",
       "matchCount": 1,
       "route": "#/recovery/recommendations",
-      "clickedAt": "2026-05-30T03:56:38.323Z"
+      "clickedAt": "2026-05-30T14:39:24.889Z"
     },
     {
       "purpose": "Visible page CTA materializes recommendation into a governed scenario",
@@ -3337,7 +3354,7 @@
       "text": "TEST AS SCENARIO",
       "matchCount": 2,
       "route": "#/recovery/recommendations",
-      "clickedAt": "2026-05-30T03:56:43.649Z"
+      "clickedAt": "2026-05-30T14:39:40.161Z"
     },
     {
       "purpose": "Visible page CTA reruns the scenario before promotion",
@@ -3345,7 +3362,7 @@
       "text": "RUN SIMULATION",
       "matchCount": 1,
       "route": "#/simulation/workspace",
-      "clickedAt": "2026-05-30T03:56:51.820Z"
+      "clickedAt": "2026-05-30T14:39:57.557Z"
     },
     {
       "purpose": "Visible page CTA promotes scenario into a proposed recovery plan",
@@ -3353,23 +3370,23 @@
       "text": "PROMOTE TO PROPOSED",
       "matchCount": 1,
       "route": "#/simulation/workspace",
-      "clickedAt": "2026-05-30T03:56:57.902Z"
+      "clickedAt": "2026-05-30T14:40:15.993Z"
     },
     {
       "purpose": "Next Action routes operator back to blockers for repair",
       "target": "Open Exception Center",
       "text": "NEXT ACTION Open Exception Center",
       "matchCount": 1,
-      "route": "#/simulation/workspace",
-      "clickedAt": "2026-05-30T03:57:04.511Z"
+      "route": "#/exceptions/center",
+      "clickedAt": "2026-05-30T14:40:19.166Z"
     },
     {
       "purpose": "Operator opens operating windows to repair remaining navigation blockers",
       "target": "Tide & Bridge Window",
       "text": "Tide & Bridge Window",
       "matchCount": 1,
-      "route": "#/exceptions/center",
-      "clickedAt": "2026-05-30T03:57:09.669Z"
+      "route": "#/constraints/tide-bridge",
+      "clickedAt": "2026-05-30T14:40:20.876Z"
     },
     {
       "purpose": "Visible page CTA applies corrected operating windows",
@@ -3377,15 +3394,15 @@
       "text": "ENTER OPERATING WINDOWS",
       "matchCount": 1,
       "route": "#/constraints/tide-bridge",
-      "clickedAt": "2026-05-30T03:57:14.551Z"
+      "clickedAt": "2026-05-30T14:40:22.706Z"
     },
     {
       "purpose": "Operator opens assignment board to regenerate against repaired constraints",
       "target": "Tug/Barge Assignment",
       "text": "Tug/Barge Assignment",
       "matchCount": 1,
-      "route": "#/constraints/tide-bridge",
-      "clickedAt": "2026-05-30T03:57:20.121Z"
+      "route": "#/operations/tug-barge-assignment",
+      "clickedAt": "2026-05-30T14:40:25.339Z"
     },
     {
       "purpose": "Visible page CTA regenerates the recovery plan and clears blockers",
@@ -3393,15 +3410,15 @@
       "text": "REGENERATE PLAN",
       "matchCount": 2,
       "route": "#/operations/tug-barge-assignment",
-      "clickedAt": "2026-05-30T03:57:22.521Z"
+      "clickedAt": "2026-05-30T14:40:25.435Z"
     },
     {
       "purpose": "Next Action opens published-plan page for approval submission",
       "target": "Submit approval",
       "text": "NEXT ACTION Submit approval",
       "matchCount": 1,
-      "route": "#/operations/tug-barge-assignment",
-      "clickedAt": "2026-05-30T03:57:27.893Z"
+      "route": "#/schedule/published-plan",
+      "clickedAt": "2026-05-30T14:40:51.696Z"
     },
     {
       "purpose": "Visible page CTA submits recovery plan for approval",
@@ -3409,7 +3426,7 @@
       "text": "SUBMIT APPROVAL",
       "matchCount": 2,
       "route": "#/schedule/published-plan",
-      "clickedAt": "2026-05-30T03:57:33.187Z"
+      "clickedAt": "2026-05-30T14:41:09.421Z"
     },
     {
       "purpose": "Visible page CTA records first approval authority",
@@ -3417,7 +3434,7 @@
       "text": "Approve",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-30T03:57:41.429Z"
+      "clickedAt": "2026-05-30T14:41:31.363Z"
     },
     {
       "purpose": "Visible page CTA records second approval authority",
@@ -3425,7 +3442,7 @@
       "text": "Approve",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-30T03:57:46.860Z"
+      "clickedAt": "2026-05-30T14:41:45.470Z"
     },
     {
       "purpose": "Visible page CTA computes publishability gate for recovery plan",
@@ -3433,7 +3450,7 @@
       "text": "CHECK PUBLISHABILITY",
       "matchCount": 3,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-30T03:57:52.503Z"
+      "clickedAt": "2026-05-30T14:41:58.729Z"
     },
     {
       "purpose": "Visible page CTA manually publishes approved recovery plan",
@@ -3441,11 +3458,11 @@
       "text": "Publish",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-30T03:57:58.815Z"
+      "clickedAt": "2026-05-30T14:42:12.286Z"
     }
   ],
   "finalAssertions": {
-    "flowRunId": "FLOW-D835DB54649D",
+    "flowRunId": "FLOW-97E7F00D1FDD",
     "flowKey": "phase5_plus_recovery_v1",
     "flowCompleted": true,
     "recommendationsCreatedByUi": true,

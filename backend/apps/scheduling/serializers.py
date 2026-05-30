@@ -627,6 +627,13 @@ class MovementAssignmentCandidateSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class MovementAssignmentCandidateOverviewSerializer(MovementAssignmentCandidateSerializer):
+    constraint_results = serializers.SerializerMethodField()
+
+    def get_constraint_results(self, obj):
+        return []
+
+
 class MovementAssignmentCandidateRunGenerateSerializer(serializers.Serializer):
     plan_version = serializers.PrimaryKeyRelatedField(
         queryset=PlanVersion.objects.all(),
@@ -662,6 +669,13 @@ class MovementAssignmentCandidateRunSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = fields
+
+
+class MovementAssignmentCandidateRunOverviewSerializer(MovementAssignmentCandidateRunSerializer):
+    candidates = serializers.SerializerMethodField()
+
+    def get_candidates(self, obj):
+        return []
 
 
 class CustomerSafeCommercialProjectionSerializer(serializers.ModelSerializer):

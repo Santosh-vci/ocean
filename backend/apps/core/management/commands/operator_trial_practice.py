@@ -100,7 +100,10 @@ class OperatorTrialPracticeRunner:
     def import_demand(self) -> dict:
         response = self._post(
             "/api/planning/import-jobs/import-trial-demand/",
-            {"source": "operator-trial-practice-command"},
+            {
+                "pack": "operator_trial_phase5",
+                "source": "operator-trial-practice-command",
+            },
         )
         return {
             "step": "import-demand",

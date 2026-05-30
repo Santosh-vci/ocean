@@ -182,3 +182,31 @@ def test_candidate_api_generate_and_select():
 
     assert selected.status_code == 200
     assert selected.data["is_selected"] is True
+
+
+@pytest.mark.django_db
+def test_operations_scope_overview_returns_lightweight_candidate_summaries():
+    version, user = prepare_operator_trial_plan()
+    run = generate_movement_assignment_candidates(plan_version=version, actor=user)
+    movement_count = run.candidates.values("movement_key").distinct().count()
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.get("/api/scheduling/overview/?scope=operations")
+
+    assert response.status_code == 200
+    assert response.data["plans"] == []
+    assert response.data["simulationScenarios"] == []
+    assert response.data["optimizerRuns"] == []
+    assert response.data["globalOptimizationRuns"] == []
+    assert response.data["commercialProjections"] == []
+    assert response.data["movementAssignmentCandidateRun"]["candidates"] == []
+    assert len(response.data["movementAssignmentCandidates"]) == movement_count
+    assert all(
+        candidate["rank"] == 1 or candidate["is_selected"]
+        for candidate in response.data["movementAssignmentCandidates"]
+    )
+    assert all(
+        candidate["constraint_results"] == []
+        for candidate in response.data["movementAssignmentCandidates"]
+    )

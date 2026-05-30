@@ -9,7 +9,14 @@ from rest_framework.test import APIClient
 from apps.audit.models import AuditEvent
 from apps.flows.models import FlowDefinition, FlowEvent, FlowRun
 from apps.flows.services import record_cta_intent
-from apps.planning.models import CargoLayerStep, ImportJob, OGVVoyage
+from apps.masters.models import Barge
+from apps.planning.models import (
+    CargoLayerStep,
+    CargoRequirement,
+    ImportJob,
+    NavigationConstraintCheck,
+    OGVVoyage,
+)
 from apps.planning.trial_pack import trial_dt
 from apps.scheduling.models import (
     ApprovalDecision,
@@ -98,6 +105,9 @@ def test_operator_trial_practice_stages_start_empty_then_build_blocked_plan():
     assert imported["counts"]["cargoRequirements"] == 8
     assert imported["counts"]["cargoLayerSteps"] == 6
     assert imported["counts"]["planVersions"] == 0
+    assert ImportJob.objects.latest("id").source == "operator-trial-practice-command"
+    assert ImportJob.objects.latest("id").filename == "operator_trial_ogv_demand.xlsx"
+    assert CargoLayerStep.objects.filter(sequence_violation=True).count() == 1
 
     windows = command_json("operator_trial_practice", "enter-windows")
     assert windows["counts"]["tideWindows"] == 3
@@ -109,6 +119,65 @@ def test_operator_trial_practice_stages_start_empty_then_build_blocked_plan():
     assert generated["planVersion"]["conflictCount"] == 4
     assert generated["planVersion"]["blockingConflictCount"] == 4
     assert generated["planVersion"]["validationStatus"] == "blocked"
+
+
+@pytest.mark.django_db
+def test_operator_trial_recovery_window_repair_clears_missed_navigation_checks():
+    command_json("operator_trial_practice", "reset")
+    command_json("operator_trial_practice", "import-demand")
+    command_json("operator_trial_practice", "enter-windows")
+    command_json("operator_trial_practice", "generate-plan")
+    assert NavigationConstraintCheck.objects.filter(
+        status=NavigationConstraintCheck.Status.MISSED,
+    ).count() >= 1
+
+    plan_version = PlanVersion.objects.order_by("-created_at").first()
+    plan_version.summary = {
+        **(plan_version.summary or {}),
+        "recoveryOrigin": {
+            "recommendationPk": 1,
+            "recommendationRef": "REC-TEST",
+        },
+    }
+    plan_version.save(update_fields=["summary", "updated_at"])
+
+    repaired = command_json("operator_trial_practice", "enter-windows")
+
+    assert repaired["windowEntry"]["constraintChecks"] == 6
+    assert NavigationConstraintCheck.objects.filter(
+        status=NavigationConstraintCheck.Status.MISSED,
+    ).count() == 0
+    assert Barge.objects.get(code="BRG-KAL-22").status == Barge.Status.AVAILABLE
+    assert Barge.objects.get(code="BRG-KAL-22").status == Barge.Status.AVAILABLE
+
+
+@pytest.mark.django_db
+def test_recovery_practice_window_repair_replaces_seeded_navigation_blockers():
+    command_json(
+        "operator_trial_practice",
+        "prepare-db-truth",
+        "--flow",
+        "recovery",
+    )
+    assert NavigationConstraintCheck.objects.filter(
+        status=NavigationConstraintCheck.Status.MISSED,
+    ).count() >= 1
+
+    plan_version = PlanVersion.objects.order_by("-created_at").first()
+    plan_version.summary = {
+        **(plan_version.summary or {}),
+        "recoveryOrigin": {
+            "recommendationPk": 1,
+            "recommendationRef": "REC-TEST",
+        },
+    }
+    plan_version.save(update_fields=["summary", "updated_at"])
+
+    command_json("operator_trial_practice", "enter-windows")
+
+    assert NavigationConstraintCheck.objects.filter(
+        status=NavigationConstraintCheck.Status.MISSED,
+    ).count() == 0
 
 
 @pytest.mark.django_db
@@ -183,7 +252,8 @@ def test_import_trial_demand_happy_path_pack_creates_clean_demand():
     )
 
     assert response.status_code == 201
-    assert OGVVoyage.objects.count() == 2
+    assert OGVVoyage.objects.count() == 5
+    assert CargoRequirement.objects.count() == 8
     assert CargoLayerStep.objects.count() == 6
     assert ImportJob.objects.get(pk=response.data["id"]).source == "operator_happy_path_v1"
     assert CargoLayerStep.objects.filter(sequence_violation=True).count() == 0

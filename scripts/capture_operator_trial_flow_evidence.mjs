@@ -117,7 +117,8 @@ async function main() {
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        voyages: 2,
+        voyages: 5,
+        cargoRequirements: 8,
         cargoLayerSteps: 6,
         plans: 0,
         trips: 0,
@@ -415,7 +416,13 @@ async function main() {
     });
 
     const finalFlow = await getFlow(cdp);
-    const finalDomain = await domainState(cdp);
+    const finalDomain = await waitForDomainState(cdp, (domain) => (
+      domain.publishedSnapshots >= 1
+      && domain.exports >= 1
+      && domain.movementCandidateCovered === 6
+      && domain.trips === 6
+      && domain.tripsWithCandidateProvenance === 6
+    ), 15_000);
     evidence.finalAssertions = {
       flowRunId: evidence.preparedFlow.flowRunId,
       flowKey: evidence.preparedFlow.flowKey,
@@ -614,6 +621,7 @@ function assertDomainState(domain, expectations) {
     ["plans", domain.plans],
     ["publishedSnapshots", domain.publishedSnapshots],
     ["exports", domain.exports],
+    ["cargoRequirements", domain.cargoRequirements],
     ["cargoLayerSteps", domain.cargoLayerSteps],
     ["sequenceViolations", domain.sequenceViolations],
     ["tideWindows", domain.tideWindows],
@@ -633,6 +641,7 @@ function assertDomainState(domain, expectations) {
   }
   const minimums = [
     ["minVoyages", "voyages"],
+    ["minCargoRequirements", "cargoRequirements"],
     ["minCargoLayerSteps", "cargoLayerSteps"],
     ["minFlowEvents", "flowEvents"],
     ["minTideWindows", "tideWindows"],
@@ -703,6 +712,7 @@ async function domainState(cdp) {
   return {
     importJobs: planning?.importJobs?.length ?? 0,
     voyages: planning?.voyages?.length ?? 0,
+    cargoRequirements: planning?.cargoRequirements?.length ?? 0,
     cargoLayerSteps: planning?.cargoLayerSteps?.length ?? 0,
     sequenceViolations: planning?.validation?.sequenceViolations ?? 0,
     tideWindows: planning?.tideWindows?.length ?? 0,
@@ -745,6 +755,19 @@ async function domainState(cdp) {
   };
 }
 
+async function waitForDomainState(cdp, predicate, timeoutMs = 10_000) {
+  const started = Date.now();
+  let lastDomain = null;
+  while (Date.now() - started < timeoutMs) {
+    lastDomain = await domainState(cdp).catch(() => null);
+    if (lastDomain && predicate(lastDomain)) {
+      return lastDomain;
+    }
+    await delay(150);
+  }
+  throw new Error(`Timed out waiting for final domain state. Last domain: ${JSON.stringify(lastDomain)}`);
+}
+
 async function waitForFlowState(cdp, { currentStep, status }, timeoutMs = 20_000) {
   const started = Date.now();
   let lastFlow = null;
@@ -753,7 +776,7 @@ async function waitForFlowState(cdp, { currentStep, status }, timeoutMs = 20_000
     if (lastFlow?.status === status && lastFlow.current_step_key === currentStep) {
       return lastFlow;
     }
-    await delay(500);
+    await delay(150);
   }
   throw new Error(
     `Timed out waiting for flow state ${status}/${currentStep}. Last flow: ${JSON.stringify(lastFlow)}`,
@@ -768,7 +791,7 @@ async function waitForAssistantNext(cdp, expectedActionId, route, timeoutMs = 20
     if (lastAssistant?.global_next_action?.action_id === expectedActionId) {
       return lastAssistant;
     }
-    await delay(500);
+    await delay(150);
   }
   throw new Error(
     `Timed out waiting for assistant action ${expectedActionId}. Last assistant: ${JSON.stringify(lastAssistant)}`,
@@ -823,7 +846,7 @@ async function clickButton(cdp, text, options = {}) {
   }
   if (match.rect.y < 0 || match.rect.y + match.rect.height > 1000) {
     await scrollButtonIntoView(cdp, match.index);
-    await delay(500);
+    await delay(150);
     match = await findButton(cdp, text, options);
     if (!match) throw new Error(`Button not found after scroll: ${text}`);
   }
@@ -860,7 +883,9 @@ async function clickButton(cdp, text, options = {}) {
     clickedAt: new Date().toISOString(),
   };
   evidence.clicks.push(click);
-  await delay(options.afterMs ?? 1800);
+  if (options.afterMs) {
+    await delay(options.afterMs);
+  }
   return click;
 }
 
@@ -950,7 +975,7 @@ async function waitForText(cdp, text, timeoutMs = 10_000) {
     const body = await bodyText(cdp).catch(() => "");
     lastBody = body;
     if (body.toLowerCase().includes(text.toLowerCase())) return;
-    await delay(500);
+    await delay(150);
   }
   throw new Error(`Timed out waiting for text: ${text}. Body sample: ${lastBody.slice(0, 700)}`);
 }
@@ -960,7 +985,7 @@ async function waitForHash(cdp, hashPath, timeoutMs = 10_000) {
   while (Date.now() - start < timeoutMs) {
     const url = await evalAsync(cdp, "location.href").catch(() => "");
     if (url.includes(`#${hashPath}`)) return;
-    await delay(400);
+    await delay(100);
   }
   throw new Error(`Timed out waiting for route: ${hashPath}`);
 }
@@ -972,7 +997,6 @@ async function hashIncludes(cdp, hashPath) {
 
 async function navigateHash(cdp, hashPath) {
   await evalAsync(cdp, `location.hash = ${JSON.stringify(hashPath)}`);
-  await delay(500);
 }
 
 async function waitForApp(cdp) {
@@ -981,7 +1005,6 @@ async function waitForApp(cdp) {
     "document.readyState === 'complete' || document.readyState === 'interactive'",
     15_000,
   );
-  await delay(500);
 }
 
 async function waitForExpression(cdp, expression, timeoutMs = 10_000) {
@@ -989,7 +1012,7 @@ async function waitForExpression(cdp, expression, timeoutMs = 10_000) {
   while (Date.now() - start < timeoutMs) {
     const value = await evalValue(cdp, expression).catch(() => false);
     if (value) return;
-    await delay(250);
+    await delay(100);
   }
   throw new Error(`Timed out waiting for expression: ${expression}`);
 }
@@ -1030,7 +1053,7 @@ async function waitForHttpOk(url, timeoutMs = 45_000) {
     } catch (error) {
       lastError = error;
     }
-    await delay(500);
+    await delay(150);
   }
   throw lastError ?? new Error(`Timed out waiting for ${url}`);
 }
@@ -1049,7 +1072,7 @@ async function waitForDebuggerUrl(port) {
     } catch {
       // Browser debugger is still starting.
     }
-    await delay(250);
+    await delay(100);
   }
   throw new Error("Chrome debugger did not start.");
 }

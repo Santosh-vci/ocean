@@ -8,7 +8,7 @@ import { apiFetch, getCsrfToken, login, logout } from "./lib/api";
 import {
   fetchActiveFlowForAction,
   recordFlowCtaEvidence,
-  shouldUseHappyPathTrialImport,
+  trialDemandPackForImport,
 } from "./lib/flowEvidence";
 import { canAccess, visibleNavItems, visibleNavModules } from "./lib/navigation";
 import { AuditPage } from "./pages/AuditPage";
@@ -84,9 +84,91 @@ function currentHashPath() {
   return window.location.hash.replace("#", "") || "/dashboard/situation";
 }
 
-const LIVE_REFRESH_INTERVAL_MS = 15000;
 const INTERACTION_REFRESH_THROTTLE_MS = 1000;
 const ACTION_FEEDBACK_TIMEOUT_MS = 4000;
+
+type WorkspaceRefreshScope = "all" | "route";
+type WorkspaceRefreshOptions = {
+  force?: boolean;
+  invalidate?: boolean;
+  scope?: WorkspaceRefreshScope;
+  targetRoute?: string;
+};
+
+const DASHBOARD_ROUTES = new Set(["/dashboard/situation"]);
+const PLANNING_OVERVIEW_ROUTES = new Set([
+  "/schedule/ogv-demand",
+  "/schedule/coal-grade-sequence",
+  "/constraints/tide-bridge",
+]);
+const SCHEDULING_OVERVIEW_ROUTES = new Set([
+  "/schedule/ogv-demand",
+  "/schedule/coal-grade-sequence",
+  "/operations/tug-barge-assignment",
+  "/operations/jetty-loading",
+  "/operations/cts-floating-crane",
+  "/schedule/published-plan",
+  "/exceptions/center",
+  "/recovery/recommendations",
+  "/simulation/workspace",
+  "/approvals/publishing",
+  "/optimization/global",
+  "/commercial/projections",
+  "/map/live",
+]);
+const OPERATIONS_SCHEDULING_SCOPE_ROUTES = new Set([
+  "/operations/tug-barge-assignment",
+  "/operations/jetty-loading",
+  "/operations/cts-floating-crane",
+  "/map/live",
+]);
+const PLANNING_SCHEDULING_SCOPE_ROUTES = new Set([
+  "/schedule/ogv-demand",
+  "/schedule/coal-grade-sequence",
+]);
+const RECOVERY_SCHEDULING_SCOPE_ROUTES = new Set([
+  "/exceptions/center",
+  "/recovery/recommendations",
+  "/simulation/workspace",
+]);
+const OPERATIONS_OVERVIEW_ROUTES = new Set([
+  "/dashboard/situation",
+  "/constraints/tide-bridge",
+  "/operations/jetty-loading",
+  "/operations/cts-floating-crane",
+  "/exceptions/center",
+  "/map/live",
+  "/operations/event-confirmation",
+]);
+const TELEMETRY_OVERVIEW_ROUTES = new Set(["/dashboard/situation", "/map/live"]);
+const AUDIT_OVERVIEW_ROUTES = new Set(["/dashboard/situation", "/admin/audit-logs"]);
+const EXPORT_OVERVIEW_ROUTES = new Set(["/admin/export-handoff"]);
+const MASTER_DATA_OVERVIEW_ROUTES = new Set(["/admin/master-data"]);
+const RBAC_OVERVIEW_ROUTES = new Set(["/admin/users-rbac"]);
+
+function schedulingOverviewEndpointForRoute(route: string) {
+  if (route === "/approvals/publishing") {
+    return "/scheduling/overview/?scope=approvals";
+  }
+  if (route === "/schedule/published-plan") {
+    return "/scheduling/overview/?scope=published";
+  }
+  if (route === "/optimization/global") {
+    return "/scheduling/overview/?scope=optimization";
+  }
+  if (route === "/commercial/projections") {
+    return "/scheduling/overview/?scope=commercial";
+  }
+  if (RECOVERY_SCHEDULING_SCOPE_ROUTES.has(route)) {
+    return "/scheduling/overview/?scope=recovery";
+  }
+  if (PLANNING_SCHEDULING_SCOPE_ROUTES.has(route)) {
+    return "/scheduling/overview/?scope=planning";
+  }
+  return OPERATIONS_SCHEDULING_SCOPE_ROUTES.has(route)
+    ? "/scheduling/overview/?scope=operations"
+    : "/scheduling/overview/";
+}
 
 function upcomingLocalIso(daysFromToday: number, hour: number, minute = 0) {
   const now = new Date();
@@ -171,7 +253,8 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const masterDataOverviewRef = useRef<MasterDataOverview | null>(null);
   const schedulingOverviewRef = useRef<SchedulingOverview | null>(null);
-  const workspaceRefreshPromiseRef = useRef<Promise<void> | null>(null);
+  const workspaceRefreshPromisesRef = useRef<Map<string, Promise<void>>>(new Map());
+  const workspaceDataRevisionRef = useRef(0);
   const workspaceLastRefreshAtRef = useRef(0);
   const actionFeedbackTimerRef = useRef<number | null>(null);
 
@@ -244,101 +327,125 @@ function App() {
   const assistant = useNextActions(route, { enabled: Boolean(currentUser) });
   const refreshAssistantActions = assistant.refresh;
   const assistantFlowRef = useRef(assistant.data?.flow ?? null);
+  const routeRef = useRef(route);
 
   useEffect(() => {
     assistantFlowRef.current = assistant.data?.flow ?? null;
   }, [assistant.data?.flow]);
 
-  const refreshWorkspaceData = useCallback(async () => {
+  useEffect(() => {
+    routeRef.current = route;
+  }, [route]);
+
+  const refreshWorkspaceData = useCallback(async (
+    scope: WorkspaceRefreshScope = "all",
+    targetRoute = routeRef.current,
+    revision = workspaceDataRevisionRef.current,
+  ) => {
     if (!currentUser) {
       return;
     }
 
+    const refreshAll = scope === "all";
+    const shouldApplyResult = () => (
+      revision === workspaceDataRevisionRef.current
+      && (refreshAll || routeRef.current === targetRoute)
+    );
+    const applyResult = <T,>(apply: (data: T) => void) => (data: T) => {
+      if (shouldApplyResult()) {
+        apply(data);
+      }
+    };
+    const applyFailure = (apply: () => void) => () => {
+      if (refreshAll && shouldApplyResult()) {
+        apply();
+      }
+    };
     const refreshes: Promise<unknown>[] = [];
 
-    if (canViewDashboard) {
+    if (canViewDashboard && (refreshAll || DASHBOARD_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<DashboardReadModel>("/dashboard/situation/")
-        .then(setDashboardReadModel)
-        .catch(() => setDashboardReadModel(null)));
+        .then(applyResult(setDashboardReadModel))
+        .catch(applyFailure(() => setDashboardReadModel(null))));
     }
 
-    if (canViewAdmin) {
+    if (canViewAdmin && (refreshAll || RBAC_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<RbacOverview>("/rbac/overview/")
-        .then(setOverview)
-        .catch(() => setOverview(null)));
+        .then(applyResult(setOverview))
+        .catch(applyFailure(() => setOverview(null))));
     }
 
-    if (canViewMasterData) {
+    if (canViewMasterData && (refreshAll || MASTER_DATA_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<MasterDataOverview>("/master-data/overview/")
-        .then((data) => {
+        .then(applyResult((data) => {
           masterDataOverviewRef.current = data;
           setMasterDataOverview(data);
-        })
-        .catch(() => {
+        }))
+        .catch(applyFailure(() => {
           masterDataOverviewRef.current = null;
           setMasterDataOverview(null);
-        }));
+        })));
     }
 
-    if (canViewAudit) {
+    if (canViewAudit && (refreshAll || AUDIT_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<AuditEvent[]>("/audit-events/")
-        .then(setAuditEvents)
-        .catch(() => setAuditEvents([])));
+        .then(applyResult(setAuditEvents))
+        .catch(applyFailure(() => setAuditEvents([]))));
     }
 
-    if (canViewExports) {
+    if (canViewExports && (refreshAll || EXPORT_OVERVIEW_ROUTES.has(targetRoute))) {
       setIsExportLoading(true);
       setExportError(null);
       refreshes.push(apiFetch<ExportOverview>("/exports/overview/")
-        .then(setExportOverview)
-        .catch(() => {
+        .then(applyResult(setExportOverview))
+        .catch(applyFailure(() => {
           setExportOverview(null);
           setExportError("Export history is unavailable.");
-        })
+        }))
         .finally(() => setIsExportLoading(false)));
     }
 
-    if (canViewSchedule) {
+    if (canViewSchedule && (refreshAll || PLANNING_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<PlanningOverview>("/planning/overview/")
-        .then(setPlanningOverview)
-        .catch(() => setPlanningOverview(null)));
+        .then(applyResult(setPlanningOverview))
+        .catch(applyFailure(() => setPlanningOverview(null))));
     }
 
-    if (canViewSchedule) {
-      refreshes.push(apiFetch<SchedulingOverview>("/scheduling/overview/")
-        .then((data) => {
+    if (canViewSchedule && (refreshAll || SCHEDULING_OVERVIEW_ROUTES.has(targetRoute))) {
+      refreshes.push(apiFetch<SchedulingOverview>(schedulingOverviewEndpointForRoute(targetRoute))
+        .then(applyResult((data) => {
           schedulingOverviewRef.current = data;
           setSchedulingOverview(data);
-        })
-        .catch(() => {
+        }))
+        .catch(applyFailure(() => {
           schedulingOverviewRef.current = null;
           setSchedulingOverview(null);
-        }));
+        })));
     }
 
-    if (canViewTelemetry) {
+    if (canViewTelemetry && (refreshAll || TELEMETRY_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<LatestAssetStateRecord[]>("/telemetry/latest-asset-states/")
-        .then(setLatestAssetStates)
-        .catch(() => setLatestAssetStates([])));
+        .then(applyResult(setLatestAssetStates))
+        .catch(applyFailure(() => setLatestAssetStates([]))));
       refreshes.push(apiFetch<GeofenceZoneRecord[]>("/telemetry/geofence-zones/")
-        .then(setGeofenceZones)
-        .catch(() => setGeofenceZones([])));
+        .then(applyResult(setGeofenceZones))
+        .catch(applyFailure(() => setGeofenceZones([]))));
       refreshes.push(apiFetch<MovementEventRecord[]>("/telemetry/movement-events/?limit=120")
-        .then(setMovementEvents)
-        .catch(() => setMovementEvents([])));
+        .then(applyResult(setMovementEvents))
+        .catch(applyFailure(() => setMovementEvents([]))));
       refreshes.push(apiFetch<LiveEtaProjectionRecord[]>("/telemetry/eta-projections/?limit=120")
-        .then(setEtaProjections)
-        .catch(() => setEtaProjections([])));
+        .then(applyResult(setEtaProjections))
+        .catch(applyFailure(() => setEtaProjections([]))));
       refreshes.push(apiFetch<TrackingAlertRecord[]>("/telemetry/alerts/?limit=120")
-        .then(setTrackingAlerts)
-        .catch(() => setTrackingAlerts([])));
+        .then(applyResult(setTrackingAlerts))
+        .catch(applyFailure(() => setTrackingAlerts([]))));
       refreshes.push(apiFetch<TelemetryReplayRunRecord[]>("/telemetry/replay-runs/")
-        .then(setTelemetryReplayRuns)
-        .catch(() => setTelemetryReplayRuns([])));
+        .then(applyResult(setTelemetryReplayRuns))
+        .catch(applyFailure(() => setTelemetryReplayRuns([]))));
       refreshes.push(apiFetch<TelemetryTrustAssessmentRecord[]>("/telemetry/trust-assessments/?limit=120")
-        .then(setTelemetryTrustAssessments)
-        .catch(() => setTelemetryTrustAssessments([])));
-    } else {
+        .then(applyResult(setTelemetryTrustAssessments))
+        .catch(applyFailure(() => setTelemetryTrustAssessments([]))));
+    } else if (refreshAll && !canViewTelemetry) {
       setLatestAssetStates([]);
       setGeofenceZones([]);
       setMovementEvents([]);
@@ -348,20 +455,20 @@ function App() {
       setTelemetryTrustAssessments([]);
     }
 
-    if (canViewOperations) {
+    if (canViewOperations && (refreshAll || OPERATIONS_OVERVIEW_ROUTES.has(targetRoute))) {
       refreshes.push(apiFetch<OperationsOverviewRecord>("/operations/overview/")
-        .then(setOperationsOverview)
-        .catch(() => setOperationsOverview(null)));
+        .then(applyResult(setOperationsOverview))
+        .catch(applyFailure(() => setOperationsOverview(null))));
       refreshes.push(apiFetch<OperationalEventCandidateRecord[]>("/operations/event-candidates/?limit=160")
-        .then(setOperationCandidates)
-        .catch(() => setOperationCandidates([])));
+        .then(applyResult(setOperationCandidates))
+        .catch(applyFailure(() => setOperationCandidates([]))));
       refreshes.push(apiFetch<ConfirmedOperationalEventRecord[]>("/operations/confirmed-events/?limit=160")
-        .then(setConfirmedOperationalEvents)
-        .catch(() => setConfirmedOperationalEvents([])));
+        .then(applyResult(setConfirmedOperationalEvents))
+        .catch(applyFailure(() => setConfirmedOperationalEvents([]))));
       refreshes.push(apiFetch<DeviceEndpointRecord[]>("/operations/devices/?limit=80")
-        .then(setOperationDevices)
-        .catch(() => setOperationDevices([])));
-    } else {
+        .then(applyResult(setOperationDevices))
+        .catch(applyFailure(() => setOperationDevices([]))));
+    } else if (refreshAll && !canViewOperations) {
       setOperationsOverview(null);
       setOperationCandidates([]);
       setConfirmedOperationalEvents([]);
@@ -381,34 +488,51 @@ function App() {
     currentUser,
   ]);
 
-  const requestWorkspaceRefresh = useCallback(async (options: { force?: boolean } = {}) => {
+  const requestWorkspaceRefresh = useCallback(async (options: WorkspaceRefreshOptions = {}) => {
     if (!currentUser) {
       return;
     }
 
+    const scope = options.scope ?? "all";
+    const targetRoute = options.targetRoute ?? routeRef.current;
+    const refreshKey = `${scope}:${targetRoute}`;
+    if (options.invalidate) {
+      workspaceDataRevisionRef.current += 1;
+      workspaceRefreshPromisesRef.current.clear();
+      workspaceLastRefreshAtRef.current = 0;
+    }
+    const revision = workspaceDataRevisionRef.current;
     const now = Date.now();
     if (
       !options.force
-      && !workspaceRefreshPromiseRef.current
+      && workspaceRefreshPromisesRef.current.size === 0
       && now - workspaceLastRefreshAtRef.current < INTERACTION_REFRESH_THROTTLE_MS
     ) {
       return;
     }
 
-    if (workspaceRefreshPromiseRef.current) {
-      await workspaceRefreshPromiseRef.current;
+    const existingRefresh = workspaceRefreshPromisesRef.current.get(refreshKey);
+    if (existingRefresh && !options.invalidate) {
+      await existingRefresh;
       return;
     }
 
-    const refreshPromise = refreshWorkspaceData()
+    const refreshPromise = refreshWorkspaceData(scope, targetRoute, revision)
       .then(() => {
         workspaceLastRefreshAtRef.current = Date.now();
-        refreshAssistantActions();
+        if (
+          revision === workspaceDataRevisionRef.current
+          && (scope === "all" || routeRef.current === targetRoute)
+        ) {
+          refreshAssistantActions();
+        }
       })
       .finally(() => {
-        workspaceRefreshPromiseRef.current = null;
+        if (workspaceRefreshPromisesRef.current.get(refreshKey) === refreshPromise) {
+          workspaceRefreshPromisesRef.current.delete(refreshKey);
+        }
       });
-    workspaceRefreshPromiseRef.current = refreshPromise;
+    workspaceRefreshPromisesRef.current.set(refreshKey, refreshPromise);
     await refreshPromise;
   }, [currentUser, refreshAssistantActions, refreshWorkspaceData]);
 
@@ -417,7 +541,7 @@ function App() {
       return;
     }
 
-    void requestWorkspaceRefresh({ force: true });
+    void requestWorkspaceRefresh({ force: true, scope: "route", targetRoute: route });
   }, [currentUser, requestWorkspaceRefresh, route]);
 
   useEffect(() => {
@@ -427,16 +551,14 @@ function App() {
 
     function refreshWhenVisible() {
       if (document.visibilityState !== "hidden") {
-        void requestWorkspaceRefresh();
+        void requestWorkspaceRefresh({ scope: "route", targetRoute: routeRef.current });
       }
     }
 
-    const intervalId = window.setInterval(refreshWhenVisible, LIVE_REFRESH_INTERVAL_MS);
     window.addEventListener("focus", refreshWhenVisible);
     window.addEventListener("online", refreshWhenVisible);
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
-      window.clearInterval(intervalId);
       window.removeEventListener("focus", refreshWhenVisible);
       window.removeEventListener("online", refreshWhenVisible);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
@@ -467,27 +589,6 @@ function App() {
     };
   }, [actionMessage, actionError]);
 
-  useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-
-    function refreshForOperatorInteraction(event: Event) {
-      const target = event.target;
-      if (!(target instanceof Element) || !target.closest(".operations-shell")) {
-        return;
-      }
-      void requestWorkspaceRefresh();
-    }
-
-    document.addEventListener("pointerdown", refreshForOperatorInteraction, true);
-    document.addEventListener("keydown", refreshForOperatorInteraction, true);
-    return () => {
-      document.removeEventListener("pointerdown", refreshForOperatorInteraction, true);
-      document.removeEventListener("keydown", refreshForOperatorInteraction, true);
-    };
-  }, [currentUser, requestWorkspaceRefresh]);
-
   function liveSchedulingOverview() {
     return schedulingOverviewRef.current ?? schedulingOverview;
   }
@@ -496,15 +597,81 @@ function App() {
     return masterDataOverviewRef.current ?? masterDataOverview;
   }
 
+  function updateSchedulingOverview(
+    updater: (overview: SchedulingOverview) => SchedulingOverview,
+  ) {
+    const current = liveSchedulingOverview();
+    if (!current) {
+      return;
+    }
+    const next = updater(current);
+    schedulingOverviewRef.current = next;
+    setSchedulingOverview(next);
+  }
+
+  function upsertApprovalRequest(approval: ApprovalRequestRecord) {
+    updateSchedulingOverview((current) => {
+      const existingIndex = current.approvalRequests.findIndex((item) => item.id === approval.id);
+      const approvalRequests = existingIndex >= 0
+        ? current.approvalRequests.map((item) => (item.id === approval.id ? approval : item))
+        : [approval, ...current.approvalRequests];
+      const activePlanVersion = current.activePlanVersion?.id === approval.plan_version
+        ? {
+          ...current.activePlanVersion,
+          status: approval.status === "approved" ? "approved" : current.activePlanVersion.status,
+        }
+        : current.activePlanVersion;
+      return {
+        ...current,
+        activePlanVersion,
+        approvalRequests,
+        validation: {
+          ...current.validation,
+          approvalPendingCount: approvalRequests.filter((item) => item.status === "pending").length,
+        },
+      };
+    });
+  }
+
+  function setLatestPublishabilityAssessment(assessment: PublishabilityAssessmentRecord) {
+    updateSchedulingOverview((current) => ({
+      ...current,
+      publishabilityAssessment: assessment,
+    }));
+  }
+
+  function addPublishedSnapshot(snapshot: PublishedPlanSnapshotRecord) {
+    updateSchedulingOverview((current) => ({
+      ...current,
+      activePlanVersion: current.activePlanVersion?.id === snapshot.plan_version
+        ? {
+          ...current.activePlanVersion,
+          status: "published",
+          published_at: snapshot.published_at,
+        }
+        : current.activePlanVersion,
+      publishedSnapshots: [
+        snapshot,
+        ...current.publishedSnapshots.filter((item) => item.id !== snapshot.id),
+      ],
+    }));
+  }
+
   async function runWorkspaceAction(label: string, action: () => Promise<string>) {
     setActionInFlight(label);
     setActionError(null);
     setActionMessage(null);
     try {
-      await requestWorkspaceRefresh({ force: true });
       const message = await action();
       setActionMessage(message);
-      await requestWorkspaceRefresh({ force: true });
+      void requestWorkspaceRefresh({
+        force: true,
+        invalidate: true,
+        scope: "route",
+        targetRoute: routeRef.current,
+      }).catch((error) => {
+        console.warn("Workspace refresh after action failed", error);
+      });
     } catch (error) {
       const detail = error instanceof Error ? error.message : "unknown error";
       setActionError(`${label} failed (${detail}). Check permissions, active plan state, and backend logs.`);
@@ -522,18 +689,6 @@ function App() {
     await recordFlowCtaEvidence(flow, actionId, route, metadata);
   }
 
-  function hasFlowRecommendationForAction(actionId: string) {
-    const actions = [
-      assistant.data?.globalNextAction,
-      ...(assistant.data?.pageActions ?? []),
-      ...(assistant.data?.rowActions ?? []),
-    ].filter(Boolean);
-    return actions.some((action) => (
-      action?.actionId === actionId
-      && action.source === "flow.current_step"
-    ));
-  }
-
   async function resolveActiveFlowForAction(actionId: string) {
     const currentFlow = assistant.data?.flow ?? assistantFlowRef.current;
     const currentFlowHasTrialMetadata = Boolean(
@@ -546,9 +701,6 @@ function App() {
     ) {
       assistantFlowRef.current = currentFlow;
       return currentFlow;
-    }
-    if (!currentFlow && !hasFlowRecommendationForAction(actionId)) {
-      return null;
     }
     const refreshedFlow = await fetchActiveFlowForAction(actionId);
     if (refreshedFlow) {
@@ -571,7 +723,8 @@ function App() {
     setSchedulingOverview(null);
     masterDataOverviewRef.current = null;
     schedulingOverviewRef.current = null;
-    workspaceRefreshPromiseRef.current = null;
+    workspaceRefreshPromisesRef.current.clear();
+    workspaceDataRevisionRef.current += 1;
     workspaceLastRefreshAtRef.current = 0;
     setLatestAssetStates([]);
     setGeofenceZones([]);
@@ -659,52 +812,24 @@ function App() {
     await runWorkspaceAction("Import demand", async () => {
       const csrfToken = await getCsrfToken();
       const activeFlow = await resolveActiveFlowForAction("IMPORT_OGV_DEMAND");
-      const usesHappyPathTrialPack = shouldUseHappyPathTrialImport(activeFlow);
-      const job = usesHappyPathTrialPack
-        ? await apiFetch<ImportJobRecord>("/planning/import-jobs/import-trial-demand/", {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
-          body: JSON.stringify({
-            pack: "operator_happy_path_v1",
-            filename: "operator_happy_path_ogv_demand.xlsx",
-            source: "operator-trial-flow-ui",
-          }),
-        })
-        : await importSingleUiDemand(csrfToken);
+      const trialPack = trialDemandPackForImport(activeFlow);
+      const job = await apiFetch<ImportJobRecord>("/planning/import-jobs/import-trial-demand/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          pack: trialPack,
+          filename: `${trialPack}_ogv_demand.xlsx`,
+          source: activeFlow ? "operator-trial-flow-ui" : "operator-trial-practice-ui",
+        }),
+      });
       await recordActiveFlowCta("IMPORT_OGV_DEMAND", "/schedule/ogv-demand", {
         importJobId: job.id,
         filename: job.filename,
+        trialPack,
       });
       return `Import committed: ${job.filename} (${job.valid_rows}/${job.total_rows} rows)`;
-    });
-  }
-
-  async function importSingleUiDemand(csrfToken: string) {
-    const stamp = Date.now();
-    const dates = operatorPlanningDates();
-    return apiFetch<ImportJobRecord>("/planning/import-jobs/validate-ogv-demand/", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({
-        commit: true,
-        filename: `operator-ui-demand-${stamp}.xlsx`,
-        source: "operator-ui-action",
-        rows: [
-          {
-            voyage_id: `VOY-UI-${String(stamp).slice(-6)}`,
-            vessel_name: "MV Operator UI Import",
-            customer_name: "Pilot Customer",
-            laycan_start: dates.laycanStart,
-            laycan_end: dates.laycanEnd,
-            eta: dates.eta,
-            required_mt: 64000,
-          },
-        ],
-      }),
     });
   }
 
@@ -1245,6 +1370,7 @@ function App() {
         requestId: approval.request_id,
         planVersionId: activeVersion.id,
       });
+      upsertApprovalRequest(approval);
       handleNavigate("/approvals/publishing");
       return `Approval submitted: ${approval.request_id}`;
     });
@@ -1283,7 +1409,7 @@ function App() {
         throw new Error("No remaining approval authority");
       }
       const csrfToken = await getCsrfToken();
-      await apiFetch(`/scheduling/approval-requests/${request.id}/decide/`, {
+      const approval = await apiFetch<ApprovalRequestRecord>(`/scheduling/approval-requests/${request.id}/decide/`, {
         method: "POST",
         headers: {
           "X-CSRFToken": csrfToken,
@@ -1294,6 +1420,7 @@ function App() {
           comments: `Approved from ${currentUser?.email ?? "operator"} via cockpit action.`,
         }),
       });
+      upsertApprovalRequest(approval);
       await recordActiveFlowCta("APPROVE_PLAN", "/approvals/publishing", {
         approvalRequestId: request.id,
         requestId: request.request_id,
@@ -1318,7 +1445,7 @@ function App() {
         throw new Error("No approval authority");
       }
       const csrfToken = await getCsrfToken();
-      await apiFetch(`/scheduling/approval-requests/${request.id}/decide/`, {
+      const approval = await apiFetch<ApprovalRequestRecord>(`/scheduling/approval-requests/${request.id}/decide/`, {
         method: "POST",
         headers: {
           "X-CSRFToken": csrfToken,
@@ -1329,6 +1456,7 @@ function App() {
           comments: `Rejected from ${currentUser?.email ?? "operator"} via cockpit action.`,
         }),
       });
+      upsertApprovalRequest(approval);
       return `Rejected ${request.request_id} as ${authorityRole.replaceAll("_", " ")}`;
     });
   }
@@ -1349,6 +1477,7 @@ function App() {
           },
         },
       );
+      setLatestPublishabilityAssessment(assessment);
       await recordActiveFlowCta("RUN_PUBLISHABILITY_CHECK", "/approvals/publishing", {
         planVersionId: activeVersion.id,
         assessmentId: assessment.id,
@@ -1374,6 +1503,7 @@ function App() {
           "X-CSRFToken": csrfToken,
         },
       });
+      addPublishedSnapshot(snapshot);
       await recordActiveFlowCta("PUBLISH_PLAN", "/approvals/publishing", {
         publishedSnapshotId: snapshot.id,
         publishedSnapshotRef: snapshot.snapshot_id,
@@ -1386,9 +1516,18 @@ function App() {
   }
 
   function handleNavigate(path: string) {
-    void requestWorkspaceRefresh({ force: true }).finally(() => {
+    if (!path) {
+      return;
+    }
+    const isCurrentPath = path === activePath;
+    routeRef.current = path;
+    if (!isCurrentPath) {
       window.location.hash = path;
       setActivePath(path);
+      return;
+    }
+    void requestWorkspaceRefresh({ force: true, scope: "route", targetRoute: path }).catch((error) => {
+      console.warn("Workspace refresh after navigation failed", error);
     });
   }
 
@@ -1681,7 +1820,11 @@ function App() {
             dashboard={dashboardReadModel}
             etaProjections={etaProjections}
             onNavigate={handleNavigate}
-            operationsHealth={schedulingOverview?.operationsHealthSummary ?? null}
+            operationsHealth={
+              operationsOverview?.health
+              ?? schedulingOverview?.operationsHealthSummary
+              ?? null
+            }
             replayRuns={telemetryReplayRuns}
             trackingAlerts={trackingAlerts}
           />

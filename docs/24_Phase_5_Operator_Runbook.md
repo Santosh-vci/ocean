@@ -40,9 +40,9 @@ Then run the operator flow in the UI:
 
 | Step | Screen | Operator action | Expected evidence |
 |---|---|---|---|
-| 1 | **Planning -> OGV Demand & Laycan** | Click **Import demand**. | The clean `operator_happy_path_v1` pack imports 2 OGV voyages with 6 cargo-layer movement intents and no sequence blockers. |
+| 1 | **Planning -> OGV Demand & Laycan** | Click **Import demand**. | The clean `operator_happy_path_v1` pack imports 5 OGV voyages, 8 cargo requirement rows, 6 cargo-layer movement intents, and no sequence blockers. |
 | 2 | **Planning -> Coal Grade Sequence** | Review the imported hatch/layer chain. | All 6 executable movements are readable before planning, and there is no blocking sequence conflict. |
-| 3 | **Constraints -> Tide & Bridge Window** | Click **Enter operating windows**. | Two tide windows, two bridge windows, asset availability, jetty availability, and exactly 6 movement-intent navigation checks are created. |
+| 3 | **Constraints -> Tide & Bridge Window** | Click **Enter operating windows**. | Two clean-flow tide windows, two clean-flow bridge windows, asset availability, jetty availability, and exactly 6 movement-intent navigation checks are created. The Phase 5 recovery practice pack still creates the three governed trial tide and bridge windows listed in Stage 3 below. |
 | 4 | **Operations -> Tug/Barge Assignment** | Click **Generate candidates**, then **Regenerate plan**. | The candidate run covers all 6 movement intents; the first `PLAN-UI-... V1` version is generated with 6 trips carrying movement-candidate provenance and no open blocking conflicts. |
 | 5 | **Schedule -> Published Plan & Schedule** | Click **Submit approval**. | One dual-authority approval request is created for the generated plan. |
 | 6 | **Recovery Loop -> Approvals & Publishing** | Click **Approve** for the first required authority. | First approval decision is recorded. |

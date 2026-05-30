@@ -4,7 +4,7 @@ import {
   fetchActiveFlowForAction,
   recordFlowCtaEvidence,
   shouldRecordFlowCta,
-  shouldUseHappyPathTrialImport,
+  trialDemandPackForImport,
 } from "./flowEvidence";
 import type { AssistantFlow } from "../types/assistant";
 
@@ -34,16 +34,17 @@ test("shouldRecordFlowCta only matches the active expected flow action", () => {
   expect(shouldRecordFlowCta(null, "IMPORT_OGV_DEMAND")).toBe(false);
 });
 
-test("shouldUseHappyPathTrialImport only selects the DB-truth happy-path pack", () => {
-  expect(shouldUseHappyPathTrialImport(flow)).toBe(true);
-  expect(shouldUseHappyPathTrialImport({
+test("trialDemandPackForImport selects flow pack or clean operator happy-path default", () => {
+  expect(trialDemandPackForImport(flow)).toBe("operator_happy_path_v1");
+  expect(trialDemandPackForImport({
     ...flow,
     trialPack: "operator_trial_phase5",
-  })).toBe(false);
-  expect(shouldUseHappyPathTrialImport({
+  })).toBe("operator_trial_phase5");
+  expect(trialDemandPackForImport({
     ...flow,
     expectedActionId: "ENTER_OPERATING_WINDOWS",
-  })).toBe(false);
+  })).toBe("operator_happy_path_v1");
+  expect(trialDemandPackForImport(null)).toBe("operator_happy_path_v1");
 });
 
 test("recordFlowCtaEvidence posts flow event after a matching CTA", async () => {

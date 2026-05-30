@@ -2683,13 +2683,14 @@ export function ApprovalsPublishingPage({
   const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
   const request = requests[0];
   const publishability = overview?.publishabilityAssessment ?? null;
+  const validation = overview?.validation;
   const publishabilityAllowsPublish = publishability
     ? ["publishable", "warning"].includes(publishability.status)
     : false;
   const published = request?.status === "published" || overview?.activePlanVersion?.status === "published";
   const readyToPublish =
     request?.status === "approved"
-    && (overview?.validation.blockingConflictCount ?? 0) === 0
+    && (validation?.blockingConflictCount ?? 0) === 0
     && publishabilityAllowsPublish;
   const publishabilityFallback = publishability
     ? "Resolve publishability blockers before manual publish."
@@ -2750,9 +2751,9 @@ export function ApprovalsPublishingPage({
 
       <div className="metric-strip seven-up recovery-kpis">
         <div><span>Pending approvals</span><strong>{requests.filter((item) => item.status === "pending").length}</strong></div>
-        <div><span>Critical</span><strong className="critical-text">{overview?.validation.criticalConflictCount ?? 0}</strong></div>
+        <div><span>Critical</span><strong className="critical-text">{validation?.criticalConflictCount ?? 0}</strong></div>
         <div><span>Publishability</span><strong className={statusTone(publishability?.status ?? "blocked")}>{short(publishability?.status ?? "not checked")}</strong></div>
-        <div><span>Simulation promos</span><strong>{overview?.validation.scenarioCount ?? 0}</strong></div>
+        <div><span>Simulation promos</span><strong>{validation?.scenarioCount ?? 0}</strong></div>
         <div>
           <span>{published ? "Published" : "Ready to publish"}</span>
           <strong className={readyToPublish || published ? "success-text" : "critical-text"}>
@@ -2787,7 +2788,7 @@ export function ApprovalsPublishingPage({
                       <td>{item.request_id}</td>
                       <td>{item.scenario_lineage?.scenarioId ?? item.plan_version_ref}</td>
                       <td>{item.reason}</td>
-                      <td>{overview?.validation.blockingConflictCount ? "Blocking conflicts remain" : "Validation clear"}</td>
+                      <td>{validation?.blockingConflictCount ? "Blocking conflicts remain" : "Validation clear"}</td>
                       <td>{itemCoverage.approved}/{itemCoverage.required}</td>
                     </tr>
                   );
@@ -2848,7 +2849,7 @@ export function ApprovalsPublishingPage({
                 <ul className="validation-list">
                   <li>{conflicts.some((conflict) => conflict.code.includes("TIDE")) ? "!" : "✓"} Tide window compatibility</li>
                   <li>{conflicts.some((conflict) => conflict.code.includes("BRIDGE")) ? "!" : "✓"} Bridge clearance slot</li>
-                  <li>{overview?.validation.blockingConflictCount ? "!" : "✓"} No blocking conflicts</li>
+                  <li>{validation?.blockingConflictCount ? "!" : "✓"} No blocking conflicts</li>
                 </ul>
               </section>
               <section className="approval-chain">

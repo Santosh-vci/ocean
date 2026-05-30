@@ -90,7 +90,9 @@ from .serializers import (
     GlobalOptimizationRunGenerateSerializer,
     GlobalOptimizationRunSerializer,
     MovementAssignmentCandidateRunGenerateSerializer,
+    MovementAssignmentCandidateRunOverviewSerializer,
     MovementAssignmentCandidateRunSerializer,
+    MovementAssignmentCandidateOverviewSerializer,
     MovementAssignmentCandidateSerializer,
     OptimizerRunGenerateSerializer,
     OptimizerRunSerializer,
@@ -1332,6 +1334,38 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):
+        overview_scope = request.query_params.get("scope", "full")
+        operations_scope = overview_scope == "operations"
+        planning_scope = overview_scope == "planning"
+        approvals_scope = overview_scope == "approvals"
+        published_scope = overview_scope == "published"
+        recovery_scope = overview_scope == "recovery"
+        optimization_scope = overview_scope == "optimization"
+        commercial_scope = overview_scope == "commercial"
+        full_scope = overview_scope == "full"
+        schedule_graph_scope = (
+            full_scope
+            or operations_scope
+            or planning_scope
+            or published_scope
+            or recovery_scope
+        )
+        conflict_scope = (
+            schedule_graph_scope
+            or approvals_scope
+        )
+        approval_scope = full_scope or approvals_scope or published_scope or recovery_scope
+        publishability_scope = (
+            full_scope
+            or approvals_scope
+            or published_scope
+            or recovery_scope
+        )
+        recovery_data_scope = full_scope or recovery_scope
+        tracking_scope = full_scope or planning_scope or recovery_scope
+        movement_candidate_scope = full_scope or operations_scope
+        global_optimizer_scope = full_scope or optimization_scope
+        commercial_projection_scope = full_scope or commercial_scope
         active_version = _active_schedule_version()
         trips = Trip.objects.none()
         assignments = Assignment.objects.none()
@@ -1352,184 +1386,209 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         global_optimization_candidates = GlobalOptimizationCandidate.objects.none()
         commercial_projection_run = None
         commercial_projections = CustomerSafeCommercialProjection.objects.none()
-        telemetry_trust_summary = latest_trust_assessment_summary(None)
+        telemetry_trust_summary = None
 
         if active_version:
-            trips = (
-                Trip.objects.filter(plan_version=active_version)
-                .select_related(
-                    "plan_version",
-                    "plan_version__plan",
-                    "voyage",
-                    "voyage__organization",
-                    "voyage__anchorage_location",
-                    "cargo_requirement",
-                    "cargo_requirement__coal_grade",
-                    "cargo_requirement__source_location",
-                    "cargo_requirement__preferred_jetty",
-                    "cargo_layer_step",
-                    "cargo_layer_step__coal_grade",
-                    "cargo_layer_step__planned_barge",
-                    "cargo_layer_step__planned_jetty",
-                    "cargo_layer_step__planned_cts",
-                    "origin_jetty",
-                    "destination_location",
+            if schedule_graph_scope:
+                trips = (
+                    Trip.objects.filter(plan_version=active_version)
+                    .select_related(
+                        "plan_version",
+                        "plan_version__plan",
+                        "voyage",
+                        "voyage__organization",
+                        "voyage__anchorage_location",
+                        "cargo_requirement",
+                        "cargo_requirement__coal_grade",
+                        "cargo_requirement__source_location",
+                        "cargo_requirement__preferred_jetty",
+                        "cargo_layer_step",
+                        "cargo_layer_step__coal_grade",
+                        "cargo_layer_step__planned_barge",
+                        "cargo_layer_step__planned_jetty",
+                        "cargo_layer_step__planned_cts",
+                        "origin_jetty",
+                        "destination_location",
+                    )
+                    .prefetch_related("events")
                 )
-                .prefetch_related("events")
-            )
-            assignments = Assignment.objects.filter(
-                trip__plan_version=active_version
-            ).select_related(
-                "trip",
-                "trip__voyage",
-                "tug",
-                "barge",
-                "jetty",
-                "cts",
-                "route_segment",
-                "owner_organization",
-            )
-            events = ScheduleEvent.objects.filter(
-                trip__plan_version=active_version
-            ).select_related("trip")
-            conflicts = Conflict.objects.filter(plan_version=active_version).select_related(
-                "plan_version",
-                "plan_version__plan",
-                "trip",
-                "trip__voyage",
-            )
-            override_requests = OverrideRequest.objects.filter(
-                plan_version=active_version
-            ).select_related(
-                "plan_version",
-                "trip",
-                "trip__voyage",
-                "assignment",
-                "requested_by",
-                "applied_by",
-                "impact_assessment",
-            )
-            approval_requests = (
-                ApprovalRequest.objects.filter(plan_version=active_version)
-                .select_related("plan_version", "requested_by")
-                .prefetch_related("decisions")
-            )
-            scenario_baselines = [active_version.id]
-            if active_version.source_version_id:
-                scenario_baselines.append(active_version.source_version_id)
-            scenarios = SimulationScenario.objects.filter(
-                Q(baseline_version_id__in=scenario_baselines)
-                | Q(scenario_version=active_version)
-            ).select_related(
-                "baseline_version",
-                "scenario_version",
-                "source_conflict",
-                "source_conflict__trip",
-                "source_conflict__trip__voyage",
-                "source_override",
-                "source_override__trip",
-                "source_override__trip__voyage",
-                "created_by",
-            ).prefetch_related(
-                "assumptions",
-                "runs__trip_projections__trip",
-                "runs__constraint_evaluations__trip",
-                "runs__ogv_projections__voyage",
-                "runs__resource_utilizations",
-            )
-            recovery_plan_versions = [active_version.id]
-            if active_version.source_version_id:
-                recovery_plan_versions.append(active_version.source_version_id)
-            recovery_input_snapshots = RecoveryInputSnapshot.objects.filter(
-                plan_version_id__in=recovery_plan_versions
-            ).select_related(
-                "plan_version",
-                "plan_version__plan",
-                "source_conflict",
-                "source_override",
-                "source_tracking_alert",
-                "source_operational_event",
-                "source_scenario",
-                "captured_by",
-            )
-            optimizer_runs = OptimizerRun.objects.filter(
-                plan_version_id__in=recovery_plan_versions
-            ).select_related(
-                "input_snapshot",
-                "plan_version",
-                "plan_version__plan",
-                "started_by",
-            ).prefetch_related(
-                "recommendations",
-                "recommendations__actions",
-                "recommendations__evaluation",
-            )
-            recovery_recommendations = RecoveryRecommendation.objects.filter(
-                optimizer_run__plan_version_id__in=recovery_plan_versions
-            ).select_related(
-                "optimizer_run",
-                "optimizer_run__input_snapshot",
-                "optimizer_run__plan_version",
-                "scenario",
-            ).prefetch_related("actions", "evaluation")
-            eta_projections = LiveEtaProjection.objects.filter(
-                trip__plan_version=active_version
-            ).select_related(
-                "source",
-                "asset_identity",
-                "trip",
-                "trip__voyage",
-                "schedule_event",
-                "source_ping",
-                "current_geofence",
-            )
-            tracking_alerts = TrackingAlert.objects.filter(
-                trip__plan_version=active_version
-            ).select_related(
-                "source",
-                "asset_identity",
-                "source_ping",
-                "trip",
-                "trip__voyage",
-                "schedule_event",
-                "eta_projection",
-                "created_scenario",
-            )
-            publishability_assessment = latest_publishability_assessment(active_version)
-            movement_assignment_candidate_run = latest_candidate_run(active_version)
-            if movement_assignment_candidate_run:
-                movement_assignment_candidates = movement_assignment_candidate_run.candidates.select_related(
-                    "run",
-                    "cargo_layer_step",
-                    "cargo_layer_step__voyage",
-                    "cargo_layer_step__coal_grade",
+                assignments = Assignment.objects.filter(
+                    trip__plan_version=active_version
+                ).select_related(
+                    "trip",
+                    "trip__voyage",
                     "tug",
                     "barge",
                     "jetty",
                     "cts",
+                    "route_segment",
+                    "owner_organization",
                 )
-            global_run_plan_versions = [active_version.id]
-            if active_version.source_version_id:
-                global_run_plan_versions.append(active_version.source_version_id)
-            global_optimization_runs = GlobalOptimizationRun.objects.filter(
-                plan_version_id__in=global_run_plan_versions,
-            ).select_related(
-                "plan_version",
-                "plan_version__plan",
-                "objective_profile",
-                "started_by",
-            ).prefetch_related("candidates")
-            latest_global_run = latest_global_optimization_run(active_version)
-            if latest_global_run:
-                global_optimization_candidates = latest_global_run.candidates.all()
-            commercial_projection_run = latest_commercial_projection_run(active_version)
-            if commercial_projection_run:
-                commercial_projections = commercial_projection_run.projections.select_related(
-                    "run",
-                    "voyage",
+                events = ScheduleEvent.objects.filter(
+                    trip__plan_version=active_version
+                ).select_related("trip")
+            if conflict_scope:
+                conflicts = Conflict.objects.filter(plan_version=active_version).select_related(
+                    "plan_version",
+                    "plan_version__plan",
                     "trip",
+                    "trip__voyage",
                 )
-            telemetry_trust_summary = latest_trust_assessment_summary(active_version)
+            if approval_scope:
+                approval_requests = (
+                    ApprovalRequest.objects.filter(plan_version=active_version)
+                    .select_related("plan_version", "requested_by")
+                    .prefetch_related("decisions")
+                )
+            if recovery_data_scope:
+                override_requests = OverrideRequest.objects.filter(
+                    plan_version=active_version
+                ).select_related(
+                    "plan_version",
+                    "trip",
+                    "trip__voyage",
+                    "assignment",
+                    "requested_by",
+                    "applied_by",
+                    "impact_assessment",
+                )
+                scenario_baselines = [active_version.id]
+                if active_version.source_version_id:
+                    scenario_baselines.append(active_version.source_version_id)
+                scenarios = SimulationScenario.objects.filter(
+                    Q(baseline_version_id__in=scenario_baselines)
+                    | Q(scenario_version=active_version)
+                ).select_related(
+                    "baseline_version",
+                    "scenario_version",
+                    "source_conflict",
+                    "source_conflict__trip",
+                    "source_conflict__trip__voyage",
+                    "source_override",
+                    "source_override__trip",
+                    "source_override__trip__voyage",
+                    "created_by",
+                ).prefetch_related(
+                    "assumptions",
+                    "runs__trip_projections__trip",
+                    "runs__constraint_evaluations__trip",
+                    "runs__ogv_projections__voyage",
+                    "runs__resource_utilizations",
+                )
+                recovery_plan_versions = [active_version.id]
+                if active_version.source_version_id:
+                    recovery_plan_versions.append(active_version.source_version_id)
+                recovery_input_snapshots = RecoveryInputSnapshot.objects.filter(
+                    plan_version_id__in=recovery_plan_versions
+                ).select_related(
+                    "plan_version",
+                    "plan_version__plan",
+                    "source_conflict",
+                    "source_override",
+                    "source_tracking_alert",
+                    "source_operational_event",
+                    "source_scenario",
+                    "captured_by",
+                )
+                optimizer_runs = OptimizerRun.objects.filter(
+                    plan_version_id__in=recovery_plan_versions
+                ).select_related(
+                    "input_snapshot",
+                    "plan_version",
+                    "plan_version__plan",
+                    "started_by",
+                ).prefetch_related(
+                    "recommendations",
+                    "recommendations__actions",
+                    "recommendations__evaluation",
+                )
+                recovery_recommendations = RecoveryRecommendation.objects.filter(
+                    optimizer_run__plan_version_id__in=recovery_plan_versions
+                ).select_related(
+                    "optimizer_run",
+                    "optimizer_run__input_snapshot",
+                    "optimizer_run__plan_version",
+                    "scenario",
+                ).prefetch_related("actions", "evaluation")
+            if tracking_scope:
+                eta_projections = LiveEtaProjection.objects.filter(
+                    trip__plan_version=active_version
+                ).select_related(
+                    "source",
+                    "asset_identity",
+                    "trip",
+                    "trip__voyage",
+                    "schedule_event",
+                    "source_ping",
+                    "current_geofence",
+                )
+                tracking_alerts = TrackingAlert.objects.filter(
+                    trip__plan_version=active_version
+                ).select_related(
+                    "source",
+                    "asset_identity",
+                    "source_ping",
+                    "trip",
+                    "trip__voyage",
+                    "schedule_event",
+                    "eta_projection",
+                    "created_scenario",
+                )
+            if publishability_scope:
+                publishability_assessment = latest_publishability_assessment(active_version)
+            if movement_candidate_scope:
+                movement_assignment_candidate_run = latest_candidate_run(active_version)
+                if movement_assignment_candidate_run:
+                    movement_assignment_candidates = movement_assignment_candidate_run.candidates
+                    if operations_scope:
+                        movement_assignment_candidates = movement_assignment_candidates.filter(
+                            Q(is_selected=True) | Q(rank=1)
+                        )
+                    movement_assignment_candidates = movement_assignment_candidates.select_related(
+                        "run",
+                        "cargo_layer_step",
+                        "cargo_layer_step__voyage",
+                        "cargo_layer_step__coal_grade",
+                        "tug",
+                        "barge",
+                        "jetty",
+                        "cts",
+                    )
+            if global_optimizer_scope:
+                global_run_plan_versions = [active_version.id]
+                if active_version.source_version_id:
+                    global_run_plan_versions.append(active_version.source_version_id)
+                global_optimization_runs = GlobalOptimizationRun.objects.filter(
+                    plan_version_id__in=global_run_plan_versions,
+                ).select_related(
+                    "plan_version",
+                    "plan_version__plan",
+                    "objective_profile",
+                    "started_by",
+                ).prefetch_related("candidates")
+                latest_global_run = latest_global_optimization_run(active_version)
+                if latest_global_run:
+                    global_optimization_candidates = latest_global_run.candidates.all()
+            if commercial_projection_scope:
+                commercial_projection_run = latest_commercial_projection_run(active_version)
+                if commercial_projection_run:
+                    commercial_projections = commercial_projection_run.projections.select_related(
+                        "run",
+                        "voyage",
+                        "trip",
+                    )
+                telemetry_trust_summary = latest_trust_assessment_summary(active_version)
+
+        published_snapshots = PublishedPlanSnapshot.objects.none()
+        if approval_scope:
+            published_snapshots = PublishedPlanSnapshot.objects.select_related(
+                "plan",
+                "plan_version",
+                "approval_request",
+                "published_by",
+            )
+            if not full_scope and active_version:
+                published_snapshots = published_snapshots.filter(plan_version=active_version)
 
         trip_totals = trips.aggregate(
             required=Sum("planned_quantity_mt"),
@@ -1547,11 +1606,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "plans": PlanSerializer(
                     Plan.objects.select_related("organization"),
                     many=True,
-                ).data,
+                ).data if full_scope else [],
                 "planVersions": PlanVersionSerializer(
                     PlanVersion.objects.select_related("plan", "created_by", "source_version"),
                     many=True,
-                ).data,
+                ).data if full_scope else [],
                 "activePlanVersion": (
                     PlanVersionSerializer(active_version).data if active_version else None
                 ),
@@ -1568,12 +1627,7 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     many=True,
                 ).data,
                 "publishedSnapshots": PublishedPlanSnapshotSerializer(
-                    PublishedPlanSnapshot.objects.select_related(
-                        "plan",
-                        "plan_version",
-                        "approval_request",
-                        "published_by",
-                    ),
+                    published_snapshots,
                     many=True,
                 ).data,
                 "simulationScenarios": SimulationScenarioSerializer(
@@ -1606,13 +1660,21 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     else None
                 ),
                 "movementAssignmentCandidateRun": (
-                    MovementAssignmentCandidateRunSerializer(
+                    (
+                        MovementAssignmentCandidateRunOverviewSerializer
+                        if operations_scope or planning_scope
+                        else MovementAssignmentCandidateRunSerializer
+                    )(
                         movement_assignment_candidate_run,
                     ).data
                     if movement_assignment_candidate_run
                     else None
                 ),
-                "movementAssignmentCandidates": MovementAssignmentCandidateSerializer(
+                "movementAssignmentCandidates": (
+                    MovementAssignmentCandidateOverviewSerializer
+                    if operations_scope or planning_scope
+                    else MovementAssignmentCandidateSerializer
+                )(
                     movement_assignment_candidates,
                     many=True,
                 ).data,
@@ -1636,23 +1698,27 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "commercialProjectionSummary": commercial_projection_summary_payload(
                     commercial_projection_run,
                 ),
-                "telemetryTrustSummary": {
-                    "profileKey": telemetry_trust_summary.profile_key,
-                    "latestAssessmentCount": telemetry_trust_summary.latest_assessment_count,
-                    "trustedCount": telemetry_trust_summary.trusted_count,
-                    "degradedCount": telemetry_trust_summary.degraded_count,
-                    "blockingCount": telemetry_trust_summary.blocking_count,
-                    "unknownCount": telemetry_trust_summary.unknown_count,
-                    "latestAssessedAt": (
-                        telemetry_trust_summary.latest_assessed_at.isoformat()
-                        if telemetry_trust_summary.latest_assessed_at
-                        else None
-                    ),
-                    "latestAssessments": TelemetryTrustAssessmentSerializer(
-                        telemetry_trust_summary.latest_assessments,
-                        many=True,
-                    ).data,
-                },
+                "telemetryTrustSummary": (
+                    {
+                        "profileKey": telemetry_trust_summary.profile_key,
+                        "latestAssessmentCount": telemetry_trust_summary.latest_assessment_count,
+                        "trustedCount": telemetry_trust_summary.trusted_count,
+                        "degradedCount": telemetry_trust_summary.degraded_count,
+                        "blockingCount": telemetry_trust_summary.blocking_count,
+                        "unknownCount": telemetry_trust_summary.unknown_count,
+                        "latestAssessedAt": (
+                            telemetry_trust_summary.latest_assessed_at.isoformat()
+                            if telemetry_trust_summary.latest_assessed_at
+                            else None
+                        ),
+                        "latestAssessments": TelemetryTrustAssessmentSerializer(
+                            telemetry_trust_summary.latest_assessments,
+                            many=True,
+                        ).data,
+                    }
+                    if telemetry_trust_summary
+                    else None
+                ),
                 "trackingSummary": {
                     "projectionCount": eta_projections.count(),
                     "openAlertCount": tracking_alerts.filter(
@@ -1676,7 +1742,11 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     )
                     or 0,
                 },
-                "operationsHealthSummary": operations_health_summary(),
+                "operationsHealthSummary": (
+                    operations_health_summary()
+                    if full_scope or recovery_scope
+                    else {}
+                ),
                 "validation": {
                     "tripCount": trips.count(),
                     "assignmentCount": assignments.count(),

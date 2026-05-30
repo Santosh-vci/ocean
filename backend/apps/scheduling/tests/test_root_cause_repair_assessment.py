@@ -22,6 +22,7 @@ from apps.scheduling.models import (
     RecoveryAction,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    RecommendationEvaluation,
     RootCauseRepairAssessment,
     Trip,
 )
@@ -100,6 +101,64 @@ def test_unknown_source_returns_non_error_unknown_assessment():
 
     assert assessment.status == RootCauseRepairAssessment.Status.UNKNOWN
     assert assessment.required_resolution["family"] == "unsupported"
+
+
+@pytest.mark.django_db
+def test_movement_assignment_blocked_addresses_when_candidate_evaluation_clears_hard_constraints():
+    recommendation = make_recommendation("MOVEMENT_ASSIGNMENT_BLOCKED")
+    assignment = recommendation.optimizer_run.input_snapshot.source_conflict.trip.assignment
+    RecoveryAction.objects.create(
+        recommendation=recommendation,
+        sequence=1,
+        action_type=RecoveryAction.ActionType.REASSIGN_CTS,
+        target_trip=assignment.trip,
+        target_assignment=assignment,
+        before_state={"cts": assignment.cts.code},
+        after_state={"cts": "CTS-ALT"},
+        constraints_checked=["cts_available", "cts_queue_overlap_review"],
+    )
+    RecommendationEvaluation.objects.create(
+        recommendation=recommendation,
+        missed_windows=0,
+        resource_conflicts=0,
+        hard_constraints_passed=True,
+        confidence_score=Decimal("86.00"),
+    )
+
+    assessment = assess_recommendation_root_cause(recommendation=recommendation)
+
+    assert assessment.status == RootCauseRepairAssessment.Status.ADDRESSES_CAUSE
+    assert assessment.source_cause_type == "MOVEMENT_ASSIGNMENT_BLOCKED"
+    assert assessment.required_resolution["family"] == "movement_assignment_candidate"
+    assert assessment.residual_risk["level"] == "low"
+
+
+@pytest.mark.django_db
+def test_movement_assignment_blocked_warns_when_candidate_evaluation_has_residual_risk():
+    recommendation = make_recommendation("MOVEMENT_ASSIGNMENT_BLOCKED")
+    assignment = recommendation.optimizer_run.input_snapshot.source_conflict.trip.assignment
+    RecoveryAction.objects.create(
+        recommendation=recommendation,
+        sequence=1,
+        action_type=RecoveryAction.ActionType.RESEQUENCE_TRIP,
+        target_trip=assignment.trip,
+        target_assignment=assignment,
+        before_state={"tripId": assignment.trip.trip_id},
+        after_state={"tripId": assignment.trip.trip_id},
+        constraints_checked=["tide_window_evaluated"],
+    )
+    RecommendationEvaluation.objects.create(
+        recommendation=recommendation,
+        missed_windows=1,
+        resource_conflicts=0,
+        hard_constraints_passed=False,
+        confidence_score=Decimal("60.00"),
+    )
+
+    assessment = assess_recommendation_root_cause(recommendation=recommendation)
+
+    assert assessment.status == RootCauseRepairAssessment.Status.MITIGATES_CAUSE
+    assert assessment.residual_risk["level"] == "medium"
 
 
 @pytest.mark.django_db

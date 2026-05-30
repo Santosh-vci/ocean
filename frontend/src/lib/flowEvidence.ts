@@ -32,11 +32,17 @@ export function shouldRecordFlowCta(
   );
 }
 
-export function shouldUseHappyPathTrialImport(flow: AssistantFlow | null | undefined) {
-  return (
+export function trialDemandPackForImport(flow: AssistantFlow | null | undefined) {
+  if (
     flow?.expectedActionId === "IMPORT_OGV_DEMAND"
-    && flow.trialPack === "operator_happy_path_v1"
-  );
+    && (
+      flow.trialPack === "operator_happy_path_v1"
+      || flow.trialPack === "operator_trial_phase5"
+    )
+  ) {
+    return flow.trialPack;
+  }
+  return "operator_happy_path_v1";
 }
 
 export async function fetchActiveFlowForAction(actionId: string) {

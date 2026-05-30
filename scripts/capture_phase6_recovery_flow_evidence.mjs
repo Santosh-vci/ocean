@@ -139,7 +139,7 @@ async function main() {
       route: await evalAsync(cdp, "location.hash"),
       clickedAt: new Date().toISOString(),
     });
-    await delay(800);
+    await waitForText(cdp, "Root-cause validation", 25_000);
 
     clicked = await clickButton(cdp, "Validate root cause", {
       purpose: "Visible page CTA records root-cause repair assessment",
@@ -1007,7 +1007,7 @@ async function waitForFlowState(cdp, { currentStep, status }, timeoutMs = 20_000
     if (lastFlow?.status === status && lastFlow.current_step_key === currentStep) {
       return lastFlow;
     }
-    await delay(500);
+    await delay(150);
   }
   throw new Error(
     `Timed out waiting for flow state ${status}/${currentStep}. Last flow: ${JSON.stringify(lastFlow)}`,
@@ -1022,7 +1022,7 @@ async function waitForAssistantNext(cdp, expectedActionId, route, timeoutMs = 20
     if (lastAssistant?.global_next_action?.action_id === expectedActionId) {
       return lastAssistant;
     }
-    await delay(500);
+    await delay(150);
   }
   throw new Error(
     `Timed out waiting for assistant action ${expectedActionId}. Last assistant: ${JSON.stringify(lastAssistant)}`,
@@ -1077,7 +1077,7 @@ async function clickButton(cdp, text, options = {}) {
   }
   if (match.rect.y < 0 || match.rect.y + match.rect.height > 1000) {
     await scrollButtonIntoView(cdp, match.index);
-    await delay(500);
+    await delay(150);
     match = await findButton(cdp, text, options);
     if (!match) throw new Error(`Button not found after scroll: ${text}`);
   }
@@ -1114,7 +1114,9 @@ async function clickButton(cdp, text, options = {}) {
     clickedAt: new Date().toISOString(),
   };
   evidence.clicks.push(click);
-  await delay(options.afterMs ?? 1800);
+  if (options.afterMs) {
+    await delay(options.afterMs);
+  }
   return click;
 }
 
@@ -1165,7 +1167,9 @@ async function clickApprovalActionButton(cdp, text, options = {}) {
     clickedAt: new Date().toISOString(),
   };
   evidence.clicks.push(click);
-  await delay(options.afterMs ?? 1800);
+  if (options.afterMs) {
+    await delay(options.afterMs);
+  }
   return click;
 }
 
@@ -1258,7 +1262,7 @@ async function waitForText(cdp, text, timeoutMs = 10_000) {
     const body = await bodyText(cdp).catch(() => "");
     lastBody = body;
     if (body.toLowerCase().includes(text.toLowerCase())) return;
-    await delay(500);
+    await delay(150);
   }
   throw new Error(`Timed out waiting for text: ${text}. Body sample: ${lastBody.slice(0, 700)}`);
 }
@@ -1268,7 +1272,7 @@ async function waitForHash(cdp, hashPath, timeoutMs = 10_000) {
   while (Date.now() - start < timeoutMs) {
     const url = await evalAsync(cdp, "location.href").catch(() => "");
     if (url.includes(`#${hashPath}`)) return;
-    await delay(400);
+    await delay(100);
   }
   throw new Error(`Timed out waiting for route: ${hashPath}`);
 }
@@ -1279,7 +1283,6 @@ async function waitForApp(cdp) {
     "document.readyState === 'complete' || document.readyState === 'interactive'",
     15_000,
   );
-  await delay(500);
 }
 
 async function waitForExpression(cdp, expression, timeoutMs = 10_000) {
@@ -1287,7 +1290,7 @@ async function waitForExpression(cdp, expression, timeoutMs = 10_000) {
   while (Date.now() - start < timeoutMs) {
     const value = await evalValue(cdp, expression).catch(() => false);
     if (value) return;
-    await delay(250);
+    await delay(100);
   }
   throw new Error(`Timed out waiting for expression: ${expression}`);
 }
@@ -1328,7 +1331,7 @@ async function waitForHttpOk(url, timeoutMs = 45_000) {
     } catch (error) {
       lastError = error;
     }
-    await delay(500);
+    await delay(150);
   }
   throw lastError ?? new Error(`Timed out waiting for ${url}`);
 }
@@ -1347,7 +1350,7 @@ async function waitForDebuggerUrl(port) {
     } catch {
       // Browser debugger is still starting.
     }
-    await delay(250);
+    await delay(100);
   }
   throw new Error("Chrome debugger did not start.");
 }

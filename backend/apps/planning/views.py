@@ -588,6 +588,19 @@ def _mark_editable_plan_versions_stale(*, reason: str) -> int:
     return stale_count
 
 
+def _latest_plan_version_has_recovery_origin() -> bool:
+    latest_plan_version = PlanVersion.objects.order_by("-created_at").first()
+    return bool(
+        latest_plan_version
+        and isinstance(latest_plan_version.summary, dict)
+        and latest_plan_version.summary.get("recoveryOrigin")
+    )
+
+
+def _restore_recovery_practice_assets() -> None:
+    Barge.objects.filter(code="BRG-KAL-22").update(status=Barge.Status.AVAILABLE)
+
+
 class PlanningOverviewViewSet(PlanningViewSet):
     queryset = OGVVoyage.objects.none()
     serializer_class = OGVVoyageSerializer
@@ -753,12 +766,17 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             bridge_windows.append(bridge_window)
 
-        NavigationConstraintCheck.objects.filter(
-            recovery_hint__in=[
-                "Open operator-entered tide window.",
-                "Open operator-entered bridge window.",
-            ],
-        ).delete()
+        is_recovery_window_repair = _latest_plan_version_has_recovery_origin()
+        if is_recovery_window_repair:
+            _restore_recovery_practice_assets()
+            NavigationConstraintCheck.objects.filter(voyage__in=target_voyages).delete()
+        else:
+            NavigationConstraintCheck.objects.filter(
+                recovery_hint__in=[
+                    "Open operator-entered tide window.",
+                    "Open operator-entered bridge window.",
+                ],
+            ).delete()
 
         checks_created = 0
         movement_index = 0
@@ -990,6 +1008,10 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             bridge_windows.append(bridge_window)
 
+        is_recovery_window_repair = _latest_plan_version_has_recovery_origin()
+        if is_recovery_window_repair:
+            _restore_recovery_practice_assets()
+
         checks_created = 0
         movement_checks = [
             ("VOY-PACIFIC-PRIDE", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(0, 8, 30), trial_dt(0, 7), trial_dt(0, 12), "4.10", 90, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 01 EBONY can cross Rantau Delta on the current tide slot."),
@@ -1003,6 +1025,11 @@ class PlanningOverviewViewSet(PlanningViewSet):
             voyage = voyages_by_id.get(voyage_id)
             if not voyage:
                 continue
+            if is_recovery_window_repair:
+                check_status = NavigationConstraintCheck.Status.CAN_CROSS
+                margin = max(abs(margin), 60)
+                eta = window_start + ((window_end - window_start) / 2)
+                hint = f"{hint} Cleared by operator-entered recovery window repair."
             NavigationConstraintCheck.objects.create(
                 voyage=voyage,
                 asset_code=asset,
