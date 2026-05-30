@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 6 / Phase 5+ is closed with browser-visible UI CTA evidence for the clean operator happy path, browser-visible UI CTA evidence for the Phase 5+ recovery path, and review-surface evidence for the read-only Phase 6 additions.
+Phase 6 / Phase 5+ is closed with browser-visible UI CTA evidence for the clean operator happy path, browser-visible UI CTA evidence for the Phase 5+ recovery path, negative publishability-gate evidence for failed root-cause repair, and review-surface evidence for the read-only Phase 6 additions.
 
 This closure does not add automatic publishing. It proves that implemented flow runtime, Next Action guidance, root-cause validation, publishability gate, global optimizer review, telemetry trust, and commercial projection surfaces are visible and governed.
 
@@ -23,7 +23,7 @@ node scripts/capture_phase6_review_surface_evidence.mjs
 | Evidence | Result | Artifact |
 |---|---:|---|
 | Clean operator happy path | Passed, 16 browser steps | `docs/evidence/operator_trial_flow/operator_trial_flow_capture.json` |
-| Phase 5+ recovery path | Passed, 17 browser steps | `docs/evidence/phase6_recovery_flow/phase6_recovery_flow_capture.json` |
+| Phase 5+ recovery path | Passed, 17 browser steps plus negative gate evidence | `docs/evidence/phase6_recovery_flow/phase6_recovery_flow_capture.json` |
 | Phase 6 review surfaces | Passed, 3 review surfaces | `docs/evidence/phase6_review_surfaces/phase6_review_surface_capture.json` |
 
 ### Clean Operator Happy Path
@@ -66,15 +66,22 @@ The recovery run starts from deterministic DB truth with disrupted demand and a 
 10. run publishability check;
 11. manually publish.
 
-Final assertions recorded in the JSON evidence:
+Positive publish assertions recorded in the JSON evidence:
 
 - `phase5_plus_recovery_v1` flow completed;
 - recommendations were created through UI CTAs;
-- root-cause assessment exists;
+- selected root-cause assessment is `addresses_cause` or `mitigates_cause`;
 - scenario was materialized through UI CTAs;
-- publishability assessment exists;
+- publishability assessment includes `recommendation_origin_root_cause`;
 - approvals are complete;
-- active published snapshot exists.
+- active published snapshot exists;
+- published snapshot carries `summary.recoveryOrigin` provenance.
+
+Negative blocked-gate assertions recorded in the same JSON evidence:
+
+- a recovery-origin plan with `does_not_address_cause` root-cause status produces blocked publishability;
+- publishability detail includes `recommendation_origin_root_cause`;
+- backend manual publish refuses the plan through the same publish endpoint.
 
 Screenshots are under `docs/evidence/phase6_recovery_flow/screenshots/`.
 
@@ -112,12 +119,14 @@ Results:
 
 ## Implementation Notes From Closure
 
-Two evidence-breaking defects were fixed during closure:
+The production hardening pass after closure tightened these invariants:
 
-- flow evaluation now treats completed steps as monotonic, so a completed early step is not reopened when later domain state changes;
-- flow selectors now prefer the latest current operational plan version over an older approved baseline, which lets promoted recovery candidates satisfy conflict-repair selectors before approval.
-
-The recovery UI also records `REPAIR_PLAN_CONFLICTS` flow CTA evidence after the page-owned `Regenerate plan` mutation succeeds.
+- recovery-origin provenance is preserved through promoted, cloned, and regenerated plan versions;
+- publishability resolves recovery origin by durable `summary.recoveryOrigin` refs before legacy scenario lineage;
+- flow selectors prefer bound refs and subject refs before any legacy global fallback;
+- flow CTA evidence is rejected server-side when the step, action, or bound object ref does not match the active flow state;
+- high-risk completed flow steps are revalidated and invalidated when their bound DB truth no longer matches;
+- recovery evidence now proves failed root-cause repair blocks publishability and backend publish.
 
 ## Remaining Business Decisions
 

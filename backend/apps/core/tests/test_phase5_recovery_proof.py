@@ -36,7 +36,7 @@ def admin_client():
     return client, user
 
 
-def _record_current_step(flow, action_id, route, user):
+def _record_current_step(flow, action_id, route, user, metadata=None):
     flow.refresh_from_db()
     return record_cta_intent(
         flow,
@@ -44,7 +44,7 @@ def _record_current_step(flow, action_id, route, user):
         action_id=action_id,
         route=route,
         actor=user,
-        metadata={"test": "operator_trial_flow"},
+        metadata={"test": "operator_trial_flow", **(metadata or {})},
     )
 
 
@@ -208,7 +208,13 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
         format="json",
     )
     assert import_response.status_code == 201
-    flow = _record_current_step(flow, "IMPORT_OGV_DEMAND", "/schedule/ogv-demand", user)
+    flow = _record_current_step(
+        flow,
+        "IMPORT_OGV_DEMAND",
+        "/schedule/ogv-demand",
+        user,
+        {"importJobId": import_response.data["id"]},
+    )
     assert flow.current_step_key == "enter_operating_windows"
 
     windows_response = client.post("/api/planning/overview/enter-operating-windows/", {})
@@ -222,7 +228,13 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
     assert flow.current_step_key == "generate_plan"
 
     version_id = _create_and_generate_plan(client, user)
-    flow = _record_current_step(flow, "GENERATE_PLAN", "/operations/tug-barge-assignment", user)
+    flow = _record_current_step(
+        flow,
+        "GENERATE_PLAN",
+        "/operations/tug-barge-assignment",
+        user,
+        {"planVersionId": version_id},
+    )
     assert flow.current_step_key == "submit_approval"
 
     approval_response = client.post(
@@ -231,7 +243,13 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
         format="json",
     )
     assert approval_response.status_code == 201
-    flow = _record_current_step(flow, "SUBMIT_APPROVAL", "/schedule/published-plan", user)
+    flow = _record_current_step(
+        flow,
+        "SUBMIT_APPROVAL",
+        "/schedule/published-plan",
+        user,
+        {"approvalRequestId": approval_response.data["id"]},
+    )
     assert flow.current_step_key == "approve_plan"
 
     approval = ApprovalRequest.objects.get(pk=approval_response.data["id"])
@@ -249,7 +267,13 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
             format="json",
         )
         assert decide_response.status_code == 200
-        flow = _record_current_step(flow, "APPROVE_PLAN", "/approvals/publishing", user)
+        flow = _record_current_step(
+            flow,
+            "APPROVE_PLAN",
+            "/approvals/publishing",
+            user,
+            {"approvalRequestId": approval.id},
+        )
     assert flow.current_step_key == "run_publishability_check"
 
     publishability_response = client.post(
@@ -262,12 +286,19 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
         "RUN_PUBLISHABILITY_CHECK",
         "/approvals/publishing",
         user,
+        {"assessmentId": publishability_response.data["id"]},
     )
     assert flow.current_step_key == "publish_plan"
 
     publish_response = client.post(f"/api/scheduling/plan-versions/{version_id}/publish/")
     assert publish_response.status_code == 201
-    flow = _record_current_step(flow, "PUBLISH_PLAN", "/approvals/publishing", user)
+    flow = _record_current_step(
+        flow,
+        "PUBLISH_PLAN",
+        "/approvals/publishing",
+        user,
+        {"publishedSnapshotId": publish_response.data["id"]},
+    )
     assert flow.current_step_key == "generate_export"
     assert PublishedPlanSnapshot.objects.filter(status=PublishedPlanSnapshot.Status.ACTIVE).exists()
 
@@ -281,7 +312,13 @@ def test_happy_path_flow_advances_from_domain_truth_after_cta_events():
         format="json",
     )
     assert export_response.status_code == 201
-    flow = _record_current_step(flow, "GENERATE_EXPORT", "/admin/export-handoff", user)
+    flow = _record_current_step(
+        flow,
+        "GENERATE_EXPORT",
+        "/admin/export-handoff",
+        user,
+        {"exportJobId": export_response.data["id"]},
+    )
 
     assert flow.status == FlowRun.Status.COMPLETED
     assert flow.current_step_key == ""

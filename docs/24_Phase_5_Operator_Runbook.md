@@ -810,6 +810,8 @@ Original Phase 5 did not yet:
 
 Phase 6 / Phase 5+ now closes part of that gap with persistent flow runtime, flow-aware Next Action guidance, UI CTA operator-trial evidence, root-cause repair assessment, explicit publishability checks, global optimizer review candidates, telemetry trust assessment, and projection-only commercial outputs. The closure evidence is documented in `27_Phase_6_Completion_Evidence.md`.
 
+For recovery-origin publication, Phase 6 / Phase 5+ adds a production gate: the selected recovery recommendation must have root-cause assessment status `addresses_cause` or `mitigates_cause` before publishability can clear. `does_not_address_cause`, `unknown`, or missing root-cause validation blocks manual publish at the publishability service and at the backend publish endpoint.
+
 The following limitations still remain deliberate business boundaries:
 
 - automatic publishing remains out of scope; the operator must still click the visible `Publish plan` CTA;
@@ -830,6 +832,7 @@ The practice run is successful when the operator can answer these questions with
 | Which jetty and CTS were involved? | `JTY-SUARAN` and `CTS-BORNEO`. |
 | What did the best recommendation change? | CTS handling changed from `CTS-BORNEO` to `CTS-JAVA`. |
 | Why was it ranked first? | Lowest risk among modeled options: no missed windows and no added resource conflicts in the recommendation evaluation. |
+| Does ranking alone make it publishable? | No. A recovery-origin plan also needs root-cause validation and publishability to pass or warn. A CTS-only action for an unavailable barge is blocked as `does_not_address_cause`. |
 | Did it silently change the active plan? | No. It became a governed simulation scenario first. |
 | Was it approved? | Yes, in the proof flow Berau and ABL approvals are recorded. |
 | Was it published? | Not automatically. After the closure command, the plan is ready to publish and the operator can perform the final publish action. |

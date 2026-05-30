@@ -29,7 +29,7 @@ from apps.scheduling.models import (
     Trip,
 )
 from apps.scheduling.publishability_services import assess_plan_publishability
-from apps.scheduling.services import publish_plan_version
+from apps.scheduling.services import clone_plan_version, publish_plan_version
 from apps.telemetry.models import AssetIdentity, TelemetrySource, TrackingAlert
 
 
@@ -169,6 +169,96 @@ def test_publish_plan_version_refuses_blocked_publishability():
         plan_version=version,
         status=PublishabilityAssessment.Status.BLOCKED,
     ).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "root_cause_status",
+    [
+        RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE,
+        RootCauseRepairAssessment.Status.UNKNOWN,
+    ],
+)
+def test_recovery_origin_blocks_failed_root_cause_before_and_after_regeneration(
+    root_cause_status,
+):
+    user, org = make_user(f"pub-root-{root_cause_status}")
+    version = make_clean_approved_plan(user, org)
+    recommendation = link_recovery_origin(version, user)
+    RootCauseRepairAssessment.objects.create(
+        recommendation=recommendation,
+        source_kind="conflict",
+        source_ref="CONFLICT-1",
+        source_cause_type="BARGE_UNAVAILABLE",
+        status=root_cause_status,
+        required_resolution={"family": "barge"},
+        observed_resolution={"action": "reassign_cts"},
+        residual_risk={"level": "high"},
+        assessed_by_algorithm_version="test",
+    )
+
+    before_regeneration = assess_plan_publishability(plan_version=version, actor=user)
+    version.summary = {
+        "tripCount": version.trips.count(),
+        "conflictCount": 0,
+        "blockingConflictCount": 0,
+        **{
+            key: value
+            for key, value in version.summary.items()
+            if key in {"recoveryOrigin", "scenarioLineage"}
+        },
+    }
+    version.save(update_fields=["summary", "updated_at"])
+    after_regeneration = assess_plan_publishability(plan_version=version, actor=user)
+
+    for assessment in [before_regeneration, after_regeneration]:
+        assert assessment.status == PublishabilityAssessment.Status.BLOCKED
+        assert any(
+            detail["key"] == "recommendation_origin_root_cause"
+            and detail["status"] == "blocked"
+            and detail["evidence"]["rootCauseStatus"] == root_cause_status
+            for detail in assessment.details
+        )
+
+
+@pytest.mark.django_db
+def test_publish_guard_refuses_recovery_origin_without_passing_root_cause():
+    user, org = make_user("pub-root-guard")
+    version = make_clean_approved_plan(user, org)
+    recommendation = link_recovery_origin(version, user)
+    RootCauseRepairAssessment.objects.create(
+        recommendation=recommendation,
+        source_kind="conflict",
+        source_ref="CONFLICT-1",
+        source_cause_type="BARGE_UNAVAILABLE",
+        status=RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE,
+        required_resolution={"family": "barge"},
+        observed_resolution={"action": "reassign_cts"},
+        residual_risk={"level": "high"},
+        assessed_by_algorithm_version="test",
+    )
+
+    with pytest.raises(ValidationError, match="publishability gate"):
+        publish_plan_version(plan_version=version, actor=user)
+
+    assert PublishabilityAssessment.objects.filter(
+        plan_version=version,
+        status=PublishabilityAssessment.Status.BLOCKED,
+        recommendation_origin_status="blocked",
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_recovery_origin_provenance_survives_successor_plan_clone():
+    user, org = make_user("pub-provenance-clone")
+    version = make_clean_approved_plan(user, org)
+    recommendation = link_recovery_origin(version, user)
+
+    clone = clone_plan_version(source_version=version, created_by=user)
+
+    assert clone.summary["recoveryOrigin"]["recommendationPk"] == recommendation.pk
+    assert clone.summary["recoveryOrigin"]["recommendationRef"] == recommendation.recommendation_id
+    assert clone.summary["scenarioLineage"]["scenarioPk"] == version.summary["scenarioLineage"]["scenarioPk"]
 
 
 @pytest.mark.django_db
@@ -473,7 +563,7 @@ def link_recovery_origin(version, user):
         status=OptimizerRun.Status.SUCCEEDED,
         algorithm_version="test",
     )
-    return RecoveryRecommendation.objects.create(
+    recommendation = RecoveryRecommendation.objects.create(
         optimizer_run=run,
         rank=1,
         status=RecoveryRecommendation.Status.MATERIALIZED,
@@ -482,3 +572,16 @@ def link_recovery_origin(version, user):
         summary="Recovery option",
         scenario=scenario,
     )
+    version.summary = {
+        **version.summary,
+        "recoveryOrigin": {
+            "recommendationPk": recommendation.pk,
+            "recommendationRef": recommendation.recommendation_id,
+            "scenarioPk": scenario.pk,
+            "scenarioId": scenario.scenario_id,
+            "baselineVersionId": baseline.pk,
+            "selectedRunRef": "RUN-1",
+        },
+    }
+    version.save(update_fields=["summary", "updated_at"])
+    return recommendation

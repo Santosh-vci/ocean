@@ -1,3 +1,6 @@
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -31,7 +34,7 @@ class FlowRunDetailView(APIView):
     action_permission_map = {"get": "schedule.view"}
 
     def get(self, request, run_id: str):
-        flow = _flow_queryset().get(run_id=run_id)
+        flow = get_object_or_404(_flow_queryset(request.user), run_id=run_id)
         return Response(FlowRunSerializer(flow).data)
 
 
@@ -40,7 +43,7 @@ class FlowRunEventView(APIView):
     action_permission_map = {"post": "schedule.edit"}
 
     def post(self, request, run_id: str):
-        flow = _flow_queryset().get(run_id=run_id)
+        flow = get_object_or_404(_flow_queryset(request.user), run_id=run_id)
         serializer = FlowEventCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         updated = record_cta_intent(
@@ -56,9 +59,28 @@ class FlowRunEventView(APIView):
         return Response(FlowRunSerializer(updated).data)
 
 
-def _flow_queryset():
-    return FlowRun.objects.select_related("flow_definition", "started_by").prefetch_related(
+def _flow_queryset(user=None):
+    queryset = FlowRun.objects.select_related("flow_definition", "started_by").prefetch_related(
         "step_runs",
         "events",
         "events__actor",
     )
+    if user is None or getattr(user, "is_superuser", False):
+        return queryset
+    organization_ids = list(
+        user.organization_memberships.filter(is_active=True).values_list(
+            "organization_id",
+            flat=True,
+        )
+    )
+    organization_ids.extend(
+        user.role_assignments.filter(is_active=True).values_list("organization_id", flat=True)
+    )
+    organization_ids = list(dict.fromkeys(organization_ids))
+    if not organization_ids:
+        return queryset.filter(started_by=user)
+    return queryset.filter(
+        Q(started_by=user)
+        | Q(started_by__organization_memberships__organization_id__in=organization_ids)
+        | Q(started_by__role_assignments__organization_id__in=organization_ids),
+    ).distinct()

@@ -521,6 +521,42 @@ Add UI CTA browser evidence, update operator runbooks, and document known remain
 
 Status: complete. Closure evidence is recorded in `27_Phase_6_Completion_Evidence.md`.
 
+### Chunk H6.8 - Recovery Lineage And Publishability Integrity
+
+Preserve recovery-origin provenance through promotion, repair, regeneration, publishability, and publish guards.
+
+Status: complete.
+
+### Chunk H6.9 - Flow Subject Binding And Domain Ref Selectors
+
+Bind flow progress to stored domain refs and use global fallback only for legacy non-trial flows.
+
+Status: complete.
+
+### Chunk H6.10 - Canonical Active Plan Selection
+
+Centralize active plan selection modes for working, approval, publish, and published-snapshot candidates.
+
+Status: complete.
+
+### Chunk H6.11 - Server-Enforced Flow CTA Evidence
+
+Reject forged flow evidence when step, action, state, visibility, or object refs do not match the active flow.
+
+Status: complete.
+
+### Chunk H6.12 - Completed-Step Invalidation Semantics
+
+Revalidate high-risk completed flow steps and block/reset downstream steps when bound DB truth is invalidated.
+
+Status: complete.
+
+### Chunk H6.13 - Evidence Assertion And Runbook Closure
+
+Tighten recovery evidence and docs so failed root-cause repair blocks publishability and backend publish.
+
+Status: complete.
+
 ## Closure Evidence
 
 Chunk 6.7 closes this specification with repeatable browser evidence and documentation updates:
@@ -529,6 +565,15 @@ Chunk 6.7 closes this specification with repeatable browser evidence and documen
 - Phase 5+ recovery UI CTA evidence: `docs/evidence/phase6_recovery_flow/phase6_recovery_flow_capture.json`;
 - read-only global optimizer, telemetry trust, and commercial projection surface evidence: `docs/evidence/phase6_review_surfaces/phase6_review_surface_capture.json`;
 - completion runbook and remaining business decisions: `27_Phase_6_Completion_Evidence.md`.
+
+Production hardening H6.8-H6.13 adds the final integrity layer:
+
+- recovery-origin plans carry durable `summary.recoveryOrigin` refs;
+- publishability blocks `does_not_address_cause`, `unknown`, and missing root-cause assessments even after regeneration;
+- flow progress is bound to explicit domain refs instead of trainer-seed global state;
+- flow CTA evidence is validated server-side against the current step and expected action;
+- high-risk completed steps invalidate when approvals, publishability, publish snapshots, exports, or provenance no longer match DB truth;
+- recovery browser/API evidence includes a negative gate where failed root-cause repair blocks publishability and manual publish.
 
 ## Exit Criteria
 

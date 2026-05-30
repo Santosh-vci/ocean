@@ -22,6 +22,7 @@ from .models import (
     RecoveryRecommendation,
     RootCauseRepairAssessment,
 )
+from .recovery_lineage import recommendation_for_plan_version, recovery_origin_from_summary
 
 PUBLISHABILITY_ALGORITHM_VERSION = "phase6.4-publishability-gate"
 
@@ -383,8 +384,8 @@ def _stale_source_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
 
 
 def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
-    lineage = plan_version.summary.get("scenarioLineage") if isinstance(plan_version.summary, dict) else None
-    if not isinstance(lineage, dict) or not lineage.get("scenarioPk"):
+    recommendation, origin = recommendation_for_plan_version(plan_version)
+    if not origin:
         return [
             _detail(
                 "recommendation_origin_root_cause",
@@ -395,12 +396,6 @@ def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, 
             )
         ]
 
-    recommendation = (
-        RecoveryRecommendation.objects.filter(scenario_id=lineage.get("scenarioPk"))
-        .select_related("root_cause_assessment")
-        .order_by("-updated_at", "-id")
-        .first()
-    )
     if recommendation is None:
         return [
             _detail(
@@ -409,7 +404,7 @@ def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, 
                 _BLOCKED,
                 "Recovery-origin plan has no linked recommendation for root-cause validation.",
                 action_id="VALIDATE_ROOT_CAUSE_REPAIR",
-                evidence={"scenarioPk": lineage.get("scenarioPk")},
+                evidence={"recoveryOrigin": True, **origin},
             )
         ]
 
@@ -424,6 +419,7 @@ def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, 
                 "Recovery-origin recommendation requires root-cause validation before publish.",
                 action_id="VALIDATE_ROOT_CAUSE_REPAIR",
                 evidence={
+                    "recoveryOrigin": True,
                     "recommendationId": recommendation.id,
                     "recommendationRef": recommendation.recommendation_id,
                 },
@@ -452,6 +448,8 @@ def _recommendation_origin_details(plan_version: PlanVersion) -> list[dict[str, 
                 else ""
             ),
             evidence={
+                "recoveryOrigin": True,
+                **origin,
                 "recommendationId": recommendation.id,
                 "recommendationRef": recommendation.recommendation_id,
                 "rootCauseAssessmentId": assessment.id,
@@ -622,20 +620,21 @@ def _resolver_action_for_detail(detail: dict[str, Any]) -> str:
 
 
 def _latest_publishability_input_time(plan_version: PlanVersion):
-    timestamps = [plan_version.updated_at]
-    lineage = (
-        plan_version.summary.get("scenarioLineage")
-        if isinstance(plan_version.summary, dict)
-        else None
-    )
-    scenario_pk = lineage.get("scenarioPk") if isinstance(lineage, dict) else None
+    timestamps = [plan_version.generated_at or plan_version.created_at]
+    if isinstance(plan_version.summary, dict) and plan_version.summary.get("sourceInputsChanged"):
+        timestamps.append(plan_version.updated_at)
+    origin = recovery_origin_from_summary(plan_version.summary)
+    scenario_pk = origin.get("scenarioPk")
+    recommendation_pk = origin.get("recommendationPk")
     timestamps.extend(
         value
         for value in [
             Conflict.objects.filter(plan_version=plan_version).aggregate(value=Max("created_at"))[
                 "value"
             ],
-            ApprovalRequest.objects.filter(plan_version=plan_version).aggregate(
+            ApprovalRequest.objects.filter(plan_version=plan_version)
+            .exclude(status=ApprovalRequest.Status.PUBLISHED)
+            .aggregate(
                 value=Max("updated_at")
             )["value"],
             plan_version.trips.aggregate(value=Max("updated_at"))["value"],
@@ -653,9 +652,10 @@ def _latest_publishability_input_time(plan_version: PlanVersion):
             ),
             (
                 RootCauseRepairAssessment.objects.filter(
-                    recommendation__scenario_id=scenario_pk,
+                    Q(recommendation_id=recommendation_pk)
+                    | Q(recommendation__scenario_id=scenario_pk),
                 ).aggregate(value=Max("updated_at"))["value"]
-                if scenario_pk
+                if scenario_pk or recommendation_pk
                 else None
             ),
         ]

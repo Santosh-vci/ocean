@@ -20,6 +20,7 @@ const evidence = {
   preparedAt: new Date().toISOString(),
   appUrl: APP_URL,
   preparedFlow: null,
+  negativeGate: null,
   steps: [],
   clicks: [],
   finalAssertions: {},
@@ -29,6 +30,7 @@ async function main() {
   await mkdir(SCREENSHOT_DIR, { recursive: true });
   await waitForHttpOk(APP_URL);
 
+  evidence.negativeGate = captureNegativeRootCauseGate();
   evidence.preparedFlow = prepareDbTruth();
 
   const browserPath = findBrowser();
@@ -129,6 +131,16 @@ async function main() {
       },
     });
 
+    const selectedRecommendation = await selectPositiveRootCauseRecommendation(cdp);
+    evidence.clicks.push({
+      purpose: "Select recovery recommendation expected to pass or warn root-cause validation",
+      target: "positive root-cause recommendation row",
+      text: selectedRecommendation.text,
+      route: await evalAsync(cdp, "location.hash"),
+      clickedAt: new Date().toISOString(),
+    });
+    await delay(800);
+
     clicked = await clickButton(cdp, "Validate root cause", {
       purpose: "Visible page CTA records root-cause repair assessment",
       exact: true,
@@ -144,7 +156,10 @@ async function main() {
       expectedCurrentStep: "materialize_recommendation",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
-      expectations: { minRootCauseAssessments: 1 },
+      expectations: {
+        minRootCauseAssessments: 1,
+        rootCauseStatusIn: ["addresses_cause", "mitigates_cause"],
+      },
     });
 
     clicked = await clickButton(cdp, "Test as scenario", {
@@ -324,9 +339,9 @@ async function main() {
 
     clicked = await clickButton(cdp, "Approve", {
       purpose: "Visible page CTA records first approval authority",
+      domClick: true,
       exact: true,
     });
-    await waitForText(cdp, "Approved", 25_000);
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
@@ -342,6 +357,7 @@ async function main() {
 
     clicked = await clickButton(cdp, "Approve", {
       purpose: "Visible page CTA records second approval authority",
+      domClick: true,
       exact: true,
     });
     await waitForFlowState(cdp, { currentStep: "run_publishability_check", status: "active" });
@@ -379,14 +395,15 @@ async function main() {
       expectations: {
         minPublishabilityAssessments: 1,
         publishabilityAllowsPublish: true,
+        publishabilityHasRecommendationOriginDetail: true,
+        rootCauseStatusIn: ["addresses_cause", "mitigates_cause"],
       },
     });
 
-    clicked = await clickButton(cdp, "Publish plan", {
+    clicked = await clickApprovalActionButton(cdp, "Publish", {
       purpose: "Visible page CTA manually publishes approved recovery plan",
       exact: true,
     });
-    await waitForText(cdp, "Published", 30_000);
     await waitForFlowState(cdp, { currentStep: "", status: "completed" });
     await captureStep(cdp, {
       step: "17",
@@ -399,12 +416,13 @@ async function main() {
       expectations: {
         minPublishedSnapshots: 1,
         approvalsComplete: true,
-        publishabilityAllowsPublish: true,
+        publishedSnapshotHasRecoveryOrigin: true,
       },
     });
 
     const finalFlow = await getFlow(cdp);
     const finalDomain = await domainState(cdp);
+    const publishabilityStepDomain = evidence.steps.find((item) => item.step === "16")?.domainState ?? {};
     evidence.finalAssertions = {
       flowRunId: evidence.preparedFlow.flowRunId,
       flowKey: evidence.preparedFlow.flowKey,
@@ -412,9 +430,18 @@ async function main() {
       recommendationsCreatedByUi: finalDomain.recommendations >= 1,
       rootCauseAssessmentExists: finalDomain.rootCauseAssessments >= 1,
       scenarioMaterializedByUi: finalDomain.scenarios >= 1,
-      publishabilityAssessmentExists: finalDomain.publishabilityAssessments >= 1,
+      publishabilityAssessmentExists: (publishabilityStepDomain.publishabilityAssessments ?? 0) >= 1,
       approvalsComplete: finalDomain.approvalsComplete,
       activePublishedSnapshotExists: finalDomain.publishedSnapshots >= 1,
+      latestRootCauseStatusAllowsPublish: ["addresses_cause", "mitigates_cause"].includes(
+        finalDomain.latestRootCauseStatus ?? publishabilityStepDomain.latestRootCauseStatus ?? "",
+      ),
+      publishabilityIncludesRecommendationOrigin: Boolean(
+        publishabilityStepDomain.publishabilityHasRecommendationOriginDetail,
+      ),
+      publishedSnapshotCarriesRecoveryOrigin: finalDomain.publishedSnapshotHasRecoveryOrigin,
+      negativeRootCauseBlocksPublishability: evidence.negativeGate?.publishabilityStatus === "blocked",
+      negativePublishRefused: evidence.negativeGate?.publishStatus >= 400,
     };
     for (const [key, passed] of Object.entries(evidence.finalAssertions)) {
       if (key.endsWith("Id") || key === "flowKey") continue;
@@ -444,6 +471,199 @@ function prepareDbTruth() {
     "recovery",
     "--json",
   ]);
+  return parseJsonPayload(output);
+}
+
+function captureNegativeRootCauseGate() {
+  const script = String.raw`
+import json
+from datetime import timedelta
+from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from rest_framework.test import APIClient
+
+from apps.organizations.models import Organization
+from apps.planning.models import BridgeWindow, OGVVoyage, TideWindow
+from apps.masters.models import Location
+from apps.scheduling.models import (
+    ApprovalDecision,
+    ApprovalRequest,
+    OptimizerRun,
+    Plan,
+    PlanVersion,
+    RecoveryInputSnapshot,
+    RecoveryRecommendation,
+    RootCauseRepairAssessment,
+    SimulationScenario,
+    Trip,
+)
+from apps.scheduling.publishability_services import assess_plan_publishability
+
+admin = get_user_model().objects.get(username="admin@coalflow.local")
+org = Organization.objects.filter(slug="berau-coal").first() or Organization.objects.first()
+now = timezone.now()
+plan = Plan.objects.create(
+    code=f"PLAN-NEG-ROOT-{int(now.timestamp())}",
+    name="Negative root-cause publishability evidence",
+    organization=org,
+    horizon_start=now,
+    horizon_end=now + timedelta(days=2),
+    status=Plan.Status.ACTIVE,
+)
+version = PlanVersion.objects.create(
+    plan=plan,
+    version_no=1,
+    status=PlanVersion.Status.APPROVED,
+    generated_at=now,
+    created_by=admin,
+)
+voyage = OGVVoyage.objects.create(
+    voyage_id=f"VOY-NEG-{version.id}",
+    vessel_name="MV Negative Root Cause",
+    customer_name="Evidence Customer",
+    eta=now,
+    laycan_start=now,
+    laycan_end=now + timedelta(days=1),
+    required_mt=10000,
+    organization=org,
+)
+Trip.objects.create(
+    plan_version=version,
+    trip_id=f"TRIP-NEG-{version.id}",
+    sequence=1,
+    voyage=voyage,
+    planned_start=now,
+    planned_end=now + timedelta(hours=6),
+    planned_quantity_mt=10000,
+)
+tide_location = Location.objects.create(
+    code=f"TIDE-NEG-{version.id}",
+    name="Negative Tide",
+    location_type=Location.LocationType.TIDE_GATE,
+    latitude=Decimal("-1.100000"),
+    longitude=Decimal("118.100000"),
+)
+bridge_location = Location.objects.create(
+    code=f"BRIDGE-NEG-{version.id}",
+    name="Negative Bridge",
+    location_type=Location.LocationType.BRIDGE,
+    latitude=Decimal("-1.200000"),
+    longitude=Decimal("118.200000"),
+)
+TideWindow.objects.create(
+    code=f"TIDE-NEG-{version.id}",
+    location=tide_location,
+    window_start=now,
+    window_end=now + timedelta(hours=12),
+    min_water_level_m=Decimal("2.10"),
+    max_loaded_draft_m=Decimal("4.50"),
+    is_active=True,
+)
+BridgeWindow.objects.create(
+    code=f"BRIDGE-NEG-{version.id}",
+    location=bridge_location,
+    window_start=now,
+    window_end=now + timedelta(hours=12),
+    clearance_m=Decimal("12.50"),
+    status=BridgeWindow.Status.OPEN,
+    is_active=True,
+)
+approval = ApprovalRequest.objects.create(
+    request_id=f"APR-NEG-{version.id}",
+    plan_version=version,
+    status=ApprovalRequest.Status.APPROVED,
+    required_authorities=[
+        ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
+        ApprovalDecision.AuthorityRole.ABL_DISPATCHER,
+    ],
+    reason="Negative root-cause gate evidence.",
+    requested_by=admin,
+    decided_at=now,
+)
+for authority in approval.required_authorities:
+    ApprovalDecision.objects.create(
+        approval_request=approval,
+        authority_role=authority,
+        decision=ApprovalDecision.Decision.APPROVE,
+        actor=admin,
+        organization=org,
+    )
+baseline = PlanVersion.objects.create(
+    plan=plan,
+    version_no=2,
+    status=PlanVersion.Status.VALIDATED,
+    generated_at=now,
+    created_by=admin,
+)
+scenario = SimulationScenario.objects.create(
+    scenario_id=f"SCN-NEG-{version.id}",
+    name="Negative root-cause scenario",
+    scenario_type="recovery",
+    baseline_version=baseline,
+    scenario_version=version,
+    status=SimulationScenario.Status.PROPOSED,
+    created_by=admin,
+)
+snapshot = RecoveryInputSnapshot.objects.create(
+    plan_version=baseline,
+    source_kind=RecoveryInputSnapshot.SourceKind.CONFLICT,
+    source_ref="BARGE_UNAVAILABLE:negative-evidence",
+)
+run = OptimizerRun.objects.create(
+    input_snapshot=snapshot,
+    plan_version=baseline,
+    status=OptimizerRun.Status.SUCCEEDED,
+    algorithm_version="negative-evidence",
+)
+recommendation = RecoveryRecommendation.objects.create(
+    optimizer_run=run,
+    rank=1,
+    status=RecoveryRecommendation.Status.MATERIALIZED,
+    risk_level=RecoveryRecommendation.RiskLevel.MEDIUM,
+    score=Decimal("50.000"),
+    summary="Negative evidence option",
+    scenario=scenario,
+)
+assessment = RootCauseRepairAssessment.objects.create(
+    recommendation=recommendation,
+    source_kind="conflict",
+    source_ref="BARGE_UNAVAILABLE:negative-evidence",
+    source_cause_type="BARGE_UNAVAILABLE",
+    status=RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE,
+    required_resolution={"family": "barge"},
+    observed_resolution={"action": "reassign_cts"},
+    residual_risk={"level": "high"},
+    assessed_by_algorithm_version="negative-evidence",
+)
+version.summary = {
+    "recoveryOrigin": {
+        "recommendationPk": recommendation.pk,
+        "recommendationRef": recommendation.recommendation_id,
+        "scenarioPk": scenario.pk,
+        "scenarioId": scenario.scenario_id,
+        "baselineVersionId": baseline.pk,
+        "selectedRunRef": run.run_id,
+    }
+}
+version.save(update_fields=["summary", "updated_at"])
+publishability = assess_plan_publishability(plan_version=version, actor=admin)
+client = APIClient(HTTP_HOST="localhost")
+client.force_authenticate(user=admin)
+publish_response = client.post(f"/api/scheduling/plan-versions/{version.id}/publish/")
+print(json.dumps({
+    "planVersionId": version.id,
+    "recommendationId": recommendation.id,
+    "rootCauseAssessmentId": assessment.id,
+    "rootCauseStatus": assessment.status,
+    "publishabilityStatus": publishability.status,
+    "publishabilityDetails": publishability.details,
+    "publishStatus": publish_response.status_code,
+    "publishResponse": getattr(publish_response, "data", None),
+}, default=str))
+`;
+  const output = runDockerManage(["shell", "-c", script]);
   return parseJsonPayload(output);
 }
 
@@ -540,6 +760,48 @@ async function captureStep(
   });
 }
 
+async function selectPositiveRootCauseRecommendation(cdp) {
+  await waitForApp(cdp);
+  const match = await evalAsync(
+    cdp,
+    `
+      (() => {
+        const preferred = [
+          "next window repair",
+          "delay trip",
+          "resequence trip",
+          "tug barge swap"
+        ];
+        const rows = Array.from(document.querySelectorAll("table tbody tr"));
+        const candidates = rows.map((row, index) => {
+          const cells = Array.from(row.querySelectorAll("td")).map((cell) => cell.innerText.trim().replace(/\\s+/g, " "));
+          return {
+            index,
+            text: cells.join(" | "),
+            strategy: (cells[2] ?? "").toLowerCase(),
+            rect: (() => {
+              const rect = row.getBoundingClientRect();
+              return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+            })(),
+          };
+        }).filter((row) => row.text && row.rect.width > 0 && row.rect.height > 0);
+        const selected = preferred
+          .map((needle) => candidates.find((row) => row.strategy.includes(needle)))
+          .find(Boolean)
+          ?? candidates.find((row) => !row.strategy.includes("cts reassignment"))
+          ?? candidates[0];
+        if (!selected) return null;
+        rows[selected.index].click();
+        return selected;
+      })()
+    `,
+  );
+  if (!match) {
+    throw new Error("No recovery recommendation row is available for root-cause validation.");
+  }
+  return match;
+}
+
 function assertFlowAndAssistant({
   assistant,
   flow,
@@ -628,6 +890,24 @@ function assertDomainState(domain, expectations) {
       `Expected publishabilityAllowsPublish=${expectations.publishabilityAllowsPublish}, got ${domain.publishabilityAllowsPublish}.`,
     );
   }
+  if (expectations.rootCauseStatusIn !== undefined) {
+    assertCondition(
+      expectations.rootCauseStatusIn.includes(domain.latestRootCauseStatus),
+      `Expected latestRootCauseStatus in ${expectations.rootCauseStatusIn.join(", ")}, got ${domain.latestRootCauseStatus}.`,
+    );
+  }
+  if (expectations.publishabilityHasRecommendationOriginDetail !== undefined) {
+    assertCondition(
+      domain.publishabilityHasRecommendationOriginDetail === expectations.publishabilityHasRecommendationOriginDetail,
+      `Expected recommendation-origin publishability detail=${expectations.publishabilityHasRecommendationOriginDetail}, got ${domain.publishabilityHasRecommendationOriginDetail}.`,
+    );
+  }
+  if (expectations.publishedSnapshotHasRecoveryOrigin !== undefined) {
+    assertCondition(
+      domain.publishedSnapshotHasRecoveryOrigin === expectations.publishedSnapshotHasRecoveryOrigin,
+      `Expected published snapshot recovery provenance=${expectations.publishedSnapshotHasRecoveryOrigin}, got ${domain.publishedSnapshotHasRecoveryOrigin}.`,
+    );
+  }
 }
 
 async function assistantState(cdp, route) {
@@ -656,6 +936,15 @@ async function domainState(cdp) {
     (total, scenario) => total + (scenario.runs?.length ?? 0),
     0,
   );
+  const rootCauseStatuses = (scheduling?.recoveryRecommendations ?? [])
+    .map((recommendation) => recommendation.root_cause_assessment?.status)
+    .filter(Boolean);
+  const publishabilityDetails = scheduling?.publishabilityAssessment?.details ?? [];
+  const publishedSnapshots = scheduling?.publishedSnapshots ?? [];
+  const publishedSnapshotApprovalsComplete = publishedSnapshots.some(
+    (snapshot) => (snapshot.payload?.approvals ?? [])
+      .filter((decision) => decision?.decision === "approve").length >= 2,
+  );
   return {
     voyages: planning?.voyages?.length ?? 0,
     cargoLayerSteps: planning?.cargoLayerSteps?.length ?? 0,
@@ -671,13 +960,16 @@ async function domainState(cdp) {
     recommendations: scheduling?.recoveryRecommendations?.length ?? 0,
     rootCauseAssessments: (scheduling?.recoveryRecommendations ?? [])
       .filter((recommendation) => recommendation.root_cause_assessment).length,
+    rootCauseStatuses,
+    latestRootCauseStatus: rootCauseStatuses.at(-1) ?? null,
     scenarios: scheduling?.simulationScenarios?.length ?? 0,
     scenarioRuns,
     approvalRequests: approvalRequests.length,
     pendingApprovals: scheduling?.validation?.approvalPendingCount ?? 0,
     approvalDecisions,
     approvalsComplete: approvalRequests.some((request) => request.status === "approved")
-      || approvalRequests.some((request) => request.status === "published"),
+      || approvalRequests.some((request) => request.status === "published")
+      || publishedSnapshotApprovalsComplete,
     publishabilityStatus: scheduling?.publishabilityAssessment?.status ?? null,
     publishabilityBlockers: scheduling?.publishabilityAssessment?.blocking_reason_count ?? 0,
     publishabilityWarnings: scheduling?.publishabilityAssessment?.warning_count ?? 0,
@@ -685,7 +977,16 @@ async function domainState(cdp) {
     publishabilityAllowsPublish: ["publishable", "warning"].includes(
       scheduling?.publishabilityAssessment?.status ?? "",
     ),
-    publishedSnapshots: scheduling?.publishedSnapshots?.length ?? 0,
+    publishabilityHasRecommendationOriginDetail: publishabilityDetails.some(
+      (detail) => detail?.key === "recommendation_origin_root_cause",
+    ),
+    publishabilityRecommendationOriginDetail: publishabilityDetails.find(
+      (detail) => detail?.key === "recommendation_origin_root_cause",
+    ) ?? null,
+    publishedSnapshots: publishedSnapshots.length,
+    publishedSnapshotHasRecoveryOrigin: publishedSnapshots.some(
+      (snapshot) => Boolean(snapshot.payload?.summary?.recoveryOrigin),
+    ),
     exports: exportsOverview?.exports?.length ?? 0,
     activePlanVersion: scheduling?.activePlanVersion
       ? {
@@ -817,7 +1118,58 @@ async function clickButton(cdp, text, options = {}) {
   return click;
 }
 
-async function findButton(cdp, text, { exact = false } = {}) {
+async function clickApprovalActionButton(cdp, text, options = {}) {
+  await waitForApp(cdp);
+  const match = await evalAsync(
+    cdp,
+    `
+      (() => {
+        const needle = ${JSON.stringify(text)}.toLowerCase();
+        const exact = ${JSON.stringify(Boolean(options.exact))};
+        const buttons = Array.from(document.querySelectorAll(".approval-actions button"));
+        const matches = buttons
+          .map((button, index) => {
+            const rect = button.getBoundingClientRect();
+            return {
+              index,
+              text: button.innerText.trim().replace(/\\s+/g, " "),
+              disabled: button.disabled,
+              rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+              visible: rect.width > 0 && rect.height > 0,
+            };
+          })
+          .filter((button) => button.visible)
+          .filter((button) => {
+            const label = button.text.toLowerCase();
+            return exact ? label === needle : label.includes(needle);
+          });
+        const selected = matches[0] ?? null;
+        if (!selected || selected.disabled) return selected ? { ...selected, blocked: true } : null;
+        buttons[selected.index].click();
+        return selected;
+      })()
+    `,
+  );
+  if (!match) {
+    throw new Error(`Approval action button not found: ${text}`);
+  }
+  if (match.blocked || match.disabled) {
+    throw new Error(`Approval action button disabled: ${text}`);
+  }
+  const click = {
+    purpose: options.purpose ?? `Click ${text}`,
+    target: text,
+    text: match.text,
+    matchCount: 1,
+    route: await evalAsync(cdp, "location.hash"),
+    clickedAt: new Date().toISOString(),
+  };
+  evidence.clicks.push(click);
+  await delay(options.afterMs ?? 1800);
+  return click;
+}
+
+async function findButton(cdp, text, { exact = false, preferLast = false, preferRightmost = false } = {}) {
   const matches = await evalAsync(
     cdp,
     `
@@ -848,7 +1200,10 @@ async function findButton(cdp, text, { exact = false } = {}) {
       })()
     `,
   );
-  return matches[0] ?? null;
+  if (preferRightmost) {
+    return [...matches].sort((left, right) => right.rect.x - left.rect.x)[0] ?? null;
+  }
+  return preferLast ? matches.at(-1) ?? null : matches[0] ?? null;
 }
 
 async function scrollButtonIntoView(cdp, index) {

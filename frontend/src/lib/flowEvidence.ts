@@ -57,6 +57,7 @@ export async function recordFlowCtaEvidence(
   const activeFlow = flow as AssistantFlow;
 
   const csrfToken = await getCsrfToken();
+  const objectRef = objectRefForAction(actionId, metadata);
   return apiFetch<unknown>(`/flows/${activeFlow.flowRunId}/events/`, {
     method: "POST",
     headers: {
@@ -66,12 +67,40 @@ export async function recordFlowCtaEvidence(
       step_key: activeFlow.currentStep,
       action_id: actionId,
       route: route || activeFlow.expectedRoute,
+      ...(objectRef ? { object_type: objectRef.objectType, object_id: objectRef.objectId } : {}),
       metadata: {
         source: "operator_ui_cta",
         ...metadata,
       },
     }),
   });
+}
+
+function objectRefForAction(actionId: string, metadata: Record<string, unknown>) {
+  const ref = (objectType: string, value: unknown) => {
+    if (value === null || value === undefined || value === "") return null;
+    return { objectType, objectId: String(value) };
+  };
+  if (actionId === "IMPORT_OGV_DEMAND") return ref("import_job", metadata.importJobId);
+  if (actionId === "GENERATE_PLAN" || actionId === "REPAIR_PLAN_CONFLICTS") {
+    return ref("plan_version", metadata.planVersionId);
+  }
+  if (actionId === "GENERATE_RECOVERY_OPTIONS") return ref("optimizer_run", metadata.optimizerRunId);
+  if (actionId === "VALIDATE_ROOT_CAUSE_REPAIR" || actionId === "MATERIALIZE_RECOVERY_RECOMMENDATION") {
+    return ref("recovery_recommendation", metadata.recommendationId);
+  }
+  if (actionId === "RUN_SIMULATION" || actionId === "PROMOTE_SCENARIO") {
+    return ref("simulation_scenario", metadata.scenarioId);
+  }
+  if (actionId === "SUBMIT_APPROVAL" || actionId === "APPROVE_PLAN") {
+    return ref("approval_request", metadata.approvalRequestId);
+  }
+  if (actionId === "RUN_PUBLISHABILITY_CHECK") {
+    return ref("publishability_assessment", metadata.assessmentId);
+  }
+  if (actionId === "PUBLISH_PLAN") return ref("published_plan_snapshot", metadata.publishedSnapshotId);
+  if (actionId === "GENERATE_EXPORT") return ref("export_job", metadata.exportJobId);
+  return null;
 }
 
 function runtimeFlowToAssistantFlow(flow: FlowRuntimeRun | null): AssistantFlow | null {

@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.masters.models import Barge, CTSAsset, Tug
@@ -9,6 +9,7 @@ from apps.organizations.models import Organization
 from apps.rbac.models import DataScope, UserRoleAssignment
 from apps.rbac.services import permission_codes_for_user
 
+from .active_plan_selectors import WORKING_CANDIDATE, select_active_plan_version
 from .models import (
     ApprovalRequest,
     Assignment,
@@ -179,17 +180,7 @@ def build_dashboard_read_model(user) -> dict:
 
 
 def _latest_operational_version():
-    return (
-        PlanVersion.objects.select_related("plan", "created_by", "source_version")
-        .annotate(
-            open_blockers=Count(
-                "conflicts",
-                filter=Q(conflicts__is_blocking=True, conflicts__resolved_at__isnull=True),
-            )
-        )
-        .order_by(F("generated_at").desc(nulls_last=True), "-created_at")
-        .first()
-    )
+    return select_active_plan_version(WORKING_CANDIDATE)
 
 
 def _role_shape_for(user) -> DashboardRoleShape:

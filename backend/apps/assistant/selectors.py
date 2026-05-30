@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from django.contrib.auth.models import AbstractBaseUser
-from django.db.models import Count, F, Q
+from django.db.models import Q
 
 from apps.audit.models import AuditEvent
 from apps.flows.models import FlowStepRun
@@ -35,6 +35,10 @@ from apps.scheduling.models import (
     RootCauseRepairAssessment,
     ScenarioRun,
     SimulationScenario,
+)
+from apps.scheduling.active_plan_selectors import (
+    WORKING_CANDIDATE,
+    select_active_plan_version as select_scheduling_active_plan_version,
 )
 from apps.scheduling.commercial_projection_services import (
     is_commercial_projection_stale,
@@ -172,37 +176,7 @@ def select_user_role_codes(user: AbstractBaseUser) -> set[str]:
 
 
 def select_active_plan_version(user: AbstractBaseUser | None = None) -> PlanVersion | None:
-    queryset = PlanVersion.objects.select_related(
-        "plan",
-        "created_by",
-        "source_version",
-    ).annotate(
-        open_blockers=Count(
-            "conflicts",
-            filter=Q(conflicts__is_blocking=True, conflicts__resolved_at__isnull=True),
-        )
-    )
-    publish_candidate = (
-        queryset.filter(status=PlanVersion.Status.APPROVED).order_by("-created_at").first()
-    )
-    if publish_candidate:
-        return publish_candidate
-
-    active_candidate = (
-        queryset.filter(
-            status__in=[
-                PlanVersion.Status.DRAFT,
-                PlanVersion.Status.VALIDATED,
-                PlanVersion.Status.PROPOSED,
-            ]
-        )
-        .order_by("-created_at")
-        .first()
-    )
-    if active_candidate:
-        return active_candidate
-
-    return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at").first()
+    return select_scheduling_active_plan_version(WORKING_CANDIDATE)
 
 
 def select_planning_counts(

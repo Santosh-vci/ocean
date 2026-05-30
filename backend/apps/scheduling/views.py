@@ -1,4 +1,4 @@
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -51,6 +51,7 @@ from .models import (
     SimulationScenario,
     Trip,
 )
+from .active_plan_selectors import WORKING_CANDIDATE, select_active_plan_version
 from .read_models import build_dashboard_read_model
 from .recovery_services import (
     build_recommendation_proof_pack,
@@ -134,35 +135,10 @@ def _schedule_version_queryset():
 
 
 def _active_schedule_version():
-    publish_candidate = (
-        _schedule_version_queryset()
-        .filter(status=PlanVersion.Status.APPROVED)
-        .order_by("-created_at")
-        .first()
-    )
-    if publish_candidate:
-        return publish_candidate
-
-    active_candidate = (
-        _schedule_version_queryset()
-        .filter(
-            status__in=[
-                PlanVersion.Status.DRAFT,
-                PlanVersion.Status.VALIDATED,
-                PlanVersion.Status.PROPOSED,
-            ]
-        )
-        .order_by("-created_at")
-        .first()
-    )
-    if active_candidate:
-        return active_candidate
-
-    return (
-        _schedule_version_queryset()
-        .order_by(F("generated_at").desc(nulls_last=True), "-created_at")
-        .first()
-    )
+    version = select_active_plan_version(WORKING_CANDIDATE)
+    if version is None:
+        return None
+    return _schedule_version_queryset().filter(pk=version.pk).first()
 
 
 class DashboardSituationView(APIView):

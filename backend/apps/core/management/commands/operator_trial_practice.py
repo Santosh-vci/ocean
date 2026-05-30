@@ -192,7 +192,8 @@ class OperatorTrialPracticeRunner:
             flow_key="phase5_plus_recovery_v1",
             trial_pack="operator_trial_phase5",
             evidence_run_id="operator-trial-recovery",
-            subject_id="recovery",
+            subject_type="plan_version",
+            subject_id=str(seed_summary["planVersionId"]),
         )
         return {
             "step": "prepare-db-truth",
@@ -230,6 +231,7 @@ class OperatorTrialPracticeRunner:
         trial_pack: str,
         evidence_run_id: str,
         subject_id: str,
+        subject_type: str = "operator_trial",
     ) -> FlowRun:
         FlowRun.objects.all().delete()
         definition = seed_canonical_flow_definitions()
@@ -243,7 +245,7 @@ class OperatorTrialPracticeRunner:
         return start_flow(
             flow_key,
             actor=self.admin,
-            subject=FlowSubject("operator_trial", subject_id),
+            subject=FlowSubject(subject_type, subject_id),
             metadata={
                 "trial_pack": trial_pack,
                 "evidence_run_id": evidence_run_id,

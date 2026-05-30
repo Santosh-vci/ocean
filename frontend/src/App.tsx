@@ -64,6 +64,7 @@ import type {
   PlanRecord,
   PlanVersionRecord,
   PlanningOverview,
+  PublishedPlanSnapshotRecord,
   PublishabilityAssessmentRecord,
   RbacOverview,
   RecoveryInputSnapshotRecord,
@@ -1054,6 +1055,7 @@ function App() {
       );
       await recordActiveFlowCta("MATERIALIZE_RECOVERY_RECOMMENDATION", "/recovery/recommendations", {
         recommendationId,
+        scenarioId: recommendation.scenario,
         scenarioRef: recommendation.scenario_ref,
       });
       handleNavigate("/simulation/workspace");
@@ -1140,9 +1142,14 @@ function App() {
           },
         },
       );
+      const latestSucceededRun = [...simulated.runs]
+        .filter((run) => run.status === "succeeded")
+        .sort((left, right) => right.id - left.id)[0];
       await recordActiveFlowCta("RUN_SIMULATION", "/simulation/workspace", {
         scenarioId: simulated.id,
         scenarioRef: simulated.scenario_id,
+        scenarioRunId: latestSucceededRun?.id,
+        scenarioRunRef: latestSucceededRun?.run_id,
       });
       return `Simulation complete: ${simulated.scenario_id}`;
     });
@@ -1168,6 +1175,7 @@ function App() {
       await recordActiveFlowCta("PROMOTE_SCENARIO", "/simulation/workspace", {
         scenarioId: promoted.id,
         scenarioRef: promoted.scenario_id,
+        scenarioVersionId: promoted.scenario_version,
         scenarioVersionRef: promoted.scenario_version_ref,
       });
       return `Scenario promoted: ${promoted.scenario_version_ref ?? promoted.scenario_id}`;
@@ -1321,13 +1329,15 @@ function App() {
         throw new Error("No active plan version");
       }
       const csrfToken = await getCsrfToken();
-      await apiFetch(`/scheduling/plan-versions/${activeVersion.id}/publish/`, {
+      const snapshot = await apiFetch<PublishedPlanSnapshotRecord>(`/scheduling/plan-versions/${activeVersion.id}/publish/`, {
         method: "POST",
         headers: {
           "X-CSRFToken": csrfToken,
         },
       });
       await recordActiveFlowCta("PUBLISH_PLAN", "/approvals/publishing", {
+        publishedSnapshotId: snapshot.id,
+        publishedSnapshotRef: snapshot.snapshot_id,
         planVersionId: activeVersion.id,
         planCode: activeVersion.plan_code,
         versionNo: activeVersion.version_no,

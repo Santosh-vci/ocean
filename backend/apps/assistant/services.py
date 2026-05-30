@@ -688,13 +688,26 @@ def _stage_plan_published(ctx) -> AssistantChecklistItem:
             "complete",
             reason="An active published snapshot exists.",
         )
-    if ctx.all_required_approvals_complete and ctx.blocking_conflict_count == 0:
+    publishability_clear = (
+        ctx.publishability_status in {"publishable", "warning"}
+        and ctx.publishability_assessment_id is not None
+        and not ctx.publishability_is_stale
+    )
+    if ctx.all_required_approvals_complete and ctx.blocking_conflict_count == 0 and publishability_clear:
         return _stage(
             "plan_published",
             "Plan published",
             "current",
             action_id="PUBLISH_PLAN",
-            reason="Approvals are complete and the plan is ready to publish.",
+            reason="Approvals and publishability are complete and the plan is ready to publish.",
+        )
+    if ctx.all_required_approvals_complete and ctx.blocking_conflict_count == 0:
+        return _stage(
+            "plan_published",
+            "Plan published",
+            "blocked",
+            action_id="RUN_PUBLISHABILITY_CHECK",
+            reason="Run a clear publishability assessment before publishing.",
         )
     if ctx.all_required_approvals_complete and ctx.blocking_conflict_count > 0:
         return _stage(

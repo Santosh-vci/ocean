@@ -7,7 +7,7 @@ from typing import Any
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from apps.masters.models import Barge, CTSAsset, Jetty, Tug
@@ -31,6 +31,7 @@ from .models import (
     PlanVersion,
     Trip,
 )
+from .active_plan_selectors import WORKING_CANDIDATE, select_active_plan_version
 
 GLOBAL_OPTIMIZER_ALGORITHM_VERSION = "phase6.5-global-optimizer-scaffold"
 DEFAULT_PROFILE_KEY = "global_optimizer_default_v1"
@@ -187,31 +188,7 @@ def generate_global_optimization_candidates(
 
 
 def select_active_global_plan_version() -> PlanVersion | None:
-    queryset = PlanVersion.objects.select_related("plan", "source_version").annotate(
-        open_blockers=Count(
-            "conflicts",
-            filter=Q(conflicts__is_blocking=True, conflicts__resolved_at__isnull=True),
-        )
-    )
-    publish_candidate = (
-        queryset.filter(status=PlanVersion.Status.APPROVED).order_by("-created_at").first()
-    )
-    if publish_candidate:
-        return publish_candidate
-    active_candidate = (
-        queryset.filter(
-            status__in=[
-                PlanVersion.Status.DRAFT,
-                PlanVersion.Status.VALIDATED,
-                PlanVersion.Status.PROPOSED,
-            ]
-        )
-        .order_by("-created_at")
-        .first()
-    )
-    if active_candidate:
-        return active_candidate
-    return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at").first()
+    return select_active_plan_version(WORKING_CANDIDATE)
 
 
 def build_global_optimizer_input_summary(

@@ -44,6 +44,7 @@ from .models import (
     SimulationScenario,
     Trip,
 )
+from .recovery_lineage import build_recovery_origin, provenance_summary_fields
 
 REQUIRED_APPROVAL_AUTHORITIES = [
     ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
@@ -87,6 +88,7 @@ def clone_plan_version(*, source_version: PlanVersion, created_by=None) -> PlanV
             **source_version.summary,
             "sourceVersion": source_version.version_no,
             "cloneMode": "generated_state_copy",
+            **provenance_summary_fields(source_version.summary),
         }
         clone.save(update_fields=["validation_status", "summary", "updated_at"])
 
@@ -1395,26 +1397,30 @@ def _promoted_version_summary(
     scenario_diff: dict,
     actor,
 ) -> dict:
-    return {
-        "scenarioLineage": {
-            "baselineVersionId": scenario.baseline_version_id,
-            "baselineVersionRef": str(scenario.baseline_version),
-            "scenarioId": scenario.scenario_id,
-            "scenarioPk": scenario.id,
-            "selectedRunId": run.id,
-            "selectedRunRef": run.run_id,
-            "assumptionIds": list(
-                scenario.assumptions.order_by("created_at", "id").values_list(
-                    "assumption_id",
-                    flat=True,
-                )
-            ),
-            "algorithmVersion": run.algorithm_version,
-            "promotedAt": timezone.now().isoformat(),
-            "promotedBy": getattr(actor, "email", "") or getattr(actor, "username", ""),
-        },
+    recovery_origin = build_recovery_origin(scenario=scenario, run=run)
+    summary = {
         "scenarioDiff": scenario_diff,
     }
+    if recovery_origin:
+        summary["recoveryOrigin"] = recovery_origin
+    summary["scenarioLineage"] = {
+        "baselineVersionId": scenario.baseline_version_id,
+        "baselineVersionRef": str(scenario.baseline_version),
+        "scenarioId": scenario.scenario_id,
+        "scenarioPk": scenario.id,
+        "selectedRunId": run.id,
+        "selectedRunRef": run.run_id,
+        "assumptionIds": list(
+            scenario.assumptions.order_by("created_at", "id").values_list(
+                "assumption_id",
+                flat=True,
+            )
+        ),
+        "algorithmVersion": run.algorithm_version,
+        "promotedAt": timezone.now().isoformat(),
+        "promotedBy": getattr(actor, "email", "") or getattr(actor, "username", ""),
+    }
+    return summary
 
 
 def _assert_scenario_inputs_mutable(scenario: SimulationScenario) -> None:
@@ -2884,6 +2890,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
     """Regenerate a deterministic trip chain from current demand, master, and constraint data."""
 
     with transaction.atomic():
+        preserved_provenance = provenance_summary_fields(plan_version.summary)
         _clear_generated_state(plan_version)
 
         steps = (
@@ -2988,6 +2995,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 .values_list("code", flat=True)
                 .first()
             ),
+            **preserved_provenance,
         }
         plan_version.save(
             update_fields=[

@@ -1,5 +1,5 @@
 {
-  "preparedAt": "2026-05-29T22:56:33.802Z",
+  "preparedAt": "2026-05-30T04:00:35.954Z",
   "appUrl": "http://localhost:8080",
   "preparedFlow": {
     "currentStep": "import_ogv_demand",
@@ -34,7 +34,7 @@
     "flow": "happy-path",
     "flowKey": "operator_happy_path_v1",
     "flowName": "Operator happy path",
-    "flowRunId": "FLOW-4522345B5591",
+    "flowRunId": "FLOW-8AA637C91A7F",
     "flowStatus": "active",
     "meaning": "DB truth is prepared for a UI-only happy path run. Demand, windows, plans, approvals, published snapshots, and exports are empty.",
     "startingCounts": {
@@ -127,7 +127,7 @@
       "title": "Prepared operator trial flow",
       "route": "/dashboard/situation",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\01_prepared_operator_trial_flow.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "import_ogv_demand",
@@ -138,7 +138,7 @@
       "clickedCtaLabel": null,
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "import_ogv_demand",
@@ -206,7 +206,7 @@
       "title": "Demand page opened",
       "route": "/schedule/ogv-demand",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\02_demand_page_opened.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "import_ogv_demand",
@@ -217,7 +217,7 @@
       "clickedCtaLabel": "NEXT ACTION Import OGV demand",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "import_ogv_demand",
@@ -285,7 +285,7 @@
       "title": "Clean OGV demand imported",
       "route": "/schedule/ogv-demand",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\03_clean_ogv_demand_imported.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "enter_operating_windows",
@@ -296,7 +296,7 @@
       "clickedCtaLabel": "IMPORT DEMAND",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "enter_operating_windows",
@@ -367,7 +367,7 @@
           "metadata": {
             "evidence": {
               "demandCount": 2,
-              "importJobId": 191
+              "importJobId": 215
             }
           }
         },
@@ -379,7 +379,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "filename": "operator_happy_path_ogv_demand.xlsx",
-            "importJobId": 191
+            "importJobId": 215
           }
         },
         {
@@ -398,7 +398,7 @@
       "title": "Clean coal sequence reviewed",
       "route": "/schedule/coal-grade-sequence",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\04_clean_coal_sequence_reviewed.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "enter_operating_windows",
@@ -409,7 +409,7 @@
       "clickedCtaLabel": "Coal Grade Sequence",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "enter_operating_windows",
@@ -480,7 +480,7 @@
           "metadata": {
             "evidence": {
               "demandCount": 2,
-              "importJobId": 191
+              "importJobId": 215
             }
           }
         },
@@ -492,7 +492,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "filename": "operator_happy_path_ogv_demand.xlsx",
-            "importJobId": 191
+            "importJobId": 215
           }
         },
         {
@@ -511,7 +511,7 @@
       "title": "Operating-window page opened",
       "route": "/constraints/tide-bridge",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\05_operating_window_page_opened.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "enter_operating_windows",
@@ -522,7 +522,7 @@
       "clickedCtaLabel": "NEXT ACTION Enter tide/bridge windows",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "enter_operating_windows",
@@ -593,7 +593,7 @@
           "metadata": {
             "evidence": {
               "demandCount": 2,
-              "importJobId": 191
+              "importJobId": 215
             }
           }
         },
@@ -605,7 +605,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "filename": "operator_happy_path_ogv_demand.xlsx",
-            "importJobId": 191
+            "importJobId": 215
           }
         },
         {
@@ -624,7 +624,7 @@
       "title": "Operating windows entered",
       "route": "/constraints/tide-bridge",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\06_operating_windows_entered.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "generate_plan",
@@ -635,7 +635,7 @@
       "clickedCtaLabel": "ENTER OPERATING WINDOWS",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "generate_plan",
@@ -736,7 +736,7 @@
           "metadata": {
             "evidence": {
               "demandCount": 2,
-              "importJobId": 191
+              "importJobId": 215
             }
           }
         },
@@ -748,7 +748,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "filename": "operator_happy_path_ogv_demand.xlsx",
-            "importJobId": 191
+            "importJobId": 215
           }
         }
       ]
@@ -758,7 +758,7 @@
       "title": "Assignment page opened",
       "route": "/operations/tug-barge-assignment",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\07_assignment_page_opened.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "generate_plan",
@@ -769,7 +769,7 @@
       "clickedCtaLabel": "NEXT ACTION Generate plan",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "generate_plan",
@@ -870,7 +870,7 @@
           "metadata": {
             "evidence": {
               "demandCount": 2,
-              "importJobId": 191
+              "importJobId": 215
             }
           }
         },
@@ -882,7 +882,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "filename": "operator_happy_path_ogv_demand.xlsx",
-            "importJobId": 191
+            "importJobId": 215
           }
         }
       ]
@@ -892,7 +892,7 @@
       "title": "Plan generated from clean demand",
       "route": "/operations/tug-barge-assignment",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\08_plan_generated_from_clean_demand.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "submit_approval",
@@ -903,7 +903,7 @@
       "clickedCtaLabel": "REGENERATE PLAN",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "submit_approval",
@@ -963,7 +963,7 @@
           "metadata": {
             "evidence": {
               "tripCount": 3,
-              "planVersionId": 254
+              "planVersionId": 320
             }
           }
         },
@@ -974,9 +974,9 @@
           "route": "/operations/tug-barge-assignment",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320
           }
         },
         {
@@ -1027,7 +1027,7 @@
       "title": "Published-plan page opened",
       "route": "/schedule/published-plan",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\09_published_plan_page_opened.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "submit_approval",
@@ -1038,7 +1038,7 @@
       "clickedCtaLabel": "NEXT ACTION Submit approval",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "submit_approval",
@@ -1098,7 +1098,7 @@
           "metadata": {
             "evidence": {
               "tripCount": 3,
-              "planVersionId": 254
+              "planVersionId": 320
             }
           }
         },
@@ -1109,9 +1109,9 @@
           "route": "/operations/tug-barge-assignment",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320
           }
         },
         {
@@ -1162,7 +1162,7 @@
       "title": "Approval request submitted",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\10_approval_request_submitted.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "blocked",
       "currentStep": "approve_plan",
@@ -1173,7 +1173,7 @@
       "clickedCtaLabel": "SUBMIT APPROVAL",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "blocked",
         "current_step": "approve_plan",
@@ -1238,7 +1238,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1249,7 +1249,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1260,9 +1260,9 @@
           "route": "/schedule/published-plan",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
-            "planVersionId": 254,
-            "approvalRequestId": 247
+            "requestId": "APR-PLAN-UI-13673509-V1",
+            "planVersionId": 320,
+            "approvalRequestId": 279
           }
         },
         {
@@ -1273,7 +1273,7 @@
           "metadata": {
             "evidence": {
               "tripCount": 3,
-              "planVersionId": 254
+              "planVersionId": 320
             }
           }
         },
@@ -1284,9 +1284,9 @@
           "route": "/operations/tug-barge-assignment",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320
           }
         }
       ]
@@ -1296,7 +1296,7 @@
       "title": "First authority approved",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\11_first_authority_approved.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "blocked",
       "currentStep": "approve_plan",
@@ -1307,7 +1307,7 @@
       "clickedCtaLabel": "Approve",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "blocked",
         "current_step": "approve_plan",
@@ -1366,9 +1366,9 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
+            "requestId": "APR-PLAN-UI-13673509-V1",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 247
+            "approvalRequestId": 279
           }
         },
         {
@@ -1384,7 +1384,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1395,7 +1395,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1406,9 +1406,9 @@
           "route": "/schedule/published-plan",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
-            "planVersionId": 254,
-            "approvalRequestId": 247
+            "requestId": "APR-PLAN-UI-13673509-V1",
+            "planVersionId": 320,
+            "approvalRequestId": 279
           }
         },
         {
@@ -1419,7 +1419,7 @@
           "metadata": {
             "evidence": {
               "tripCount": 3,
-              "planVersionId": 254
+              "planVersionId": 320
             }
           }
         }
@@ -1430,7 +1430,7 @@
       "title": "All approvals complete",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\12_all_approvals_complete.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "run_publishability_check",
@@ -1441,7 +1441,7 @@
       "clickedCtaLabel": "Approve",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "run_publishability_check",
@@ -1505,7 +1505,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1516,9 +1516,9 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
+            "requestId": "APR-PLAN-UI-13673509-V1",
             "authorityRole": "abl_dispatcher",
-            "approvalRequestId": 247
+            "approvalRequestId": 279
           }
         },
         {
@@ -1528,9 +1528,9 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
+            "requestId": "APR-PLAN-UI-13673509-V1",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 247
+            "approvalRequestId": 279
           }
         },
         {
@@ -1546,7 +1546,7 @@
                 "berau_scheduler"
               ],
               "approvedRoles": [],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1557,7 +1557,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         }
@@ -1568,7 +1568,7 @@
       "title": "Publishability gate cleared",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\13_publishability_gate_cleared.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "publish_plan",
@@ -1579,7 +1579,7 @@
       "clickedCtaLabel": "CHECK PUBLISHABILITY",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "publish_plan",
@@ -1639,11 +1639,11 @@
           "metadata": {
             "evidence": {
               "warningCount": 0,
-              "planVersionId": 254,
+              "planVersionId": 320,
               "blockingReasonCount": 0,
               "publishabilityStatus": "publishable",
-              "publishabilityAssessmentId": 4,
-              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+              "publishabilityAssessmentId": 57,
+              "publishabilityAssessmentRef": "PUB-54EBF4EF26B0"
             }
           }
         },
@@ -1655,10 +1655,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "publishable",
-            "assessmentId": 4,
+            "assessmentId": 57,
             "warningCount": 0,
-            "assessmentRef": "PUB-B4F2C4048605",
-            "planVersionId": 254,
+            "assessmentRef": "PUB-54EBF4EF26B0",
+            "planVersionId": 320,
             "blockingReasonCount": 0
           }
         },
@@ -1674,7 +1674,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         },
@@ -1685,9 +1685,9 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
+            "requestId": "APR-PLAN-UI-13673509-V1",
             "authorityRole": "abl_dispatcher",
-            "approvalRequestId": 247
+            "approvalRequestId": 279
           }
         },
         {
@@ -1697,9 +1697,9 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "requestId": "APR-PLAN-UI-95429353-V1",
+            "requestId": "APR-PLAN-UI-13673509-V1",
             "authorityRole": "berau_scheduler",
-            "approvalRequestId": 247
+            "approvalRequestId": 279
           }
         }
       ]
@@ -1709,7 +1709,7 @@
       "title": "Plan manually published",
       "route": "/approvals/publishing",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\14_plan_manually_published.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "generate_export",
@@ -1720,7 +1720,7 @@
       "clickedCtaLabel": "PUBLISH PLAN",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "generate_export",
@@ -1779,7 +1779,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "publishedSnapshotId": 55
+              "publishedSnapshotId": 66
             }
           }
         },
@@ -1790,9 +1790,11 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320,
+            "publishedSnapshotId": 66,
+            "publishedSnapshotRef": "LIVE-PLAN-UI-13673509-V1"
           }
         },
         {
@@ -1803,11 +1805,11 @@
           "metadata": {
             "evidence": {
               "warningCount": 0,
-              "planVersionId": 254,
+              "planVersionId": 320,
               "blockingReasonCount": 0,
               "publishabilityStatus": "publishable",
-              "publishabilityAssessmentId": 4,
-              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+              "publishabilityAssessmentId": 57,
+              "publishabilityAssessmentRef": "PUB-54EBF4EF26B0"
             }
           }
         },
@@ -1819,10 +1821,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "publishable",
-            "assessmentId": 4,
+            "assessmentId": 57,
             "warningCount": 0,
-            "assessmentRef": "PUB-B4F2C4048605",
-            "planVersionId": 254,
+            "assessmentRef": "PUB-54EBF4EF26B0",
+            "planVersionId": 320,
             "blockingReasonCount": 0
           }
         },
@@ -1838,7 +1840,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         }
@@ -1849,7 +1851,7 @@
       "title": "Export handoff page opened",
       "route": "/admin/export-handoff",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\15_export_handoff_page_opened.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "active",
       "currentStep": "generate_export",
@@ -1860,7 +1862,7 @@
       "clickedCtaLabel": "NEXT ACTION Generate governed export",
       "assistantFlow": {
         "active_flow": "operator_happy_path_v1",
-        "flow_run_id": "FLOW-4522345B5591",
+        "flow_run_id": "FLOW-8AA637C91A7F",
         "flow_name": "Operator happy path",
         "flow_status": "active",
         "current_step": "generate_export",
@@ -1919,7 +1921,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "publishedSnapshotId": 55
+              "publishedSnapshotId": 66
             }
           }
         },
@@ -1930,9 +1932,11 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320,
+            "publishedSnapshotId": 66,
+            "publishedSnapshotRef": "LIVE-PLAN-UI-13673509-V1"
           }
         },
         {
@@ -1943,11 +1947,11 @@
           "metadata": {
             "evidence": {
               "warningCount": 0,
-              "planVersionId": 254,
+              "planVersionId": 320,
               "blockingReasonCount": 0,
               "publishabilityStatus": "publishable",
-              "publishabilityAssessmentId": 4,
-              "publishabilityAssessmentRef": "PUB-B4F2C4048605"
+              "publishabilityAssessmentId": 57,
+              "publishabilityAssessmentRef": "PUB-54EBF4EF26B0"
             }
           }
         },
@@ -1959,10 +1963,10 @@
           "metadata": {
             "source": "operator_ui_cta",
             "status": "publishable",
-            "assessmentId": 4,
+            "assessmentId": 57,
             "warningCount": 0,
-            "assessmentRef": "PUB-B4F2C4048605",
-            "planVersionId": 254,
+            "assessmentRef": "PUB-54EBF4EF26B0",
+            "planVersionId": 320,
             "blockingReasonCount": 0
           }
         },
@@ -1978,7 +1982,7 @@
                 "abl_dispatcher",
                 "berau_scheduler"
               ],
-              "approvalRequestId": 247
+              "approvalRequestId": 279
             }
           }
         }
@@ -1989,7 +1993,7 @@
       "title": "Governed export generated",
       "route": "/admin/export-handoff",
       "screenshot": "F:\\ocean\\docs\\evidence\\operator_trial_flow\\screenshots\\16_governed_export_generated.png",
-      "flowRunId": "FLOW-4522345B5591",
+      "flowRunId": "FLOW-8AA637C91A7F",
       "flowKey": "operator_happy_path_v1",
       "flowStatus": "completed",
       "currentStep": "",
@@ -2042,7 +2046,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "exportJobId": 61
+              "exportJobId": 63
             }
           }
         },
@@ -2054,7 +2058,7 @@
           "metadata": {
             "source": "operator_ui_cta",
             "exportType": "plan",
-            "exportJobId": 61,
+            "exportJobId": 63,
             "exportFormat": "print"
           }
         },
@@ -2065,7 +2069,7 @@
           "route": "",
           "metadata": {
             "evidence": {
-              "publishedSnapshotId": 55
+              "publishedSnapshotId": 66
             }
           }
         },
@@ -2076,9 +2080,11 @@
           "route": "/approvals/publishing",
           "metadata": {
             "source": "operator_ui_cta",
-            "planCode": "PLAN-UI-95429353",
+            "planCode": "PLAN-UI-13673509",
             "versionNo": 1,
-            "planVersionId": 254
+            "planVersionId": 320,
+            "publishedSnapshotId": 66,
+            "publishedSnapshotRef": "LIVE-PLAN-UI-13673509-V1"
           }
         }
       ]
@@ -2091,7 +2097,7 @@
       "text": "SUPER",
       "matchCount": 1,
       "route": "#/dashboard/situation",
-      "clickedAt": "2026-05-29T22:56:45.073Z"
+      "clickedAt": "2026-05-30T04:00:47.947Z"
     },
     {
       "purpose": "Global Next Action opens demand import page",
@@ -2099,7 +2105,7 @@
       "text": "NEXT ACTION Import OGV demand",
       "matchCount": 2,
       "route": "#/dashboard/situation",
-      "clickedAt": "2026-05-29T22:56:48.330Z"
+      "clickedAt": "2026-05-30T04:00:51.306Z"
     },
     {
       "purpose": "Visible page CTA imports clean happy-path OGV demand",
@@ -2107,7 +2113,7 @@
       "text": "IMPORT DEMAND",
       "matchCount": 2,
       "route": "#/schedule/ogv-demand",
-      "clickedAt": "2026-05-29T22:56:51.543Z"
+      "clickedAt": "2026-05-30T04:00:54.722Z"
     },
     {
       "purpose": "Operator reviews the clean cargo sequence before entering windows",
@@ -2115,7 +2121,7 @@
       "text": "Coal Grade Sequence",
       "matchCount": 1,
       "route": "#/schedule/ogv-demand",
-      "clickedAt": "2026-05-29T22:56:55.265Z"
+      "clickedAt": "2026-05-30T04:00:58.164Z"
     },
     {
       "purpose": "Global Next Action opens operating-window page",
@@ -2123,7 +2129,7 @@
       "text": "NEXT ACTION Enter tide/bridge windows",
       "matchCount": 1,
       "route": "#/schedule/coal-grade-sequence",
-      "clickedAt": "2026-05-29T22:56:58.833Z"
+      "clickedAt": "2026-05-30T04:01:01.923Z"
     },
     {
       "purpose": "Visible page CTA creates tide, bridge, asset, and jetty windows",
@@ -2131,7 +2137,7 @@
       "text": "ENTER OPERATING WINDOWS",
       "matchCount": 1,
       "route": "#/constraints/tide-bridge",
-      "clickedAt": "2026-05-29T22:57:02.436Z"
+      "clickedAt": "2026-05-30T04:01:05.581Z"
     },
     {
       "purpose": "Global Next Action opens tug-barge assignment page",
@@ -2139,7 +2145,7 @@
       "text": "NEXT ACTION Generate plan",
       "matchCount": 2,
       "route": "#/constraints/tide-bridge",
-      "clickedAt": "2026-05-29T22:57:05.865Z"
+      "clickedAt": "2026-05-30T04:01:09.766Z"
     },
     {
       "purpose": "Visible page CTA generates the operator plan",
@@ -2147,7 +2153,7 @@
       "text": "REGENERATE PLAN",
       "matchCount": 1,
       "route": "#/operations/tug-barge-assignment",
-      "clickedAt": "2026-05-29T22:57:09.125Z"
+      "clickedAt": "2026-05-30T04:01:13.200Z"
     },
     {
       "purpose": "Global Next Action opens approval-submission page",
@@ -2155,7 +2161,7 @@
       "text": "NEXT ACTION Submit approval",
       "matchCount": 1,
       "route": "#/operations/tug-barge-assignment",
-      "clickedAt": "2026-05-29T22:57:12.805Z"
+      "clickedAt": "2026-05-30T04:01:17.448Z"
     },
     {
       "purpose": "Visible page CTA creates the approval request",
@@ -2163,7 +2169,7 @@
       "text": "SUBMIT APPROVAL",
       "matchCount": 2,
       "route": "#/schedule/published-plan",
-      "clickedAt": "2026-05-29T22:57:16.699Z"
+      "clickedAt": "2026-05-30T04:01:21.774Z"
     },
     {
       "purpose": "Visible page CTA records first authority approval",
@@ -2171,7 +2177,7 @@
       "text": "Approve",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-29T22:57:20.800Z"
+      "clickedAt": "2026-05-30T04:01:27.199Z"
     },
     {
       "purpose": "Visible page CTA records second authority approval",
@@ -2179,7 +2185,7 @@
       "text": "Approve",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-29T22:57:25.344Z"
+      "clickedAt": "2026-05-30T04:01:31.858Z"
     },
     {
       "purpose": "Visible page CTA computes the publishability gate before manual publish",
@@ -2187,7 +2193,7 @@
       "text": "CHECK PUBLISHABILITY",
       "matchCount": 3,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-29T22:57:29.289Z"
+      "clickedAt": "2026-05-30T04:01:37.076Z"
     },
     {
       "purpose": "Visible page CTA manually publishes the plan",
@@ -2195,7 +2201,7 @@
       "text": "PUBLISH PLAN",
       "matchCount": 2,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-29T22:57:33.542Z"
+      "clickedAt": "2026-05-30T04:01:41.539Z"
     },
     {
       "purpose": "Global Next Action opens governed export page",
@@ -2203,7 +2209,7 @@
       "text": "NEXT ACTION Generate governed export",
       "matchCount": 1,
       "route": "#/approvals/publishing",
-      "clickedAt": "2026-05-29T22:57:38.331Z"
+      "clickedAt": "2026-05-30T04:01:47.087Z"
     },
     {
       "purpose": "Visible page CTA generates the governed export",
@@ -2211,11 +2217,11 @@
       "text": "PLAN · PRINT Printable schedule Operator-readable plan handoff for Berau/ABL coordination.",
       "matchCount": 1,
       "route": "#/admin/export-handoff",
-      "clickedAt": "2026-05-29T22:57:42.309Z"
+      "clickedAt": "2026-05-30T04:01:51.759Z"
     }
   ],
   "finalAssertions": {
-    "flowRunId": "FLOW-4522345B5591",
+    "flowRunId": "FLOW-8AA637C91A7F",
     "flowKey": "operator_happy_path_v1",
     "flowCompleted": true,
     "activePublishedSnapshotExists": true,

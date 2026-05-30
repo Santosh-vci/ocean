@@ -73,6 +73,8 @@ test("recordFlowCtaEvidence posts flow event after a matching CTA", async () => 
         step_key: "import_ogv_demand",
         action_id: "IMPORT_OGV_DEMAND",
         route: "/schedule/ogv-demand",
+        object_type: "import_job",
+        object_id: "7",
         metadata: {
           source: "operator_ui_cta",
           importJobId: 7,

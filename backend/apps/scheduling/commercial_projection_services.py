@@ -7,7 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 from django.db import transaction
-from django.db.models import F, Max
+from django.db.models import Max
 from django.utils import timezone
 
 from apps.planning.models import OGVVoyage
@@ -25,6 +25,7 @@ from .models import (
     ScheduleEvent,
     Trip,
 )
+from .active_plan_selectors import WORKING_CANDIDATE, select_active_plan_version
 
 COMMERCIAL_PROJECTION_ALGORITHM_VERSION = "phase6.6-commercial-projection"
 PROJECTION_ONLY_DISCLAIMER = (
@@ -457,26 +458,7 @@ def _run_summary(projection_specs: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _select_active_plan_version() -> PlanVersion | None:
-    queryset = PlanVersion.objects.select_related("plan", "source_version")
-    publish_candidate = (
-        queryset.filter(status=PlanVersion.Status.APPROVED).order_by("-created_at").first()
-    )
-    if publish_candidate:
-        return publish_candidate
-    active_candidate = (
-        queryset.filter(
-            status__in=[
-                PlanVersion.Status.DRAFT,
-                PlanVersion.Status.VALIDATED,
-                PlanVersion.Status.PROPOSED,
-            ]
-        )
-        .order_by("-created_at")
-        .first()
-    )
-    if active_candidate:
-        return active_candidate
-    return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at").first()
+    return select_active_plan_version(WORKING_CANDIDATE)
 
 
 def _plan_version_summary(plan_version: PlanVersion | None) -> dict[str, Any] | None:

@@ -6,11 +6,13 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.flows.definitions import seed_canonical_flow_definitions
 from apps.flows.models import FlowDefinition, FlowEvent, FlowRun, FlowStepRun
-from apps.flows.services import record_cta_intent, start_flow
+from apps.flows.selectors import evaluate_selector
+from apps.flows.services import evaluate_flow_run, record_cta_intent, start_flow
 from apps.masters.models import Location
 from apps.organizations.models import Organization
 from apps.planning.models import BridgeWindow, ImportJob, OGVVoyage, TideWindow
@@ -210,6 +212,40 @@ def create_plan_chain(user, org, voyage):
     return version
 
 
+def start_completed_bound_happy_flow(user, org):
+    voyage = create_demand(user, org)
+    create_windows()
+    version = create_plan_chain(user, org, voyage)
+    import_job = ImportJob.objects.latest("id")
+    approval = ApprovalRequest.objects.get(plan_version=version)
+    snapshot = PublishedPlanSnapshot.objects.get(plan_version=version)
+    export = ExportJob.objects.get(plan_version=version)
+    assessment = assess_plan_publishability(plan_version=version, actor=user)
+    flow = start_flow(
+        "operator_happy_path_v1",
+        user,
+        metadata={
+            "trial_pack": "operator_happy_path_v1",
+            "bound_refs": {
+                "import_job_id": str(import_job.id),
+                "plan_version_id": str(version.id),
+                "approval_request_id": str(approval.id),
+                "publishability_assessment_id": str(assessment.id),
+                "published_snapshot_id": str(snapshot.id),
+                "export_job_id": str(export.id),
+            },
+        },
+    )
+    return {
+        "flow": flow,
+        "version": version,
+        "approval": approval,
+        "snapshot": snapshot,
+        "export": export,
+        "assessment": assessment,
+    }
+
+
 @pytest.mark.django_db
 def test_flow_model_constraints_and_references():
     definition = seed_canonical_flow_definitions()[0]
@@ -325,6 +361,198 @@ def test_record_cta_intent_only_writes_flow_runtime_records():
 
 
 @pytest.mark.django_db
+def test_record_cta_intent_rejects_future_step_and_wrong_action_without_events():
+    seed_canonical_flow_definitions()
+    user, _org = make_user("flows-forged")
+    flow = start_flow(
+        "operator_happy_path_v1",
+        user,
+        metadata={"trial_pack": "operator_happy_path_v1"},
+    )
+    event_count = FlowEvent.objects.count()
+
+    with pytest.raises(ValidationError, match="current flow step"):
+        record_cta_intent(
+            flow,
+            step_key="generate_plan",
+            action_id="GENERATE_PLAN",
+            route="/operations/tug-barge-assignment",
+            actor=user,
+        )
+    with pytest.raises(ValidationError, match="expected flow step action"):
+        record_cta_intent(
+            flow,
+            step_key="import_ogv_demand",
+            action_id="GENERATE_PLAN",
+            route="/operations/tug-barge-assignment",
+            actor=user,
+        )
+
+    flow.refresh_from_db()
+    assert FlowEvent.objects.count() == event_count
+    assert flow.current_step_key == "import_ogv_demand"
+
+
+@pytest.mark.django_db
+def test_record_cta_intent_rejects_conflicting_bound_refs_without_events():
+    seed_canonical_flow_definitions()
+    user, _org = make_user("flows-ref-conflict")
+    flow = start_flow(
+        "operator_happy_path_v1",
+        user,
+        metadata={"trial_pack": "operator_happy_path_v1"},
+    )
+    first = record_cta_intent(
+        flow,
+        step_key="import_ogv_demand",
+        action_id="IMPORT_OGV_DEMAND",
+        route="/schedule/ogv-demand",
+        actor=user,
+        object_type="import_job",
+        object_id="101",
+    )
+    event_count = FlowEvent.objects.count()
+
+    with pytest.raises(ValidationError, match="Conflicting flow domain references"):
+        record_cta_intent(
+            first,
+            step_key="import_ogv_demand",
+            action_id="IMPORT_OGV_DEMAND",
+            route="/schedule/ogv-demand",
+            actor=user,
+            object_type="import_job",
+            object_id="202",
+        )
+
+    first.refresh_from_db()
+    assert FlowEvent.objects.count() == event_count
+    assert first.metadata["bound_refs"]["import_job_id"] == "101"
+
+
+@pytest.mark.django_db
+def test_parallel_trial_flow_does_not_advance_from_other_flow_bound_domain_refs():
+    seed_canonical_flow_definitions()
+    user, org = make_user("flows-parallel")
+    voyage = create_demand(user, org)
+    create_windows()
+    version = create_plan_chain(user, org, voyage)
+    import_job = ImportJob.objects.latest("id")
+    approval = ApprovalRequest.objects.get(plan_version=version)
+    snapshot = PublishedPlanSnapshot.objects.get(plan_version=version)
+    export = ExportJob.objects.get(plan_version=version)
+    assessment = assess_plan_publishability(plan_version=version, actor=user)
+
+    completed_flow = start_flow(
+        "operator_happy_path_v1",
+        user,
+        metadata={
+            "trial_pack": "operator_happy_path_v1",
+            "bound_refs": {
+                "import_job_id": str(import_job.id),
+                "plan_version_id": str(version.id),
+                "approval_request_id": str(approval.id),
+                "publishability_assessment_id": str(assessment.id),
+                "published_snapshot_id": str(snapshot.id),
+                "export_job_id": str(export.id),
+            },
+        },
+    )
+    isolated_flow = start_flow(
+        "operator_happy_path_v1",
+        user,
+        metadata={"trial_pack": "operator_happy_path_v1"},
+    )
+
+    assert completed_flow.status == FlowRun.Status.COMPLETED
+    assert isolated_flow.current_step_key == "import_ogv_demand"
+    assert not evaluate_selector("demand_imported", isolated_flow).completed
+    assert not evaluate_selector("approval_submitted", isolated_flow).completed
+    assert not evaluate_selector("publishability_assessment_clear", isolated_flow).completed
+    assert not evaluate_selector("plan_published", isolated_flow).completed
+    assert not evaluate_selector("export_generated", isolated_flow).completed
+
+
+@pytest.mark.django_db
+def test_high_risk_completed_step_invalidates_when_bound_approval_changes():
+    seed_canonical_flow_definitions()
+    user, org = make_user("flows-invalidate")
+    state = start_completed_bound_happy_flow(user, org)
+    flow = state["flow"]
+    approval = state["approval"]
+    assert flow.status == FlowRun.Status.COMPLETED
+
+    decision = approval.decisions.filter(
+        authority_role=ApprovalDecision.AuthorityRole.ABL_DISPATCHER,
+    ).get()
+    decision.decision = ApprovalDecision.Decision.REJECT
+    decision.save(update_fields=["decision"])
+
+    evaluated = evaluate_flow_run(flow, actor=user)
+    approve_step = evaluated.step_runs.get(step_key="approve_plan")
+    later_statuses = dict(
+        evaluated.step_runs.filter(sequence__gt=approve_step.sequence).values_list(
+            "step_key",
+            "status",
+        )
+    )
+
+    assert evaluated.status == FlowRun.Status.BLOCKED
+    assert evaluated.current_step_key == "approve_plan"
+    assert approve_step.status == FlowStepRun.Status.BLOCKED
+    assert approve_step.evidence["invalidationReason"] == "completed_step_invalidated"
+    assert later_statuses["run_publishability_check"] == FlowStepRun.Status.PENDING
+    assert later_statuses["publish_plan"] == FlowStepRun.Status.PENDING
+    assert evaluated.events.filter(
+        event_type=FlowEvent.EventType.BLOCKED,
+        metadata__evidence__invalidationReason="completed_step_invalidated",
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_high_risk_publishability_step_invalidates_when_source_inputs_change():
+    seed_canonical_flow_definitions()
+    user, org = make_user("flows-invalidate-source")
+    state = start_completed_bound_happy_flow(user, org)
+    flow = state["flow"]
+    version = state["version"]
+    assert flow.status == FlowRun.Status.COMPLETED
+
+    version.summary = {**version.summary, "sourceInputsChanged": True}
+    version.save(update_fields=["summary", "updated_at"])
+
+    evaluated = evaluate_flow_run(flow, actor=user)
+    publishability_step = evaluated.step_runs.get(step_key="run_publishability_check")
+
+    assert evaluated.status == FlowRun.Status.BLOCKED
+    assert evaluated.current_step_key == "run_publishability_check"
+    assert publishability_step.status == FlowStepRun.Status.BLOCKED
+    assert publishability_step.evidence["invalidationReason"] == "completed_step_invalidated"
+    assert "stale" in publishability_step.blocked_reason.lower()
+
+
+@pytest.mark.django_db
+def test_high_risk_publish_step_invalidates_when_bound_snapshot_is_missing():
+    seed_canonical_flow_definitions()
+    user, org = make_user("flows-invalidate-snapshot")
+    state = start_completed_bound_happy_flow(user, org)
+    flow = state["flow"]
+    snapshot = state["snapshot"]
+    assert flow.status == FlowRun.Status.COMPLETED
+
+    snapshot.status = PublishedPlanSnapshot.Status.SUPERSEDED
+    snapshot.save(update_fields=["status"])
+
+    evaluated = evaluate_flow_run(flow, actor=user)
+    publish_step = evaluated.step_runs.get(step_key="publish_plan")
+
+    assert evaluated.status == FlowRun.Status.BLOCKED
+    assert evaluated.current_step_key == "publish_plan"
+    assert publish_step.status == FlowStepRun.Status.BLOCKED
+    assert publish_step.evidence["invalidationReason"] == "completed_step_invalidated"
+    assert "published plan snapshot" in publish_step.blocked_reason.lower()
+
+
+@pytest.mark.django_db
 def test_flow_api_auth_permissions_and_response_shape():
     seed_canonical_flow_definitions()
     viewer, org = make_user("flows-viewer", permissions=("schedule.view",))
@@ -354,6 +582,17 @@ def test_flow_api_auth_permissions_and_response_shape():
         },
         format="json",
     )
+    event_count_before_forgery = FlowEvent.objects.count()
+    forged_event = client_for(editor).post(
+        f"/api/flows/{flow.run_id}/events/",
+        {
+            "step_key": "generate_plan",
+            "action_id": "GENERATE_PLAN",
+            "route": "/operations/tug-barge-assignment",
+        },
+        format="json",
+    )
+    event_count_after_forgery = FlowEvent.objects.count()
     allowed_event = client_for(editor).post(
         f"/api/flows/{flow.run_id}/events/",
         {
@@ -375,6 +614,8 @@ def test_flow_api_auth_permissions_and_response_shape():
     assert detail.status_code == 200
     assert detail.data["run_id"] == flow.run_id
     assert denied_event.status_code == 403
+    assert forged_event.status_code == 400
+    assert event_count_after_forgery == event_count_before_forgery
     assert allowed_event.status_code == 200
     assert allowed_event.data["recent_events"][0]["event_type"] in {
         FlowEvent.EventType.CTA_INTENT,
