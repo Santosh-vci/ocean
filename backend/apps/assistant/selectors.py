@@ -26,6 +26,7 @@ from apps.scheduling.models import (
     ExportJob,
     GlobalOptimizationRun,
     ImpactChainAssessment,
+    MovementAssignmentCandidateRun,
     OptimizerRun,
     OverrideRequest,
     PlanVersion,
@@ -43,6 +44,9 @@ from apps.scheduling.active_plan_selectors import (
 from apps.scheduling.commercial_projection_services import (
     is_commercial_projection_stale,
     latest_commercial_projection_run,
+)
+from apps.scheduling.movement_assignment_services import (
+    build_movement_assignment_input_summary,
 )
 from apps.scheduling.publishability_services import (
     is_publishability_assessment_stale,
@@ -130,6 +134,12 @@ class AssistantContext:
     latest_global_optimization_candidate_ref: str = ""
     latest_global_optimization_candidate_count: int = 0
     latest_global_optimization_candidate_summary: str = ""
+    movement_assignment_candidate_run_id: int | None = None
+    movement_assignment_candidate_run_ref: str = ""
+    movement_assignment_candidate_movement_count: int = 0
+    movement_assignment_candidate_covered_count: int = 0
+    movement_assignment_candidate_blocked_count: int = 0
+    movement_assignment_candidate_is_stale: bool = True
     telemetry_trust_blocking_count: int = 0
     telemetry_trust_degraded_count: int = 0
     telemetry_trust_latest_assessment_id: int | None = None
@@ -671,6 +681,58 @@ def select_global_optimizer_status(
     }
 
 
+def select_movement_assignment_candidate_status(
+    user: AbstractBaseUser | None,
+    active_plan_version: PlanVersion | None,
+) -> dict[str, Any]:
+    if active_plan_version is None:
+        return {
+            "movement_assignment_candidate_run_id": None,
+            "movement_assignment_candidate_run_ref": "",
+            "movement_assignment_candidate_movement_count": 0,
+            "movement_assignment_candidate_covered_count": 0,
+            "movement_assignment_candidate_blocked_count": 0,
+            "movement_assignment_candidate_is_stale": True,
+        }
+    run = (
+        MovementAssignmentCandidateRun.objects.filter(
+            plan_version=active_plan_version,
+            status=MovementAssignmentCandidateRun.Status.SUCCEEDED,
+        )
+        .prefetch_related("candidates")
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if run is None:
+        return {
+            "movement_assignment_candidate_run_id": None,
+            "movement_assignment_candidate_run_ref": "",
+            "movement_assignment_candidate_movement_count": 0,
+            "movement_assignment_candidate_covered_count": 0,
+            "movement_assignment_candidate_blocked_count": 0,
+            "movement_assignment_candidate_is_stale": True,
+        }
+    expected_signature_payload = build_movement_assignment_input_summary(active_plan_version)
+    metadata = run.metadata if isinstance(run.metadata, dict) else {}
+    return {
+        "movement_assignment_candidate_run_id": run.id,
+        "movement_assignment_candidate_run_ref": run.run_id,
+        "movement_assignment_candidate_movement_count": int(metadata.get("movementCount") or 0),
+        "movement_assignment_candidate_covered_count": int(
+            metadata.get("coveredMovementCount") or 0
+        ),
+        "movement_assignment_candidate_blocked_count": int(
+            metadata.get("blockedCandidateCount") or 0
+        ),
+        "movement_assignment_candidate_is_stale": (
+            sorted(expected_signature_payload.get("cargoLayerStepIds", []))
+            != sorted(run.input_summary.get("cargoLayerStepIds", []))
+            if isinstance(run.input_summary, dict)
+            else True
+        ),
+    }
+
+
 def select_telemetry_trust_status(
     user: AbstractBaseUser | None,
     active_plan_version: PlanVersion | None,
@@ -813,6 +875,10 @@ def build_assistant_context(
     operational_risks = select_operational_actualization_risks(user, active_plan_version)
     publishability_status = select_publishability_status(user, active_plan_version)
     global_optimizer_status = select_global_optimizer_status(user, active_plan_version)
+    movement_assignment_candidate_status = select_movement_assignment_candidate_status(
+        user,
+        active_plan_version,
+    )
     telemetry_trust_status = select_telemetry_trust_status(user, active_plan_version)
     commercial_projection_status = select_commercial_projection_status(user, active_plan_version)
     audit_counts = select_recent_audit_counts(user)
@@ -864,6 +930,7 @@ def build_assistant_context(
         **operational_risks,
         **publishability_status,
         **global_optimizer_status,
+        **movement_assignment_candidate_status,
         **telemetry_trust_status,
         **commercial_projection_status,
         **audit_counts,

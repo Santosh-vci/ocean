@@ -36,6 +36,8 @@ from .models import (
     ExportJob,
     GlobalOptimizationCandidate,
     GlobalOptimizationRun,
+    MovementAssignmentCandidate,
+    MovementAssignmentCandidateRun,
     OptimizerRun,
     OverrideRequest,
     Plan,
@@ -65,6 +67,11 @@ from .global_optimizer_services import (
     generate_global_optimization_candidates,
     latest_global_optimization_run,
 )
+from .movement_assignment_services import (
+    generate_movement_assignment_candidates,
+    latest_candidate_run,
+    select_movement_assignment_candidate,
+)
 from .commercial_projection_services import (
     commercial_projection_summary_payload,
     generate_customer_safe_commercial_projections,
@@ -82,6 +89,9 @@ from .serializers import (
     GlobalOptimizationCandidateSerializer,
     GlobalOptimizationRunGenerateSerializer,
     GlobalOptimizationRunSerializer,
+    MovementAssignmentCandidateRunGenerateSerializer,
+    MovementAssignmentCandidateRunSerializer,
+    MovementAssignmentCandidateSerializer,
     OptimizerRunGenerateSerializer,
     OptimizerRunSerializer,
     OverrideRequestSerializer,
@@ -204,7 +214,7 @@ class PlanVersionViewSet(SchedulingViewSet):
     @action(detail=True, methods=["post"], url_path="generate")
     def generate(self, request, pk=None):
         version = self.get_object()
-        result = generate_plan_version(version)
+        result = generate_plan_version(version, actor=request.user)
         record_audit_event(
             actor=request.user,
             organization=version.plan.organization,
@@ -216,6 +226,9 @@ class PlanVersionViewSet(SchedulingViewSet):
                 "tripCount": result.trip_count,
                 "conflictCount": result.conflict_count,
                 "blockingConflictCount": result.blocking_conflict_count,
+                "assignmentCandidateRunId": result.plan_version.summary.get(
+                    "assignmentCandidateRunId"
+                ),
             },
             request=request,
         )
@@ -750,6 +763,103 @@ class GlobalOptimizationCandidateViewSet(ReadOnlyModelViewSet):
     serializer_class = GlobalOptimizationCandidateSerializer
 
 
+class MovementAssignmentCandidateRunViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "generate": "schedule.edit",
+    }
+    queryset = MovementAssignmentCandidateRun.objects.select_related(
+        "plan_version",
+        "plan_version__plan",
+        "generated_by",
+    ).prefetch_related(
+        "candidates",
+        "candidates__cargo_layer_step",
+        "candidates__cargo_layer_step__voyage",
+        "candidates__cargo_layer_step__coal_grade",
+        "candidates__tug",
+        "candidates__barge",
+        "candidates__jetty",
+        "candidates__cts",
+    )
+    serializer_class = MovementAssignmentCandidateRunSerializer
+
+    @action(detail=False, methods=["post"], url_path="generate")
+    def generate(self, request):
+        generate_serializer = MovementAssignmentCandidateRunGenerateSerializer(data=request.data)
+        generate_serializer.is_valid(raise_exception=True)
+        run = generate_movement_assignment_candidates(
+            plan_version=generate_serializer.validated_data.get("plan_version"),
+            actor=request.user,
+        )
+        run = self.get_queryset().get(pk=run.pk)
+        record_audit_event(
+            actor=request.user,
+            organization=run.organization,
+            action="movement_assignment_candidate.run.generate",
+            object_type="movement_assignment_candidate_run",
+            object_id=str(run.pk),
+            object_repr=run.run_id,
+            metadata={
+                "run_id": run.run_id,
+                "plan_version_id": run.plan_version_id,
+                "input_signature": run.input_signature,
+                "candidate_count": run.candidates.count(),
+                "movement_count": run.metadata.get("movementCount", 0),
+                "algorithm_version": run.algorithm_version,
+            },
+            request=request,
+        )
+        return Response(
+            MovementAssignmentCandidateRunSerializer(run).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class MovementAssignmentCandidateViewSet(ReadOnlyModelViewSet):
+    permission_classes = [RequiresAccessPermission]
+    action_permission_map = {
+        "list": "schedule.view",
+        "retrieve": "schedule.view",
+        "select": "schedule.edit",
+    }
+    queryset = MovementAssignmentCandidate.objects.select_related(
+        "run",
+        "run__plan_version",
+        "run__plan_version__plan",
+        "cargo_layer_step",
+        "cargo_layer_step__voyage",
+        "cargo_layer_step__coal_grade",
+        "tug",
+        "barge",
+        "jetty",
+        "cts",
+    ).all()
+    serializer_class = MovementAssignmentCandidateSerializer
+
+    @action(detail=True, methods=["post"], url_path="select")
+    def select(self, request, pk=None):
+        candidate = select_movement_assignment_candidate(self.get_object())
+        record_audit_event(
+            actor=request.user,
+            organization=candidate.organization,
+            action="movement_assignment_candidate.select",
+            object_type="movement_assignment_candidate",
+            object_id=str(candidate.pk),
+            object_repr=candidate.candidate_id,
+            metadata={
+                "run_id": candidate.run.run_id,
+                "movement_key": candidate.movement_key,
+                "status": candidate.status,
+                "rank": candidate.rank,
+            },
+            request=request,
+        )
+        return Response(MovementAssignmentCandidateSerializer(candidate).data)
+
+
 class CommercialProjectionRunViewSet(ReadOnlyModelViewSet):
     permission_classes = [RequiresAccessPermission]
     action_permission_map = {
@@ -1236,6 +1346,8 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
         eta_projections = LiveEtaProjection.objects.none()
         tracking_alerts = TrackingAlert.objects.none()
         publishability_assessment = None
+        movement_assignment_candidate_run = None
+        movement_assignment_candidates = MovementAssignmentCandidate.objects.none()
         global_optimization_runs = GlobalOptimizationRun.objects.none()
         global_optimization_candidates = GlobalOptimizationCandidate.objects.none()
         commercial_projection_run = None
@@ -1384,6 +1496,18 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                 "created_scenario",
             )
             publishability_assessment = latest_publishability_assessment(active_version)
+            movement_assignment_candidate_run = latest_candidate_run(active_version)
+            if movement_assignment_candidate_run:
+                movement_assignment_candidates = movement_assignment_candidate_run.candidates.select_related(
+                    "run",
+                    "cargo_layer_step",
+                    "cargo_layer_step__voyage",
+                    "cargo_layer_step__coal_grade",
+                    "tug",
+                    "barge",
+                    "jetty",
+                    "cts",
+                )
             global_run_plan_versions = [active_version.id]
             if active_version.source_version_id:
                 global_run_plan_versions.append(active_version.source_version_id)
@@ -1481,6 +1605,17 @@ class SchedulingOverviewViewSet(SchedulingViewSet):
                     if publishability_assessment
                     else None
                 ),
+                "movementAssignmentCandidateRun": (
+                    MovementAssignmentCandidateRunSerializer(
+                        movement_assignment_candidate_run,
+                    ).data
+                    if movement_assignment_candidate_run
+                    else None
+                ),
+                "movementAssignmentCandidates": MovementAssignmentCandidateSerializer(
+                    movement_assignment_candidates,
+                    many=True,
+                ).data,
                 "globalOptimizationRuns": GlobalOptimizationRunSerializer(
                     global_optimization_runs,
                     many=True,

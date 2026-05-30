@@ -27,6 +27,8 @@ from .models import (
     GlobalOptimizationCandidate,
     GlobalOptimizationRun,
     ImpactChainAssessment,
+    MovementAssignmentCandidate,
+    MovementAssignmentCandidateRun,
     OptimizerRun,
     OverrideRequest,
     Plan,
@@ -575,6 +577,86 @@ class GlobalOptimizationRunSerializer(serializers.ModelSerializer):
             "started_at",
             "completed_at",
             "error_message",
+            "candidates",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class MovementAssignmentCandidateSerializer(serializers.ModelSerializer):
+    run_ref = serializers.CharField(source="run.run_id", read_only=True)
+    cargo_layer_step_ref = serializers.CharField(source="cargo_layer_step", read_only=True)
+    voyage_ref = serializers.CharField(source="cargo_layer_step.voyage.voyage_id", read_only=True)
+    vessel_name = serializers.CharField(source="cargo_layer_step.voyage.vessel_name", read_only=True)
+    coal_grade = serializers.CharField(source="cargo_layer_step.coal_grade.code", read_only=True)
+    tug = TugSerializer(read_only=True)
+    barge = BargeSerializer(read_only=True)
+    jetty = JettySerializer(read_only=True)
+    cts = CTSAssetSerializer(read_only=True)
+
+    class Meta:
+        model = MovementAssignmentCandidate
+        fields = (
+            "id",
+            "candidate_id",
+            "run",
+            "run_ref",
+            "cargo_layer_step",
+            "cargo_layer_step_ref",
+            "voyage_ref",
+            "vessel_name",
+            "coal_grade",
+            "movement_key",
+            "rank",
+            "status",
+            "tug",
+            "barge",
+            "jetty",
+            "cts",
+            "route_segment",
+            "score",
+            "constraint_results",
+            "blocking_reasons",
+            "warning_reasons",
+            "selection_reason",
+            "is_selected",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class MovementAssignmentCandidateRunGenerateSerializer(serializers.Serializer):
+    plan_version = serializers.PrimaryKeyRelatedField(
+        queryset=PlanVersion.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+
+class MovementAssignmentCandidateRunSerializer(serializers.ModelSerializer):
+    plan_version_ref = serializers.CharField(source="plan_version", read_only=True)
+    generated_by_email = serializers.EmailField(source="generated_by.email", read_only=True)
+    candidates = MovementAssignmentCandidateSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = MovementAssignmentCandidateRun
+        fields = (
+            "id",
+            "run_id",
+            "status",
+            "plan_version",
+            "plan_version_ref",
+            "input_signature",
+            "input_summary",
+            "algorithm_version",
+            "generated_by",
+            "generated_by_email",
+            "started_at",
+            "completed_at",
+            "error_message",
+            "metadata",
             "candidates",
             "created_at",
             "updated_at",

@@ -27,6 +27,7 @@ import type {
   ConfirmedOperationalEventRecord,
   ConflictRecord,
   DeviceEndpointRecord,
+  MovementAssignmentCandidateRecord,
   OperationalEventCandidateRecord,
   SchedulingOverview,
   TripRecord,
@@ -52,6 +53,8 @@ type LogisticsPageProps = AssistantRecommendationSurfaceProps & {
     notes: string,
   ) => void | Promise<void>;
   onRegenerate?: () => void;
+  onGenerateMovementCandidates?: () => void;
+  onSelectMovementCandidate?: (candidateId: number) => void | Promise<void>;
   onSubmitApproval?: () => void;
   operationCandidates?: OperationalEventCandidateRecord[];
   confirmedOperationalEvents?: ConfirmedOperationalEventRecord[];
@@ -177,6 +180,26 @@ function selectedTripFor(
   const selectedAssignment = assignments.find((assignment) => assignment.id === selectedAssignmentId)
     ?? assignments[0];
   return trips.find((trip) => trip.id === selectedAssignment?.trip) ?? trips[0];
+}
+
+function movementCandidateGroups(candidates: MovementAssignmentCandidateRecord[]) {
+  const groups = new Map<string, MovementAssignmentCandidateRecord[]>();
+  candidates.forEach((candidate) => {
+    const group = groups.get(candidate.movement_key) ?? [];
+    group.push(candidate);
+    groups.set(candidate.movement_key, group);
+  });
+  return [...groups.values()].map((group) => group.sort((a, b) => a.rank - b.rank));
+}
+
+function candidateStatusTone(status: string) {
+  if (status === "feasible") return "ok";
+  if (status === "blocked") return "critical";
+  return "pending";
+}
+
+function topCandidate(group: MovementAssignmentCandidateRecord[]) {
+  return group.find((candidate) => candidate.is_selected) ?? group[0];
 }
 
 function eventFor(trip: TripRecord | undefined, eventType: string) {
@@ -321,11 +344,19 @@ export function TugBargeAssignmentPage({
   isActionRunning = false,
   onAssistantNavigate,
   onExport,
+  onGenerateMovementCandidates,
   onRegenerate,
+  onSelectMovementCandidate,
 }: LogisticsPageProps) {
   const assignments = overview?.assignments ?? EMPTY_ASSIGNMENTS;
   const trips = overview?.trips ?? EMPTY_TRIPS;
   const conflicts = activePlanConflicts(overview?.conflicts ?? EMPTY_CONFLICTS);
+  const movementCandidateRun = overview?.movementAssignmentCandidateRun ?? null;
+  const movementCandidates = overview?.movementAssignmentCandidates ?? [];
+  const candidateGroups = useMemo(
+    () => movementCandidateGroups(movementCandidates),
+    [movementCandidates],
+  );
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(
     assignments[0]?.id ?? null,
   );
@@ -355,6 +386,15 @@ export function TugBargeAssignmentPage({
         </div>
         <div className="planning-actions">
           <span className="phase-chip">Fleet feasibility</span>
+          <DisabledReasonTooltip actionId="REVIEW_ASSIGNMENT_CANDIDATES" actions={assistantActions}>
+            <button
+              disabled={!canEdit || !onGenerateMovementCandidates || isActionRunning}
+              onClick={onGenerateMovementCandidates}
+              type="button"
+            >
+              Generate candidates
+            </button>
+          </DisabledReasonTooltip>
           <DisabledReasonTooltip actionId="REGENERATE_PLAN" actions={assistantActions}>
             <button
               disabled={!canEdit || !onRegenerate || isActionRunning}
@@ -390,6 +430,68 @@ export function TugBargeAssignmentPage({
         <div><span>Blocked</span><strong className={blockedCount ? "critical-text" : ""}>{blockedCount}</strong></div>
         <div><span>Plan version</span><strong>{overview?.activePlanVersion?.plan_code ?? "—"}</strong></div>
       </div>
+
+      <section className="board-surface planning-grid-panel">
+        <div className="grid-header">
+          <div><SvgIcon name="rule" /><strong>Movement assignment candidates</strong></div>
+          <span>{movementCandidateRun ? `${candidateGroups.length} movement(s) covered` : "Generate before plan creation"}</span>
+        </div>
+        <div className="grid-scroll">
+          <table className="planning-table logistics-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Movement</th>
+                <th>Candidate</th>
+                <th>Tug</th>
+                <th>Barge</th>
+                <th>Jetty</th>
+                <th><Abbr term="CTS">CTS</Abbr></th>
+                <th>Constraint reason</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {candidateGroups.length ? candidateGroups.map((group) => {
+                const candidate = topCandidate(group);
+                const reason = candidate.blocking_reasons[0]
+                  ?? candidate.warning_reasons[0]
+                  ?? "Feasible against current constraints.";
+                return (
+                  <tr key={candidate.movement_key}>
+                    <td><span className={`status-chip ${candidateStatusTone(candidate.status)}`}>{shortStatus(candidate.status)}</span></td>
+                    <td>{candidate.vessel_name} / {candidate.coal_grade}</td>
+                    <td>{candidate.candidate_id} / rank {candidate.rank}</td>
+                    <td>{candidate.tug?.code ?? "UNASSIGNED"}</td>
+                    <td>{candidate.barge?.code ?? "UNASSIGNED"}</td>
+                    <td>{candidate.jetty?.code ?? "UNASSIGNED"}</td>
+                    <td>{candidate.cts?.code ?? "UNASSIGNED"}</td>
+                    <td>{reason}</td>
+                    <td>
+                      <button
+                        disabled={
+                          candidate.status === "blocked"
+                          || candidate.is_selected
+                          || !onSelectMovementCandidate
+                          || isActionRunning
+                        }
+                        onClick={() => onSelectMovementCandidate?.(candidate.id)}
+                        type="button"
+                      >
+                        {candidate.is_selected ? "Selected" : "Select"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }) : (
+                <tr>
+                  <td colSpan={9}>No movement candidates generated yet</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="logistics-split">
         <section className="board-surface planning-grid-panel">

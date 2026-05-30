@@ -131,6 +131,19 @@ _ACTION_DEFINITIONS: Final[tuple[AssistantActionDefinition, ...]] = (
         "Plan generation requires ready demand, operating windows, and schedule edit permission.",
     ),
     _action(
+        "REVIEW_ASSIGNMENT_CANDIDATES",
+        "Review assignment candidates",
+        "Review feasible tug-barge-jetty-CTS movement candidates before plan generation.",
+        "/operations/tug-barge-assignment",
+        "Review candidates",
+        ("berau-scheduler", "abl-dispatcher"),
+        "schedule.view",
+        False,
+        True,
+        ("dashboard", "page_card"),
+        "Assignment candidate review requires schedule visibility.",
+    ),
+    _action(
         "REGENERATE_PLAN",
         "Regenerate plan",
         "Regenerate an editable active plan after source inputs change.",
@@ -509,6 +522,7 @@ ROUTE_ACTIONS: Final[dict[str, tuple[str, ...]]] = {
     ),
     "/operations/tug-barge-assignment": (
         "GENERATE_PLAN",
+        "REVIEW_ASSIGNMENT_CANDIDATES",
         "REGENERATE_PLAN",
         "OPEN_EXCEPTION_CENTER",
     ),

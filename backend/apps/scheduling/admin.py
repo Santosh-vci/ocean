@@ -12,6 +12,8 @@ from .models import (
     GlobalOptimizationCandidate,
     GlobalOptimizationRun,
     ImpactChainAssessment,
+    MovementAssignmentCandidate,
+    MovementAssignmentCandidateRun,
     OverrideRequest,
     OptimizerRun,
     Plan,
@@ -260,6 +262,49 @@ class GlobalOptimizationCandidateAdmin(admin.ModelAdmin):
         "unresolved_risks",
         "approval_lineage",
         "metadata",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(MovementAssignmentCandidateRun)
+class MovementAssignmentCandidateRunAdmin(admin.ModelAdmin):
+    list_display = ("run_id", "plan_version", "status", "generated_by", "created_at")
+    list_filter = ("status", "algorithm_version")
+    search_fields = ("run_id", "plan_version__plan__code", "input_signature")
+    readonly_fields = (
+        "run_id",
+        "input_signature",
+        "input_summary",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(MovementAssignmentCandidate)
+class MovementAssignmentCandidateAdmin(admin.ModelAdmin):
+    list_display = (
+        "candidate_id",
+        "run",
+        "movement_key",
+        "rank",
+        "status",
+        "is_selected",
+    )
+    list_filter = ("status", "is_selected")
+    search_fields = (
+        "candidate_id",
+        "run__run_id",
+        "movement_key",
+        "cargo_layer_step__voyage__voyage_id",
+    )
+    readonly_fields = (
+        "candidate_id",
+        "constraint_results",
+        "blocking_reasons",
+        "warning_reasons",
+        "selection_reason",
         "created_at",
         "updated_at",
     )

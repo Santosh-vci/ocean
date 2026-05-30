@@ -22,7 +22,7 @@ node scripts/capture_phase6_review_surface_evidence.mjs
 
 | Evidence | Result | Artifact |
 |---|---:|---|
-| Clean operator happy path | Passed, 16 browser steps | `docs/evidence/operator_trial_flow/operator_trial_flow_capture.json` |
+| Clean operator happy path | Passed, 17 browser steps | `docs/evidence/operator_trial_flow/operator_trial_flow_capture.json` |
 | Phase 5+ recovery path | Passed, 17 browser steps plus negative gate evidence | `docs/evidence/phase6_recovery_flow/phase6_recovery_flow_capture.json` |
 | Phase 6 review surfaces | Passed, 3 review surfaces | `docs/evidence/phase6_review_surfaces/phase6_review_surface_capture.json` |
 
@@ -33,12 +33,13 @@ The happy-path run starts from deterministic DB truth with no demand, plans, app
 1. import OGV demand;
 2. review coal sequence;
 3. enter operating windows;
-4. generate plan;
-5. submit approval;
-6. approve both authorities;
-7. run publishability check;
-8. manually publish;
-9. generate governed export.
+4. generate movement assignment candidates;
+5. generate plan from candidate-backed assignments;
+6. submit approval;
+7. approve both authorities;
+8. run publishability check;
+9. manually publish;
+10. generate governed export.
 
 Final assertions recorded in the JSON evidence:
 
@@ -46,6 +47,8 @@ Final assertions recorded in the JSON evidence:
 - active published snapshot exists;
 - approvals are complete;
 - publishability allows publish;
+- six movement intents are covered by the candidate run;
+- six generated trips carry movement candidate provenance;
 - governed export exists.
 
 Screenshots are under `docs/evidence/operator_trial_flow/screenshots/`.

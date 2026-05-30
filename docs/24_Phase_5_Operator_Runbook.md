@@ -18,7 +18,7 @@ Do not use the same run label for every rehearsal. There are four different flow
 
 | Run type | Command or entry point | Use it for | Expected end state |
 |---|---|---|---|
-| Operator happy path | UI from `http://localhost:8080`, starting with **Import OGV demand** | Manual operator rehearsal of the clean planning transaction. | A `PLAN-UI-... V1` plan is generated, approved, and published with no open blocking conflicts. |
+| Operator happy path | UI from `http://localhost:8080`, starting with **Import OGV demand** | Manual operator rehearsal of the clean planning transaction. | A `PLAN-UI-... V1` plan is generated from six movement-assignment candidates, approved, publishability-checked, published, and exported with no open blocking conflicts. |
 | Automated happy-path regression | `docker compose exec -T api python manage.py phase1_e2e_proof --json` | Machine-readable regression proof for the same clean planning capability. | `PLAN-PHASE1-E2E` is `published` and `feasible`, with 2 trips, 14 schedule events, a live snapshot, and a governed printable export. |
 | Phase 5 staged recovery practice | `operator_trial_practice reset`, `import-demand`, `enter-windows`, `generate-plan` | Manual operator practice from empty demand into a deliberately blocked recovery case. | `PLAN-<trial date> V1` is generated with 6 trips and 4 open exceptions. |
 | Phase 5 proof and closure | `phase5_recovery_proof --json`, then `phase5_resolve_trial_pack --json` | Automated evidence for recommendation retrieval/ranking/scenario handoff, followed by clean closure. | Recovery proof is audit-visible; closure version is approved, feasible, and ready to publish. |
@@ -40,32 +40,39 @@ Then run the operator flow in the UI:
 
 | Step | Screen | Operator action | Expected evidence |
 |---|---|---|---|
-| 1 | **Planning -> OGV Demand & Laycan** | Click **Import demand**. | One clean operator OGV demand is imported: `MV Operator UI Import`, 64,000 MT, with two cargo layers. |
-| 2 | **Planning -> Coal Grade Sequence** | Review the imported hatch/layer chain. | Sequence is readable before planning: `EBONY` H1/L1 and `AGATHIS` H2/L1. For the clean import there should be no blocking sequence conflict. |
-| 3 | **Constraints -> Tide & Bridge Window** | Click **Enter operating windows**. | Two tide windows, two bridge windows, asset availability, jetty availability, and navigation checks are created. |
-| 4 | **Operations -> Tug/Barge Assignment** | Click **Regenerate plan**. | The first `PLAN-UI-... V1` version is created and generated; it has 2 trips and no open blocking conflicts. |
+| 1 | **Planning -> OGV Demand & Laycan** | Click **Import demand**. | The clean `operator_happy_path_v1` pack imports 2 OGV voyages with 6 cargo-layer movement intents and no sequence blockers. |
+| 2 | **Planning -> Coal Grade Sequence** | Review the imported hatch/layer chain. | All 6 executable movements are readable before planning, and there is no blocking sequence conflict. |
+| 3 | **Constraints -> Tide & Bridge Window** | Click **Enter operating windows**. | Two tide windows, two bridge windows, asset availability, jetty availability, and exactly 6 movement-intent navigation checks are created. |
+| 4 | **Operations -> Tug/Barge Assignment** | Click **Generate candidates**, then **Regenerate plan**. | The candidate run covers all 6 movement intents; the first `PLAN-UI-... V1` version is generated with 6 trips carrying movement-candidate provenance and no open blocking conflicts. |
 | 5 | **Schedule -> Published Plan & Schedule** | Click **Submit approval**. | One dual-authority approval request is created for the generated plan. |
 | 6 | **Recovery Loop -> Approvals & Publishing** | Click **Approve** for the first required authority. | First approval decision is recorded. |
-| 7 | **Recovery Loop -> Approvals & Publishing** | Click **Approve** for the second required authority. | Required approvals are complete and **Publish plan** becomes available. |
-| 8 | **Recovery Loop -> Approvals & Publishing** | Click **Publish plan**. | The active `PLAN-UI-... V1` plan becomes `published`; a live published snapshot exists. |
-| 9 | **Admin Console -> Exports & Handoff** | Optional: generate the printable schedule export. | A governed export artifact exists for external handoff. This is post-publication handoff, not a precondition for publication. |
+| 7 | **Recovery Loop -> Approvals & Publishing** | Click **Approve** for the second required authority. | Required approvals are complete and the flow moves to publishability validation. |
+| 8 | **Recovery Loop -> Approvals & Publishing** | Click **Check publishability**. | The persisted publishability gate returns `publishable` or `warning`; **Publish plan** remains manual. |
+| 9 | **Recovery Loop -> Approvals & Publishing** | Click **Publish plan**. | The active `PLAN-UI-... V1` plan becomes `published`; a live published snapshot exists. |
+| 10 | **Admin Console -> Exports & Handoff** | Generate the printable schedule export. | A governed export artifact exists for external handoff. This is post-publication handoff, not a precondition for publication. |
 
-Latest local validation on 26 May 2026 reached the required publication endpoint:
+Latest local validation on 30 May 2026 reached the required publication and export endpoint:
 
 | Evidence | Runtime value |
 |---|---|
-| OGV demand | 1 voyage |
-| Cargo layers | 2 |
+| OGV demand | 2 voyages |
+| Cargo layers | 6 |
 | Tide windows | 2 |
 | Bridge windows | 2 |
+| Movement-intent navigation checks | 6 |
+| Movement assignment candidate runs | 1 |
+| Candidate-covered movements | 6 |
 | Plan version | `PLAN-UI-... V1` |
 | Plan status | `published` |
 | Validation status | `feasible` |
-| Trips | 2 |
+| Trips | 6 |
+| Trips with movement candidate provenance | 6 |
 | Open conflicts | 0 |
 | Approval requests | 1 |
 | Approval decisions | 2 |
+| Publishability assessments | 1 clear assessment |
 | Published snapshots | 1 |
+| Governed exports | 1 |
 
 Business interpretation:
 
@@ -484,7 +491,7 @@ docker compose exec -T api python manage.py operator_trial_practice enter-window
 
 Business context:
 
-This adds the governed navigation and resource context for the imported demand: tide gates, bridge slots, asset availability, jetty availability, and navigation checks. These constraints are what later make the plan operationally meaningful.
+This adds the governed navigation and resource context for the imported demand: tide gates, bridge slots, asset availability, jetty availability, and movement-intent navigation checks. The checks are created against the six cargo-layer movements that will later become generated trips, so the plan is built against the same movement set the operator just reviewed.
 
 Evidence to look for:
 
@@ -492,7 +499,7 @@ Evidence to look for:
 - 3 bridge windows.
 - 3 asset availability rows.
 - 3 jetty availability rows.
-- 5 navigation checks.
+- 6 movement-intent navigation checks.
 - Still no generated plan or trips.
 
 Move forward when:
@@ -513,33 +520,32 @@ Business context to confirm:
 
 - There are 5 active/planned OGV orders.
 - The current generated plan is `PLAN-2026-05-26 V1`.
-- The system has created 6 tug/barge/jetty/CTS trip assignments.
-- The main recovery case is `BARGE_UNAVAILABLE`.
-- The affected order is `MV PACIFIC PRIDE`.
-- The affected trip is `PI-PLAN-2026-05-26-0003`.
-- The planned equipment is `BER-TUG-08` / `BRG-KAL-22`.
-- The planned jetty is `JTY-SUARAN`.
-- The planned CTS is `CTS-BORNEO`.
+- The system has created one movement-assignment candidate run before generating the plan.
+- The candidate run covers the 6 cargo-layer movements created from imported demand.
+- The generated plan has 6 tug/barge/jetty/CTS trip assignments.
+- Each generated trip carries `MOVEMENT_ASSIGNMENT_CANDIDATE` provenance.
+- The runtime can route around unavailable declared equipment when a feasible candidate exists.
+- Remaining blockers are explicit movement-assignment, navigation, or cargo-sequence blockers.
 
 What happened in the business process:
 
-The schedule expected `BRG-KAL-22` to support an `EBONY` movement for `MV PACIFIC PRIDE`. That barge is unavailable inside the trip window. The operator needs to recover the movement without making a silent spreadsheet-style edit.
+The operator has moved from demand and operating-window entry into candidate-backed assignment. The backend enumerates feasible and blocked tug-barge-jetty-CTS combinations for each cargo-layer movement, selects the top feasible or warning candidate where available, and generates a plan with explicit provenance. If a movement has no acceptable combination, the plan is blocked with a governed conflict instead of silently assigning an invalid chain.
 
 Evidence to look for:
 
 - Open exceptions: 4.
-- Blocking exceptions: 3.
-- Exception code: `BARGE_UNAVAILABLE`.
-- Resource: `BRG-KAL-22`.
-- Affected OGV: `MV PACIFIC PRIDE`.
-- Status: critical/blocking.
-- Next action points to simulation or recovery.
+- Blocking exceptions: 4.
+- Movement assignment candidate runs: 1.
+- Candidate-covered movements: 6.
+- Generated trips: 6.
+- Trip selection reason: `MOVEMENT_ASSIGNMENT_CANDIDATE`.
+- Remaining exception codes include movement assignment, navigation, or cargo sequence blockers.
 
 Move forward when:
 
 The operator can explain the disruption in one sentence:
 
-`MV PACIFIC PRIDE has a planned EBONY movement from JTY-SUARAN, but BRG-KAL-22 is unavailable, so the trip needs a governed recovery decision.`
+`The plan was generated from six reviewed movement candidates; feasible combinations were assigned, and the remaining blocked movements need governed recovery or operator correction before approval.`
 
 ### Stage 5 - Retrieve The Recovery Input
 

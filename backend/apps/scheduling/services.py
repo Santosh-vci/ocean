@@ -2886,10 +2886,20 @@ def _ceil_minutes(delta: timedelta) -> int:
     return math.ceil(delta.total_seconds() / 60)
 
 
-def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
+def generate_plan_version(plan_version: PlanVersion, *, candidate_run=None, actor=None) -> GenerationResult:
     """Regenerate a deterministic trip chain from current demand, master, and constraint data."""
 
+    from .movement_assignment_services import (
+        candidate_run_summary,
+        fresh_candidate_run_for_generation,
+        selected_or_top_candidate_for_step,
+    )
+
     with transaction.atomic():
+        resolved_candidate_run = candidate_run or fresh_candidate_run_for_generation(
+            plan_version,
+            actor=actor,
+        )
         preserved_provenance = provenance_summary_fields(plan_version.summary)
         _clear_generated_state(plan_version)
 
@@ -2911,16 +2921,26 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 "required_sequence_no",
             )
         )
-        tugs = list(Tug.objects.select_related("organization").order_by("code"))
         route_segment = _first_route_segment()
         default_destination = Location.objects.filter(
             location_type=Location.LocationType.TRANSSHIPMENT
         ).first()
 
-        assigned_windows: dict[str, list[tuple]] = {}
         for sequence, step in enumerate(steps, start=1):
             planned_start = step.planned_start or step.voyage.eta + timedelta(hours=sequence)
             planned_end = step.planned_end or planned_start + timedelta(hours=10)
+            candidate = selected_or_top_candidate_for_step(resolved_candidate_run, step)
+            candidate_blockers = list(candidate.blocking_reasons or []) if candidate else []
+            candidate_warnings = list(candidate.warning_reasons or []) if candidate else []
+            selected_tug = candidate.tug if candidate and candidate.tug_id else None
+            selected_barge = candidate.barge if candidate and candidate.barge_id else step.planned_barge
+            selected_jetty = candidate.jetty if candidate and candidate.jetty_id else step.planned_jetty
+            selected_cts = candidate.cts if candidate and candidate.cts_id else step.planned_cts
+            selected_route_segment = (
+                candidate.route_segment
+                if candidate and candidate.route_segment_id
+                else route_segment
+            )
             trip = Trip.objects.create(
                 plan_version=plan_version,
                 trip_id=f"PI-{plan_version.plan.code}-{sequence:04d}",
@@ -2928,7 +2948,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 voyage=step.voyage,
                 cargo_requirement=step.cargo_requirement,
                 cargo_layer_step=step,
-                origin_jetty=step.planned_jetty,
+                origin_jetty=selected_jetty,
                 destination_location=default_destination or step.voyage.anchorage_location,
                 planned_start=planned_start,
                 planned_end=planned_end,
@@ -2936,38 +2956,59 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 loaded_quantity_mt=max(step.required_mt - step.remaining_mt, 0),
                 status=_trip_status(step),
                 selection_reason={
-                    "source": "deterministic_schedule_generator",
+                    "source": "movement_assignment_candidate_runtime",
                     "layer_step": step.id,
                     "voyage_priority": step.voyage.priority,
-                    "reason_code": "EARLIEST_LAYER_WITH_DECLARED_CHAIN",
+                    "reason_code": "MOVEMENT_ASSIGNMENT_CANDIDATE",
+                    "assignmentCandidateRunId": resolved_candidate_run.id,
+                    "assignmentCandidateRunRef": resolved_candidate_run.run_id,
+                    "assignmentCandidateId": candidate.id if candidate else None,
+                    "assignmentCandidateRef": candidate.candidate_id if candidate else "",
+                    "assignmentCandidateStatus": candidate.status if candidate else "missing",
+                    "candidateBlockingReasons": candidate_blockers,
+                    "candidateWarningReasons": candidate_warnings,
                 },
             )
-            tug = _choose_tug(
-                tugs=tugs,
-                start=planned_start,
-                end=planned_end,
-                assigned_windows=assigned_windows,
-            )
-            if tug:
-                assigned_windows.setdefault(tug.code, []).append((planned_start, planned_end))
-
             assignment = Assignment.objects.create(
                 trip=trip,
-                tug=tug,
-                barge=step.planned_barge,
-                jetty=step.planned_jetty,
-                cts=step.planned_cts,
-                route_segment=route_segment,
-                owner_organization=tug.organization if tug else None,
+                tug=selected_tug,
+                barge=selected_barge,
+                jetty=selected_jetty,
+                cts=selected_cts,
+                route_segment=selected_route_segment,
+                owner_organization=selected_tug.organization if selected_tug else None,
                 planned_departure=planned_start + timedelta(hours=2),
                 planned_arrival=planned_end - timedelta(hours=2),
-                tug_status=_asset_status_label(tug),
-                barge_status=_asset_status_label(step.planned_barge),
-                next_constraint=step.blocking_reason or step.voyage.next_blocking_constraint,
-                next_action=_next_action(step),
-                status=_assignment_status(step),
+                tug_status=_asset_status_label(selected_tug),
+                barge_status=_asset_status_label(selected_barge),
+                next_constraint=(
+                    candidate_blockers[0]
+                    if candidate_blockers
+                    else candidate_warnings[0]
+                    if candidate_warnings
+                    else step.blocking_reason or step.voyage.next_blocking_constraint
+                ),
+                next_action=(
+                    "Review blocked movement candidate before dispatch."
+                    if candidate_blockers
+                    else "Review candidate warnings before dispatch."
+                    if candidate_warnings
+                    else _next_action(step)
+                ),
+                status=Assignment.Status.BLOCKED if candidate_blockers else _assignment_status(step),
             )
             _create_events(trip=trip, assignment=assignment)
+            if candidate_blockers:
+                _conflict(
+                    plan_version=plan_version,
+                    trip=trip,
+                    code="MOVEMENT_ASSIGNMENT_BLOCKED",
+                    severity=Conflict.Severity.CRITICAL,
+                    object_type="movement_assignment_candidate",
+                    object_id=str(candidate.id if candidate else ""),
+                    message=candidate_blockers[0],
+                    is_blocking=True,
+                )
             _validate_trip(plan_version=plan_version, trip=trip, assignment=assignment)
 
         conflicts = Conflict.objects.filter(plan_version=plan_version)
@@ -2995,6 +3036,7 @@ def generate_plan_version(plan_version: PlanVersion) -> GenerationResult:
                 .values_list("code", flat=True)
                 .first()
             ),
+            **candidate_run_summary(resolved_candidate_run),
             **preserved_provenance,
         }
         plan_version.save(

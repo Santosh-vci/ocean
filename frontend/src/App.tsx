@@ -55,6 +55,8 @@ import type {
   MasterDataCatalogs,
   MasterDataRecord,
   MasterDataOverview,
+  MovementAssignmentCandidateRecord,
+  MovementAssignmentCandidateRunRecord,
   MovementEventRecord,
   OperationalEventCandidateRecord,
   ConfirmedOperationalEventRecord,
@@ -833,6 +835,42 @@ function App() {
     });
   }
 
+  async function handleGenerateMovementCandidates() {
+    await runWorkspaceAction("Generate candidates", async () => {
+      const activeVersion = liveSchedulingOverview()?.activePlanVersion
+        ?? await createInitialOperatorPlanVersion();
+      const csrfToken = await getCsrfToken();
+      const run = await apiFetch<MovementAssignmentCandidateRunRecord>(
+        "/scheduling/movement-assignment-candidate-runs/generate/",
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({ plan_version: activeVersion.id }),
+        },
+      );
+      const movementCount = Number(run.metadata?.movementCount ?? 0);
+      return `Assignment candidates generated: ${movementCount} movements`;
+    });
+  }
+
+  async function handleSelectMovementCandidate(candidateId: number) {
+    await runWorkspaceAction("Select candidate", async () => {
+      const csrfToken = await getCsrfToken();
+      const candidate = await apiFetch<MovementAssignmentCandidateRecord>(
+        `/scheduling/movement-assignment-candidates/${candidateId}/select/`,
+        {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+        },
+      );
+      return `Selected candidate: ${candidate.candidate_id}`;
+    });
+  }
+
   async function handleRegeneratePlan() {
     await runWorkspaceAction("Generate schedule", async () => {
       const activeVersion = liveSchedulingOverview()?.activePlanVersion
@@ -854,6 +892,7 @@ function App() {
         planVersionId: version.id,
         planCode: version.plan_code,
         versionNo: version.version_no,
+        assignmentCandidateRunId: version.summary?.assignmentCandidateRunId,
       });
       await recordActiveFlowCta("REPAIR_PLAN_CONFLICTS", "/operations/tug-barge-assignment", {
         planVersionId: version.id,
@@ -1482,7 +1521,9 @@ function App() {
             canExport={canGenerateExports}
             isActionRunning={isWorkspaceActionRunning}
             onExport={() => handleGenerateExport({ exportType: "plan", exportFormat: "csv" })}
+            onGenerateMovementCandidates={handleGenerateMovementCandidates}
             onRegenerate={handleRegeneratePlan}
+            onSelectMovementCandidate={handleSelectMovementCandidate}
             overview={schedulingOverview}
           />
         ) : null}

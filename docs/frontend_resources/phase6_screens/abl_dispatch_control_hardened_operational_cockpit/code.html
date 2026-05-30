@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ABL Dispatcher Control Tower</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&amp;family=Hanken+Grotesk:wght@600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e1e0ff",
+                        "background": "#0b1326",
+                        "primary-container": "#0ea5e9",
+                        "surface": "#0b1326",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-container": "#003751",
+                        "surface-container-highest": "#2d3449",
+                        "on-tertiary": "#492900",
+                        "primary": "#89ceff",
+                        "status-success": "#10B981",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "tertiary-fixed": "#ffdcbd",
+                        "tertiary": "#ffb86e",
+                        "border-subtle": "#334155",
+                        "on-tertiary-container": "#4d2b00",
+                        "on-surface": "#dae2fd",
+                        "on-background": "#dae2fd",
+                        "surface-dim": "#0b1326",
+                        "primary-fixed-dim": "#89ceff",
+                        "outline": "#88929b",
+                        "on-error-container": "#ffdad6",
+                        "coal-ebony": "#2D2D2D",
+                        "on-secondary": "#1000a9",
+                        "on-tertiary-fixed": "#2c1600",
+                        "on-secondary-container": "#b0b2ff",
+                        "on-primary-fixed-variant": "#004c6e",
+                        "on-primary": "#00344d",
+                        "coal-agathis": "#C5A16F",
+                        "tertiary-fixed-dim": "#ffb86e",
+                        "surface-bright": "#31394d",
+                        "inverse-on-surface": "#283044",
+                        "surface-variant": "#2d3449",
+                        "surface-container-high": "#222a3d",
+                        "planned-stroke": "#94A3B8",
+                        "on-error": "#690005",
+                        "surface-graphite": "#1E293B",
+                        "status-warning": "#F59E0B",
+                        "outline-variant": "#3e4850",
+                        "on-tertiary-fixed-variant": "#693c00",
+                        "status-info": "#0EA5E9",
+                        "live-indicator": "#F0F9FF",
+                        "inverse-primary": "#006591",
+                        "coal-mahoni": "#4B3D33",
+                        "secondary-container": "#3131c0",
+                        "tertiary-container": "#de8712",
+                        "on-surface-variant": "#bec8d2",
+                        "error": "#ffb4ab",
+                        "surface-charcoal": "#0F172A",
+                        "surface-tint": "#89ceff",
+                        "inverse-surface": "#dae2fd",
+                        "status-critical": "#EF4444",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "surface-container-low": "#131b2e",
+                        "secondary": "#c0c1ff",
+                        "on-secondary-fixed": "#07006c",
+                        "on-primary-fixed": "#001e2f",
+                        "primary-fixed": "#c9e6ff",
+                        "error-container": "#93000a",
+                        "surface-container": "#171f33"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width-expanded": "240px",
+                        "sidebar-width-collapsed": "56px",
+                        "margin-page": "16px",
+                        "unit": "4px",
+                        "gutter": "8px",
+                        "row-height-standard": "36px",
+                        "row-height-compact": "28px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "data-tabular": ["JetBrains Mono"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "data-tabular": ["11px", {"lineHeight": "14px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "headline-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        .gantt-grid {
+            background-image: linear-gradient(to right, #1E293B 1px, transparent 1px), linear-gradient(to bottom, #1E293B 1px, transparent 1px);
+            background-size: 40px 28px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-sm overflow-hidden select-none">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full h-row-height-standard bg-surface-charcoal border-b border-border-subtle flex justify-between items-center px-margin-page z-50">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-md text-headline-md font-bold text-primary">COALFLOW TOWER | OPERATIONS | ABL DISPATCH CONTROL</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-2 py-1 bg-surface-container-highest rounded text-status-success font-data-tabular">
+<span class="material-symbols-outlined text-[14px]">sensors</span>
+                98% FEED HEALTH
+            </div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all" data-icon="settings">settings</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-all" data-icon="help">help</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">DP</div>
+</div>
+</header>
+<!-- SideNavBar (Collapsed by default, expands on hover) -->
+<aside class="fixed left-0 top-row-height-standard h-[calc(100%-64px)] w-sidebar-width-collapsed hover:w-sidebar-width-expanded transition-all duration-300 bg-surface-container border-r border-border-subtle flex flex-col z-40 group overflow-hidden">
+<div class="flex flex-col py-4 gap-1">
+<div class="flex items-center px-4 py-2 bg-primary-container text-on-primary-container font-bold border-l-2 border-primary cursor-pointer">
+<span class="material-symbols-outlined mr-4" data-icon="directions_boat">directions_boat</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Vessels</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-highest cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="sailing">sailing</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Barges</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-highest cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="precision_manufacturing">precision_manufacturing</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Floating Cranes</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-highest cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="anchor">anchor</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Jetty Ops</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-highest cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="warning">warning</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Exceptions</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-highest cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="calendar_today">calendar_today</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Schedules</span>
+</div>
+</div>
+<div class="mt-auto border-t border-border-subtle py-2">
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:text-primary cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="inventory_2">inventory_2</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">Archive</span>
+</div>
+<div class="flex items-center px-4 py-2 text-on-surface-variant hover:text-primary cursor-pointer transition-all">
+<span class="material-symbols-outlined mr-4" data-icon="terminal">terminal</span>
+<span class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-label-caps text-label-caps">System Log</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width-collapsed mt-row-height-standard h-[calc(100vh-64px)] flex flex-col bg-surface-charcoal overflow-hidden">
+<!-- KPI Strip -->
+<div class="h-10 bg-surface-graphite border-b border-border-subtle flex items-center px-margin-page gap-8">
+<div class="flex flex-col">
+<span class="text-[10px] text-outline-variant uppercase font-bold leading-tight">Active Pairs</span>
+<span class="font-data-tabular text-headline-md text-primary leading-tight">24</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline-variant uppercase font-bold leading-tight">Blocked Assets</span>
+<span class="font-data-tabular text-headline-md text-status-critical leading-tight">3</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline-variant uppercase font-bold leading-tight">Queue Pressure</span>
+<span class="font-data-tabular text-headline-md text-status-warning leading-tight">HIGH (Jetty Alpha)</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline-variant uppercase font-bold leading-tight">Tide Risk</span>
+<span class="font-data-tabular text-headline-md text-status-info leading-tight">2 <span class="text-xs font-normal opacity-70">(15:40)</span></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline-variant uppercase font-bold leading-tight">SLA Breaches</span>
+<span class="font-data-tabular text-headline-md text-status-critical leading-tight animate-pulse">1 Critical</span>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Execution Board -->
+<div class="flex-1 flex flex-col border-r border-border-subtle overflow-hidden">
+<!-- Data Grid Header -->
+<div class="bg-surface-container-high h-8 flex items-center border-b border-border-subtle px-2 gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider"><div class="w-24">Asset ID</div><div class="w-28">OGV / Destination</div><div class="w-12">Jetty</div><div class="w-12">CTS</div><div class="w-20">Plan Dep.</div><div class="w-20">ETA Var.</div><div class="w-28">Next Constraint</div><div class="flex-1">Status</div><div class="w-24">SLA Deadline</div></div>
+<!-- Data Grid Rows -->
+<div class="flex-1 overflow-y-auto bg-surface-charcoal"><div class="bg-surface-container-low px-2 py-0.5 border-b border-border-subtle text-primary font-bold text-[9px] flex items-center"> <span class="material-symbols-outlined text-[12px] mr-1">group</span> TUG EXECUTION CHAINS </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-critical pl-1">SEA-TITAN-01</div> <div class="w-28 truncate text-on-surface-variant">MV IRON ORE A</div> <div class="w-12">A1</div> <div class="w-12 text-center">CTS-4</div> <div class="w-20">14:20</div> <div class="w-20 text-status-critical font-bold">+45m │ │</div> <div class="w-28 text-status-warning italic">Waiting Tide</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-critical"></span> Waiting Tide </div> <div class="w-24 text-outline">16:00</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-info pl-1">BLUE-TIDE-09</div> <div class="w-28 truncate text-on-surface-variant">MV GLOBAL STAR</div> <div class="w-12">B2</div> <div class="w-12 text-center">CTS-1</div> <div class="w-20">15:05</div> <div class="w-20 text-status-success font-bold">-05m │ │</div> <div class="w-28">-</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-info"></span> Sailing Loaded </div> <div class="w-24 text-outline">17:30</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-info pl-1">TUG-FORCE-04</div> <div class="w-28 truncate text-on-surface-variant">MV PACIFIC RIM</div> <div class="w-12">A1</div> <div class="w-12 text-center">CTS-2</div> <div class="w-20">16:15</div> <div class="w-20 text-status-success">00m │ │</div> <div class="w-28">-</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-info"></span> Mooring Ops </div> <div class="w-24 text-outline">18:00</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-success pl-1">OCEAN-RUN-2</div> <div class="w-28 truncate text-on-surface-variant">ST PETERSBURG</div> <div class="w-12">C1</div> <div class="w-12 text-center">CTS-3</div> <div class="w-20">16:45</div> <div class="w-20 text-status-warning">+15m │ │</div> <div class="w-28 text-status-warning">Jetty Q</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-warning"></span> Slow Transit </div> <div class="w-24 text-outline">18:45</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-info pl-1">MAR-GULF-01</div> <div class="w-28 truncate text-on-surface-variant">MV LIBERTY</div> <div class="w-12">A4</div> <div class="w-12 text-center">CTS-1</div> <div class="w-20">17:10</div> <div class="w-20 text-status-success">00m │ │</div> <div class="w-28">-</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-info"></span> Active </div> <div class="w-24 text-outline">19:00</div> </div> <div class="bg-surface-container-low px-2 py-0.5 border-b border-border-subtle text-primary font-bold text-[9px] flex items-center mt-1"> <span class="material-symbols-outlined text-[12px] mr-1">sailing</span> BARGE LOGISTICS </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-warning pl-1">BRG-9022</div> <div class="w-28 truncate text-on-surface-variant">ANCHORAGE-04</div> <div class="w-12">W</div> <div class="w-12 text-center">N/A</div> <div class="w-20">13:45</div> <div class="w-20 text-status-warning">+12m │ │</div> <div class="w-28 text-status-critical">Weather Div.</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-warning"></span> Holding (Weather) </div> <div class="w-24 text-outline">15:00</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-success pl-1">BRG-1105</div> <div class="w-28 truncate text-on-surface-variant">JETTY-C1</div> <div class="w-12">C1</div> <div class="w-12 text-center">CTS-8</div> <div class="w-20">18:00</div> <div class="w-20 text-status-success">00m │ │</div> <div class="w-28">-</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-success"></span> Loading Complete </div> <div class="w-24 text-outline">21:00</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-critical pl-1">BRG-2210</div> <div class="w-28 truncate text-on-surface-variant">TERMINAL-A</div> <div class="w-12">A2</div> <div class="w-12 text-center">CTS-5</div> <div class="w-20">19:15</div> <div class="w-20 text-status-critical font-bold">+35m │ │</div> <div class="w-28 text-status-critical">Mechanical</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-critical"></span> Awaiting Repair </div> <div class="w-24 text-outline">22:00</div> </div> <div class="h-7 flex items-center border-b border-border-subtle hover:bg-surface-container transition-colors px-2 gap-2 font-data-tabular text-[11px] group cursor-pointer"> <div class="w-24 font-bold text-on-surface border-l-2 border-status-info pl-1">BRG-4402</div> <div class="w-28 truncate text-on-surface-variant">OFFSHORE-01</div> <div class="w-12">S1</div> <div class="w-12 text-center">-</div> <div class="w-20">20:00</div> <div class="w-20 text-status-success">00m │ │</div> <div class="w-28">-</div> <div class="flex-1 flex items-center gap-2"> <span class="w-1.5 h-1.5 rounded-full bg-status-info"></span> In Transit </div> <div class="w-24 text-outline">23:00</div> </div></div>
+<!-- Gantt/Timeline Workspace -->
+<div class="h-64 border-t border-border-subtle flex flex-col bg-surface-graphite">
+<div class="h-8 bg-surface-container-high flex items-center border-b border-border-subtle px-margin-page gap-4 overflow-x-auto no-scrollbar"><div class="w-24">Asset ID</div><div class="w-28">OGV / Destination</div><div class="w-12">Jetty</div><div class="w-12">CTS</div><div class="w-20">Plan Dep.</div><div class="w-20">ETA Var.</div><div class="w-28">Next Constraint</div><div class="flex-1">Status</div><div class="w-24">SLA Deadline</div></div>
+<div class="flex-1 relative overflow-auto gantt-grid p-4">
+<!-- Simulated Gantt Bars -->
+<div class="space-y-4">
+<div class="flex items-center gap-2">
+<span class="w-20 text-[10px] text-outline-variant font-bold truncate">SEA-TITAN-01</span>
+<div class="flex-1 h-5 relative bg-surface-container rounded overflow-hidden">
+<div class="absolute left-10 w-48 h-full bg-status-info/40 border-l border-r border-status-info flex items-center px-2 text-[9px] font-bold">TRANSSHIPMENT OPS</div>
+<div class="absolute left-64 w-12 h-full bg-status-critical/60 border-l border-r border-status-critical flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-20 text-[10px] text-outline-variant font-bold truncate">BLUE-TIDE-09</span>
+<div class="flex-1 h-5 relative bg-surface-container rounded overflow-hidden">
+<div class="absolute left-0 w-80 h-full bg-status-success/30 border-l border-r border-status-success flex items-center px-2 text-[9px]">VOYAGE #9928</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-20 text-[10px] text-outline-variant font-bold truncate">TUG-FORCE-04</span>
+<div class="flex-1 h-5 relative bg-surface-container rounded overflow-hidden">
+<div class="absolute left-[30%] w-32 h-full bg-tertiary-container/30 border-l border-r border-tertiary flex items-center px-2 text-[9px]">SCHEDULED MAINT</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-20 text-[10px] text-outline-variant font-bold truncate">BRG-9022</span>
+<div class="flex-1 h-5 relative bg-surface-container rounded overflow-hidden">
+<div class="absolute left-20 w-full h-full bg-status-warning/20 border-l-4 border-status-warning flex items-center px-2 text-[9px] italic">HOLDING FOR TIDE WINDOW...</div>
+</div>
+</div>
+</div>
+<!-- Current Time Indicator -->
+<div class="absolute top-0 bottom-0 left-[25%] w-px bg-primary shadow-[0_0_10px_rgba(137,206,255,1)] z-10 flex flex-col items-center">
+<div class="bg-primary text-on-primary-container text-[8px] font-bold px-1 rounded-sm -mt-2">14:15</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Detail Rail -->
+<aside class="w-80 bg-surface-container flex flex-col overflow-y-auto border-l border-border-subtle">
+<!-- Asset Info -->
+<div class="p-4 border-b border-border-subtle">
+<div class="flex justify-between items-start mb-2">
+<h2 class="font-headline-md text-primary">SEA-TITAN-01</h2><div class="flex gap-2 mt-1"> <span class="text-[9px] text-outline px-1 bg-surface-charcoal rounded border border-border-subtle">GPS: 2m ago</span> <span class="text-[9px] text-outline px-1 bg-surface-charcoal rounded border border-border-subtle">AIS: 1m ago</span> </div>
+<span class="px-1.5 py-0.5 bg-status-critical/20 border border-status-critical text-status-critical rounded font-label-caps text-[9px]">BLOCKED</span>
+</div>
+<div class="grid grid-cols-2 gap-y-2 text-[11px]">
+<div class="text-outline-variant uppercase">Current Status</div>
+<div class="text-on-surface text-right font-data-tabular">WAITING TIDE</div>
+<div class="text-outline-variant uppercase">Fuel Level</div>
+<div class="text-on-surface text-right font-data-tabular">82%</div>
+<div class="text-outline-variant uppercase">Last AIS</div>
+<div class="text-status-success text-right font-data-tabular">4s AGO</div>
+</div>
+<div class="mt-4 h-32 w-full rounded bg-surface-charcoal relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent z-10 p-2 flex items-end">
+<span class="text-[9px] font-bold text-outline uppercase tracking-widest">Live Asset Cam / Map</span>
+</div>
+<img class="w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A highly detailed industrial monitor display showing a high-contrast maritime map in dark mode. The map features glowing cyan ship icons and green navigation lanes against a deep charcoal background. Digital data overlays and monospaced text show live vessel telemetry. The lighting is low and clinical, characteristic of a high-tech control room environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj1DEoWwgFhYnYik_pqnciH0y574yzsqmQ3YQJW_F3QrJZVO4j0x_hkODFiI1JimL_X9drH-dUk6nTrWZsS9R7Mwcgls7lMzpVbJ0O_rKwX4f5sHKhCxUfKaM1_6T3aBJXfCBc0H7NYdWKEFXXLzog6t7ZUhS5xvtFK4_hnb_BlE6HTYfjCmedlIJqU1qAdMQDGuQJXB6nywAy4trUHPWY4BZeU-Izy8fKRdUlZSm0i5VVUZRWKLhzk4xV8ulrTKWZqkXsM8GmDuDG"/>
+<div class="absolute top-2 right-2 bg-status-success/80 text-[8px] px-1 rounded text-on-surface z-20 animate-pulse uppercase">Live Feed Active</div></div>
+</div>
+<!-- Next Action Assist -->
+<div class="p-4 border-b border-border-subtle">
+<h3 class="text-[10px] font-bold text-primary uppercase mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span> Next Action Assist
+                    </h3>
+<div class="space-y-2"><div class="p-2 bg-surface-charcoal border-l-2 border-status-info flex flex-col gap-2 cursor-pointer hover:bg-surface-container-highest transition-all"> <div class="flex justify-between items-start"> <span class="text-on-surface text-[11px] leading-tight font-bold">Re-route BRG-9022 to Jetty Alpha-2</span> <span class="text-[9px] text-outline-variant uppercase">22m Save</span> </div> <button class="w-full h-6 bg-status-info/20 text-status-info border border-status-info/50 text-[9px] font-bold rounded uppercase hover:bg-status-info hover:text-on-primary transition-all">EXECUTE REROUTE</button> </div> <div class="p-2 bg-surface-charcoal border-l-2 border-status-warning flex flex-col gap-2 cursor-pointer hover:bg-surface-container-highest transition-all"> <div class="flex justify-between items-start"> <span class="text-on-surface text-[11px] leading-tight font-bold">Notify SEA-TITAN: Tide Shift</span> <span class="text-[9px] text-outline-variant">15:40 Start</span> </div> <button class="w-full h-6 bg-status-warning/20 text-status-warning border border-status-warning/50 text-[9px] font-bold rounded uppercase hover:bg-status-warning hover:text-on-primary transition-all">SEND NOTIFICATION</button> </div></div>
+</div>
+<!-- Feed Trust Panel -->
+<div class="p-4 mt-auto">
+<h3 class="text-[10px] font-bold text-outline-variant uppercase mb-2">Feed Trust Status</h3>
+<div class="flex items-center justify-between text-[10px] mb-1">
+<span>GPS / AIS Link</span>
+<span class="text-status-success font-data-tabular">STABLE</span>
+</div>
+<div class="w-full h-1 bg-surface-charcoal rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-[98%] shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+</div>
+<div class="mt-4 flex flex-col gap-1">
+<button class="w-full h-8 bg-primary text-on-primary-container font-data-tabular text-[11px] font-bold rounded flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span> CREATE SCENARIO
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+<!-- SLA Lane (Bottom Section) -->
+<div class="h-32 bg-surface-container-lowest border-t border-border-subtle flex flex-col z-50"> <div class="h-7 bg-surface-graphite border-b border-border-subtle flex items-center px-4 justify-between"> <span class="text-[10px] font-bold text-primary uppercase">Active Operational SLA Lane</span> <div class="flex gap-4 items-center"> <div class="flex items-center gap-1"> <span class="w-2 h-2 rounded-full bg-status-critical"></span> <span class="text-[9px] text-outline">Breached</span> </div> <div class="flex items-center gap-1"> <span class="w-2 h-2 rounded-full bg-status-warning"></span> <span class="text-[9px] text-outline">Due Soon</span> </div> <div class="flex items-center gap-1"> <span class="w-2 h-2 rounded-full bg-status-success"></span> <span class="text-[9px] text-outline">Within SLA</span> </div> </div> </div> <div class="flex-1 overflow-y-auto px-4 py-1"> <table class="w-full text-left font-data-tabular text-[10px]"> <thead class="text-outline-variant uppercase border-b border-border-subtle"> <tr> <th class="py-1">Severity</th> <th class="py-1">Affected Object</th> <th class="py-1">Issue Type</th> <th class="py-1">Owner</th> <th class="py-1">Age</th> <th class="py-1">Deadline</th> <th class="py-1">Status</th> <th class="py-1 text-right">Next Action</th> </tr> </thead> <tbody class="divide-y divide-border-subtle/50"> <tr> <td class="py-1.5"><span class="px-1 bg-status-critical/20 text-status-critical rounded text-[9px]">CRITICAL</span></td> <td class="py-1.5 text-on-surface">OGV-99 (MV IRON ORE A)</td> <td class="py-1.5">Demurrage Risk High</td> <td class="py-1.5">Disptach Ops</td> <td class="py-1.5">42m</td> <td class="py-1.5 text-status-warning font-bold">15:30</td> <td class="py-1.5"><span class="px-1.5 py-0.5 bg-status-critical/10 border border-status-critical text-status-critical rounded-full">Breached</span></td> <td class="py-1.5 text-right text-primary hover:underline cursor-pointer">Escalate to Master</td> </tr> <tr> <td class="py-1.5"><span class="px-1 bg-status-warning/20 text-status-warning rounded text-[9px]">MEDIUM</span></td> <td class="py-1.5 text-on-surface">BRG-22 (WEATHER)</td> <td class="py-1.5">Deviation Detected</td> <td class="py-1.5">Marine Logistics</td> <td class="py-1.5">12m</td> <td class="py-1.5">17:00</td> <td class="py-1.5"><span class="px-1.5 py-0.5 bg-status-warning/10 border border-status-warning text-status-warning rounded-full">Due Soon</span></td> <td class="py-1.5 text-right text-primary hover:underline cursor-pointer">Confirm Reroute</td> </tr> </tbody> </table> </div> </div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full h-row-height-compact bg-surface-container-lowest border-t border-border-subtle flex justify-between items-center px-4 py-1 z-50">
+<span class="font-data-tabular text-data-tabular text-on-surface-variant opacity-60">Industrial Systems v4.2.0 | Latency: 24ms | Connection: Stable</span>
+<div class="flex gap-4">
+<a class="font-data-tabular text-data-tabular text-on-surface-variant hover:text-primary transition-all" href="#">SLA Monitor</a>
+<a class="font-data-tabular text-data-tabular text-on-surface-variant hover:text-primary transition-all" href="#">System Health</a>
+</div>
+</footer>
+<script>
+        // Simple Pulse Interactivity
+        document.querySelectorAll('.cursor-pointer').forEach(el => {
+            el.addEventListener('mousedown', () => el.classList.add('opacity-80'));
+            el.addEventListener('mouseup', () => el.classList.remove('opacity-80'));
+        });
+
+        // Time simulation update (static for visual demo, but ready for hooks)
+        const updateClock = () => {
+            // Placeholder for real-time data sync logic
+        };
+        setInterval(updateClock, 1000);
+    </script>
+</body></html>

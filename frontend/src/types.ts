@@ -896,6 +896,54 @@ export type GlobalOptimizationRunRecord = {
   updated_at: string;
 };
 
+export type MovementAssignmentCandidateRecord = {
+  id: number;
+  candidate_id: string;
+  run: number;
+  run_ref: string;
+  cargo_layer_step: number;
+  cargo_layer_step_ref: string;
+  voyage_ref: string;
+  vessel_name: string;
+  coal_grade: string;
+  movement_key: string;
+  rank: number;
+  status: string;
+  tug: TugRecord | null;
+  barge: BargeRecord | null;
+  jetty: JettyRecord | null;
+  cts: CTSAssetRecord | null;
+  route_segment: number | null;
+  score: string;
+  constraint_results: Array<Record<string, unknown>>;
+  blocking_reasons: string[];
+  warning_reasons: string[];
+  selection_reason: Record<string, unknown>;
+  is_selected: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MovementAssignmentCandidateRunRecord = {
+  id: number;
+  run_id: string;
+  status: string;
+  plan_version: number | null;
+  plan_version_ref: string | null;
+  input_signature: string;
+  input_summary: Record<string, unknown>;
+  algorithm_version: string;
+  generated_by: number | null;
+  generated_by_email: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string;
+  metadata: Record<string, unknown>;
+  candidates: MovementAssignmentCandidateRecord[];
+  created_at: string;
+  updated_at: string;
+};
+
 export type TelemetryTrustProfileRecord = {
   id: number;
   profile_key: string;
@@ -1486,6 +1534,8 @@ export type SchedulingOverview = {
   recoveryInputSnapshots: RecoveryInputSnapshotRecord[];
   optimizerRuns: OptimizerRunRecord[];
   recoveryRecommendations: RecoveryRecommendationRecord[];
+  movementAssignmentCandidateRun: MovementAssignmentCandidateRunRecord | null;
+  movementAssignmentCandidates: MovementAssignmentCandidateRecord[];
   globalOptimizationRuns: GlobalOptimizationRunRecord[];
   globalOptimizationCandidates: GlobalOptimizationCandidateRecord[];
   commercialProjectionRun: CommercialProjectionRunRecord | null;

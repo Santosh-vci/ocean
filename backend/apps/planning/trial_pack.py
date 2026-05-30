@@ -159,7 +159,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
             "etc_target": iso(2, 14),
             "laycan_start": iso(0, 0),
             "laycan_end": iso(4, 0),
-            "required_mt": 96000,
+            "required_mt": 144000,
             "loaded_mt": 0,
             "in_transit_mt": 0,
             "priority": 1,
@@ -167,12 +167,13 @@ def operator_happy_path_demand_rows() -> list[dict]:
             "current_stage": "READY_TO_PLAN",
             "next_blocking_constraint": "Ready for scheduling",
             "cargo_requirements": [
-                _requirement("EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 48000, 0, 0),
+                _requirement("EBONY", "LOC-SAMBARATA-PORT", "JTY-SUARAN", 96000, 0, 0),
                 _requirement("AGATHIS", "LOC-LATI-PORT", "JTY-LATI", 48000, 0, 0),
             ],
             "cargo_layers": [
-                _layer("EBONY", 1, 1, 1, 48000, 48000, "BRG-VAL-08", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(0, 10), iso(0, 20)),
-                _layer("AGATHIS", 2, 1, 2, 48000, 48000, "BRG-NUS-17", "JTY-LATI", "CTS-JAVA", "planned", "", "READY", False, iso(1, 4), iso(1, 14)),
+                _layer("EBONY", 1, 1, 1, 48000, 48000, "BRG-VAL-08", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(0, 10), iso(0, 16)),
+                _layer("AGATHIS", 2, 1, 2, 48000, 48000, "BRG-NUS-17", "JTY-LATI", "CTS-JAVA", "planned", "", "READY", False, iso(0, 18), iso(1, 0)),
+                _layer("EBONY", 3, 2, 3, 48000, 48000, "BRG-VAL-08", "JTY-SUARAN", "FC-CHLOE", "planned", "", "READY", False, iso(1, 6), iso(1, 12)),
             ],
         },
         {
@@ -185,7 +186,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
             "etc_target": iso(3, 10),
             "laycan_start": iso(1, 0),
             "laycan_end": iso(5, 0),
-            "required_mt": 72000,
+            "required_mt": 108000,
             "loaded_mt": 0,
             "in_transit_mt": 0,
             "priority": 2,
@@ -194,9 +195,12 @@ def operator_happy_path_demand_rows() -> list[dict]:
             "next_blocking_constraint": "Ready for scheduling",
             "cargo_requirements": [
                 _requirement("MAHONI", "LOC-SUARAN-PORT", "JTY-SUARAN", 72000, 0, 0),
+                _requirement("AGATHIS", "LOC-LATI-PORT", "JTY-LATI", 36000, 0, 0),
             ],
             "cargo_layers": [
-                _layer("MAHONI", 1, 1, 1, 72000, 72000, "BRG-VAL-08", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(1, 12), iso(2, 2)),
+                _layer("MAHONI", 1, 1, 1, 36000, 36000, "BRG-NUS-17", "JTY-SUARAN", "CTS-BORNEO", "planned", "", "READY", False, iso(1, 14), iso(1, 20)),
+                _layer("AGATHIS", 2, 1, 2, 36000, 36000, "BRG-VAL-08", "JTY-LATI", "CTS-JAVA", "planned", "", "READY", False, iso(2, 4), iso(2, 10)),
+                _layer("MAHONI", 3, 2, 3, 36000, 36000, "BRG-NUS-17", "JTY-SUARAN", "FC-CHLOE", "planned", "", "READY", False, iso(2, 12), iso(2, 18)),
             ],
         },
     ]

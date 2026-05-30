@@ -597,23 +597,23 @@ class PlanningOverviewViewSet(PlanningViewSet):
         voyages = list(
             OGVVoyage.objects.prefetch_related("layer_steps", "layer_steps__planned_barge").all()
         )
-        trial_voyages = [
-            voyage for voyage in voyages if voyage.voyage_id.startswith("VOY-")
-        ]
-        trial_ids = {voyage.voyage_id for voyage in trial_voyages}
-        if {
-            "VOY-PACIFIC-PRIDE",
-            "VOY-NORTH-STAR",
-            "VOY-TRITON-STAR",
-        }.issubset(trial_ids):
-            return self._enter_trial_operating_windows(request=request, voyages=trial_voyages)
-
         operator_voyages = [
             voyage
             for voyage in voyages
             if voyage.voyage_id.startswith("VOY-UI-")
             or voyage.vessel_name == "MV Operator UI Import"
         ]
+        trial_voyages = [
+            voyage for voyage in voyages if voyage.voyage_id.startswith("VOY-")
+        ]
+        trial_ids = {voyage.voyage_id for voyage in trial_voyages}
+        if not operator_voyages and {
+            "VOY-PACIFIC-PRIDE",
+            "VOY-NORTH-STAR",
+            "VOY-TRITON-STAR",
+        }.issubset(trial_ids):
+            return self._enter_trial_operating_windows(request=request, voyages=trial_voyages)
+
         target_voyages = operator_voyages or voyages
         earliest_eta = min((voyage.eta for voyage in target_voyages), default=None)
         operating_anchor = earliest_eta or _next_operating_anchor()
@@ -761,56 +761,51 @@ class PlanningOverviewViewSet(PlanningViewSet):
         ).delete()
 
         checks_created = 0
+        movement_index = 0
         for voyage in target_voyages:
             layer_steps = sorted(
                 voyage.layer_steps.all(),
                 key=lambda step: step.required_sequence_no,
             )
-            asset_codes = [
-                step.planned_barge.code
-                for step in layer_steps
-                if step.planned_barge is not None
-            ] or ["BRG-VAL-08"]
-            for index, asset_code in enumerate(dict.fromkeys(asset_codes), start=1):
-                tide_window = tide_windows[(index - 1) % len(tide_windows)]
-                bridge_window = bridge_windows[(index - 1) % len(bridge_windows)]
-                tide_eta_gate = tide_window.window_start + timedelta(hours=1)
-                bridge_eta_gate = bridge_window.window_start + timedelta(hours=1)
-                NavigationConstraintCheck.objects.filter(
-                    voyage=voyage,
-                    asset_code=asset_code,
-                    constraint_type__in=[
-                        NavigationConstraintCheck.ConstraintType.TIDE,
-                        NavigationConstraintCheck.ConstraintType.BRIDGE,
-                    ],
-                ).delete()
+            movement_steps = layer_steps or [None]
+            for step in movement_steps:
+                movement_index += 1
+                asset_code = (
+                    step.planned_barge.code
+                    if step is not None and step.planned_barge is not None
+                    else "BRG-VAL-08"
+                )
+                planned_start = (
+                    step.planned_start
+                    if step is not None and step.planned_start is not None
+                    else voyage.eta
+                )
+                if movement_index % 2:
+                    window = tide_windows[(movement_index - 1) % len(tide_windows)]
+                    constraint_type = NavigationConstraintCheck.ConstraintType.TIDE
+                    route_for_check = tide_route_segment
+                    margin_minutes = 180
+                    recovery_hint = "Open operator-entered tide window."
+                else:
+                    window = bridge_windows[(movement_index - 1) % len(bridge_windows)]
+                    constraint_type = NavigationConstraintCheck.ConstraintType.BRIDGE
+                    route_for_check = bridge_route_segment
+                    margin_minutes = 210
+                    recovery_hint = "Open operator-entered bridge window."
                 NavigationConstraintCheck.objects.create(
                     voyage=voyage,
                     asset_code=asset_code,
-                    route_segment=tide_route_segment,
-                    constraint_type=NavigationConstraintCheck.ConstraintType.TIDE,
-                    eta_gate=tide_eta_gate,
-                    window_start=tide_window.window_start,
-                    window_end=tide_window.window_end,
+                    route_segment=route_for_check,
+                    constraint_type=constraint_type,
+                    eta_gate=(planned_start or window.window_start) + timedelta(hours=1),
+                    window_start=window.window_start,
+                    window_end=window.window_end,
                     draft_m=Decimal("4.20"),
-                    margin_minutes=180,
+                    margin_minutes=margin_minutes,
                     status=NavigationConstraintCheck.Status.CAN_CROSS,
-                    recovery_hint="Open operator-entered tide window.",
+                    recovery_hint=recovery_hint,
                 )
-                NavigationConstraintCheck.objects.create(
-                    voyage=voyage,
-                    asset_code=asset_code,
-                    route_segment=bridge_route_segment,
-                    constraint_type=NavigationConstraintCheck.ConstraintType.BRIDGE,
-                    eta_gate=bridge_eta_gate,
-                    window_start=bridge_window.window_start,
-                    window_end=bridge_window.window_end,
-                    draft_m=Decimal("4.20"),
-                    margin_minutes=210,
-                    status=NavigationConstraintCheck.Status.CAN_CROSS,
-                    recovery_hint="Open operator-entered bridge window.",
-                )
-                checks_created += 2
+                checks_created += 1
 
         cleared_recovery_state = _clear_resolved_navigation_recovery_state(target_voyages)
         stale_plan_versions = _mark_editable_plan_versions_stale(
@@ -996,13 +991,15 @@ class PlanningOverviewViewSet(PlanningViewSet):
             bridge_windows.append(bridge_window)
 
         checks_created = 0
-        for voyage_id, asset, segment, kind, eta, window_start, window_end, draft, margin, check_status, hint in [
-            ("VOY-PACIFIC-PRIDE", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(0, 8), trial_dt(0, 7), trial_dt(0, 12), "4.10", 118, NavigationConstraintCheck.Status.CAN_CROSS, "Proceed through Rantau Delta on current slot."),
-            ("VOY-OCEAN-VOYAGER", "BRG-KAL-22", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 10, 40), trial_dt(1, 8), trial_dt(1, 10), "4.50", -40, NavigationConstraintCheck.Status.MISSED, "Split load or resequence against TIDE-DEEP-01."),
-            ("VOY-NORTH-STAR", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 9, 45), trial_dt(1, 4), trial_dt(1, 5), "4.00", -285, NavigationConstraintCheck.Status.MISSED, "Hold upstream and request next bridge lift."),
-            ("VOY-TRITON-STAR", "BRG-VAL-08", 3, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 18, 20), trial_dt(1, 18), trial_dt(1, 23), "4.60", 22, NavigationConstraintCheck.Status.MARGINAL, "Use priority tow and reduce loading target if delayed."),
-            ("VOY-GOLDEN-ORIOLE", "BRG-KAL-22", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 4, 25), trial_dt(1, 4), trial_dt(1, 5), "4.40", 35, NavigationConstraintCheck.Status.WAITING, "Await pilot confirmation before dispatch."),
-        ]:
+        movement_checks = [
+            ("VOY-PACIFIC-PRIDE", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(0, 8, 30), trial_dt(0, 7), trial_dt(0, 12), "4.10", 90, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 01 EBONY can cross Rantau Delta on the current tide slot."),
+            ("VOY-PACIFIC-PRIDE", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 4, 20), trial_dt(1, 4), trial_dt(1, 5), "4.20", 40, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 02 AGATHIS can use the restricted bridge slot with pilot clearance."),
+            ("VOY-PACIFIC-PRIDE", "BRG-KAL-22", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 9, 30), trial_dt(1, 8), trial_dt(1, 10), "4.35", 30, NavigationConstraintCheck.Status.WAITING, "Movement 03 EBONY is waiting on the tight Rantau Delta tide slot."),
+            ("VOY-NORTH-STAR", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 9, 45), trial_dt(1, 4), trial_dt(1, 5), "4.00", -285, NavigationConstraintCheck.Status.MISSED, "Movement 04 SUNGKAI misses the bridge lift and needs governed recovery."),
+            ("VOY-GOLDEN-ORIOLE", "BRG-KAL-22", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(4, 6, 25), trial_dt(1, 4), trial_dt(1, 5), "4.40", -4345, NavigationConstraintCheck.Status.WAITING, "Movement 05 MAHONI is awaiting a future bridge slot before dispatch."),
+            ("VOY-TRITON-STAR", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 8, 20), trial_dt(1, 8), trial_dt(1, 10), "4.30", 100, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 06 EBONY can cross on the tight Rantau Delta tide slot."),
+        ]
+        for voyage_id, asset, segment, kind, eta, window_start, window_end, draft, margin, check_status, hint in movement_checks:
             voyage = voyages_by_id.get(voyage_id)
             if not voyage:
                 continue

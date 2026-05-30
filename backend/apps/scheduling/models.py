@@ -49,6 +49,14 @@ def global_optimization_candidate_reference() -> str:
     return _reference("GCAN")
 
 
+def movement_assignment_candidate_run_reference() -> str:
+    return _reference("MACR")
+
+
+def movement_assignment_candidate_reference() -> str:
+    return _reference("MAC")
+
+
 def commercial_projection_run_reference() -> str:
     return _reference("CPR")
 
@@ -1060,6 +1068,155 @@ class GlobalOptimizationCandidate(models.Model):
             models.UniqueConstraint(
                 fields=("run", "rank"),
                 name="unique_global_optimization_candidate_rank",
+            )
+        ]
+
+    @property
+    def organization(self):
+        return self.run.organization
+
+    def __str__(self) -> str:
+        return self.candidate_id
+
+
+class MovementAssignmentCandidateRun(models.Model):
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELED = "canceled", "Canceled"
+
+    run_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=movement_assignment_candidate_run_reference,
+    )
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.QUEUED)
+    plan_version = models.ForeignKey(
+        PlanVersion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidate_runs",
+    )
+    input_signature = models.CharField(max_length=64, blank=True)
+    input_summary = models.JSONField(default=dict, blank=True)
+    algorithm_version = models.CharField(
+        max_length=96,
+        default="phase6.14-movement-assignment-candidates",
+    )
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_movement_assignment_candidate_runs",
+    )
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=("status", "created_at")),
+            models.Index(fields=("plan_version", "status", "created_at")),
+            models.Index(fields=("algorithm_version", "status")),
+            models.Index(fields=("input_signature",)),
+        ]
+
+    @property
+    def organization(self):
+        return self.plan_version.plan.organization if self.plan_version else None
+
+    def __str__(self) -> str:
+        return self.run_id
+
+
+class MovementAssignmentCandidate(models.Model):
+    class Status(models.TextChoices):
+        FEASIBLE = "feasible", "Feasible"
+        WARNING = "warning", "Warning"
+        BLOCKED = "blocked", "Blocked"
+
+    candidate_id = models.CharField(
+        max_length=96,
+        unique=True,
+        default=movement_assignment_candidate_reference,
+    )
+    run = models.ForeignKey(
+        MovementAssignmentCandidateRun,
+        on_delete=models.CASCADE,
+        related_name="candidates",
+    )
+    cargo_layer_step = models.ForeignKey(
+        CargoLayerStep,
+        on_delete=models.CASCADE,
+        related_name="movement_assignment_candidates",
+    )
+    movement_key = models.CharField(max_length=120)
+    rank = models.PositiveIntegerField()
+    status = models.CharField(max_length=32, choices=Status.choices)
+    tug = models.ForeignKey(
+        Tug,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidates",
+    )
+    barge = models.ForeignKey(
+        Barge,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidates",
+    )
+    jetty = models.ForeignKey(
+        Jetty,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidates",
+    )
+    cts = models.ForeignKey(
+        CTSAsset,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidates",
+    )
+    route_segment = models.ForeignKey(
+        RouteSegment,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movement_assignment_candidates",
+    )
+    score = models.DecimalField(max_digits=9, decimal_places=3, default=0)
+    constraint_results = models.JSONField(default=list, blank=True)
+    blocking_reasons = models.JSONField(default=list, blank=True)
+    warning_reasons = models.JSONField(default=list, blank=True)
+    selection_reason = models.JSONField(default=dict, blank=True)
+    is_selected = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["run", "movement_key", "rank", "id"]
+        indexes = [
+            models.Index(fields=("run", "movement_key", "rank")),
+            models.Index(fields=("cargo_layer_step", "status", "rank")),
+            models.Index(fields=("status", "score")),
+            models.Index(fields=("is_selected", "run")),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("run", "cargo_layer_step", "rank"),
+                name="unique_movement_assignment_candidate_rank",
             )
         ]
 

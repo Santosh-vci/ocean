@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.audit.services import record_audit_event
-from apps.masters.models import Location
+from apps.masters.models import Barge, CTSAsset, Location, Tug
 from apps.planning.models import (
     AssetAvailabilityWindow,
     BridgeWindow,
@@ -203,6 +203,13 @@ class Phase5TrialPackResolver:
             status=AssetAvailabilityWindow.Status.AVAILABLE,
             reason="Phase 5 trial closure: resource released for governed plan.",
         )
+        tug_updates = Tug.objects.exclude(status=Tug.Status.AVAILABLE).update(
+            status=Tug.Status.AVAILABLE,
+        )
+        barge_updates = Barge.objects.exclude(status=Barge.Status.AVAILABLE).update(
+            status=Barge.Status.AVAILABLE,
+        )
+        cts_updates = CTSAsset.objects.filter(is_available=False).update(is_available=True)
         jetty_updates = JettyAvailabilityWindow.objects.exclude(
             status=JettyAvailabilityWindow.Status.WORKING,
         ).update(
@@ -230,6 +237,9 @@ class Phase5TrialPackResolver:
             "normalizedAt": now.isoformat(),
             "cargoLayerRows": layer_updates,
             "assetAvailabilityRows": unavailable_updates,
+            "tugRows": tug_updates,
+            "bargeRows": barge_updates,
+            "ctsRows": cts_updates,
             "jettyWindowRows": jetty_updates,
             "navigationCheckRows": navigation_updates,
             "tideWindowRows": tide_updates,

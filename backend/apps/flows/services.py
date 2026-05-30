@@ -40,6 +40,8 @@ BOUND_REF_ALIASES = {
     "recovery_snapshot_id": "recovery_snapshot_id",
     "optimizerRunId": "optimizer_run_id",
     "optimizer_run_id": "optimizer_run_id",
+    "assignmentCandidateRunId": "assignment_candidate_run_id",
+    "assignment_candidate_run_id": "assignment_candidate_run_id",
     "publishabilityAssessmentId": "publishability_assessment_id",
     "publishability_assessment_id": "publishability_assessment_id",
     "rootCauseAssessmentId": "root_cause_assessment_id",

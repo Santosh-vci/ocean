@@ -102,12 +102,12 @@ def test_operator_trial_practice_stages_start_empty_then_build_blocked_plan():
     windows = command_json("operator_trial_practice", "enter-windows")
     assert windows["counts"]["tideWindows"] == 3
     assert windows["counts"]["bridgeWindows"] == 3
-    assert windows["windowEntry"]["constraintChecks"] == 5
+    assert windows["windowEntry"]["constraintChecks"] == 6
 
     generated = command_json("operator_trial_practice", "generate-plan")
     assert generated["planVersion"]["tripCount"] == 6
     assert generated["planVersion"]["conflictCount"] == 4
-    assert generated["planVersion"]["blockingConflictCount"] == 3
+    assert generated["planVersion"]["blockingConflictCount"] == 4
     assert generated["planVersion"]["validationStatus"] == "blocked"
 
 
@@ -184,6 +184,7 @@ def test_import_trial_demand_happy_path_pack_creates_clean_demand():
 
     assert response.status_code == 201
     assert OGVVoyage.objects.count() == 2
+    assert CargoLayerStep.objects.count() == 6
     assert ImportJob.objects.get(pk=response.data["id"]).source == "operator_happy_path_v1"
     assert CargoLayerStep.objects.filter(sequence_violation=True).count() == 0
     assert CargoLayerStep.objects.filter(

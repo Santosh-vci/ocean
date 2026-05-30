@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>COALFLOW TOWER | BERAU CARGO / OGV</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;900&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            overflow: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0F172A;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+        .data-grid-row:hover {
+            background-color: #2d3449;
+        }
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "on-secondary-fixed-variant": "#2f2ebe",
+                "on-primary-fixed": "#001e2f",
+                "status-success": "#10B981",
+                "surface-container-high": "#222a3d",
+                "status-critical": "#EF4444",
+                "primary": "#89ceff",
+                "border-subtle": "#334155",
+                "primary-fixed-dim": "#89ceff",
+                "coal-mahoni": "#4B3D33",
+                "inverse-surface": "#dae2fd",
+                "on-background": "#dae2fd",
+                "tertiary-container": "#de8712",
+                "on-tertiary-fixed": "#2c1600",
+                "on-secondary-fixed": "#07006c",
+                "on-surface-variant": "#bec8d2",
+                "tertiary": "#ffb86e",
+                "on-secondary": "#1000a9",
+                "surface-bright": "#31394d",
+                "coal-ebony": "#2D2D2D",
+                "secondary-fixed": "#e1e0ff",
+                "outline-variant": "#3e4850",
+                "tertiary-fixed": "#ffdcbd",
+                "surface-container-low": "#131b2e",
+                "surface-charcoal": "#0F172A",
+                "on-primary-container": "#003751",
+                "secondary-container": "#3131c0",
+                "status-warning": "#F59E0B",
+                "surface-container-highest": "#2d3449",
+                "live-indicator": "#F0F9FF",
+                "coal-agathis": "#C5A16F",
+                "on-error": "#690005",
+                "error": "#ffb4ab",
+                "secondary": "#c0c1ff",
+                "on-error-container": "#ffdad6",
+                "error-container": "#93000a",
+                "secondary-fixed-dim": "#c0c1ff",
+                "surface-dim": "#0b1326",
+                "surface-container": "#171f33",
+                "outline": "#88929b",
+                "tertiary-fixed-dim": "#ffb86e",
+                "planned-stroke": "#94A3B8",
+                "surface-graphite": "#1E293B",
+                "surface-container-lowest": "#060e20",
+                "on-surface": "#dae2fd",
+                "primary-container": "#0ea5e9",
+                "inverse-on-surface": "#283044",
+                "surface": "#0b1326",
+                "on-tertiary-fixed-variant": "#693c00",
+                "inverse-primary": "#006591",
+                "surface-tint": "#89ceff",
+                "status-info": "#0EA5E9",
+                "surface-variant": "#2d3449",
+                "on-tertiary-container": "#4d2b00",
+                "on-tertiary": "#492900",
+                "on-primary": "#00344d",
+                "on-primary-fixed-variant": "#004c6e"
+              },
+              "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+              },
+              "spacing": {
+                "row-height-standard": "36px",
+                "gutter": "8px",
+                "sidebar-width-collapsed": "56px",
+                "unit": "4px",
+                "row-height-compact": "28px",
+                "sidebar-width-expanded": "240px",
+                "margin-page": "16px"
+              },
+              "fontFamily": {
+                "headline-lg": ["Hanken Grotesk"],
+                "headline-md": ["Hanken Grotesk"],
+                "body-md": ["Inter"],
+                "label-caps": ["Inter"],
+                "data-tabular": ["JetBrains Mono"],
+                "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                "headline-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                "headline-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                "data-tabular": ["12px", {"lineHeight": "16px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="flex flex-col h-screen font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface-container-high dark:bg-surface-container-high text-primary font-headline-md text-headline-md docked full-width top-0 border-b border-border-subtle flex justify-between items-center w-full px-margin-page h-row-height-standard z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg font-black text-primary uppercase tracking-tighter">COAL-OPS X1</span>
+<div class="h-4 w-px bg-border-subtle"></div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-label-caps uppercase text-xs">COALFLOW TOWER</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface-variant font-label-caps uppercase text-xs">CONTROL TOWER</span>
+<span class="text-outline-variant">/</span>
+<span class="text-primary font-label-caps uppercase text-xs">OGV DEMAND &amp; SCHEDULE</span><div class="flex items-center gap-1.5 px-2 py-0.5 bg-status-success/10 border border-status-success/30 rounded-sm ml-2"><span class="w-1 h-1 rounded-full bg-status-success"></span><span class="text-[9px] font-black uppercase text-status-success">PUBLISHED / LIVE</span></div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex gap-4">
+<a class="text-primary border-b-2 border-primary pb-1 font-label-caps" href="#">LIVE-PLAN-104</a>
+</nav>
+<div class="flex items-center gap-2">
+<button class="px-3 h-row-height-compact bg-surface-graphite text-on-surface hover:bg-surface-variant transition-colors text-xs font-bold uppercase rounded-sm border border-border-subtle">Review Changes</button>
+<button class="px-3 h-row-height-compact bg-primary text-on-primary hover:opacity-80 transition-colors text-xs font-bold uppercase rounded-sm">Publish Plan</button>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-variant p-1 rounded transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-variant p-1 rounded transition-colors" data-icon="history">history</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-surface-variant p-1 rounded transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-surface-charcoal dark:bg-surface-charcoal text-primary font-label-caps text-label-caps docked left-0 h-full w-sidebar-width-collapsed hover:w-sidebar-width-expanded transition-all duration-300 border-r border-border-subtle flex flex-col z-40 group">
+<div class="p-4 flex flex-col items-center group-hover:items-start transition-all">
+<div class="w-8 h-8 rounded-full bg-surface-graphite flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="account_circle">account_circle</span>
+</div>
+<div class="hidden group-hover:block mt-2">
+<div class="text-[10px] font-bold text-on-surface">Dispatcher-01</div>
+<div class="text-[8px] text-on-surface-variant">Port Sector A</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 mt-4">
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="dashboard">dashboard</span>
+<span class="hidden group-hover:block whitespace-nowrap">Control Tower</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 bg-primary-container text-on-primary-container border-l-2 border-primary transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="event_note">event_note</span>
+<span class="hidden group-hover:block whitespace-nowrap">Planning</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="local_shipping">local_shipping</span>
+<span class="hidden group-hover:block whitespace-nowrap">Logistics</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="rule">rule</span>
+<span class="hidden group-hover:block whitespace-nowrap">Constraints</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="map">map</span>
+<span class="hidden group-hover:block whitespace-nowrap">Map</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="science">science</span>
+<span class="hidden group-hover:block whitespace-nowrap">Simulation</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="settings">settings</span>
+<span class="hidden group-hover:block whitespace-nowrap">Admin</span>
+</div>
+</nav>
+<div class="mt-auto p-2 group-hover:p-4 transition-all">
+<button class="w-full bg-primary/10 border border-primary text-primary py-2 rounded-sm text-[10px] hidden group-hover:block uppercase font-black">New Scenario</button>
+</div>
+<div class="flex flex-col gap-1 py-4 border-t border-border-subtle">
+<div class="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="help">help</span>
+<span class="hidden group-hover:block whitespace-nowrap">Help</span>
+</div>
+<div class="flex items-center gap-4 px-4 py-2 text-on-surface-variant hover:bg-surface-graphite transition-all cursor-pointer">
+<span class="material-symbols-outlined shrink-0" data-icon="description">description</span>
+<span class="hidden group-hover:block whitespace-nowrap">Logs</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col bg-surface-charcoal overflow-hidden">
+<!-- KPI Strip -->
+<section class="grid grid-cols-6 gap-0.5 bg-border-subtle p-px border-b border-border-subtle shrink-0">
+<div class="bg-surface-graphite p-2 flex flex-col justify-center min-w-0">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Highest Risk OGV</div>
+<div class="flex items-center gap-2">
+<span class="text-status-critical material-symbols-outlined text-xs status-pulse" data-icon="warning">warning</span>
+<span class="font-data-tabular text-data-tabular text-status-critical truncate">MV PACIFIC STAR</span>
+</div>
+</div>
+<div class="bg-surface-graphite p-2 flex flex-col justify-center">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Total Cargo Remaining</div>
+<div class="font-data-tabular text-data-tabular text-primary">142k MT</div>
+</div>
+<div class="bg-surface-graphite p-2 flex flex-col justify-center">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Grade Conflicts</div>
+<div class="font-data-tabular text-data-tabular text-status-warning">3</div>
+</div>
+<div class="bg-surface-graphite p-2 flex flex-col justify-center">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Laycan Breaches</div>
+<div class="font-data-tabular text-data-tabular text-error">1</div>
+</div>
+<div class="bg-surface-graphite p-2 flex flex-col justify-center">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Pending Approvals</div>
+<div class="font-data-tabular text-data-tabular text-on-surface">5</div>
+</div>
+<div class="bg-surface-graphite p-2 flex flex-col justify-center">
+<div class="text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">ESTIMATED EXPOSURE</div>
+<div class="font-data-tabular text-data-tabular text-status-warning">$12,400</div>
+</div>
+</section>
+<div class="flex flex-1 overflow-hidden">
+<!-- Data Board -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Table Header -->
+<div class="grid grid-cols-[1.5fr_0.8fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1fr] bg-surface-container text-on-surface-variant border-b border-border-subtle h-row-height-compact px-4 items-center shrink-0">
+<div class="font-label-caps">OGV (Voyage ID)</div>
+<div class="font-label-caps">Customer</div>
+<div class="font-label-caps">Laycan Timeline</div>
+<div class="font-label-caps text-right pr-4">Remaining / Target</div>
+<div class="font-label-caps">Loading Sequence Ladder</div>
+<div class="font-label-caps">ETA/ETC</div>
+<div class="font-label-caps">Risk</div>
+<div class="font-label-caps text-right">Actions</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar"><!-- Multiple dense rows for 10-12 target rows -->
+<div class="flex flex-col border-b border-border-subtle data-grid-row h-[32px] hover:bg-surface-variant transition-colors">
+<div class="grid grid-cols-[1.5fr_0.8fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1fr] px-4 h-full items-center text-on-surface text-[11px]">
+<div class="flex items-center gap-2 truncate font-bold">
+<div class="w-1.5 h-1.5 rounded-full bg-status-critical"></div>
+<span>MV PACIFIC STAR <span class="text-[9px] opacity-40">#V24-01</span></span>
+</div>
+<div class="uppercase opacity-80">CHINA STEEL</div>
+<div class="flex items-center h-2 bg-surface-charcoal rounded-full relative">
+<div class="absolute h-full bg-primary/40 rounded-full" style="left: 20%; width: 50%"></div>
+<div class="absolute w-1 h-3 bg-primary top-1/2 -translate-y-1/2" style="left: 45%"></div>
+</div>
+<div class="text-right pr-4 font-data-tabular"><span class="text-primary">31k</span> / 65k</div>
+<div class="flex gap-0.5 h-4">
+<div class="flex-1 bg-status-success/40 border-t-2 border-status-success" title="H1: Loaded"></div>
+<div class="flex-1 bg-status-info/40 border-t-2 border-status-info status-pulse" title="H2: Loading"></div>
+<div class="flex-1 bg-surface-graphite border-t-2 border-outline/30" title="H3: Planned"></div>
+<div class="flex-1 bg-status-critical/30 border-t-2 border-status-critical border-dashed" title="H4: Blocked"></div>
+</div>
+<div class="font-data-tabular">22 May 14:00</div>
+<div class="text-[9px] font-black text-status-critical">CRITICAL</div>
+<div class="text-right"><button class="text-[9px] font-bold text-primary hover:underline">VIEW</button></div>
+</div>
+</div>
+<!-- Repeat block for density -->
+<div class="flex flex-col border-b border-border-subtle data-grid-row h-[32px] hover:bg-surface-variant transition-colors">
+<div class="grid grid-cols-[1.5fr_0.8fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1fr] px-4 h-full items-center text-on-surface text-[11px]">
+<div class="flex items-center gap-2 truncate font-bold">
+<div class="w-1.5 h-1.5 rounded-full bg-status-warning"></div>
+<span>MV IRON LADY <span class="text-[9px] opacity-40">#V24-02</span></span>
+</div>
+<div class="uppercase opacity-80">POSCO</div>
+<div class="flex items-center h-2 bg-surface-charcoal rounded-full relative">
+<div class="absolute h-full bg-status-warning/40 rounded-full" style="left: 40%; width: 30%"></div>
+<div class="absolute w-1 h-3 bg-status-warning top-1/2 -translate-y-1/2" style="left: 55%"></div>
+</div>
+<div class="text-right pr-4 font-data-tabular"><span class="text-primary">75k</span> / 75k</div>
+<div class="flex gap-0.5 h-4">
+<div class="flex-1 bg-surface-graphite border-t-2 border-outline/30"></div>
+<div class="flex-1 bg-surface-graphite border-t-2 border-outline/30"></div>
+<div class="flex-1 bg-surface-graphite border-t-2 border-outline/30"></div>
+</div>
+<div class="font-data-tabular">25 May 08:00</div>
+<div class="text-[9px] font-black text-status-warning">WARNING</div>
+<div class="text-right"><button class="text-[9px] font-bold text-primary hover:underline">PLAN</button></div>
+</div>
+</div>
+<!-- Additional rows simulated -->
+<div class="flex flex-col border-b border-border-subtle data-grid-row h-[32px] opacity-80">
+<div class="grid grid-cols-[1.5fr_0.8fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1fr] px-4 h-full items-center text-on-surface text-[11px]">
+<div class="flex items-center gap-2"><span>MV GLOBAL STAR</span></div>
+<div class="uppercase">JERA</div>
+<div></div>
+<div class="text-right pr-4 font-data-tabular text-status-success">0 / 55k</div>
+<div class="flex gap-0.5 h-4 w-full bg-status-success/20"></div>
+<div class="font-data-tabular">20 May 11:30</div>
+<div class="text-[9px] font-black text-status-success">NOMINAL</div>
+<div class="text-right">-</div>
+</div>
+</div></div>
+</div>
+<!-- Right Rail: Next Action Assist -->
+<aside class="w-72 bg-surface-container border-l border-border-subtle flex flex-col shrink-0">
+<div class="p-4 border-b border-border-subtle flex justify-between items-center bg-surface-container-high">
+<h3 class="font-label-caps text-on-surface uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary">assignment_late</span>
+            Approval Queue
+        </h3>
+<span class="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[10px] font-black">08</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+<div class="p-3 bg-surface-graphite border border-border-subtle rounded group cursor-pointer hover:border-primary transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[9px] font-black px-1.5 py-0.5 bg-status-critical/10 text-status-critical rounded uppercase">Substitution</span>
+<span class="text-[9px] text-outline">2m ago</span>
+</div>
+<div class="text-[11px] font-bold text-on-surface mb-1">MV PACIFIC STAR: Grade B → C</div>
+<div class="text-[10px] text-on-surface-variant leading-tight mb-3">Shortfall at Stockpile 4 requires grade re-allocation.</div>
+<div class="flex gap-2">
+<button class="flex-1 h-6 bg-primary text-on-primary text-[9px] font-black uppercase rounded">Approve</button>
+<button class="px-2 h-6 border border-border-subtle text-[9px] font-bold uppercase rounded">Review</button>
+</div>
+</div>
+<div class="p-3 bg-surface-graphite border border-border-subtle rounded group cursor-pointer hover:border-primary transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[9px] font-black px-1.5 py-0.5 bg-status-warning/10 text-status-warning rounded uppercase">Priority</span>
+</div>
+<div class="text-[11px] font-bold text-on-surface mb-1">Adjust Sequence: MV IRON LADY</div>
+<div class="text-[10px] text-on-surface-variant leading-tight mb-3">Advance H3 to mitigate jetty conflict.</div>
+<div class="flex gap-2">
+<button class="flex-1 h-6 bg-primary text-on-primary text-[9px] font-black uppercase rounded">Approve</button>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-border-subtle bg-surface-container-low">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Live Status</span>
+<span class="w-2 h-2 rounded-full bg-status-success status-pulse"></span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-surface-charcoal p-2 rounded">
+<div class="text-[8px] text-outline uppercase">AIS Feed</div>
+<div class="text-[10px] font-bold text-status-success">ACTIVE</div>
+</div>
+<div class="bg-surface-charcoal p-2 rounded">
+<div class="text-[8px] text-outline uppercase">Jetty Tele</div>
+<div class="text-[10px] font-bold text-status-success">ACTIVE</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<section class="bg-surface-container-low border-t border-border-subtle h-32 shrink-0 overflow-hidden flex flex-col">
+<div class="px-4 py-1 bg-surface-container-high border-b border-border-subtle flex items-center justify-between">
+<span class="text-[10px] font-black text-on-surface uppercase tracking-widest">Live Operational SLA Lane</span>
+<div class="flex gap-4">
+<span class="text-[9px] text-on-surface-variant"><strong class="text-status-critical">02</strong> Critical</span>
+<span class="text-[9px] text-on-surface-variant"><strong class="text-status-warning">05</strong> Warning</span>
+</div>
+</div>
+<div class="flex-1 overflow-x-auto custom-scrollbar">
+<table class="w-full text-left">
+<thead class="sticky top-0 bg-surface-container-low text-[9px] font-black text-outline uppercase">
+<tr>
+<th class="px-4 py-1.5">Severity</th>
+<th class="px-4 py-1.5">Object</th>
+<th class="px-4 py-1.5">Issue Type</th>
+<th class="px-4 py-1.5">Owner</th>
+<th class="px-4 py-1.5">Age</th>
+<th class="px-4 py-1.5">SLA Deadline</th>
+<th class="px-4 py-1.5 text-right">Next Action</th>
+</tr>
+</thead>
+<tbody class="text-[10px] divide-y divide-border-subtle/20 font-data-tabular text-on-surface">
+<tr class="hover:bg-surface-charcoal">
+<td class="px-4 py-1"><span class="text-status-critical">● CRITICAL</span></td>
+<td class="px-4 py-1 font-bold">MV PACIFIC STAR</td>
+<td class="px-4 py-1">Grade Shortfall</td>
+<td class="px-4 py-1">Berau Planner</td>
+<td class="px-4 py-1">14m</td>
+<td class="px-4 py-1 text-status-critical">-04m (EXPIRED)</td>
+<td class="px-4 py-1 text-right text-primary font-bold cursor-pointer">APPROVE SUBST</td>
+</tr>
+<tr class="hover:bg-surface-charcoal">
+<td class="px-4 py-1"><span class="text-status-warning">● WARNING</span></td>
+<td class="px-4 py-1 font-bold">MV IRON LADY</td>
+<td class="px-4 py-1">Seq Conflict</td>
+<td class="px-4 py-1">ABL Dispatch</td>
+<td class="px-4 py-1">32m</td>
+<td class="px-4 py-1">+28m</td>
+<td class="px-4 py-1 text-right text-primary font-bold cursor-pointer">VIEW PLAN</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section><footer class="bg-surface-container-lowest dark:bg-surface-container-lowest text-status-success font-data-tabular text-data-tabular docked full-width bottom-0 h-row-height-compact border-t border-border-subtle flex justify-between items-center px-margin-page w-full z-50">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5 uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success status-pulse"></span>
+                System Health: OPTIMAL
+            </span>
+<span class="text-outline-variant">|</span>
+<span class="uppercase">Sync: 14:15:02</span>
+<span class="text-outline-variant">|</span>
+<span class="uppercase">Live Feed: 98%</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-bold">Plan:</span>
+<span class="text-status-info font-bold uppercase">LIVE-2024-05-22-B</span>
+</div>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-bold">State:</span>
+<span class="text-primary font-bold uppercase tracking-wider">PUBLISHED</span>
+</div>
+<div class="flex items-center gap-3 ml-4">
+<a class="text-on-surface-variant hover:text-on-surface uppercase text-[10px] transition-colors" href="#">Network Status</a>
+<a class="text-on-surface-variant hover:text-on-surface uppercase text-[10px] transition-colors" href="#">API v4.2</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -25,6 +25,7 @@ const evidence = {
 };
 
 async function main() {
+  await rm(SCREENSHOT_DIR, { recursive: true, force: true });
   await mkdir(SCREENSHOT_DIR, { recursive: true });
   await waitForHttpOk(APP_URL);
 
@@ -116,7 +117,10 @@ async function main() {
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minVoyages: 2,
+        voyages: 2,
+        cargoLayerSteps: 6,
+        plans: 0,
+        trips: 0,
         sequenceViolations: 0,
         minFlowEvents: 2,
       },
@@ -137,7 +141,7 @@ async function main() {
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minCargoLayerSteps: 1,
+        cargoLayerSteps: 6,
         sequenceViolations: 0,
       },
     });
@@ -172,9 +176,10 @@ async function main() {
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
       expectations: {
-        minTideWindows: 1,
-        minBridgeWindows: 1,
-        minConstraintChecks: 1,
+        tideWindows: 2,
+        bridgeWindows: 2,
+        constraintChecks: 6,
+        trips: 0,
       },
     });
 
@@ -190,6 +195,33 @@ async function main() {
       expectedCurrentStep: "generate_plan",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
+      expectations: {
+        movementCandidateRuns: 0,
+        trips: 0,
+      },
+    });
+
+    clicked = await clickButton(cdp, "Generate candidates", {
+      purpose: "Visible page CTA derives feasible tug-barge-jetty-CTS candidates",
+      exact: true,
+    });
+    await waitForText(cdp, "Assignment candidates generated: 6 movements", 30_000);
+    await waitForAssistantNext(cdp, "GENERATE_PLAN", "/operations/tug-barge-assignment");
+    await captureStep(cdp, {
+      step: "08",
+      title: "Assignment candidates generated",
+      route: "/operations/tug-barge-assignment",
+      expectedActionId: "GENERATE_PLAN",
+      expectedCurrentStep: "generate_plan",
+      expectedFlowStatus: "active",
+      clickedCtaLabel: clicked.text,
+      expectations: {
+        minPlanVersions: 1,
+        movementCandidateRuns: 1,
+        movementCandidateCovered: 6,
+        movementCandidateMovements: 6,
+        trips: 0,
+      },
     });
 
     clicked = await clickButton(cdp, "Regenerate plan", {
@@ -200,7 +232,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "submit_approval", status: "active" });
     await waitForAssistantNext(cdp, "SUBMIT_APPROVAL", "/operations/tug-barge-assignment");
     await captureStep(cdp, {
-      step: "08",
+      step: "09",
       title: "Plan generated from clean demand",
       route: "/operations/tug-barge-assignment",
       expectedActionId: "SUBMIT_APPROVAL",
@@ -209,7 +241,11 @@ async function main() {
       clickedCtaLabel: clicked.text,
       expectations: {
         minPlanVersions: 1,
-        minTrips: 1,
+        trips: 6,
+        movementCandidateRuns: 1,
+        movementCandidateCovered: 6,
+        tripsWithCandidateProvenance: 6,
+        generatedFromMovementCandidates: true,
         blockingConflicts: 0,
       },
     });
@@ -219,7 +255,7 @@ async function main() {
     });
     await waitForHash(cdp, "/schedule/published-plan");
     await captureStep(cdp, {
-      step: "09",
+      step: "10",
       title: "Published-plan page opened",
       route: "/schedule/published-plan",
       expectedActionId: "SUBMIT_APPROVAL",
@@ -232,12 +268,18 @@ async function main() {
       purpose: "Visible page CTA creates the approval request",
       exact: true,
     });
+    await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
+    let approvalRouteOpened = await hashIncludes(cdp, "/approvals/publishing");
+    if (!approvalRouteOpened) {
+      await waitForAssistantNext(cdp, "APPROVE_PLAN", "/schedule/published-plan");
+      await navigateHash(cdp, "/approvals/publishing");
+      clicked = { ...clicked, text: `${clicked.text}; route /approvals/publishing` };
+    }
     await waitForHash(cdp, "/approvals/publishing");
     await waitForText(cdp, "Approve", 20_000);
-    await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "10",
+      step: "11",
       title: "Approval request submitted",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
@@ -258,7 +300,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "11",
+      step: "12",
       title: "First authority approved",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
@@ -278,7 +320,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "run_publishability_check", status: "active" });
     await waitForAssistantNext(cdp, "RUN_PUBLISHABILITY_CHECK", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "12",
+      step: "13",
       title: "All approvals complete",
       route: "/approvals/publishing",
       expectedActionId: "RUN_PUBLISHABILITY_CHECK",
@@ -300,7 +342,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "publish_plan", status: "active" });
     await waitForAssistantNext(cdp, "PUBLISH_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "13",
+      step: "14",
       title: "Publishability gate cleared",
       route: "/approvals/publishing",
       expectedActionId: "PUBLISH_PLAN",
@@ -322,7 +364,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "generate_export", status: "active" });
     await waitForAssistantNext(cdp, "GENERATE_EXPORT", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "14",
+      step: "15",
       title: "Plan manually published",
       route: "/approvals/publishing",
       expectedActionId: "GENERATE_EXPORT",
@@ -339,7 +381,7 @@ async function main() {
     });
     await waitForHash(cdp, "/admin/export-handoff");
     await captureStep(cdp, {
-      step: "15",
+      step: "16",
       title: "Export handoff page opened",
       route: "/admin/export-handoff",
       expectedActionId: "GENERATE_EXPORT",
@@ -355,7 +397,7 @@ async function main() {
     await waitForText(cdp, "Export generated", 25_000);
     await waitForFlowState(cdp, { currentStep: "", status: "completed" });
     await captureStep(cdp, {
-      step: "16",
+      step: "17",
       title: "Governed export generated",
       route: "/admin/export-handoff",
       expectedActionId: null,
@@ -366,6 +408,9 @@ async function main() {
         minExports: 1,
         minPublishedSnapshots: 1,
         approvalsComplete: true,
+        trips: 6,
+        tripsWithCandidateProvenance: 6,
+        generatedFromMovementCandidates: true,
       },
     });
 
@@ -379,6 +424,9 @@ async function main() {
       approvalsComplete: finalDomain.approvalsComplete,
       publishabilityAllowsPublish: finalDomain.publishabilityAllowsPublish,
       generatedExportExists: finalDomain.exports >= 1,
+      movementCandidateCovered: finalDomain.movementCandidateCovered,
+      generatedTrips: finalDomain.trips,
+      tripsWithCandidateProvenance: finalDomain.tripsWithCandidateProvenance,
     };
     assertCondition(evidence.finalAssertions.flowCompleted, "Final flow is not completed.");
     assertCondition(
@@ -396,6 +444,18 @@ async function main() {
     assertCondition(
       evidence.finalAssertions.generatedExportExists,
       "No export exists after export CTA.",
+    );
+    assertCondition(
+      evidence.finalAssertions.movementCandidateCovered === 6,
+      `Expected 6 candidate-covered movements, got ${evidence.finalAssertions.movementCandidateCovered}.`,
+    );
+    assertCondition(
+      evidence.finalAssertions.generatedTrips === 6,
+      `Expected 6 generated trips, got ${evidence.finalAssertions.generatedTrips}.`,
+    );
+    assertCondition(
+      evidence.finalAssertions.tripsWithCandidateProvenance === 6,
+      `Expected 6 trips with movement candidate provenance, got ${evidence.finalAssertions.tripsWithCandidateProvenance}.`,
     );
 
     await writeFile(EVIDENCE_JSON, JSON.stringify(evidence, null, 2));
@@ -556,7 +616,15 @@ function assertDomainState(domain, expectations) {
     ["exports", domain.exports],
     ["cargoLayerSteps", domain.cargoLayerSteps],
     ["sequenceViolations", domain.sequenceViolations],
+    ["tideWindows", domain.tideWindows],
+    ["bridgeWindows", domain.bridgeWindows],
+    ["constraintChecks", domain.constraintChecks],
+    ["trips", domain.trips],
     ["blockingConflicts", domain.blockingConflicts],
+    ["movementCandidateRuns", domain.movementCandidateRuns],
+    ["movementCandidateCovered", domain.movementCandidateCovered],
+    ["movementCandidateMovements", domain.movementCandidateMovements],
+    ["tripsWithCandidateProvenance", domain.tripsWithCandidateProvenance],
   ];
   for (const [key, actual] of checks) {
     if (expectations[key] !== undefined) {
@@ -599,6 +667,12 @@ function assertDomainState(domain, expectations) {
       `Expected publishabilityAllowsPublish=${expectations.publishabilityAllowsPublish}, got ${domain.publishabilityAllowsPublish}.`,
     );
   }
+  if (expectations.generatedFromMovementCandidates !== undefined) {
+    assertCondition(
+      domain.generatedFromMovementCandidates === expectations.generatedFromMovementCandidates,
+      `Expected generatedFromMovementCandidates=${expectations.generatedFromMovementCandidates}, got ${domain.generatedFromMovementCandidates}.`,
+    );
+  }
 }
 
 async function assistantState(cdp, route) {
@@ -620,6 +694,8 @@ async function domainState(cdp) {
     pageFetchJson(cdp, "/api/dashboard/situation/").catch(() => null),
   ]);
   const approvalRequests = scheduling?.approvalRequests ?? [];
+  const candidateRun = scheduling?.movementAssignmentCandidateRun ?? null;
+  const trips = scheduling?.trips ?? [];
   const approvalDecisions = approvalRequests.reduce(
     (total, request) => total + (request.decisions?.length ?? 0),
     0,
@@ -636,7 +712,19 @@ async function domainState(cdp) {
     planVersions: scheduling?.planVersions?.length ?? 0,
     activePlanVersionStatus: scheduling?.activePlanVersion?.status ?? null,
     activePlanVersionValidation: scheduling?.activePlanVersion?.validation_status ?? null,
-    trips: scheduling?.trips?.length ?? 0,
+    trips: trips.length,
+    movementCandidateRuns: candidateRun ? 1 : 0,
+    movementCandidateMovements: Number(candidateRun?.metadata?.movementCount ?? 0),
+    movementCandidateCovered: Number(candidateRun?.metadata?.coveredMovementCount ?? 0),
+    movementCandidateCount: scheduling?.movementAssignmentCandidates?.length ?? 0,
+    tripsWithCandidateProvenance: trips.filter((trip) => (
+      trip.selection_reason?.reason_code === "MOVEMENT_ASSIGNMENT_CANDIDATE"
+      || trip.selection_reason?.reasonCode === "MOVEMENT_ASSIGNMENT_CANDIDATE"
+    )).length,
+    generatedFromMovementCandidates: Boolean(
+      scheduling?.activePlanVersion?.summary?.generatedFromMovementCandidates,
+    ),
+    assignmentCandidateRunId: scheduling?.activePlanVersion?.summary?.assignmentCandidateRunId ?? null,
     blockingConflicts: scheduling?.validation?.blockingConflictCount ?? 0,
     approvalRequests: approvalRequests.length,
     pendingApprovals: scheduling?.validation?.approvalPendingCount ?? 0,
@@ -875,6 +963,16 @@ async function waitForHash(cdp, hashPath, timeoutMs = 10_000) {
     await delay(400);
   }
   throw new Error(`Timed out waiting for route: ${hashPath}`);
+}
+
+async function hashIncludes(cdp, hashPath) {
+  const url = await evalAsync(cdp, "location.href").catch(() => "");
+  return url.includes(`#${hashPath}`);
+}
+
+async function navigateHash(cdp, hashPath) {
+  await evalAsync(cdp, `location.hash = ${JSON.stringify(hashPath)}`);
+  await delay(500);
 }
 
 async function waitForApp(cdp) {

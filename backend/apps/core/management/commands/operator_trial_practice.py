@@ -24,6 +24,7 @@ from apps.scheduling.models import Conflict, Plan, PlanVersion, Trip
 from apps.scheduling.models import (
     ApprovalRequest,
     ExportJob,
+    MovementAssignmentCandidateRun,
     OptimizerRun,
     PublishabilityAssessment,
     PublishedPlanSnapshot,
@@ -313,6 +314,7 @@ class OperatorTrialPracticeRunner:
             "plans": Plan.objects.count(),
             "planVersions": PlanVersion.objects.count(),
             "trips": Trip.objects.count(),
+            "movementAssignmentCandidateRuns": MovementAssignmentCandidateRun.objects.count(),
             "approvalRequests": ApprovalRequest.objects.count(),
             "publishedSnapshots": PublishedPlanSnapshot.objects.count(),
             "exports": ExportJob.objects.count(),

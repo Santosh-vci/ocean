@@ -176,6 +176,55 @@ def rule_ready_to_generate(ctx: AssistantContext) -> list[ActionRecommendation]:
     return []
 
 
+def rule_assignment_candidate_review_needed(ctx: AssistantContext) -> list[ActionRecommendation]:
+    no_generated_plan = (
+        ctx.active_plan_version_id is None
+        or ctx.active_plan_trip_count == 0
+        or ctx.active_plan_status == PlanVersion.Status.DRAFT
+    )
+    if not (
+        ctx.demand_count > 0
+        and ctx.tide_window_count > 0
+        and ctx.bridge_window_count > 0
+        and no_generated_plan
+    ):
+        return []
+    if (
+        ctx.movement_assignment_candidate_run_id
+        and not ctx.movement_assignment_candidate_is_stale
+        and ctx.movement_assignment_candidate_covered_count > 0
+        and ctx.movement_assignment_candidate_blocked_count == 0
+    ):
+        return []
+
+    blocked = ctx.movement_assignment_candidate_blocked_count > 0
+    return [
+        build_recommendation(
+            "REVIEW_ASSIGNMENT_CANDIDATES",
+            priority="warning" if blocked else "info",
+            rank_score=975 if blocked else 590,
+            enabled=True,
+            reason=(
+                "Movement assignment candidates include blocked combinations that need review."
+                if blocked
+                else "Review tug-barge-jetty-CTS movement candidates before generating the plan."
+            ),
+            source="planning.assignment_candidates_needed",
+            impact_if_ignored=(
+                "The generated plan may skip the operator's pre-generation feasibility review."
+            ),
+            metadata={
+                "candidateRunId": ctx.movement_assignment_candidate_run_id,
+                "candidateRunRef": ctx.movement_assignment_candidate_run_ref,
+                "movementCount": ctx.movement_assignment_candidate_movement_count,
+                "coveredMovementCount": ctx.movement_assignment_candidate_covered_count,
+                "blockedCandidateCount": ctx.movement_assignment_candidate_blocked_count,
+                "stale": ctx.movement_assignment_candidate_is_stale,
+            },
+        )
+    ]
+
+
 def rule_published_needs_draft(ctx: AssistantContext) -> list[ActionRecommendation]:
     if ctx.source_inputs_changed and ctx.active_plan_status in {
         PlanVersion.Status.PUBLISHED,
@@ -996,6 +1045,7 @@ RULES: tuple[Rule, ...] = (
     rule_sequence_review_needed,
     rule_missing_windows,
     rule_ready_to_generate,
+    rule_assignment_candidate_review_needed,
     rule_published_needs_draft,
     rule_editable_stale_regenerate,
     rule_blocking_conflicts,

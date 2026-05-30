@@ -278,7 +278,7 @@ def test_operator_ui_can_start_from_master_only_seed_with_intake_and_windows():
     assert CargoRequirement.objects.count() == 2
     assert CargoLayerStep.objects.count() == 2
     assert windows_response.status_code == 201
-    assert windows_response.data["constraintChecks"] == 4
+    assert windows_response.data["constraintChecks"] == 2
     assert windows_response.data["tideWindows"] == [
         "TIDE-UI-OPERATING-01",
         "TIDE-UI-OPERATING-02",
@@ -325,11 +325,11 @@ def test_operator_windows_anchor_to_fresh_ui_import_when_demo_voyages_exist():
     ui_voyage = OGVVoyage.objects.get(voyage_id="VOY-UI-MIXED-001")
 
     assert windows_response.status_code == 201
-    assert windows_response.data["constraintChecks"] == 4
+    assert windows_response.data["constraintChecks"] == 2
     assert timezone.localtime(
         TideWindow.objects.get(code="TIDE-UI-OPERATING-01").window_start,
     ).date() == timezone.localtime(ui_voyage.eta).date()
     assert timezone.localtime(
         BridgeWindow.objects.get(code="BRDG-UI-OPERATING-01").window_start,
     ).date() == timezone.localtime(ui_voyage.eta).date()
-    assert NavigationConstraintCheck.objects.filter(voyage=ui_voyage).count() == 4
+    assert NavigationConstraintCheck.objects.filter(voyage=ui_voyage).count() == 2

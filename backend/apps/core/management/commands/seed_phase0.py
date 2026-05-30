@@ -60,6 +60,7 @@ from apps.scheduling.models import (
     CustomerSafeCommercialProjection,
     ExportJob,
     GlobalOptimizationRun,
+    MovementAssignmentCandidateRun,
     OptimizerRun,
     OverrideRequest,
     Plan,
@@ -499,6 +500,7 @@ class Command(BaseCommand):
         CommercialProjectionRun.objects.all().delete()
         PublishabilityAssessment.objects.all().delete()
         GlobalOptimizationRun.objects.all().delete()
+        MovementAssignmentCandidateRun.objects.all().delete()
         RootCauseRepairAssessment.objects.all().delete()
         RecommendationEvaluation.objects.all().delete()
         RecoveryAction.objects.all().delete()

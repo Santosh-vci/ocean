@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>COAL CONTROL TOWER | MANAGEMENT KPI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Hanken+Grotesk:wght@600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        .data-grid-row:hover {
+            background-color: rgba(45, 52, 73, 0.5);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "tertiary": "#ffb86e",
+                        "on-surface-variant": "#bec8d2",
+                        "outline-variant": "#3e4850",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed": "#c9e6ff",
+                        "surface": "#0b1326",
+                        "surface-container-highest": "#2d3449",
+                        "surface-graphite": "#1E293B",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-primary": "#006591",
+                        "tertiary-container": "#de8712",
+                        "on-surface": "#dae2fd",
+                        "surface-tint": "#89ceff",
+                        "status-critical": "#EF4444",
+                        "secondary-container": "#3131c0",
+                        "primary-fixed-dim": "#89ceff",
+                        "surface-container-high": "#222a3d",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "error-container": "#93000a",
+                        "background": "#0b1326",
+                        "on-tertiary-container": "#4d2b00",
+                        "status-warning": "#F59E0B",
+                        "surface-bright": "#31394d",
+                        "outline": "#88929b",
+                        "on-secondary-container": "#b0b2ff",
+                        "border-subtle": "#334155",
+                        "surface-charcoal": "#0F172A",
+                        "surface-container": "#171f33",
+                        "secondary": "#c0c1ff",
+                        "on-primary-container": "#003751",
+                        "surface-container-lowest": "#060e20",
+                        "surface-variant": "#2d3449",
+                        "primary": "#89ceff",
+                        "status-success": "#10B981",
+                        "status-info": "#0EA5E9",
+                        "on-primary": "#00344d",
+                        "live-indicator": "#F0F9FF",
+                        "planned-stroke": "#94A3B8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "row-height-standard": "36px",
+                        "gutter": "8px",
+                        "sidebar-width-expanded": "240px",
+                        "margin-page": "16px",
+                        "unit": "4px",
+                        "sidebar-width-collapsed": "56px",
+                        "row-height-compact": "28px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "data-tabular": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-tabular": ["12px", {"lineHeight": "16px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="flex flex-col h-full overflow-y-auto bg-surface-graphite border-r border-border-subtle w-sidebar-width-collapsed lg:w-sidebar-width-expanded z-50 transition-all duration-300 ease-in-out shrink-0">
+<div class="p-4 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary">settings_input_component</span>
+</div>
+<div class="hidden lg:block">
+<h2 class="text-on-surface font-headline-md text-headline-md uppercase tracking-wider">OPERATIONS</h2>
+<p class="text-on-surface-variant text-label-caps font-label-caps">Vessel &amp; Barge Scheduling</p>
+</div>
+</div>
+<button class="mt-4 bg-primary text-on-primary px-4 py-2 font-data-tabular text-data-tabular rounded-lg hover:brightness-110 transition-all hidden lg:block">
+                NEW SCENARIO
+            </button>
+</div>
+<nav class="flex-1 mt-4">
+<div class="space-y-1">
+<a class="bg-surface-container-high text-primary border-l-4 border-primary px-4 py-2 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="hidden lg:inline font-body-md text-body-md">Control Tower</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-variant flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="hidden lg:inline font-body-md text-body-md">Planning</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-variant flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="hidden lg:inline font-body-md text-body-md">Simulation</span>
+</a>
+<a class="text-on-surface-variant px-4 py-2 hover:bg-surface-variant flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="hidden lg:inline font-body-md text-body-md">Admin</span>
+</a>
+</div>
+</nav>
+<div class="mt-auto p-4 border-t border-border-subtle space-y-2">
+<a class="text-on-surface-variant flex items-center gap-3 px-2 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+<span class="hidden lg:inline text-label-caps font-label-caps">Logs</span>
+</a>
+<a class="text-on-surface-variant flex items-center gap-3 px-2 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="dns">dns</span>
+<span class="hidden lg:inline text-label-caps font-label-caps">System Status</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-page h-row-height-standard bg-surface-charcoal border-b border-border-subtle shrink-0">
+<div class="flex items-center gap-6">
+<h1 class="text-headline-lg font-headline-lg font-bold text-primary whitespace-nowrap">COAL CONTROL TOWER</h1>
+<div class="hidden md:flex gap-4 items-center">
+<span class="text-primary border-b-2 border-primary font-bold text-label-caps font-label-caps">MANAGEMENT KPI</span>
+<span class="text-on-surface-variant font-body-md text-body-md">V1.4.2-STABLE</span>
+<div class="flex items-center gap-1.5 px-2 py-0.5 bg-status-success/10 rounded">
+<div class="w-2 h-2 rounded-full bg-status-success animate-pulse"></div>
+<span class="text-status-success text-label-caps font-label-caps">LIVE_SYNC</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center gap-2">
+<button class="bg-surface-variant hover:bg-surface-bright text-on-surface-variant text-label-caps font-label-caps px-3 py-1 rounded transition-colors">RE-OPTIMIZE</button>
+<button class="bg-primary hover:brightness-110 text-on-primary text-label-caps font-label-caps px-3 py-1 rounded transition-colors">APPROVE PLAN</button>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="settings">settings</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="help">help</span>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-border-subtle overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhUUFnc53SknskTFguyKADrKSXr1f0J6Ub29nOTtv5GIDWVmOZ8FCPtKyi6SULpapdN2HqXJCM8U3Z5SxTUhaUG6rNviXHDapAAwp8Rxjxoc62_rByU87YRvvV8X9UBkcd_yAZ0KpHxBraPgrPskzKglknN0QVeUkcM_RoNkygYSY0OOPjtMTla5wiBMKHnGLqhj8zA9WzJSMv1cCGBJX3kITWD5jiRXEdDi5z6Li0NOhIAI4fpaW-RhJfjTRzSVx_mQhCivKONfvo"/>
+</div>
+</div>
+</div>
+</header>
+<!-- KPI Strip -->
+<section class="h-[72px] bg-surface-container-low border-b border-border-subtle grid grid-cols-5 divide-x divide-border-subtle px-margin-page items-center shrink-0">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Total Throughput</span>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-md font-data-tabular text-on-surface">1.2M <span class="text-on-surface-variant">/ 1.5M</span></span>
+<span class="text-status-warning text-label-caps font-label-caps">80%</span>
+</div>
+<div class="w-full bg-surface-charcoal h-1 mt-1 rounded-full overflow-hidden">
+<div class="bg-status-warning h-full w-[80%]"></div>
+</div>
+</div>
+<div class="flex flex-col px-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Avg Delay</span>
+<span class="text-headline-md font-data-tabular text-status-critical">42m</span>
+<span class="text-label-caps font-label-caps text-on-error">+12m vs Target</span>
+</div>
+<div class="flex flex-col px-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Estimated Exposure</span>
+<span class="text-headline-md font-data-tabular text-on-surface">$24,400</span>
+<span class="text-label-caps font-label-caps text-status-critical">TRENDING UP</span>
+</div>
+<div class="flex flex-col px-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Asset Utilization</span>
+<span class="text-headline-md font-data-tabular text-status-success">88%</span>
+<div class="w-full bg-surface-charcoal h-1 mt-1 rounded-full overflow-hidden">
+<div class="bg-status-success h-full w-[88%]"></div>
+</div>
+</div>
+<div class="flex flex-col px-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Governance</span>
+<span class="text-headline-md font-data-tabular text-primary">92%</span>
+<span class="text-label-caps font-label-caps text-on-surface-variant">OPTIMAL COMPLIANCE</span>
+</div>
+</section>
+<!-- Main Workspace -->
+<section class="flex-1 flex min-h-0">
+<!-- Left 70%: Active Bottleneck Ranking -->
+<div class="w-[70%] flex flex-col border-r border-border-subtle overflow-hidden">
+<div class="bg-surface-charcoal px-4 py-2 border-b border-border-subtle flex justify-between items-center shrink-0">
+<span class="text-label-caps font-label-caps text-on-surface uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-status-warning" data-icon="report_problem">report_problem</span>
+                        Active Bottleneck Ranking
+                    </span>
+<div class="flex items-center gap-2 text-label-caps font-label-caps text-on-surface-variant">
+<span class="">FILTER: CRITICAL/HIGH</span>
+<span class="material-symbols-outlined cursor-pointer" data-icon="filter_list">filter_list</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-surface-charcoal z-10">
+<tr class="text-label-caps font-label-caps text-on-surface-variant text-left border-b border-border-subtle h-row-height-compact">
+<th class="pl-4 w-10">RK</th>
+<th class="w-48">Bottleneck Node</th>
+<th class="w-32">OGV</th>
+<th class="w-24 text-right pr-4">MT Impact</th>
+<th class="w-24">Delay</th>
+<th class="w-28">SLA State</th>
+<th class="w-32">Owner</th>
+<th class="pr-4">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle/50 font-data-tabular text-data-tabular">
+<!-- Dynamic Rows -->
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-status-critical font-bold">01</td>
+<td class="text-on-surface">Muara Berau - TS#2</td>
+<td class="text-primary">MV ORIENT STAR</td>
+<td class="text-right pr-4">12,500</td>
+<td class="text-status-critical">4.2h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">H. SYARIF</td>
+<td class="pr-4"><button class="text-primary hover:underline uppercase text-[9px] font-bold">Escalate L2</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-status-critical font-bold">02</td>
+<td class="text-on-surface">Jetty 5 - Loader B</td>
+<td class="text-primary">MV OCEAN ACE</td>
+<td class="text-right pr-4">8,200</td>
+<td class="text-status-critical">2.8h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">W. TANAKA</td>
+<td class="pr-4"><button class="text-primary hover:underline uppercase text-[9px] font-bold">Re-route</button></td>
+</tr>
+<!-- Multiple rows to fill space as requested -->
+<script>
+                                const tbody = document.currentScript.previousElementSibling.previousElementSibling;
+                                const nodes = ["Conveyor B1", "Transfer Point C", "Taboneo Anchorage", "Jetty 2 South", "Stacking Area D", "Barge #422", "Customs Clearance", "Tug Deployment", "Fuel Bunker 1", "Floating Crane X", "Sampling Lab", "Draft Survey"];
+                                const vessels = ["MV OCEAN QUEEN", "MV NORDIC PRIDE", "MV STAR CLIPPER", "MV BLUE WAVE", "MV IRON LADY", "MV ARCTIC FOX", "MV PACIFIC SUN", "MV ZENITH", "MV BRAVO", "MV ECHO", "MV GOLF", "MV HOTEL"];
+                                const owners = ["A. PUTRA", "R. MILLER", "K. JENSEN", "S. CHEN", "B. GOMES", "M. KHAN", "L. ROSSI", "P. SMITH", "J. DOE", "F. WANG", "V. GUPTA", "H. SCHMIDT"];
+                                
+                                for(let i=3; i<=18; i++) {
+                                    const delay = (Math.random() * 5).toFixed(1);
+                                    const sla = delay > 3 ? 'Breached' : (delay > 1.5 ? 'Due Soon' : 'Within SLA');
+                                    const slaColor = sla === 'Breached' ? 'status-critical' : (sla === 'Due Soon' ? 'status-warning' : 'status-success');
+                                    document.write(`
+                                        <tr class="data-grid-row h-row-height-standard">
+                                            <td class="pl-4 text-on-surface-variant">${i.toString().padStart(2, '0')}</td>
+                                            <td class="text-on-surface">${nodes[i%nodes.length]}</td>
+                                            <td class="text-primary">${vessels[i%vessels.length]}</td>
+                                            <td class="text-right pr-4">${(Math.random() * 10000).toFixed(0)}</td>
+                                            <td class="${slaColor}">${delay}h</td>
+                                            <td><span class="px-1.5 py-0.5 bg-${slaColor}/20 text-${slaColor} rounded uppercase text-[9px] font-bold">${sla}</span></td>
+                                            <td class="text-on-surface-variant">${owners[i%owners.length]}</td>
+                                            <td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+                                        </tr>
+                                    `);
+                                }
+                            </script>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">03</td>
+<td class="text-on-surface">Jetty 2 South</td>
+<td class="text-primary">MV BLUE WAVE</td>
+<td class="text-right pr-4">2244</td>
+<td class="status-success">0.0h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-success/20 text-status-success rounded uppercase text-[9px] font-bold">Within SLA</span></td>
+<td class="text-on-surface-variant">S. CHEN</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">04</td>
+<td class="text-on-surface">Stacking Area D</td>
+<td class="text-primary">MV IRON LADY</td>
+<td class="text-right pr-4">5382</td>
+<td class="status-critical">4.9h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">B. GOMES</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">05</td>
+<td class="text-on-surface">Barge #422</td>
+<td class="text-primary">MV ARCTIC FOX</td>
+<td class="text-right pr-4">2212</td>
+<td class="status-warning">2.3h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-warning/20 text-status-warning rounded uppercase text-[9px] font-bold">Due Soon</span></td>
+<td class="text-on-surface-variant">M. KHAN</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">06</td>
+<td class="text-on-surface">Customs Clearance</td>
+<td class="text-primary">MV PACIFIC SUN</td>
+<td class="text-right pr-4">9316</td>
+<td class="status-critical">4.0h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">L. ROSSI</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">07</td>
+<td class="text-on-surface">Tug Deployment</td>
+<td class="text-primary">MV ZENITH</td>
+<td class="text-right pr-4">4625</td>
+<td class="status-success">0.8h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-success/20 text-status-success rounded uppercase text-[9px] font-bold">Within SLA</span></td>
+<td class="text-on-surface-variant">P. SMITH</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">08</td>
+<td class="text-on-surface">Fuel Bunker 1</td>
+<td class="text-primary">MV BRAVO</td>
+<td class="text-right pr-4">5481</td>
+<td class="status-critical">3.2h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">J. DOE</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">09</td>
+<td class="text-on-surface">Floating Crane X</td>
+<td class="text-primary">MV ECHO</td>
+<td class="text-right pr-4">1837</td>
+<td class="status-warning">2.6h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-warning/20 text-status-warning rounded uppercase text-[9px] font-bold">Due Soon</span></td>
+<td class="text-on-surface-variant">F. WANG</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">10</td>
+<td class="text-on-surface">Sampling Lab</td>
+<td class="text-primary">MV GOLF</td>
+<td class="text-right pr-4">522</td>
+<td class="status-warning">2.4h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-warning/20 text-status-warning rounded uppercase text-[9px] font-bold">Due Soon</span></td>
+<td class="text-on-surface-variant">V. GUPTA</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">11</td>
+<td class="text-on-surface">Draft Survey</td>
+<td class="text-primary">MV HOTEL</td>
+<td class="text-right pr-4">6199</td>
+<td class="status-critical">3.4h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">H. SCHMIDT</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">12</td>
+<td class="text-on-surface">Conveyor B1</td>
+<td class="text-primary">MV OCEAN QUEEN</td>
+<td class="text-right pr-4">3103</td>
+<td class="status-critical">4.3h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">A. PUTRA</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">13</td>
+<td class="text-on-surface">Transfer Point C</td>
+<td class="text-primary">MV NORDIC PRIDE</td>
+<td class="text-right pr-4">7182</td>
+<td class="status-critical">3.6h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">R. MILLER</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">14</td>
+<td class="text-on-surface">Taboneo Anchorage</td>
+<td class="text-primary">MV STAR CLIPPER</td>
+<td class="text-right pr-4">8013</td>
+<td class="status-critical">3.9h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">K. JENSEN</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">15</td>
+<td class="text-on-surface">Jetty 2 South</td>
+<td class="text-primary">MV BLUE WAVE</td>
+<td class="text-right pr-4">5558</td>
+<td class="status-success">0.9h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-success/20 text-status-success rounded uppercase text-[9px] font-bold">Within SLA</span></td>
+<td class="text-on-surface-variant">S. CHEN</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">16</td>
+<td class="text-on-surface">Stacking Area D</td>
+<td class="text-primary">MV IRON LADY</td>
+<td class="text-right pr-4">1347</td>
+<td class="status-warning">2.6h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-warning/20 text-status-warning rounded uppercase text-[9px] font-bold">Due Soon</span></td>
+<td class="text-on-surface-variant">B. GOMES</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">17</td>
+<td class="text-on-surface">Barge #422</td>
+<td class="text-primary">MV ARCTIC FOX</td>
+<td class="text-right pr-4">1339</td>
+<td class="status-critical">4.5h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-critical/20 text-status-critical rounded uppercase text-[9px] font-bold">Breached</span></td>
+<td class="text-on-surface-variant">M. KHAN</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+<tr class="data-grid-row h-row-height-standard">
+<td class="pl-4 text-on-surface-variant">18</td>
+<td class="text-on-surface">Customs Clearance</td>
+<td class="text-primary">MV PACIFIC SUN</td>
+<td class="text-right pr-4">9226</td>
+<td class="status-warning">2.9h</td>
+<td class=""><span class="px-1.5 py-0.5 bg-status-warning/20 text-status-warning rounded uppercase text-[9px] font-bold">Due Soon</span></td>
+<td class="text-on-surface-variant">L. ROSSI</td>
+<td class="pr-4"><button class="text-on-surface-variant hover:text-primary hover:underline uppercase text-[9px] font-bold">Details</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right 30%: Operational Detail Rail -->
+<div class="w-[30%] flex flex-col bg-surface-container-lowest overflow-hidden">
+<!-- Top: SLA Aging Donut -->
+<div class="p-4 border-b border-border-subtle flex flex-col gap-3">
+<span class="text-label-caps font-label-caps text-on-surface uppercase tracking-widest">SLA Aging &amp; Escalation</span>
+<div class="flex items-center gap-6">
+<div class="relative w-24 h-24">
+<!-- SVG Donut Chart Placeholder -->
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-status-success" cx="18" cy="18" fill="none" r="16" stroke-dasharray="45, 100" stroke-width="3"></circle>
+<circle class="stroke-status-warning" cx="18" cy="18" fill="none" r="16" stroke-dasharray="25, 100" stroke-dashoffset="-45" stroke-width="3"></circle>
+<circle class="stroke-status-critical" cx="18" cy="18" fill="none" r="16" stroke-dasharray="20, 100" stroke-dashoffset="-70" stroke-width="3"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="10, 100" stroke-dashoffset="-90" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-headline-md font-data-tabular">158</span>
+<span class="text-[8px] font-label-caps text-on-surface-variant">TOTAL</span>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-center text-[10px]">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-status-success rounded-full"></span> Within SLA</span>
+<span class="font-data-tabular">45%</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-status-warning rounded-full"></span> Due Soon</span>
+<span class="font-data-tabular">25%</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-status-critical rounded-full"></span> Breached</span>
+<span class="font-data-tabular">20%</span>
+</div>
+<div class="flex justify-between items-center text-[10px]">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-primary rounded-full"></span> Escalated</span>
+<span class="font-data-tabular">10%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle: Throughput Trend -->
+<div class="p-4 border-b border-border-subtle flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="text-label-caps font-label-caps text-on-surface uppercase tracking-widest">Throughput vs Plan (7D)</span>
+<span class="text-[9px] text-status-success">+2.4%</span>
+</div>
+<div class="h-24 w-full bg-surface-charcoal/50 rounded p-1 relative flex items-end gap-1">
+<!-- Simplified bar trend chart -->
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors h-[75%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors h-[90%] rounded-t-sm"></div>
+<div class="flex-1 bg-status-warning/20 hover:bg-status-warning/40 transition-colors h-[30%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors h-[65%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[85%] rounded-t-sm"></div>
+<!-- Overlay line chart trace -->
+<div class="absolute inset-0 flex items-center justify-center">
+<svg class="w-full h-full overflow-visible">
+<path d="M 0 50 Q 50 20 100 60 T 200 10 T 300 40" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"></path>
+</svg>
+</div>
+</div>
+<div class="flex justify-between text-[8px] font-label-caps text-on-surface-variant">
+<span class="">14 SEP</span>
+<span class="">17 SEP</span>
+<span class="">TODAY</span>
+</div>
+</div>
+<!-- Bottom: Governance Health Depth -->
+<div class="p-4 flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+<span class="text-label-caps font-label-caps text-on-surface uppercase tracking-widest">Governance Health Depth</span>
+<div class="space-y-4">
+<div class="space-y-1">
+<div class="flex justify-between text-label-caps">
+<span class="">Policy Approvals</span>
+<span class="font-data-tabular">94%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-charcoal rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-[94%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-label-caps">
+<span class="">Operational Blockers</span>
+<span class="font-data-tabular text-status-warning">12 ACTIVE</span>
+</div>
+<div class="w-full h-1.5 bg-surface-charcoal rounded-full overflow-hidden">
+<div class="h-full bg-status-warning w-[45%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-label-caps">
+<span class="">Authorized Overrides</span>
+<span class="font-data-tabular text-primary">04 (LAST 24H)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-charcoal rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[20%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-label-caps">
+<span class="">Audit Readiness</span>
+<span class="font-data-tabular">99.2%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-charcoal rounded-full overflow-hidden">
+<div class="h-full bg-status-info w-[99%]"></div>
+</div>
+</div>
+</div>
+<!-- Contextual Alert Panel -->
+<div class="mt-4 p-3 bg-status-critical/10 border-l-2 border-status-critical rounded-r-lg">
+<h4 class="text-status-critical text-[10px] font-bold uppercase mb-1">Audit Alert</h4>
+<p class="text-[10px] text-on-surface-variant leading-tight">3 Vessel overrides pending L2 signature for the current tidal window.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Live Escalation Triage Lane -->
+<section class="h-auto bg-surface-container-lowest border-t border-status-critical/30 flex flex-col overflow-hidden shrink-0 pb-1"><div class="flex justify-between items-center bg-status-critical/10 px-4 py-1 border-b border-status-critical/20">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-status-critical animate-pulse"></div>
+<span class="text-status-critical font-bold text-label-caps font-label-caps uppercase">Live SLA Escalation Stream</span>
+</div>
+<span class="text-on-surface-variant text-[8px] font-data-tabular">T-REF: 14:02:45 UTC</span>
+</div>
+<div class="flex flex-col gap-1 p-2">
+<!-- Scenario 1 -->
+<div class="flex items-center gap-3 bg-status-critical/10 border border-status-critical/20 rounded-sm px-3 py-1.5">
+<span class="bg-status-critical text-on-error text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase min-w-[60px] text-center">Breach</span>
+<span class="text-on-surface font-bold text-body-sm">MV NORTH STAR</span>
+<span class="text-on-surface-variant text-[10px] flex-1">TIDE GATE MISSED | IMPACT: +4h</span>
+<span class="bg-surface-variant text-on-surface-variant text-[9px] px-2 py-0.5 rounded-sm uppercase border border-outline-variant">Owner: ABL-DISPATCH</span>
+</div>
+<!-- Scenario 2 -->
+<div class="flex items-center gap-3 bg-status-critical/10 border border-status-critical/20 rounded-sm px-3 py-1.5">
+<span class="bg-status-critical text-on-error text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase min-w-[60px] text-center">Critical</span>
+<span class="text-on-surface font-bold text-body-sm">JETTY 02</span>
+<span class="text-on-surface-variant text-[10px] flex-1">GRADE MISMATCH: AGATHIS</span>
+<span class="bg-surface-variant text-on-surface-variant text-[9px] px-2 py-0.5 rounded-sm uppercase border border-outline-variant">Owner: BERAU-PLANNER</span>
+</div>
+<!-- Scenario 3 -->
+<div class="flex items-center gap-3 bg-status-warning/10 border border-status-warning/20 rounded-sm px-3 py-1.5">
+<span class="bg-status-warning text-on-tertiary-container text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase min-w-[60px] text-center">Warning</span>
+<span class="text-on-surface font-bold text-body-sm">TUG T-104</span>
+<span class="text-on-surface-variant text-[10px] flex-1">MECHANICAL FAILURE | IMPACT: CYCLIC DELAY</span>
+<span class="bg-surface-variant text-on-surface-variant text-[9px] px-2 py-0.5 rounded-sm uppercase border border-outline-variant">Owner: ABL-OPS</span>
+</div>
+<!-- Scenario 4 -->
+<div class="flex items-center gap-3 bg-status-warning/10 border border-status-warning/20 rounded-sm px-3 py-1.5">
+<span class="bg-status-warning text-on-tertiary-container text-[9px] font-bold px-2 py-0.5 rounded-sm uppercase min-w-[60px] text-center">Due 22m</span>
+<span class="text-on-surface font-bold text-body-sm">MV PACIFIC STAR</span>
+<span class="text-on-surface-variant text-[10px] flex-1">GRADE SHORTFALL</span>
+<span class="bg-surface-variant text-on-surface-variant text-[9px] px-2 py-0.5 rounded-sm uppercase border border-outline-variant">Owner: BERAU-PLANNER</span>
+</div>
+</div></section>
+<!-- Footer -->
+<footer class="h-row-height-compact bg-surface-charcoal border-t border-border-subtle flex justify-between items-center px-margin-page shrink-0 z-50">
+<div class="text-label-caps font-label-caps text-on-surface-variant">
+                BERAU COAL x ABL - INDUSTRIAL COCKPIT v2.0
+            </div>
+<div class="flex gap-6 items-center">
+<div class="flex items-center gap-1.5">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Feed Health:</span>
+<span class="text-status-success font-data-tabular text-data-tabular">OPTIMAL</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Sync:</span>
+<span class="text-status-success font-data-tabular text-data-tabular">23:22:23 UTC</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Systems:</span>
+<span class="text-status-success font-data-tabular text-data-tabular">ONLINE</span>
+</div>
+</div>
+</footer>
+</main>
+<style>
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+    </style>
+<script>
+        // Simulate real-time value changes
+        setInterval(() => {
+            const timeEl = document.querySelectorAll('.font-data-tabular');
+            timeEl.forEach(el => {
+                if(el.textContent.includes('UTC')) {
+                    const now = new Date();
+                    el.textContent = now.getUTCHours().toString().padStart(2, '0') + ":" + 
+                                     now.getUTCMinutes().toString().padStart(2, '0') + ":" + 
+                                     now.getUTCSeconds().toString().padStart(2, '0') + " UTC";
+                }
+            });
+        }, 1000);
+
+        // Simple row highlight on hover logic handled by CSS, 
+        // but adding a click effect for data-grid-row
+        document.querySelectorAll('.data-grid-row').forEach(row => {
+            row.addEventListener('mousedown', () => {
+                row.classList.add('scale-[0.995]', 'duration-75');
+            });
+            row.addEventListener('mouseup', () => {
+                row.classList.remove('scale-[0.995]');
+            });
+        });
+    </script>
+</body></html>

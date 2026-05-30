@@ -12,6 +12,8 @@ from .views import (
     ExportJobViewSet,
     GlobalOptimizationCandidateViewSet,
     GlobalOptimizationRunViewSet,
+    MovementAssignmentCandidateRunViewSet,
+    MovementAssignmentCandidateViewSet,
     OptimizerRunViewSet,
     OverrideRequestViewSet,
     PlanVersionViewSet,
@@ -66,6 +68,16 @@ router.register(
     "scheduling/global-optimization-candidates",
     GlobalOptimizationCandidateViewSet,
     basename="global-optimization-candidate",
+)
+router.register(
+    "scheduling/movement-assignment-candidate-runs",
+    MovementAssignmentCandidateRunViewSet,
+    basename="movement-assignment-candidate-run",
+)
+router.register(
+    "scheduling/movement-assignment-candidates",
+    MovementAssignmentCandidateViewSet,
+    basename="movement-assignment-candidate",
 )
 router.register(
     "scheduling/commercial-projection-runs",
