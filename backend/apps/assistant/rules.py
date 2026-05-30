@@ -59,11 +59,7 @@ def _flow_step_action_id(ctx: AssistantContext) -> str:
 
     step_key = ctx.current_flow_step_key
     reason = ctx.flow_blocked_reason.lower()
-    if (
-        ctx.blocking_conflict_count > 0
-        or step_key in {"submit_approval", "repair_remaining_conflicts"}
-        or "conflict" in reason
-    ):
+    if step_key in {"submit_approval", "repair_remaining_conflicts"} or "conflict" in reason:
         return "OPEN_EXCEPTION_CENTER"
     if step_key in {"approve_plan", "publish_plan"} or "approval" in reason:
         return "APPROVE_PLAN" if ctx.pending_approval_count > 0 else "SUBMIT_APPROVAL"
@@ -359,6 +355,8 @@ def rule_approval_ready_to_submit(ctx: AssistantContext) -> list[ActionRecommend
 
 def rule_approval_user_decision_pending(ctx: AssistantContext) -> list[ActionRecommendation]:
     if ctx.current_user_pending_approval_count <= 0:
+        return []
+    if ctx.blocking_conflict_count > 0:
         return []
     return [
         build_recommendation(

@@ -8,7 +8,8 @@ from rest_framework.test import APIClient
 
 from apps.audit.models import AuditEvent
 from apps.flows.definitions import seed_canonical_flow_definitions
-from apps.flows.services import evaluate_flow_run, start_flow
+from apps.flows.models import FlowStepRun
+from apps.flows.services import evaluate_flow_run, record_cta_intent, start_flow
 from apps.masters.models import Barge, CTSAsset, Jetty, Tug
 from apps.organizations.models import Organization
 from apps.planning.models import AssetAvailabilityWindow, OGVVoyage
@@ -231,7 +232,7 @@ def test_root_cause_assessment_api_requires_authentication_and_schedule_view():
 
 
 @pytest.mark.django_db
-def test_phase5_flow_advances_after_root_cause_assessment_exists():
+def test_phase5_flow_blocks_failed_root_cause_assessment():
     seed_canonical_flow_definitions()
     recommendation = make_recommendation("BARGE_UNAVAILABLE")
     assignment = recommendation.optimizer_run.input_snapshot.source_conflict.trip.assignment
@@ -254,9 +255,122 @@ def test_phase5_flow_advances_after_root_cause_assessment_exists():
     assessment = assess_recommendation_root_cause(recommendation=recommendation)
     evaluate_flow_run(flow_run, actor=user)
     flow_run.refresh_from_db()
+    validate_step = flow_run.step_runs.get(step_key="validate_root_cause")
 
     assert assessment.status == RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE
+    assert flow_run.current_step_key == "validate_root_cause"
+    assert validate_step.status == FlowStepRun.Status.BLOCKED
+    assert "does_not_address_cause" in validate_step.blocked_reason
+
+
+@pytest.mark.django_db
+def test_phase5_flow_advances_after_passing_root_cause_assessment():
+    seed_canonical_flow_definitions()
+    recommendation = make_recommendation("BARGE_UNAVAILABLE")
+    recommendation.metadata = {"explicitOperationalMitigation": {"acceptedBy": "operator"}}
+    recommendation.save(update_fields=["metadata"])
+    assignment = recommendation.optimizer_run.input_snapshot.source_conflict.trip.assignment
+    RecoveryAction.objects.create(
+        recommendation=recommendation,
+        sequence=1,
+        action_type=RecoveryAction.ActionType.REASSIGN_CTS,
+        target_trip=assignment.trip,
+        target_assignment=assignment,
+        before_state={"cts": assignment.cts.code},
+        after_state={"cts": "CTS-ALT"},
+        constraints_checked=["cts_available"],
+    )
+    user = User.objects.create_user(username="operator-pass", password="pw")
+    flow_run = start_flow("phase5_plus_recovery_v1", actor=user)
+
+    flow_run.refresh_from_db()
+    assert flow_run.current_step_key == "validate_root_cause"
+
+    assessment = assess_recommendation_root_cause(recommendation=recommendation)
+    evaluate_flow_run(flow_run, actor=user)
+    flow_run.refresh_from_db()
+
+    assert assessment.status == RootCauseRepairAssessment.Status.MITIGATES_CAUSE
     assert flow_run.current_step_key == "materialize_recommendation"
+
+
+@pytest.mark.django_db
+def test_failed_root_cause_cta_evidence_does_not_bind_flow_and_can_be_replaced():
+    seed_canonical_flow_definitions()
+    failed = make_recommendation("BARGE_UNAVAILABLE")
+    failed_assignment = failed.optimizer_run.input_snapshot.source_conflict.trip.assignment
+    RecoveryAction.objects.create(
+        recommendation=failed,
+        sequence=1,
+        action_type=RecoveryAction.ActionType.REASSIGN_CTS,
+        target_trip=failed_assignment.trip,
+        target_assignment=failed_assignment,
+        before_state={"cts": failed_assignment.cts.code},
+        after_state={"cts": "CTS-ALT"},
+        constraints_checked=["cts_available"],
+    )
+    failed_assessment = assess_recommendation_root_cause(recommendation=failed)
+
+    user = User.objects.create_user(username="operator-revalidate", password="pw")
+    flow_run = start_flow("phase5_plus_recovery_v1", actor=user)
+
+    flow_run = record_cta_intent(
+        flow_run,
+        step_key="validate_root_cause",
+        action_id="VALIDATE_ROOT_CAUSE_REPAIR",
+        route="/recovery/recommendations",
+        actor=user,
+        object_type="recovery_recommendation",
+        object_id=str(failed.id),
+        metadata={
+            "recommendationId": failed.id,
+            "assessmentId": failed_assessment.id,
+            "status": failed_assessment.status,
+        },
+    )
+    flow_run.refresh_from_db()
+    assert failed_assessment.status == RootCauseRepairAssessment.Status.DOES_NOT_ADDRESS_CAUSE
+    assert flow_run.current_step_key == "validate_root_cause"
+    assert flow_run.metadata.get("bound_refs", {}).get("recommendation_id") is None
+
+    passing = make_recommendation("BARGE_UNAVAILABLE")
+    passing.metadata = {"explicitOperationalMitigation": {"acceptedBy": "operator"}}
+    passing.save(update_fields=["metadata"])
+    passing_assignment = passing.optimizer_run.input_snapshot.source_conflict.trip.assignment
+    RecoveryAction.objects.create(
+        recommendation=passing,
+        sequence=1,
+        action_type=RecoveryAction.ActionType.REASSIGN_CTS,
+        target_trip=passing_assignment.trip,
+        target_assignment=passing_assignment,
+        before_state={"cts": passing_assignment.cts.code},
+        after_state={"cts": "CTS-ALT"},
+        constraints_checked=["cts_available"],
+    )
+    passing_assessment = assess_recommendation_root_cause(recommendation=passing)
+
+    flow_run = record_cta_intent(
+        flow_run,
+        step_key="validate_root_cause",
+        action_id="VALIDATE_ROOT_CAUSE_REPAIR",
+        route="/recovery/recommendations",
+        actor=user,
+        object_type="recovery_recommendation",
+        object_id=str(passing.id),
+        metadata={
+            "recommendationId": passing.id,
+            "assessmentId": passing_assessment.id,
+            "status": passing_assessment.status,
+        },
+    )
+    flow_run.refresh_from_db()
+
+    assert passing_assessment.status == RootCauseRepairAssessment.Status.MITIGATES_CAUSE
+    assert flow_run.current_step_key == "materialize_recommendation"
+    assert flow_run.metadata["bound_refs"]["recommendation_id"] == str(passing.id)
+    assert flow_run.metadata["bound_refs"]["root_cause_assessment_id"] == str(
+        passing_assessment.id,
+    )
 
 
 @pytest.mark.django_db

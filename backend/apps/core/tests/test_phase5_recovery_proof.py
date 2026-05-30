@@ -99,6 +99,16 @@ def test_operator_trial_practice_stages_start_empty_then_build_blocked_plan():
     assert reset["counts"]["voyages"] == 0
     assert reset["counts"]["cargoRequirements"] == 0
     assert reset["counts"]["planVersions"] == 0
+    assert reset["flowKey"] == "phase5_recovery_from_demand_v1"
+    assert reset["currentStep"] == "import_ogv_demand"
+    assert reset["expectedActionIds"][:3] == [
+        "IMPORT_OGV_DEMAND",
+        "ENTER_OPERATING_WINDOWS",
+        "GENERATE_PLAN",
+    ]
+    assert reset["counts"]["flowRuns"] == 1
+    flow = FlowRun.objects.get(run_id=reset["flowRunId"])
+    assert flow.metadata["trial_pack"] == "operator_trial_phase5"
 
     imported = command_json("operator_trial_practice", "import-demand")
     assert imported["counts"]["voyages"] == 5
@@ -237,7 +247,11 @@ def test_seed_phase0_master_data_only_clears_flow_runs_but_keeps_definitions():
             "flow_key",
             flat=True,
         )
-    ) == {"operator_happy_path_v1", "phase5_plus_recovery_v1"}
+    ) == {
+        "operator_happy_path_v1",
+        "phase5_plus_recovery_v1",
+        "phase5_recovery_from_demand_v1",
+    }
 
 
 @pytest.mark.django_db

@@ -277,7 +277,11 @@ def test_seed_phase0_master_data_only_creates_flow_definitions_without_runs():
             "flow_key",
             flat=True,
         )
-    ) == {"operator_happy_path_v1", "phase5_plus_recovery_v1"}
+    ) == {
+        "operator_happy_path_v1",
+        "phase5_plus_recovery_v1",
+        "phase5_recovery_from_demand_v1",
+    }
     assert FlowRun.objects.count() == 0
 
 

@@ -84,16 +84,22 @@ class OperatorTrialPracticeRunner:
         self._admin = None
 
     def reset(self) -> dict:
-        stdout = StringIO()
-        call_command(
-            "seed_phase0",
-            reset_operational_data=True,
-            master_data_only=True,
-            stdout=stdout,
+        self._master_data_only_reset()
+        flow_run = self._create_trial_flow_run(
+            flow_key="phase5_recovery_from_demand_v1",
+            trial_pack="operator_trial_phase5",
+            evidence_run_id="operator-trial-recovery-from-demand",
+            subject_type="operator_trial",
+            subject_id="recovery-from-demand",
         )
         return {
             "step": "reset",
-            "meaning": "Master data, users, telemetry identities, and operations feeds are seeded; demand and schedules are empty.",
+            "meaning": (
+                "Master data, users, telemetry identities, and operations feeds are seeded; "
+                "demand and schedules are empty. A recovery-practice UI flow is active so "
+                "the visible Import demand CTA imports the blocked Phase 5 trial pack."
+            ),
+            **self._flow_payload(flow_run),
             "counts": self._counts(),
         }
 

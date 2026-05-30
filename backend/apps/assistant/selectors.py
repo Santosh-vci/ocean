@@ -34,6 +34,7 @@ from apps.scheduling.models import (
     RecoveryInputSnapshot,
     RecoveryRecommendation,
     RootCauseRepairAssessment,
+    ScenarioConstraintEvaluation,
     ScenarioRun,
     SimulationScenario,
 )
@@ -348,6 +349,19 @@ def select_simulation_counts(
         Q(baseline_version_id__in=scenario_versions)
         | Q(scenario_version=active_plan_version)
     )
+    simulated = scenarios.filter(status=SimulationScenario.Status.SIMULATED)
+    promotable_count = 0
+    for scenario in simulated:
+        latest_run = (
+            scenario.runs.filter(status=ScenarioRun.Status.SUCCEEDED)
+            .order_by("-completed_at", "-created_at", "-id")
+            .first()
+        )
+        if latest_run and not latest_run.constraint_evaluations.filter(
+            severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        ).exists():
+            promotable_count += 1
+
     return {
         "open_scenario_count": scenarios.exclude(
             status__in=[SimulationScenario.Status.PROPOSED, SimulationScenario.Status.CANCELED],
@@ -358,15 +372,8 @@ def select_simulation_counts(
         )
         .distinct()
         .count(),
-        "simulated_scenario_count": scenarios.filter(
-            status=SimulationScenario.Status.SIMULATED,
-        ).count(),
-        "promotable_scenario_count": scenarios.filter(
-            status=SimulationScenario.Status.SIMULATED,
-            runs__status=ScenarioRun.Status.SUCCEEDED,
-        )
-        .distinct()
-        .count(),
+        "simulated_scenario_count": simulated.count(),
+        "promotable_scenario_count": promotable_count,
     }
 
 

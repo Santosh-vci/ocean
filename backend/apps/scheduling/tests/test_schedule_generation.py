@@ -576,7 +576,7 @@ def test_jetty_override_impact_chain_flags_missed_tide_window():
 
 
 @pytest.mark.django_db
-def test_publish_is_blocked_until_conflicts_are_resolved_even_after_approvals():
+def test_approval_and_publish_are_blocked_until_conflicts_are_resolved():
     call_command("seed_phase0")
     platform = Organization.objects.get(slug="coalflow-platform")
     user = User.objects.create_user(username="approval-manager", password="secret")
@@ -597,7 +597,8 @@ def test_publish_is_blocked_until_conflicts_are_resolved_even_after_approvals():
     )
     publish_response = client.post(f"/api/scheduling/plan-versions/{version.id}/publish/")
 
-    assert decision_response.status_code == 200
+    assert decision_response.status_code == 400
+    assert "blocking conflicts remain" in str(decision_response.data).lower()
     assert publish_response.status_code == 400
     assert not PublishedPlanSnapshot.objects.exists()
 
@@ -835,7 +836,7 @@ def test_selected_run_promotion_materializes_candidate_and_preserves_baseline():
 
 
 @pytest.mark.django_db
-def test_promoted_candidate_materializes_projected_constraints_for_governance():
+def test_promoted_candidate_rejects_projected_critical_constraints_for_governance():
     call_command("seed_phase0")
     organization = Organization.objects.get(slug="coalflow-platform")
     user = User.objects.create_user("scenario-governance")
@@ -843,27 +844,19 @@ def test_promoted_candidate_materializes_projected_constraints_for_governance():
     scenario = SimulationScenario.objects.get(scenario_id__contains="TUG-OUTAGE")
     run = scenario.runs.order_by("-created_at", "-id").first()
 
-    promoted = promote_scenario_to_proposed(scenario=scenario, actor=user, run=run)
-    candidate = promoted.scenario_version
-
-    assert candidate.validation_status == PlanVersion.ValidationStatus.BLOCKED
-    assert candidate.conflicts.filter(code="ASSET_OUTAGE_OVERLAP", is_blocking=True).exists()
-    approval = submit_approval_request(
-        plan_version=candidate,
-        actor=user,
-        reason="Scenario candidate review.",
-    )
+    with pytest.raises(ValidationError, match="critical simulated constraint"):
+        promote_scenario_to_proposed(scenario=scenario, actor=user, run=run)
+    scenario.refresh_from_db()
     client = APIClient()
     client.force_authenticate(user)
     overview = client.get("/api/scheduling/overview/")
 
-    assert approval.status == ApprovalRequest.Status.PENDING
-    assert candidate.status == PlanVersion.Status.PROPOSED
+    assert scenario.status == SimulationScenario.Status.SIMULATED
+    assert scenario.scenario_version_id is None
     assert overview.status_code == 200
-    assert (
-        overview.data["approvalRequests"][0]["scenario_lineage"]["scenarioId"]
-        == scenario.scenario_id
-    )
+    assert scenario.scenario_id in {
+        item["scenario_id"] for item in overview.data["simulationScenarios"]
+    }
 
 
 @pytest.mark.django_db
@@ -1773,6 +1766,11 @@ def test_phase5_deterministic_repair_engine_persists_candidate_set():
     assert optimizer_run.summary["bestScore"] == max(
         float(item.score) for item in recommendations
     )
+    assert recommendations[0].metadata["rootCauseFit"]["status"] in {
+        "addresses_cause",
+        "mitigates_cause",
+    }
+    assert all("rootCauseFit" in item.metadata for item in recommendations)
 
 
 @pytest.mark.django_db

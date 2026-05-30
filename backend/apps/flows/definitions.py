@@ -60,7 +60,7 @@ OPERATOR_HAPPY_PATH_STEPS = [
         "expected_route": "/approvals/publishing",
         "expected_action_id": "APPROVE_PLAN",
         "completion_selector": "approvals_complete",
-        "blocked_selector": "approval_missing",
+        "blocked_selector": "approval_blocked_or_missing",
         "required_permission": "schedule.approve",
         "terminal": False,
     },
@@ -80,7 +80,7 @@ OPERATOR_HAPPY_PATH_STEPS = [
         "expected_route": "/approvals/publishing",
         "expected_action_id": "PUBLISH_PLAN",
         "completion_selector": "plan_published",
-        "blocked_selector": "approval_missing",
+        "blocked_selector": "approval_blocked_or_missing",
         "required_permission": "schedule.publish",
         "terminal": False,
     },
@@ -134,7 +134,7 @@ PHASE5_PLUS_RECOVERY_STEPS = [
         "expected_route": "/recovery/recommendations",
         "expected_action_id": "VALIDATE_ROOT_CAUSE_REPAIR",
         "completion_selector": "root_cause_assessment_exists",
-        "blocked_selector": "none",
+        "blocked_selector": "root_cause_assessment_blocking",
         "required_permission": "schedule.view",
         "terminal": False,
     },
@@ -164,7 +164,7 @@ PHASE5_PLUS_RECOVERY_STEPS = [
         "expected_route": "/simulation/workspace",
         "expected_action_id": "PROMOTE_SCENARIO",
         "completion_selector": "scenario_promoted",
-        "blocked_selector": "scenario_run_missing",
+        "blocked_selector": "scenario_run_critical_constraints_present",
         "required_permission": "schedule.edit",
         "terminal": False,
     },
@@ -194,7 +194,7 @@ PHASE5_PLUS_RECOVERY_STEPS = [
         "expected_route": "/approvals/publishing",
         "expected_action_id": "APPROVE_PLAN",
         "completion_selector": "approvals_complete",
-        "blocked_selector": "approval_missing",
+        "blocked_selector": "approval_blocked_or_missing",
         "required_permission": "schedule.approve",
         "terminal": False,
     },
@@ -214,10 +214,45 @@ PHASE5_PLUS_RECOVERY_STEPS = [
         "expected_route": "/approvals/publishing",
         "expected_action_id": "PUBLISH_PLAN",
         "completion_selector": "plan_published",
-        "blocked_selector": "approval_missing",
+        "blocked_selector": "approval_blocked_or_missing",
         "required_permission": "schedule.publish",
         "terminal": True,
     },
+]
+
+
+PHASE5_RECOVERY_FROM_DEMAND_STEPS = [
+    {
+        "step_key": "import_ogv_demand",
+        "label": "Import blocked OGV demand",
+        "expected_route": "/schedule/ogv-demand",
+        "expected_action_id": "IMPORT_OGV_DEMAND",
+        "completion_selector": "demand_imported",
+        "blocked_selector": "none",
+        "required_permission": "schedule.edit",
+        "terminal": False,
+    },
+    {
+        "step_key": "enter_operating_windows",
+        "label": "Enter tide and bridge windows",
+        "expected_route": "/constraints/tide-bridge",
+        "expected_action_id": "ENTER_OPERATING_WINDOWS",
+        "completion_selector": "operating_windows_entered",
+        "blocked_selector": "none",
+        "required_permission": "schedule.edit",
+        "terminal": False,
+    },
+    {
+        "step_key": "generate_blocked_plan",
+        "label": "Generate blocked recovery plan",
+        "expected_route": "/operations/tug-barge-assignment",
+        "expected_action_id": "GENERATE_PLAN",
+        "completion_selector": "plan_generated",
+        "blocked_selector": "none",
+        "required_permission": "schedule.edit",
+        "terminal": False,
+    },
+    *PHASE5_PLUS_RECOVERY_STEPS,
 ]
 
 
@@ -239,6 +274,18 @@ CANONICAL_FLOW_DEFINITIONS = [
         "status": FlowDefinition.Status.ACTIVE,
         "entry_route": "/exceptions/center",
         "steps": PHASE5_PLUS_RECOVERY_STEPS,
+    },
+    {
+        "flow_key": "phase5_recovery_from_demand_v1",
+        "name": "Phase 5 recovery from demand import",
+        "description": (
+            "UI-driven recovery practice from blocked OGV demand import through "
+            "exception repair and manual publish."
+        ),
+        "version": 1,
+        "status": FlowDefinition.Status.ACTIVE,
+        "entry_route": "/schedule/ogv-demand",
+        "steps": PHASE5_RECOVERY_FROM_DEMAND_STEPS,
     },
 ]
 

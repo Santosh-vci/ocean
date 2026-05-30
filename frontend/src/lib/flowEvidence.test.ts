@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 import {
+  fetchActiveTrialFlow,
   fetchActiveFlowForAction,
   recordFlowCtaEvidence,
   shouldRecordFlowCta,
@@ -42,8 +43,10 @@ test("trialDemandPackForImport selects flow pack or clean operator happy-path de
   })).toBe("operator_trial_phase5");
   expect(trialDemandPackForImport({
     ...flow,
-    expectedActionId: "ENTER_OPERATING_WINDOWS",
-  })).toBe("operator_happy_path_v1");
+    activeFlow: "phase5_plus_recovery_v1",
+    expectedActionId: "OPEN_EXCEPTION_CENTER",
+    trialPack: "operator_trial_phase5",
+  })).toBe("operator_trial_phase5");
   expect(trialDemandPackForImport(null)).toBe("operator_happy_path_v1");
 });
 
@@ -126,6 +129,49 @@ test("fetchActiveFlowForAction maps runtime flow truth for a matching CTA", asyn
     trialPack: "operator_happy_path_v1",
     evidenceRunId: "operator-trial-happy-path",
     expectedActionIds: ["IMPORT_OGV_DEMAND", "ENTER_OPERATING_WINDOWS"],
+  });
+});
+
+test("fetchActiveTrialFlow maps trial metadata even when the current step is not import", async () => {
+  const fetchMock = vi.fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        flow: {
+          run_id: "FLOW-789",
+          flow_definition: {
+            flow_key: "phase5_recovery_from_demand_v1",
+            name: "Phase 5 recovery from demand import",
+          },
+          status: "active",
+          current_step_key: "open_exception_center",
+          metadata: {
+            trial_pack: "operator_trial_phase5",
+            evidence_run_id: "operator-trial-recovery-from-demand",
+            expected_action_ids: ["IMPORT_OGV_DEMAND", "ENTER_OPERATING_WINDOWS"],
+          },
+          step_runs: [
+            {
+              step_key: "open_exception_center",
+              status: "active",
+              expected_route: "/exceptions/center",
+              expected_action_id: "OPEN_EXCEPTION_CENTER",
+              blocked_reason: "",
+            },
+          ],
+        },
+      }),
+    });
+  vi.stubGlobal("fetch", fetchMock);
+
+  const activeFlow = await fetchActiveTrialFlow();
+
+  expect(activeFlow).toMatchObject({
+    activeFlow: "phase5_recovery_from_demand_v1",
+    expectedActionId: "OPEN_EXCEPTION_CENTER",
+    trialPack: "operator_trial_phase5",
+    evidenceRunId: "operator-trial-recovery-from-demand",
   });
 });
 

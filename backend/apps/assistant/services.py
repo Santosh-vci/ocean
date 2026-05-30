@@ -62,6 +62,16 @@ RECOVERY_WORKFLOW_NEXT_ACTION_IDS = {
     "PROMOTE_SCENARIO",
     "REGENERATE_PLAN",
 }
+FLOW_RESOLUTION_ACTION_IDS = {
+    "GENERATE_RECOVERY_OPTIONS",
+    "OPEN_RECOMMENDATION_CONSOLE",
+    "VALIDATE_ROOT_CAUSE_REPAIR",
+    "MATERIALIZE_RECOVERY_RECOMMENDATION",
+    "RUN_SIMULATION",
+    "PROMOTE_SCENARIO",
+    "REPAIR_PLAN_CONFLICTS",
+    "REGENERATE_PLAN",
+}
 
 
 def build_recommendation(
@@ -226,7 +236,7 @@ def _select_global_next_action(
             ),
             None,
         )
-        if higher_critical_blocker:
+        if higher_critical_blocker and flow_action.action_id not in FLOW_RESOLUTION_ACTION_IDS:
             return higher_critical_blocker
         return flow_action
 

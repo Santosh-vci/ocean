@@ -1937,6 +1937,7 @@ export function SimulationWorkspacePage({
     (trip) => trip.assignment?.id === Number(selectedAssignmentId),
   );
   const remainingRisk = num(scenario?.delta_summary.remainingViolations, 0);
+  const activeBlockingConflicts = overview?.validation.blockingConflictCount ?? 0;
   const warningRisk = runSummaryNum(latestRun, "constraintSummary", "warning");
   const changedTripCount = runSummaryNum(latestRun, "projectionSummary", "changedTripCount");
   const maxDelay = runSummaryNum(latestRun, "projectionSummary", "maxDelayMinutes")
@@ -2095,7 +2096,13 @@ export function SimulationWorkspacePage({
           <DisabledReasonTooltip
             actionId="PROMOTE_SCENARIO"
             actions={assistantActions}
-            fallback={!canEdit ? "Your role cannot promote scenarios." : ""}
+            fallback={
+              !canEdit
+                ? "Your role cannot promote scenarios."
+                : remainingRisk
+                  ? "Resolve simulated critical constraints before promotion."
+                  : ""
+            }
           >
             <button
               disabled={
@@ -2104,6 +2111,7 @@ export function SimulationWorkspacePage({
                 || scenarioLocked
                 || !latestRun
                 || latestRun.status !== "succeeded"
+                || remainingRisk > 0
                 || !onPromoteScenario
                 || isActionRunning
               }
@@ -2640,10 +2648,22 @@ export function SimulationWorkspacePage({
             <DisabledReasonTooltip
               actionId="SUBMIT_APPROVAL"
               actions={assistantActions}
-              fallback={!canEdit ? "Your role cannot submit approval requests." : ""}
+              fallback={
+                !canEdit
+                  ? "Your role cannot submit approval requests."
+                  : activeBlockingConflicts
+                    ? "Resolve blocking conflicts before approval submission."
+                    : ""
+              }
             >
               <button
-                disabled={!canEdit || !overview?.activePlanVersion || !onSubmitApproval || isActionRunning}
+                disabled={
+                  !canEdit
+                  || !overview?.activePlanVersion
+                  || activeBlockingConflicts > 0
+                  || !onSubmitApproval
+                  || isActionRunning
+                }
                 onClick={onSubmitApproval}
                 type="button"
               >
@@ -2684,6 +2704,7 @@ export function ApprovalsPublishingPage({
   const request = requests[0];
   const publishability = overview?.publishabilityAssessment ?? null;
   const validation = overview?.validation;
+  const approvalBlockingConflicts = validation?.blockingConflictCount ?? 0;
   const publishabilityAllowsPublish = publishability
     ? ["publishable", "warning"].includes(publishability.status)
     : false;
@@ -2864,9 +2885,19 @@ export function ApprovalsPublishingPage({
                 })}
               </section>
               <div className="approval-actions">
-                <DisabledReasonTooltip actionId="APPROVE_PLAN" actions={assistantActions}>
+                <DisabledReasonTooltip
+                  actionId="APPROVE_PLAN"
+                  actions={assistantActions}
+                  fallback={approvalBlockingConflicts ? "Resolve blocking conflicts before approval." : ""}
+                >
                   <button
-                    disabled={!canEdit || request.status !== "pending" || !onApprove || isActionRunning}
+                    disabled={
+                      !canEdit
+                      || request.status !== "pending"
+                      || approvalBlockingConflicts > 0
+                      || !onApprove
+                      || isActionRunning
+                    }
                     onClick={onApprove}
                     type="button"
                   >

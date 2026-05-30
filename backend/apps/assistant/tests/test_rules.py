@@ -170,6 +170,23 @@ def test_blocking_conflict_outranks_submit_approval():
     assert shaped.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
 
 
+def test_blocking_conflict_suppresses_pending_approval_action():
+    ctx = context(
+        route="/approvals/publishing",
+        active_plan_status=PlanVersion.Status.PROPOSED,
+        active_plan_trip_count=4,
+        blocking_conflict_count=2,
+        pending_approval_count=1,
+        current_user_pending_approval_count=1,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "OPEN_EXCEPTION_CENTER"
+    assert "APPROVE_PLAN" not in [item.action_id for item in shaped.page_actions]
+
+
 def test_flow_current_step_becomes_global_next_action():
     ctx = context(
         active_flow_run_id="FLOW-TEST",

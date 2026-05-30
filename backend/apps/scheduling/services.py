@@ -595,6 +595,10 @@ def submit_approval_request(
 ) -> ApprovalRequest:
     if plan_version.status in {PlanVersion.Status.PUBLISHED, PlanVersion.Status.SUPERSEDED}:
         raise ValidationError("Published or superseded plan versions cannot be submitted.")
+    if _open_blocking_conflicts(plan_version).exists():
+        raise ValidationError(
+            "Approval submission is blocked while unresolved blocking conflicts remain.",
+        )
 
     request_id = f"APR-{plan_version.plan.code}-V{plan_version.version_no}"
     with transaction.atomic():
@@ -673,6 +677,13 @@ def record_approval_decision(
         raise ValidationError({"decision": "Unsupported approval decision."})
     if authority_role not in dict(ApprovalDecision.AuthorityRole.choices):
         raise ValidationError({"authority_role": "Unsupported approval authority."})
+    if (
+        decision == ApprovalDecision.Decision.APPROVE
+        and _open_blocking_conflicts(approval_request.plan_version).exists()
+    ):
+        raise ValidationError(
+            "Approval is blocked while unresolved blocking conflicts remain.",
+        )
 
     organization = _default_organization_for_actor(actor)
     with transaction.atomic():
@@ -1100,6 +1111,14 @@ def promote_scenario_to_proposed(
 
     with transaction.atomic():
         selected_run = _selected_scenario_run(scenario=scenario, run=run)
+        critical_count = selected_run.constraint_evaluations.filter(
+            severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        ).count()
+        if critical_count:
+            raise ValidationError(
+                "Scenario promotion is blocked while "
+                f"{critical_count} critical simulated constraint(s) remain.",
+            )
         if scenario.scenario_version is None:
             scenario.scenario_version = clone_plan_version(
                 source_version=scenario.baseline_version,

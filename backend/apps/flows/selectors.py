@@ -15,6 +15,7 @@ from apps.scheduling.models import (
     PublishabilityAssessment,
     RecoveryInputSnapshot,
     RecoveryRecommendation,
+    ScenarioConstraintEvaluation,
     RootCauseRepairAssessment,
     ScenarioRun,
     SimulationScenario,
@@ -31,6 +32,11 @@ from apps.scheduling.publishability_services import (
 )
 from apps.scheduling.services import REQUIRED_APPROVAL_AUTHORITIES
 from apps.telemetry.models import TrackingAlert
+
+PASSING_ROOT_CAUSE_STATUSES = {
+    RootCauseRepairAssessment.Status.ADDRESSES_CAUSE,
+    RootCauseRepairAssessment.Status.MITIGATES_CAUSE,
+}
 
 
 @dataclass(slots=True)
@@ -52,6 +58,7 @@ def evaluate_selector(selector_name: str, flow_run=None) -> SelectorResult:
         "approval_submitted": _approval_submitted,
         "approvals_complete": _approvals_complete,
         "approval_missing": _approval_missing,
+        "approval_blocked_or_missing": _approval_blocked_or_missing,
         "plan_published": _plan_published,
         "export_generated": _export_generated,
         "active_disruption_exists": _active_disruption_exists,
@@ -63,8 +70,10 @@ def evaluate_selector(selector_name: str, flow_run=None) -> SelectorResult:
         "recommendation_materialized": _recommendation_materialized,
         "scenario_missing": _scenario_missing,
         "root_cause_assessment_exists": _root_cause_assessment_exists,
+        "root_cause_assessment_blocking": _root_cause_assessment_blocking,
         "scenario_run_succeeded": _scenario_run_succeeded,
         "scenario_run_missing": _scenario_run_missing,
+        "scenario_run_critical_constraints_present": _scenario_run_critical_constraints_present,
         "scenario_promoted": _scenario_promoted,
         "blocking_conflicts_clear": _blocking_conflicts_clear,
         "blocking_conflicts_present": _blocking_conflicts_present,
@@ -262,10 +271,23 @@ def _plan_generated(flow_run, selector_name: str) -> SelectorResult:
 
 def _approval_submitted(flow_run, selector_name: str) -> SelectorResult:
     request = _approval_request(flow_run)
+    version = request.plan_version if request else _active_plan_version(flow_run)
+    blocking_count = _blocking_conflict_count(version)
+    if blocking_count:
+        return SelectorResult(
+            reason=f"{blocking_count} blocking conflict(s) remain before approval submission.",
+            evidence={
+                "approvalRequestId": request.id if request else None,
+                "blockingConflictCount": blocking_count,
+            },
+        )
     return SelectorResult(
         completed=request is not None,
         reason="" if request else "No approval request has been submitted.",
-        evidence={"approvalRequestId": request.id if request else None},
+        evidence={
+            "approvalRequestId": request.id if request else None,
+            "blockingConflictCount": blocking_count,
+        },
     )
 
 
@@ -273,6 +295,15 @@ def _approvals_complete(flow_run, selector_name: str) -> SelectorResult:
     request = _approval_request(flow_run)
     if request is None:
         return SelectorResult(reason="No approval request is available.")
+    blocking_count = _blocking_conflict_count(request.plan_version)
+    if blocking_count:
+        return SelectorResult(
+            reason=f"{blocking_count} blocking conflict(s) remain before approval.",
+            evidence={
+                "approvalRequestId": request.id,
+                "blockingConflictCount": blocking_count,
+            },
+        )
     approved_roles = set(
         request.decisions.filter(decision=ApprovalDecision.Decision.APPROVE).values_list(
             "authority_role",
@@ -299,6 +330,22 @@ def _approval_missing(flow_run, selector_name: str) -> SelectorResult:
         reason=complete.reason or "Required approvals are incomplete.",
         evidence=complete.evidence,
     )
+
+
+def _approval_blocked_or_missing(flow_run, selector_name: str) -> SelectorResult:
+    request = _approval_request(flow_run)
+    version = request.plan_version if request else _active_plan_version(flow_run)
+    blocking_count = _blocking_conflict_count(version)
+    if blocking_count:
+        return SelectorResult(
+            blocked=True,
+            reason=f"{blocking_count} blocking conflict(s) remain before approval.",
+            evidence={
+                "approvalRequestId": request.id if request else None,
+                "blockingConflictCount": blocking_count,
+            },
+        )
+    return _approval_missing(flow_run, selector_name)
 
 
 def _plan_published(flow_run, selector_name: str) -> SelectorResult:
@@ -469,10 +516,15 @@ def _root_cause_assessment_exists(flow_run, selector_name: str) -> SelectorResul
     assessment = RootCauseRepairAssessment.objects.filter(
         recommendation=recommendation,
     ).first()
-    completed = assessment is not None
+    completed = assessment is not None and assessment.status in PASSING_ROOT_CAUSE_STATUSES
+    reason = ""
+    if assessment is None:
+        reason = "Root-cause repair assessment has not been recorded."
+    elif not completed:
+        reason = f"Root-cause repair assessment is {assessment.status}."
     return SelectorResult(
         completed=completed,
-        reason="" if completed else "Root-cause repair assessment has not been recorded.",
+        reason=reason,
         evidence={
             "recommendationId": recommendation.id,
             "recommendationRef": recommendation.recommendation_id,
@@ -480,6 +532,17 @@ def _root_cause_assessment_exists(flow_run, selector_name: str) -> SelectorResul
             "rootCauseAssessmentStatus": assessment.status if assessment else "",
             "sourceCauseType": assessment.source_cause_type if assessment else "",
         },
+    )
+
+
+def _root_cause_assessment_blocking(flow_run, selector_name: str) -> SelectorResult:
+    assessment = _root_cause_assessment_exists(flow_run, selector_name)
+    status = assessment.evidence.get("rootCauseAssessmentStatus", "")
+    blocked = bool(status and status not in PASSING_ROOT_CAUSE_STATUSES)
+    return SelectorResult(
+        blocked=blocked,
+        reason=assessment.reason if blocked else "",
+        evidence=assessment.evidence,
     )
 
 
@@ -546,32 +609,34 @@ def _scenario_missing(flow_run, selector_name: str) -> SelectorResult:
 
 
 def _scenario_run_succeeded(flow_run, selector_name: str) -> SelectorResult:
-    scenario_run_id = _bound_int(flow_run, "scenario_run_id")
-    if scenario_run_id:
-        run = ScenarioRun.objects.filter(pk=scenario_run_id, status=ScenarioRun.Status.SUCCEEDED).first()
-    else:
-        scenario_id = _bound_int(flow_run, "scenario_id")
-        if _requires_bound_refs(flow_run) and not scenario_id:
-            run = None
-        elif scenario_id:
-            run = (
-                ScenarioRun.objects.filter(
-                    scenario_id=scenario_id,
-                    status=ScenarioRun.Status.SUCCEEDED,
-                )
-                .order_by("-completed_at", "-created_at", "-id")
-                .first()
-            )
-        else:
-            run = (
-                ScenarioRun.objects.filter(status=ScenarioRun.Status.SUCCEEDED)
-                .order_by("-completed_at", "-created_at", "-id")
-                .first()
-            )
+    run = _selected_successful_scenario_run(flow_run)
     return SelectorResult(
         completed=run is not None,
         reason="" if run else "No successful scenario run is available.",
         evidence={"scenarioRunId": run.id if run else None},
+    )
+
+
+def _selected_successful_scenario_run(flow_run) -> ScenarioRun | None:
+    scenario_run_id = _bound_int(flow_run, "scenario_run_id")
+    if scenario_run_id:
+        return ScenarioRun.objects.filter(pk=scenario_run_id, status=ScenarioRun.Status.SUCCEEDED).first()
+    scenario_id = _bound_int(flow_run, "scenario_id")
+    if _requires_bound_refs(flow_run) and not scenario_id:
+        return None
+    if scenario_id:
+        return (
+            ScenarioRun.objects.filter(
+                scenario_id=scenario_id,
+                status=ScenarioRun.Status.SUCCEEDED,
+            )
+            .order_by("-completed_at", "-created_at", "-id")
+            .first()
+        )
+    return (
+        ScenarioRun.objects.filter(status=ScenarioRun.Status.SUCCEEDED)
+        .order_by("-completed_at", "-created_at", "-id")
+        .first()
     )
 
 
@@ -581,6 +646,24 @@ def _scenario_run_missing(flow_run, selector_name: str) -> SelectorResult:
         blocked=not succeeded.completed,
         reason=succeeded.reason,
         evidence=succeeded.evidence,
+    )
+
+
+def _scenario_run_critical_constraints_present(flow_run, selector_name: str) -> SelectorResult:
+    run = _selected_successful_scenario_run(flow_run)
+    if run is None:
+        return SelectorResult()
+    critical_count = run.constraint_evaluations.filter(
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).count()
+    return SelectorResult(
+        blocked=critical_count > 0,
+        reason=(
+            f"{critical_count} critical simulated constraint(s) remain before promotion."
+            if critical_count
+            else ""
+        ),
+        evidence={"scenarioRunId": run.id, "criticalConstraintCount": critical_count},
     )
 
 
@@ -609,15 +692,7 @@ def _blocking_conflicts_clear(flow_run, selector_name: str) -> SelectorResult:
     if _requires_bound_refs(flow_run) and _bound_or_subject_plan_version(flow_run) is None:
         return SelectorResult(reason="Bound plan version evidence has not been recorded.")
     version = _active_plan_version(flow_run)
-    count = (
-        Conflict.objects.filter(
-            plan_version=version,
-            is_blocking=True,
-            resolved_at__isnull=True,
-        ).count()
-        if version
-        else 0
-    )
+    count = _blocking_conflict_count(version)
     return SelectorResult(
         completed=count == 0,
         reason="" if count == 0 else f"{count} blocking conflict(s) remain.",
@@ -632,6 +707,16 @@ def _blocking_conflicts_present(flow_run, selector_name: str) -> SelectorResult:
         reason=clear.reason,
         evidence=clear.evidence,
     )
+
+
+def _blocking_conflict_count(version: PlanVersion | None) -> int:
+    if version is None:
+        return 0
+    return Conflict.objects.filter(
+        plan_version=version,
+        is_blocking=True,
+        resolved_at__isnull=True,
+    ).count()
 
 
 def _publishability_assessment_clear(flow_run, selector_name: str) -> SelectorResult:

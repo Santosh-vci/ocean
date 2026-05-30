@@ -6,6 +6,7 @@ import { Topbar } from "./components/Topbar";
 import { useNextActions } from "./hooks/useNextActions";
 import { apiFetch, getCsrfToken, login, logout } from "./lib/api";
 import {
+  fetchActiveTrialFlow,
   fetchActiveFlowForAction,
   recordFlowCtaEvidence,
   trialDemandPackForImport,
@@ -812,7 +813,8 @@ function App() {
     await runWorkspaceAction("Import demand", async () => {
       const csrfToken = await getCsrfToken();
       const activeFlow = await resolveActiveFlowForAction("IMPORT_OGV_DEMAND");
-      const trialPack = trialDemandPackForImport(activeFlow);
+      const trialFlow = activeFlow ?? await fetchActiveTrialFlow().catch(() => null);
+      const trialPack = trialDemandPackForImport(trialFlow);
       const job = await apiFetch<ImportJobRecord>("/planning/import-jobs/import-trial-demand/", {
         method: "POST",
         headers: {
@@ -821,7 +823,7 @@ function App() {
         body: JSON.stringify({
           pack: trialPack,
           filename: `${trialPack}_ogv_demand.xlsx`,
-          source: activeFlow ? "operator-trial-flow-ui" : "operator-trial-practice-ui",
+          source: trialFlow ? "operator-trial-flow-ui" : "operator-trial-practice-ui",
         }),
       });
       await recordActiveFlowCta("IMPORT_OGV_DEMAND", "/schedule/ogv-demand", {
@@ -1352,6 +1354,10 @@ function App() {
       if (!activeVersion || ["published", "superseded"].includes(activeVersion.status)) {
         throw new Error("No submittable active plan version");
       }
+      const blockingConflictCount = liveSchedulingOverview()?.validation.blockingConflictCount ?? 0;
+      if (blockingConflictCount > 0) {
+        throw new Error(`${blockingConflictCount} blocking conflict(s) remain before approval submission`);
+      }
       const csrfToken = await getCsrfToken();
       const approval = await apiFetch<ApprovalRequestRecord>(
         `/scheduling/plan-versions/${activeVersion.id}/request-approval/`,
@@ -1400,6 +1406,10 @@ function App() {
         ?? liveOverview?.approvalRequests[0];
       if (!request) {
         throw new Error("No approval request");
+      }
+      const blockingConflictCount = liveOverview?.validation.blockingConflictCount ?? 0;
+      if (blockingConflictCount > 0) {
+        throw new Error(`${blockingConflictCount} blocking conflict(s) remain before approval`);
       }
       const decidedAuthorities = request.decisions
         .filter((decision) => decision.decision === "approve")

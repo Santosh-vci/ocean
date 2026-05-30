@@ -443,7 +443,7 @@ Open **Planning -> OGV Demand & Laycan**.
 
 Business context:
 
-The system is ready, but there is no voyage demand yet. This is the correct starting point for operator rehearsal because the operator must first import the OGV demand file before any schedule, assignments, exceptions, recovery options, or approvals can exist.
+The system is ready, but there is no voyage demand yet. This is the correct starting point for operator rehearsal because the operator must first import the OGV demand file before any schedule, assignments, exceptions, recovery options, or approvals can exist. The reset also activates the recovery-practice UI flow, so the visible **Import demand** CTA imports the blocked Phase 5 trial pack. This does not change the clean happy path, which starts from `seed_phase0 --master-data-only`.
 
 Evidence to look for:
 
@@ -451,6 +451,7 @@ Evidence to look for:
 - Cargo requirements: `0`.
 - No generated plan.
 - No active exceptions.
+- Active flow: `phase5_recovery_from_demand_v1`.
 
 Move forward when:
 
@@ -466,7 +467,7 @@ docker compose exec -T api python manage.py operator_trial_practice import-deman
 
 Business context:
 
-This imports the trial OGV file. It creates 5 vessel orders, 8 cargo requirement rows, and 6 executable hatch/layer rows. This is the first business event in the practice flow.
+This imports the blocked Phase 5 trial OGV file. It creates 5 vessel orders, 8 cargo requirement rows, and 6 executable hatch/layer rows. This is the first business event in the practice flow.
 
 Evidence to look for:
 

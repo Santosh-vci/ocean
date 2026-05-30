@@ -58,6 +58,28 @@ DEFAULT_REPAIR_OBJECTIVE_WEIGHTS = {
     "ogvCompletionRisk": 0.07,
     "demurrageProxy": 0.05,
 }
+ROOT_CAUSE_FIT_SCORE_ADJUSTMENTS = {
+    "addresses_cause": 0,
+    "mitigates_cause": -8,
+    "unknown": -30,
+    "does_not_address_cause": -60,
+}
+ASSET_REPAIR_ACTION_BY_CAUSE = {
+    "BARGE_UNAVAILABLE": RecoveryAction.ActionType.REASSIGN_BARGE,
+    "TUG_UNAVAILABLE": RecoveryAction.ActionType.REASSIGN_TUG,
+    "CTS_UNAVAILABLE": RecoveryAction.ActionType.REASSIGN_CTS,
+}
+TIMING_REPAIR_ACTIONS = {
+    RecoveryAction.ActionType.DELAY_TRIP,
+    RecoveryAction.ActionType.RESEQUENCE_TRIP,
+    RecoveryAction.ActionType.SHIFT_WINDOW,
+    RecoveryAction.ActionType.HOLD_AT_ANCHORAGE,
+}
+ASSIGNMENT_REPAIR_ACTIONS = {
+    RecoveryAction.ActionType.REASSIGN_BARGE,
+    RecoveryAction.ActionType.REASSIGN_TUG,
+    RecoveryAction.ActionType.REASSIGN_CTS,
+}
 
 
 def active_recovery_plan_version() -> PlanVersion | None:
@@ -986,7 +1008,144 @@ def _deterministic_repair_candidates(
     )
     if cts:
         candidates.append(cts)
-    return candidates
+    return [
+        _apply_root_cause_fit_to_candidate(snapshot=snapshot, candidate=candidate)
+        for candidate in candidates
+    ]
+
+
+def _apply_root_cause_fit_to_candidate(*, snapshot: RecoveryInputSnapshot, candidate: dict) -> dict:
+    source_cause_type = _snapshot_source_cause_type(snapshot)
+    status, reason = _candidate_root_cause_fit_status(
+        source_cause_type=source_cause_type,
+        candidate=candidate,
+    )
+    adjustment = ROOT_CAUSE_FIT_SCORE_ADJUSTMENTS[status]
+    original_score = float(candidate["score"])
+    adjusted_score = round(max(0, min(100, original_score + adjustment)), 3)
+    fit = {
+        "sourceCauseType": source_cause_type,
+        "status": status,
+        "scoreAdjustment": adjustment,
+        "reason": reason,
+    }
+    score_breakdown = {
+        **candidate["score_breakdown"],
+        "rootCauseFit": fit,
+        "totalScoreBeforeRootCauseFit": round(original_score, 3),
+        "totalScore": adjusted_score,
+    }
+    metadata = {
+        **candidate.get("metadata", {}),
+        "rootCauseFit": fit,
+    }
+    score_summary = (
+        f"{candidate['score_summary']} Root-cause fit: "
+        f"{status.replace('_', ' ')} ({adjustment:+.0f})."
+    )
+    return {
+        **candidate,
+        "score": adjusted_score,
+        "score_breakdown": score_breakdown,
+        "score_summary": score_summary,
+        "metadata": {
+            **metadata,
+            "scoreSummary": score_summary,
+        },
+    }
+
+
+def _candidate_root_cause_fit_status(*, source_cause_type: str, candidate: dict) -> tuple[str, str]:
+    if not source_cause_type:
+        return "unknown", "No source cause type was available for recovery ranking."
+    action_types = {
+        str(action.get("action_type") or "")
+        for action in candidate.get("actions", [])
+        if isinstance(action, dict)
+    }
+    constraint_tokens = {
+        str(token)
+        for action in candidate.get("actions", [])
+        if isinstance(action, dict)
+        for token in action.get("constraints_checked", [])
+    }
+    hard_passed = bool(candidate.get("hard_constraints_passed"))
+    missed_windows = int(candidate.get("missed_windows") or 0)
+    resource_conflicts = int(candidate.get("resource_conflicts") or 0)
+
+    expected_asset_action = ASSET_REPAIR_ACTION_BY_CAUSE.get(source_cause_type)
+    if expected_asset_action:
+        if str(expected_asset_action) in action_types and hard_passed:
+            return "addresses_cause", f"{expected_asset_action} directly repairs {source_cause_type}."
+        if action_types & {str(action) for action in TIMING_REPAIR_ACTIONS}:
+            return "mitigates_cause", f"Timing changes mitigate {source_cause_type} without direct asset repair."
+        return "does_not_address_cause", f"Candidate actions do not repair {source_cause_type}."
+
+    if source_cause_type in {"TIDE_WINDOW_MISSED", "BRIDGE_WINDOW_MISSED"}:
+        required_check = (
+            "tide_window_evaluated"
+            if source_cause_type == "TIDE_WINDOW_MISSED"
+            else "bridge_window_evaluated"
+        )
+        timing_action = bool(action_types & {str(action) for action in TIMING_REPAIR_ACTIONS})
+        if timing_action and required_check in constraint_tokens and missed_windows == 0 and hard_passed:
+            return "addresses_cause", f"Candidate timing satisfies {source_cause_type} evidence."
+        if timing_action:
+            return "mitigates_cause", f"Candidate changes timing but leaves residual {source_cause_type} risk."
+        return "does_not_address_cause", f"Candidate does not change timing for {source_cause_type}."
+
+    if source_cause_type == "JETTY_OVERLAP":
+        if action_types & {str(action) for action in TIMING_REPAIR_ACTIONS}:
+            return "mitigates_cause", "Timing changes mitigate jetty overlap pending final window proof."
+        return "does_not_address_cause", "Candidate does not move the jetty timing overlap."
+
+    if source_cause_type == "MOVEMENT_ASSIGNMENT_BLOCKED":
+        if action_types & {str(action) for action in ASSIGNMENT_REPAIR_ACTIONS}:
+            if hard_passed and missed_windows == 0 and resource_conflicts == 0:
+                return "addresses_cause", "Candidate clears movement assignment feasibility."
+            return "mitigates_cause", "Candidate repairs assignment family with residual feasibility risk."
+        return "does_not_address_cause", "Candidate does not repair movement assignment feasibility."
+
+    if source_cause_type == "LAYER_SEQUENCE_VIOLATION":
+        sequence_evidence = any(
+            isinstance(action, dict)
+            and isinstance(action.get("metadata"), dict)
+            and (
+                action["metadata"].get("cargoSequenceRepair")
+                or action["metadata"].get("sequenceViolationCleared")
+            )
+            for action in candidate.get("actions", [])
+        )
+        if sequence_evidence:
+            return "addresses_cause", "Candidate includes cargo sequence repair evidence."
+        if str(RecoveryAction.ActionType.RESEQUENCE_TRIP) in action_types:
+            return "mitigates_cause", "Candidate resequences trips but lacks explicit cargo sequence proof."
+        return "does_not_address_cause", "Candidate does not repair cargo sequence ordering."
+
+    if source_cause_type == "TELEMETRY_ALERT_UNRESOLVED":
+        return "unknown", "Telemetry truth requires a trust-state assessment before ranking can prove repair."
+
+    return "unknown", f"No root-cause ranking rule exists for {source_cause_type}."
+
+
+def _snapshot_source_cause_type(snapshot: RecoveryInputSnapshot) -> str:
+    if snapshot.source_conflict_id and snapshot.source_conflict:
+        return snapshot.source_conflict.code
+    if snapshot.source_tracking_alert_id:
+        return "TELEMETRY_ALERT_UNRESOLVED"
+    if snapshot.source_override_id and snapshot.source_override:
+        if snapshot.source_override.reason_code == OverrideRequest.ReasonCode.TIDE_BRIDGE_RECOVERY:
+            return "TIDE_WINDOW_MISSED"
+        if snapshot.source_override.reason_code == OverrideRequest.ReasonCode.GRADE_SEQUENCE_RECOVERY:
+            return "LAYER_SEQUENCE_VIOLATION"
+        return str(snapshot.source_override.reason_code or "")
+    conflicts = snapshot.constraint_state.get("conflicts", [])
+    if isinstance(conflicts, list):
+        for conflict in conflicts:
+            code = conflict.get("code") if isinstance(conflict, dict) else ""
+            if code:
+                return str(code)
+    return ""
 
 
 def _delay_trip_candidate(

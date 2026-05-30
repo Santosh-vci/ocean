@@ -11,6 +11,8 @@ from rest_framework.exceptions import ValidationError
 from .models import FlowDefinition, FlowEvent, FlowRun, FlowStepRun
 from .selectors import SelectorResult, evaluate_selector
 
+PASSING_ROOT_CAUSE_STATUSES = {"addresses_cause", "mitigates_cause"}
+
 HIGH_RISK_STEP_KEYS = {
     "generate_plan",
     "validate_root_cause",
@@ -292,6 +294,11 @@ def record_cta_intent(
         object_type=object_type or "",
         object_id=str(object_id or ""),
     )
+    _clear_failed_root_cause_refs_for_revalidation(
+        flow_run,
+        action_id=action_id,
+        incoming_refs=incoming_refs,
+    )
     _assert_bound_refs_compatible(flow_run, incoming_refs)
     _merge_bound_refs(flow_run, incoming_refs)
     _record_event(
@@ -448,6 +455,8 @@ def _extract_bound_refs(
 ) -> dict[str, str]:
     refs: dict[str, str] = {}
     payload = metadata if isinstance(metadata, dict) else {}
+    if action_id == "VALIDATE_ROOT_CAUSE_REPAIR" and not _root_cause_validation_passes(payload):
+        return refs
     aliases = {**BOUND_REF_ALIASES, **ACTION_REF_ALIASES.get(action_id, {})}
     for source_key, target_key in aliases.items():
         value = payload.get(source_key)
@@ -458,6 +467,41 @@ def _extract_bound_refs(
         if target_key:
             refs[target_key] = str(object_id)
     return refs
+
+
+def _root_cause_validation_passes(payload: dict[str, Any]) -> bool:
+    status = str(payload.get("status") or payload.get("rootCauseAssessmentStatus") or "")
+    return status in PASSING_ROOT_CAUSE_STATUSES
+
+
+def _clear_failed_root_cause_refs_for_revalidation(
+    flow_run: FlowRun,
+    *,
+    action_id: str,
+    incoming_refs: dict[str, str],
+) -> None:
+    if action_id != "VALIDATE_ROOT_CAUSE_REPAIR":
+        return
+    if not {"recommendation_id", "root_cause_assessment_id"}.intersection(incoming_refs):
+        return
+    existing_status = _bound_root_cause_assessment_status(flow_run)
+    if existing_status in {"", *PASSING_ROOT_CAUSE_STATUSES}:
+        return
+    _remove_bound_refs(flow_run, {"recommendation_id", "root_cause_assessment_id"})
+
+
+def _bound_root_cause_assessment_status(flow_run: FlowRun) -> str:
+    assessment_id = _bound_refs(flow_run).get("root_cause_assessment_id")
+    if not assessment_id:
+        return ""
+    from apps.scheduling.models import RootCauseRepairAssessment
+
+    return (
+        RootCauseRepairAssessment.objects.filter(pk=assessment_id)
+        .values_list("status", flat=True)
+        .first()
+        or ""
+    )
 
 
 def _assert_bound_refs_compatible(flow_run: FlowRun, incoming_refs: dict[str, str]) -> None:
@@ -471,6 +515,22 @@ def _assert_bound_refs_compatible(flow_run: FlowRun, incoming_refs: dict[str, st
     }
     if conflicts:
         raise ValidationError({"bound_refs": {"Conflicting flow domain references": conflicts}})
+
+
+def _remove_bound_refs(flow_run: FlowRun, keys: set[str]) -> None:
+    if not keys:
+        return
+    metadata = flow_run.metadata if isinstance(flow_run.metadata, dict) else {}
+    bound_refs = dict(metadata.get("bound_refs", {}) if isinstance(metadata.get("bound_refs"), dict) else {})
+    changed = False
+    for key in keys:
+        if key in bound_refs:
+            bound_refs.pop(key, None)
+            changed = True
+    if not changed:
+        return
+    flow_run.metadata = {**metadata, "bound_refs": bound_refs}
+    flow_run.save(update_fields=["metadata", "updated_at"])
 
 
 def _merge_bound_refs(flow_run: FlowRun, incoming_refs: dict[str, str]) -> None:
