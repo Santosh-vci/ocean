@@ -11,11 +11,13 @@ from apps.flows.models import FlowDefinition, FlowEvent, FlowRun
 from apps.flows.services import record_cta_intent
 from apps.masters.models import Barge
 from apps.planning.models import (
+    BridgeWindow,
     CargoLayerStep,
     CargoRequirement,
     ImportJob,
     NavigationConstraintCheck,
     OGVVoyage,
+    TideWindow,
 )
 from apps.planning.trial_pack import trial_dt
 from apps.scheduling.models import (
@@ -26,6 +28,9 @@ from apps.scheduling.models import (
     PlanVersion,
     PublishedPlanSnapshot,
     RecoveryRecommendation,
+    ScenarioConstraintEvaluation,
+    ScenarioRun,
+    SimulationScenario,
 )
 from apps.telemetry.models import TrackingAlert
 
@@ -123,11 +128,15 @@ def test_operator_trial_practice_stages_start_empty_then_build_blocked_plan():
     assert windows["counts"]["tideWindows"] == 3
     assert windows["counts"]["bridgeWindows"] == 3
     assert windows["windowEntry"]["constraintChecks"] == 6
+    assert not NavigationConstraintCheck.objects.filter(
+        status=NavigationConstraintCheck.Status.WAITING,
+        margin_minutes__lt=0,
+    ).exists()
 
     generated = command_json("operator_trial_practice", "generate-plan")
     assert generated["planVersion"]["tripCount"] == 6
-    assert generated["planVersion"]["conflictCount"] == 4
-    assert generated["planVersion"]["blockingConflictCount"] == 4
+    assert generated["planVersion"]["conflictCount"] == 2
+    assert generated["planVersion"]["blockingConflictCount"] == 2
     assert generated["planVersion"]["validationStatus"] == "blocked"
 
 
@@ -159,6 +168,68 @@ def test_operator_trial_recovery_window_repair_clears_missed_navigation_checks()
     ).count() == 0
     assert Barge.objects.get(code="BRG-KAL-22").status == Barge.Status.AVAILABLE
     assert Barge.objects.get(code="BRG-KAL-22").status == Barge.Status.AVAILABLE
+
+
+@pytest.mark.django_db
+def test_operator_trial_recovery_repair_creates_targeted_windows_not_horizon_blanket():
+    command_json("operator_trial_practice", "reset")
+    command_json("operator_trial_practice", "import-demand")
+    command_json("operator_trial_practice", "enter-windows")
+    command_json("operator_trial_practice", "generate-plan")
+    plan_version = PlanVersion.objects.order_by("-created_at").first()
+    scenario = SimulationScenario.objects.create(
+        scenario_id="SIM-TARGETED-WINDOW-REPAIR",
+        name="Targeted window repair",
+        scenario_type="RECOVERY_RECOMMENDATION",
+        baseline_version=plan_version,
+        status=SimulationScenario.Status.SIMULATED,
+    )
+    run = ScenarioRun.objects.create(
+        scenario=scenario,
+        run_id="RUN-TARGETED-WINDOW-REPAIR-01",
+        baseline_version=plan_version,
+        status=ScenarioRun.Status.SUCCEEDED,
+        algorithm_version="test",
+        input_hash="targeted",
+        completed_at=trial_dt(0, 12),
+    )
+    trip = plan_version.trips.order_by("sequence").first()
+    ScenarioConstraintEvaluation.objects.create(
+        run=run,
+        evaluation_id="SCE-TARGETED-BRIDGE",
+        trip=trip,
+        code="BRIDGE_WINDOW_MISSED",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        affected_object_type="bridge_window",
+        affected_object_id="BRDG-TRIAL-GATE-B-02",
+        projected_value={"projectedAt": trial_dt(1, 20).isoformat()},
+        margin_minutes=-300,
+        message="Projected gate misses the bridge slot.",
+    )
+    ScenarioConstraintEvaluation.objects.create(
+        run=run,
+        evaluation_id="SCE-TARGETED-TIDE",
+        trip=trip,
+        code="TIDE_WINDOW_MISSED",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        affected_object_type="tide_window",
+        affected_object_id="TIDE-TRIAL-RANTAU-02",
+        projected_value={"projectedAt": trial_dt(2, 0).isoformat()},
+        margin_minutes=-120,
+        message="Projected gate misses the tide slot.",
+    )
+
+    repaired = command_json("operator_trial_practice", "enter-windows")
+
+    closure = repaired["windowEntry"]["recoveryClosureWindows"]
+    assert closure["targetCount"] == 2
+    assert closure["sourceScenarioRun"] == run.run_id
+    assert not TideWindow.objects.filter(code="TIDE-OPERATOR-RECOVERY-CLOSURE").exists()
+    assert not BridgeWindow.objects.filter(code="BRDG-OPERATOR-RECOVERY-CLOSURE").exists()
+    repair_tide = TideWindow.objects.get(code__startswith="TIDE-OPERATOR-RECOVERY-")
+    repair_bridge = BridgeWindow.objects.get(code__startswith="BRDG-OPERATOR-RECOVERY-")
+    assert repair_tide.window_end - repair_tide.window_start <= trial_dt(0, 6) - trial_dt(0, 0)
+    assert repair_bridge.window_end - repair_bridge.window_start <= trial_dt(0, 6) - trial_dt(0, 0)
 
 
 @pytest.mark.django_db

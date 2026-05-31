@@ -618,9 +618,6 @@ def _scenario_run_succeeded(flow_run, selector_name: str) -> SelectorResult:
 
 
 def _selected_successful_scenario_run(flow_run) -> ScenarioRun | None:
-    scenario_run_id = _bound_int(flow_run, "scenario_run_id")
-    if scenario_run_id:
-        return ScenarioRun.objects.filter(pk=scenario_run_id, status=ScenarioRun.Status.SUCCEEDED).first()
     scenario_id = _bound_int(flow_run, "scenario_id")
     if _requires_bound_refs(flow_run) and not scenario_id:
         return None
@@ -633,6 +630,12 @@ def _selected_successful_scenario_run(flow_run) -> ScenarioRun | None:
             .order_by("-completed_at", "-created_at", "-id")
             .first()
         )
+    scenario_run_id = _bound_int(flow_run, "scenario_run_id")
+    if scenario_run_id:
+        return ScenarioRun.objects.filter(
+            pk=scenario_run_id,
+            status=ScenarioRun.Status.SUCCEEDED,
+        ).first()
     return (
         ScenarioRun.objects.filter(status=ScenarioRun.Status.SUCCEEDED)
         .order_by("-completed_at", "-created_at", "-id")

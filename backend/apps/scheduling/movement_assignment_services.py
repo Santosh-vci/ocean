@@ -116,6 +116,7 @@ def select_movement_assignment_candidate(
     if candidate.status == MovementAssignmentCandidate.Status.BLOCKED:
         raise ValidationError({"candidate": "Blocked movement assignment candidates cannot be selected."})
     with transaction.atomic():
+        _assert_selection_does_not_overlap(candidate)
         MovementAssignmentCandidate.objects.filter(
             run=candidate.run,
             cargo_layer_step=candidate.cargo_layer_step,
@@ -125,6 +126,55 @@ def select_movement_assignment_candidate(
         candidate.selection_reason = {**reason, "selectedByOperator": True}
         candidate.save(update_fields=("is_selected", "selection_reason", "updated_at"))
     return candidate
+
+
+def _assert_selection_does_not_overlap(candidate: MovementAssignmentCandidate) -> None:
+    start, end = _candidate_window(candidate)
+    resources = _hard_resource_codes(candidate)
+    if not resources:
+        return
+    selected = (
+        MovementAssignmentCandidate.objects.filter(
+            run=candidate.run,
+            is_selected=True,
+        )
+        .exclude(cargo_layer_step=candidate.cargo_layer_step)
+        .select_related("cargo_layer_step", "tug", "barge", "cts")
+    )
+    for other in selected:
+        other_start, other_end = _candidate_window(other)
+        if not _time_windows_overlap(start, end, other_start, other_end):
+            continue
+        overlapping = sorted(resources & _hard_resource_codes(other))
+        if overlapping:
+            raise ValidationError(
+                {
+                    "candidate": (
+                        f"{', '.join(overlapping)} already selected for overlapping "
+                        f"movement {other.movement_key}."
+                    )
+                }
+            )
+
+
+def _candidate_window(candidate: MovementAssignmentCandidate):
+    sequence = candidate.cargo_layer_step.required_sequence_no or 1
+    return _movement_window(candidate.cargo_layer_step, sequence)
+
+
+def _hard_resource_codes(candidate: MovementAssignmentCandidate) -> set[str]:
+    resources: set[str] = set()
+    if candidate.tug_id and candidate.tug:
+        resources.add(f"tug:{candidate.tug.code}")
+    if candidate.barge_id and candidate.barge:
+        resources.add(f"barge:{candidate.barge.code}")
+    if candidate.cts_id and candidate.cts:
+        resources.add(f"cts:{candidate.cts.code}")
+    return resources
+
+
+def _time_windows_overlap(start, end, other_start, other_end) -> bool:
+    return start < other_end and end > other_start
 
 
 def selected_or_top_candidate_for_step(
@@ -213,6 +263,7 @@ def _candidate_specs(steps: list[CargoLayerStep]) -> list[dict[str, Any]]:
     cts_assets = list(CTSAsset.objects.filter(is_active=True).order_by("code"))
     route_segment = _first_route_segment()
     reserved_windows: dict[str, list[tuple]] = {}
+    tug_use_counts: dict[str, int] = {}
     specs: list[dict[str, Any]] = []
 
     for sequence, step in enumerate(steps, start=1):
@@ -235,6 +286,7 @@ def _candidate_specs(steps: list[CargoLayerStep]) -> list[dict[str, Any]]:
                                 cts=cts,
                                 route_segment=route_segment,
                                 reserved_windows=reserved_windows,
+                                tug_use_count=tug_use_counts.get(tug.code, 0) if tug else 0,
                             )
                         )
         movement_specs.sort(
@@ -261,6 +313,9 @@ def _candidate_specs(steps: list[CargoLayerStep]) -> list[dict[str, Any]]:
         )
         if top_candidate:
             _reserve_candidate_windows(top_candidate, reserved_windows, start, end)
+            tug = top_candidate.get("tug")
+            if tug is not None:
+                tug_use_counts[tug.code] = tug_use_counts.get(tug.code, 0) + 1
         for rank, spec in enumerate(movement_specs, start=1):
             spec["rank"] = rank
             specs.append(spec)
@@ -279,6 +334,7 @@ def _score_candidate(
     cts: CTSAsset | None,
     route_segment: RouteSegment | None,
     reserved_windows: dict[str, list[tuple]],
+    tug_use_count: int = 0,
 ) -> dict[str, Any]:
     checks = []
     blocking: list[str] = []
@@ -314,6 +370,7 @@ def _score_candidate(
     score += Decimal(100 * sum(1 for matched in declared_match.values() if matched))
     score -= Decimal(500 * len(blocking))
     score -= Decimal(75 * len(warnings))
+    score -= Decimal(35 * tug_use_count)
     if tug and tug.status == Tug.Status.AVAILABLE:
         score += Decimal("20")
 
@@ -341,6 +398,7 @@ def _score_candidate(
             "declaredMatch": declared_match,
             "movementKey": movement_key,
             "tugCode": tug.code if tug else "",
+            "tugRotationUseCount": tug_use_count,
             "bargeCode": barge.code if barge else "",
             "jettyCode": jetty.code if jetty else "",
             "ctsCode": cts.code if cts else "",

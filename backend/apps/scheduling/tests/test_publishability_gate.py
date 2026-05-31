@@ -125,6 +125,76 @@ def test_publishability_service_blocks_hard_gate_failures(mutator, expected_grou
 
 
 @pytest.mark.django_db
+def test_publishability_blocks_horizon_wide_operator_recovery_windows():
+    user, org = make_user("pub-recovery-window")
+    version = make_clean_approved_plan(user, org)
+    location = Location.objects.filter(location_type=Location.LocationType.TIDE_GATE).first()
+    now = timezone.now()
+    TideWindow.objects.create(
+        code="TIDE-OPERATOR-RECOVERY-CLOSURE",
+        location=location,
+        window_start=now,
+        window_end=now + timedelta(days=8),
+        min_water_level_m=Decimal("2.90"),
+        max_loaded_draft_m=Decimal("4.80"),
+        source="operator-recovery-repair",
+        is_active=True,
+    )
+
+    assessment = assess_plan_publishability(plan_version=version, actor=user)
+
+    assert assessment.status == PublishabilityAssessment.Status.BLOCKED
+    assert any(
+        detail["key"] == "operator_recovery_windows_bounded"
+        and detail["status"] == "blocked"
+        for detail in assessment.details
+    )
+
+
+@pytest.mark.django_db
+def test_publishability_ignores_synthetic_phase3_seed_alerts():
+    user, org = make_user("pub-synthetic-alert")
+    version = make_clean_approved_plan(user, org)
+    alert = make_tracking_alert(version, user)
+    alert.evidence = {"seed": "phase_3_sample_movement"}
+    alert.save(update_fields=["evidence", "updated_at"])
+
+    assessment = assess_plan_publishability(plan_version=version, actor=user)
+
+    assert assessment.status == PublishabilityAssessment.Status.PUBLISHABLE
+    telemetry_detail = next(
+        detail for detail in assessment.details if detail["key"] == "telemetry_alerts_clear"
+    )
+    assert telemetry_detail["status"] == "clear"
+
+
+@pytest.mark.django_db
+def test_publishability_allows_bounded_same_day_operator_recovery_windows():
+    user, org = make_user("pub-bounded-recovery-window")
+    version = make_clean_approved_plan(user, org)
+    location = Location.objects.filter(location_type=Location.LocationType.TIDE_GATE).first()
+    now = timezone.now()
+    TideWindow.objects.create(
+        code="TIDE-OPERATOR-RECOVERY-01",
+        location=location,
+        window_start=now,
+        window_end=now + timedelta(hours=13),
+        min_water_level_m=Decimal("2.90"),
+        max_loaded_draft_m=Decimal("4.80"),
+        source="operator-recovery-repair",
+        is_active=True,
+    )
+
+    assessment = assess_plan_publishability(plan_version=version, actor=user)
+
+    assert assessment.status == PublishabilityAssessment.Status.PUBLISHABLE
+    assert not any(
+        detail["key"] == "operator_recovery_windows_bounded"
+        for detail in assessment.details
+    )
+
+
+@pytest.mark.django_db
 def test_publishability_api_uses_schedule_view_permission():
     user, org = make_user("pub-api", permissions=("schedule.view",))
     version = make_clean_approved_plan(user, org)

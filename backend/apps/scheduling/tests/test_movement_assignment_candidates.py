@@ -4,9 +4,10 @@ from io import StringIO
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
-from apps.planning.models import CargoLayerStep
+from apps.planning.models import CargoLayerStep, OGVVoyage
 from apps.planning.trial_pack import trial_dt
 from apps.scheduling.models import (
     ApprovalRequest,
@@ -50,6 +51,29 @@ def prepare_operator_trial_plan() -> tuple[PlanVersion, object]:
     return version, user
 
 
+def prepare_happy_path_plan() -> tuple[PlanVersion, object]:
+    call_command("seed_phase0", master_data_only=True, verbosity=0)
+    user = get_user_model().objects.get(username="admin@coalflow.local")
+    client = APIClient()
+    client.force_authenticate(user)
+    response = client.post(
+        "/api/planning/import-jobs/import-trial-demand/",
+        {"pack": "operator_happy_path_v1"},
+        format="json",
+    )
+    assert response.status_code == 201
+    command_json("operator_trial_practice", "enter-windows")
+    plan = Plan.objects.create(
+        code="PLAN-MAC-HAPPY",
+        name="Movement assignment happy path trial",
+        horizon_start=trial_dt(0, 0),
+        horizon_end=trial_dt(8, 12),
+        status=Plan.Status.ACTIVE,
+    )
+    version = PlanVersion.objects.create(plan=plan, version_no=1, created_by=user)
+    return version, user
+
+
 @pytest.mark.django_db
 def test_candidate_generation_covers_each_operator_trial_movement_without_plan_mutation():
     version, user = prepare_operator_trial_plan()
@@ -81,6 +105,29 @@ def test_candidate_generation_covers_each_operator_trial_movement_without_plan_m
         "recommendations": RecoveryRecommendation.objects.count(),
         "published": PublishedPlanSnapshot.objects.count(),
     } == before_counts
+
+
+@pytest.mark.django_db
+def test_happy_path_pack_uses_realistic_vessel_names_and_rotates_tugs():
+    version, user = prepare_happy_path_plan()
+
+    run = generate_movement_assignment_candidates(plan_version=version, actor=user)
+
+    assert OGVVoyage.objects.filter(vessel_name__icontains="HAPPY PATH").count() == 0
+    assert set(OGVVoyage.objects.values_list("vessel_name", flat=True)) == {
+        "MV DERAWAN STAR",
+        "MV MARATUA TRADER",
+        "MV SAMBARATA QUEEN",
+        "MV LATI HORIZON",
+        "MV BORNEO PROSPERITY",
+    }
+    selected_tugs = set(
+        run.candidates.filter(is_selected=True, tug__isnull=False).values_list(
+            "tug__code",
+            flat=True,
+        )
+    )
+    assert selected_tugs == {"BER-TUG-08", "BER-TUG-09"}
 
 
 @pytest.mark.django_db
@@ -152,8 +199,70 @@ def test_blocked_only_movement_generates_explicit_blocking_conflict():
         trip__cargo_layer_step=step,
         code="MOVEMENT_ASSIGNMENT_BLOCKED",
     )
+    assignment = Trip.objects.get(plan_version=version, cargo_layer_step=step).assignment
     assert conflict.is_blocking is True
     assert "No feasible" in conflict.message
+    assert assignment.status == Assignment.Status.BLOCKED
+    assert assignment.tug_id is None
+    assert assignment.barge_id is None
+    assert assignment.cts_id is None
+
+
+@pytest.mark.django_db
+def test_operator_candidate_selection_rejects_overlapping_hard_resource_reuse():
+    version, user = prepare_operator_trial_plan()
+    run = generate_movement_assignment_candidates(plan_version=version, actor=user)
+    selected = list(
+        run.candidates.filter(is_selected=True)
+        .select_related("cargo_layer_step", "tug", "barge", "cts")
+        .order_by("cargo_layer_step__planned_start", "id")
+    )
+    overlap_pair = None
+    for left in selected:
+        left_start = left.cargo_layer_step.planned_start
+        left_end = left.cargo_layer_step.planned_end
+        if not left_start or not left_end:
+            continue
+        for right in selected:
+            if left.pk == right.pk:
+                continue
+            right_start = right.cargo_layer_step.planned_start
+            right_end = right.cargo_layer_step.planned_end
+            if right_start and right_end and left_start < right_end and left_end > right_start:
+                overlap_pair = (left, right)
+                break
+        if overlap_pair:
+            break
+    assert overlap_pair is not None
+    source, conflicting = overlap_pair
+    candidate = (
+        run.candidates.filter(cargo_layer_step=source.cargo_layer_step)
+        .exclude(pk=source.pk)
+        .select_related("cargo_layer_step")
+        .first()
+    )
+    candidate.tug = conflicting.tug
+    candidate.barge = conflicting.barge
+    candidate.cts = conflicting.cts
+    candidate.status = MovementAssignmentCandidate.Status.FEASIBLE
+    candidate.blocking_reasons = []
+    candidate.warning_reasons = []
+    candidate.is_selected = False
+    candidate.save(
+        update_fields=(
+            "tug",
+            "barge",
+            "cts",
+            "status",
+            "blocking_reasons",
+            "warning_reasons",
+            "is_selected",
+            "updated_at",
+        )
+    )
+
+    with pytest.raises(ValidationError, match="already selected for overlapping movement"):
+        select_movement_assignment_candidate(candidate)
 
 
 @pytest.mark.django_db

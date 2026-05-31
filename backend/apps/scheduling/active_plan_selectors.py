@@ -53,4 +53,7 @@ def select_active_plan_version(mode: str = WORKING_CANDIDATE) -> PlanVersion | N
     )
     if candidate:
         return candidate
+    published = select_active_plan_version(PUBLISHED_SNAPSHOT)
+    if published:
+        return published
     return queryset.order_by(F("generated_at").desc(nulls_last=True), "-created_at", "-id").first()

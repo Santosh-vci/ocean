@@ -24,6 +24,9 @@ from apps.scheduling.models import (
     Plan,
     PlanVersion,
     PublishedPlanSnapshot,
+    ScenarioConstraintEvaluation,
+    ScenarioRun,
+    SimulationScenario,
     Trip,
 )
 from apps.scheduling.publishability_services import assess_plan_publishability
@@ -474,6 +477,95 @@ def test_parallel_trial_flow_does_not_advance_from_other_flow_bound_domain_refs(
     assert not evaluate_selector("publishability_assessment_clear", isolated_flow).completed
     assert not evaluate_selector("plan_published", isolated_flow).completed
     assert not evaluate_selector("export_generated", isolated_flow).completed
+
+
+@pytest.mark.django_db
+def test_promote_scenario_selector_uses_latest_successful_run_for_bound_scenario():
+    seed_canonical_flow_definitions()
+    user, org = make_user("flows-promote-rerun")
+    now = timezone.now()
+    plan = Plan.objects.create(
+        code="PLAN-FLOW-PROMOTE",
+        name="Flow promote rerun",
+        organization=org,
+        horizon_start=now,
+        horizon_end=now + timedelta(days=3),
+        status=Plan.Status.ACTIVE,
+    )
+    version = PlanVersion.objects.create(
+        plan=plan,
+        version_no=1,
+        status=PlanVersion.Status.GENERATED,
+        generated_at=now,
+        created_by=user,
+    )
+    scenario = SimulationScenario.objects.create(
+        scenario_id="SIM-FLOW-PROMOTE",
+        name="Flow promote rerun",
+        scenario_type="RECOVERY_RECOMMENDATION",
+        baseline_version=version,
+        status=SimulationScenario.Status.SIMULATED,
+        created_by=user,
+    )
+    stale_run = ScenarioRun.objects.create(
+        scenario=scenario,
+        run_id="RUN-FLOW-PROMOTE-01",
+        baseline_version=version,
+        status=ScenarioRun.Status.SUCCEEDED,
+        algorithm_version="test",
+        input_hash="old",
+        completed_at=now,
+        created_by=user,
+    )
+    ScenarioConstraintEvaluation.objects.create(
+        run=stale_run,
+        evaluation_id="SCE-FLOW-PROMOTE-01",
+        code="BRIDGE_WINDOW_MISSED",
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        affected_object_type="bridge_window",
+        affected_object_id="BRDG-FLOW",
+        margin_minutes=-60,
+        message="Old run still had a bridge miss.",
+    )
+    fresh_run = ScenarioRun.objects.create(
+        scenario=scenario,
+        run_id="RUN-FLOW-PROMOTE-02",
+        baseline_version=version,
+        status=ScenarioRun.Status.SUCCEEDED,
+        algorithm_version="test",
+        input_hash="new",
+        completed_at=now + timedelta(minutes=5),
+        created_by=user,
+    )
+    ScenarioConstraintEvaluation.objects.create(
+        run=fresh_run,
+        evaluation_id="SCE-FLOW-PROMOTE-02",
+        code="BRIDGE_WINDOW_TIGHT",
+        severity=ScenarioConstraintEvaluation.Severity.WARNING,
+        affected_object_type="bridge_window",
+        affected_object_id="BRDG-FLOW",
+        margin_minutes=20,
+        message="Latest run has only a warning.",
+    )
+    flow = start_flow(
+        "phase5_recovery_from_demand_v1",
+        user,
+        metadata={
+            "trial_pack": "operator_trial_phase5",
+            "bound_refs": {
+                "scenario_id": str(scenario.id),
+                "scenario_run_id": str(stale_run.id),
+            },
+        },
+    )
+
+    result = evaluate_selector("scenario_run_critical_constraints_present", flow)
+
+    assert not result.blocked
+    assert result.evidence == {
+        "scenarioRunId": fresh_run.id,
+        "criticalConstraintCount": 0,
+    }
 
 
 @pytest.mark.django_db

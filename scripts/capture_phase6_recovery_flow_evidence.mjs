@@ -71,14 +71,14 @@ async function main() {
     await waitForText(cdp, "COALFLOW TOWER", 15_000);
     await waitForText(cdp, "Super", 15_000);
     await clickButton(cdp, "Super", { purpose: "Set Assist to Super mode", exact: true });
-    await waitForAssistantNext(cdp, "OPEN_EXCEPTION_CENTER", "/dashboard/situation");
+    await waitForAssistantNext(cdp, "GENERATE_RECOVERY_OPTIONS", "/dashboard/situation");
 
     await captureStep(cdp, {
       step: "01",
       title: "Prepared Phase 5 plus recovery flow",
       route: "/dashboard/situation",
       expectedActionId: "GENERATE_RECOVERY_OPTIONS",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedGlobalActionId: "GENERATE_RECOVERY_OPTIONS",
       expectedCurrentStep: "generate_recovery_options",
       expectedFlowStatus: "active",
       clickedCtaLabel: null,
@@ -92,7 +92,7 @@ async function main() {
       },
     });
 
-    let clicked = await clickButton(cdp, "Open Exception Center", {
+    let clicked = await clickButton(cdp, "Generate recovery options", {
       purpose: "Global Next Action opens Exception Center for recovery option generation",
     });
     await waitForHash(cdp, "/exceptions/center");
@@ -101,7 +101,7 @@ async function main() {
       title: "Exception Center opened from Next Action",
       route: "/exceptions/center",
       expectedActionId: "GENERATE_RECOVERY_OPTIONS",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedGlobalActionId: "GENERATE_RECOVERY_OPTIONS",
       expectedCurrentStep: "generate_recovery_options",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
@@ -120,7 +120,7 @@ async function main() {
       title: "Recovery recommendations generated",
       route: "/recovery/recommendations",
       expectedActionId: "VALIDATE_ROOT_CAUSE_REPAIR",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedGlobalActionId: "VALIDATE_ROOT_CAUSE_REPAIR",
       expectedCurrentStep: "validate_root_cause",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
@@ -152,7 +152,7 @@ async function main() {
       title: "Root-cause validation recorded",
       route: "/recovery/recommendations",
       expectedActionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedGlobalActionId: "MATERIALIZE_RECOVERY_RECOMMENDATION",
       expectedCurrentStep: "materialize_recommendation",
       expectedFlowStatus: "active",
       clickedCtaLabel: clicked.text,
@@ -168,15 +168,16 @@ async function main() {
     });
     await waitForHash(cdp, "/simulation/workspace");
     await waitForText(cdp, "Simulation Workspace", 25_000);
-    await waitForFlowState(cdp, { currentStep: "promote_scenario", status: "active" });
+    await waitForFlowState(cdp, { currentStep: "promote_scenario", status: "blocked" });
+    await waitForAssistantNext(cdp, "RUN_SIMULATION", "/simulation/workspace");
     await captureStep(cdp, {
       step: "05",
-      title: "Scenario materialized with simulation result",
+      title: "Scenario materialized and promotion blocked by simulated constraints",
       route: "/simulation/workspace",
       expectedActionId: "PROMOTE_SCENARIO",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
+      expectedGlobalActionId: "RUN_SIMULATION",
       expectedCurrentStep: "promote_scenario",
-      expectedFlowStatus: "active",
+      expectedFlowStatus: "blocked",
       clickedCtaLabel: clicked.text,
       expectations: {
         minScenarios: 1,
@@ -184,90 +185,24 @@ async function main() {
       },
     });
 
-    clicked = await clickButton(cdp, "Run simulation", {
-      purpose: "Visible page CTA reruns the scenario before promotion",
-      exact: true,
-    });
-    await waitForText(cdp, "Simulation complete", 25_000);
-    await captureStep(cdp, {
-      step: "06",
-      title: "Scenario simulation rerun visible",
-      route: "/simulation/workspace",
-      expectedActionId: "PROMOTE_SCENARIO",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
-      expectedCurrentStep: "promote_scenario",
-      expectedFlowStatus: "active",
-      clickedCtaLabel: clicked.text,
-      expectations: { minScenarioRuns: 1 },
-    });
-
-    clicked = await clickButton(cdp, "Promote to proposed", {
-      purpose: "Visible page CTA promotes scenario into a proposed recovery plan",
-      exact: true,
-    });
-    await waitForText(cdp, "Scenario promoted", 25_000);
-    await waitForFlowState(cdp, { currentStep: "repair_remaining_conflicts", status: "blocked" });
-    await waitForAssistantNext(cdp, "OPEN_EXCEPTION_CENTER", "/simulation/workspace");
-    await captureStep(cdp, {
-      step: "07",
-      title: "Promoted scenario returns to remaining blockers",
-      route: "/simulation/workspace",
-      expectedActionId: "REPAIR_PLAN_CONFLICTS",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
-      expectedCurrentStep: "repair_remaining_conflicts",
-      expectedFlowStatus: "blocked",
-      clickedCtaLabel: clicked.text,
-      expectations: {
-        minScenarios: 1,
-        minOpenConflicts: 1,
-      },
-    });
-
-    clicked = await clickButton(cdp, "Open Exception Center", {
-      purpose: "Next Action routes operator back to blockers for repair",
-    });
-    await waitForHash(cdp, "/exceptions/center");
-    await captureStep(cdp, {
-      step: "08",
-      title: "Exception Center shows remaining repair work",
-      route: "/exceptions/center",
-      expectedActionId: "REPAIR_PLAN_CONFLICTS",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
-      expectedCurrentStep: "repair_remaining_conflicts",
-      expectedFlowStatus: "blocked",
-      clickedCtaLabel: clicked.text,
-      expectations: { minOpenConflicts: 1 },
-    });
-
     clicked = await clickButton(cdp, "Tide & Bridge Window", {
-      purpose: "Operator opens operating windows to repair remaining navigation blockers",
+      purpose: "Operator opens operating windows to repair simulated navigation and sequence blockers",
       exact: true,
     });
     await waitForHash(cdp, "/constraints/tide-bridge");
     await waitForText(cdp, "Tide", 15_000);
-    await captureStep(cdp, {
-      step: "09",
-      title: "Operating windows opened for conflict repair",
-      route: "/constraints/tide-bridge",
-      expectedActionId: "REPAIR_PLAN_CONFLICTS",
-      expectedGlobalActionId: "OPEN_EXCEPTION_CENTER",
-      expectedCurrentStep: "repair_remaining_conflicts",
-      expectedFlowStatus: "blocked",
-      clickedCtaLabel: clicked.text,
-    });
-
     clicked = await clickButton(cdp, "Enter operating windows", {
-      purpose: "Visible page CTA applies corrected operating windows",
+      purpose: "Visible page CTA applies corrected recovery operating windows",
       exact: true,
     });
     await waitForText(cdp, "Operating windows entered", 25_000);
     await captureStep(cdp, {
-      step: "10",
-      title: "Corrected operating windows entered",
+      step: "06",
+      title: "Recovery operating constraints repaired",
       route: "/constraints/tide-bridge",
-      expectedActionId: "REPAIR_PLAN_CONFLICTS",
-      expectedGlobalActionId: "REGENERATE_PLAN",
-      expectedCurrentStep: "repair_remaining_conflicts",
+      expectedActionId: "PROMOTE_SCENARIO",
+      expectedGlobalActionId: "RUN_SIMULATION",
+      expectedCurrentStep: "promote_scenario",
       expectedFlowStatus: "blocked",
       clickedCtaLabel: clicked.text,
       expectations: {
@@ -276,21 +211,41 @@ async function main() {
       },
     });
 
-    clicked = await clickButton(cdp, "Tug/Barge Assignment", {
-      purpose: "Operator opens assignment board to regenerate against repaired constraints",
+    clicked = await clickButton(cdp, "Simulation Workspace", {
+      purpose: "Operator returns to simulation after repairing the recovery constraints",
       exact: true,
     });
-    await waitForHash(cdp, "/operations/tug-barge-assignment");
-    clicked = await clickButton(cdp, "Regenerate plan", {
-      purpose: "Visible page CTA regenerates the recovery plan and clears blockers",
+    await waitForHash(cdp, "/simulation/workspace");
+    clicked = await clickButton(cdp, "Run simulation", {
+      purpose: "Visible page CTA reruns the repaired scenario before promotion",
       exact: true,
     });
-    await waitForFlowState(cdp, { currentStep: "submit_approval", status: "active" }, 30_000);
-    await waitForAssistantNext(cdp, "SUBMIT_APPROVAL", "/operations/tug-barge-assignment");
+    await waitForText(cdp, "Simulation complete", 25_000);
     await captureStep(cdp, {
-      step: "11",
-      title: "Recovery plan regenerated feasible",
-      route: "/operations/tug-barge-assignment",
+      step: "07",
+      title: "Repaired scenario simulation clears critical blockers",
+      route: "/simulation/workspace",
+      expectedActionId: "PROMOTE_SCENARIO",
+      expectedGlobalActionId: "RUN_SIMULATION",
+      expectedCurrentStep: "promote_scenario",
+      expectedFlowStatus: "blocked",
+      clickedCtaLabel: clicked.text,
+      expectations: {
+        minScenarioRuns: 1,
+      },
+    });
+
+    clicked = await clickButton(cdp, "Promote to proposed", {
+      purpose: "Visible page CTA promotes the repaired scenario into a proposed recovery plan",
+      exact: true,
+    });
+    await waitForText(cdp, "Scenario promoted", 25_000);
+    await waitForFlowState(cdp, { currentStep: "submit_approval", status: "active" }, 30_000);
+    await waitForAssistantNext(cdp, "SUBMIT_APPROVAL", "/simulation/workspace");
+    await captureStep(cdp, {
+      step: "08",
+      title: "Repaired scenario promoted as feasible recovery plan",
+      route: "/simulation/workspace",
       expectedActionId: "SUBMIT_APPROVAL",
       expectedCurrentStep: "submit_approval",
       expectedFlowStatus: "active",
@@ -306,7 +261,7 @@ async function main() {
     });
     await waitForHash(cdp, "/schedule/published-plan");
     await captureStep(cdp, {
-      step: "12",
+      step: "09",
       title: "Recovery candidate ready for approval submission",
       route: "/schedule/published-plan",
       expectedActionId: "SUBMIT_APPROVAL",
@@ -324,7 +279,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "13",
+      step: "10",
       title: "Recovery approval request submitted",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
@@ -345,7 +300,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "approve_plan", status: "blocked" });
     await waitForAssistantNext(cdp, "APPROVE_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "14",
+      step: "11",
       title: "First recovery approval recorded",
       route: "/approvals/publishing",
       expectedActionId: "APPROVE_PLAN",
@@ -363,7 +318,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "run_publishability_check", status: "active" });
     await waitForAssistantNext(cdp, "RUN_PUBLISHABILITY_CHECK", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "15",
+      step: "12",
       title: "Dual recovery approval complete",
       route: "/approvals/publishing",
       expectedActionId: "RUN_PUBLISHABILITY_CHECK",
@@ -385,7 +340,7 @@ async function main() {
     await waitForFlowState(cdp, { currentStep: "publish_plan", status: "active" });
     await waitForAssistantNext(cdp, "PUBLISH_PLAN", "/approvals/publishing");
     await captureStep(cdp, {
-      step: "16",
+      step: "13",
       title: "Recovery publishability gate cleared",
       route: "/approvals/publishing",
       expectedActionId: "PUBLISH_PLAN",
@@ -406,7 +361,7 @@ async function main() {
     });
     await waitForFlowState(cdp, { currentStep: "", status: "completed" });
     await captureStep(cdp, {
-      step: "17",
+      step: "14",
       title: "Recovery plan manually published",
       route: "/approvals/publishing",
       expectedActionId: null,
@@ -422,7 +377,7 @@ async function main() {
 
     const finalFlow = await getFlow(cdp);
     const finalDomain = await domainState(cdp);
-    const publishabilityStepDomain = evidence.steps.find((item) => item.step === "16")?.domainState ?? {};
+    const publishabilityStepDomain = evidence.steps.find((item) => item.step === "13")?.domainState ?? {};
     evidence.finalAssertions = {
       flowRunId: evidence.preparedFlow.flowRunId,
       flowKey: evidence.preparedFlow.flowKey,

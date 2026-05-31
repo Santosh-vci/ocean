@@ -29,6 +29,7 @@ from .models import (
     Assignment,
     Conflict,
     ImpactChainAssessment,
+    MovementAssignmentCandidate,
     OverrideRequest,
     Plan,
     PlanVersion,
@@ -44,7 +45,11 @@ from .models import (
     SimulationScenario,
     Trip,
 )
-from .recovery_lineage import build_recovery_origin, provenance_summary_fields
+from .recovery_lineage import (
+    build_recovery_origin,
+    provenance_summary_fields,
+    recovery_origin_from_summary,
+)
 
 REQUIRED_APPROVAL_AUTHORITIES = [
     ApprovalDecision.AuthorityRole.BERAU_SCHEDULER,
@@ -746,14 +751,20 @@ def publish_plan_version(*, plan_version: PlanVersion, actor) -> PublishedPlanSn
         raise ValidationError(f"Publish is blocked by publishability gate: {message}")
 
     with transaction.atomic():
+        now = timezone.now()
         PlanVersion.objects.filter(
             plan=plan_version.plan,
-            status=PlanVersion.Status.PUBLISHED,
-        ).exclude(pk=plan_version.pk).update(status=PlanVersion.Status.SUPERSEDED)
+        ).exclude(pk=plan_version.pk).exclude(
+            status=PlanVersion.Status.SUPERSEDED,
+        ).update(status=PlanVersion.Status.SUPERSEDED)
         PublishedPlanSnapshot.objects.filter(
             plan=plan_version.plan,
             status=PublishedPlanSnapshot.Status.ACTIVE,
         ).update(status=PublishedPlanSnapshot.Status.SUPERSEDED)
+        _resolve_recovery_origin_source_conflicts(
+            plan_version=plan_version,
+            resolved_at=now,
+        )
 
         snapshot = PublishedPlanSnapshot.objects.create(
             snapshot_id=f"LIVE-{plan_version.plan.code}-V{plan_version.version_no}",
@@ -764,12 +775,31 @@ def publish_plan_version(*, plan_version: PlanVersion, actor) -> PublishedPlanSn
             published_by=actor,
         )
         plan_version.status = PlanVersion.Status.PUBLISHED
-        plan_version.published_at = timezone.now()
+        plan_version.published_at = now
         plan_version.save(update_fields=["status", "published_at", "updated_at"])
         approval_request.status = ApprovalRequest.Status.PUBLISHED
         approval_request.save(update_fields=["status", "updated_at"])
 
     return snapshot
+
+
+def _resolve_recovery_origin_source_conflicts(
+    *,
+    plan_version: PlanVersion,
+    resolved_at,
+) -> int:
+    origin = recovery_origin_from_summary(plan_version.summary)
+    baseline_version_id = origin.get("baselineVersionId")
+    try:
+        baseline_version_id = int(baseline_version_id)
+    except (TypeError, ValueError):
+        return 0
+    if baseline_version_id == plan_version.id:
+        return 0
+    return Conflict.objects.filter(
+        plan_version_id=baseline_version_id,
+        resolved_at__isnull=True,
+    ).update(resolved_at=resolved_at)
 
 
 def compute_plan_diff(*, source_version: PlanVersion, target_version: PlanVersion) -> dict:
@@ -1137,7 +1167,7 @@ def promote_scenario_to_proposed(
             source_version=scenario.baseline_version,
             target_version=scenario.scenario_version,
         )
-        scenario.scenario_version.summary = {
+        promoted_summary = {
             **scenario.scenario_version.summary,
             **_promoted_version_summary(
                 scenario=scenario,
@@ -1146,6 +1176,11 @@ def promote_scenario_to_proposed(
                 actor=actor,
             ),
         }
+        scenario.scenario_version.summary = _clear_stale_source_marker_when_run_is_current(
+            summary=promoted_summary,
+            run=selected_run,
+            actor=actor,
+        )
         scenario.status = SimulationScenario.Status.PROPOSED
         scenario.scenario_version.status = PlanVersion.Status.PROPOSED
         scenario.scenario_version.save(update_fields=["status", "summary", "updated_at"])
@@ -1380,7 +1415,46 @@ def _replace_version_conflicts_from_run(
             message=evaluation.message,
             is_blocking=evaluation.severity == ScenarioConstraintEvaluation.Severity.CRITICAL,
         )
+    conflicts = target_version.conflicts.all()
+    _reconcile_generated_trip_statuses(plan_version=target_version, conflicts=conflicts)
+    _reconcile_cargo_layer_steps_for_clear_trips(plan_version=target_version, conflicts=conflicts)
     _refresh_plan_version_validation(target_version)
+
+
+def _reconcile_cargo_layer_steps_for_clear_trips(*, plan_version: PlanVersion, conflicts) -> None:
+    blocked_trip_ids = set(
+        conflicts.filter(
+            is_blocking=True,
+            resolved_at__isnull=True,
+            trip_id__isnull=False,
+        ).values_list("trip_id", flat=True)
+    )
+    for trip in plan_version.trips.exclude(cargo_layer_step__isnull=True).select_related(
+        "cargo_layer_step",
+    ):
+        if trip.id in blocked_trip_ids:
+            continue
+        step = trip.cargo_layer_step
+        if (
+            not step.sequence_violation
+            and step.status not in {CargoLayerStep.Status.BLOCKED, CargoLayerStep.Status.QC_HOLD}
+            and not step.blocking_reason
+        ):
+            continue
+        step.sequence_violation = False
+        step.blocking_reason = ""
+        step.chain_status = "RECOVERY CLEARED"
+        if step.status in {CargoLayerStep.Status.BLOCKED, CargoLayerStep.Status.QC_HOLD}:
+            step.status = CargoLayerStep.Status.PLANNED
+        step.save(
+            update_fields=[
+                "status",
+                "sequence_violation",
+                "blocking_reason",
+                "chain_status",
+                "updated_at",
+            ]
+        )
 
 
 def _refresh_plan_version_validation(plan_version: PlanVersion) -> None:
@@ -1440,6 +1514,42 @@ def _promoted_version_summary(
         "promotedBy": getattr(actor, "email", "") or getattr(actor, "username", ""),
     }
     return summary
+
+
+def _clear_stale_source_marker_when_run_is_current(
+    *,
+    summary: dict,
+    run: ScenarioRun,
+    actor,
+) -> dict:
+    if not summary.get("sourceInputsChanged"):
+        return summary
+
+    changed_at = _summary_datetime(summary.get("sourceInputChangedAt"))
+    run_completed_at = run.completed_at or run.updated_at
+    if changed_at and run_completed_at and run_completed_at < changed_at:
+        return summary
+
+    return {
+        **summary,
+        "sourceInputsChanged": False,
+        "sourceInputChangeResolvedAt": timezone.now().isoformat(),
+        "sourceInputChangeResolvedBy": getattr(actor, "email", "")
+        or getattr(actor, "username", ""),
+        "sourceInputChangeResolvedByScenarioRun": run.run_id,
+        "sourceInputChangeResolution": "promoted_scenario_run_recomputed_after_source_change",
+    }
+
+
+def _summary_datetime(value):
+    if not isinstance(value, str) or not value:
+        return None
+    parsed = parse_datetime(value)
+    if parsed is None:
+        return None
+    if timezone.is_naive(parsed):
+        return timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
 
 
 def _assert_scenario_inputs_mutable(scenario: SimulationScenario) -> None:
@@ -1972,7 +2082,7 @@ def _propagate_projection_graph(*, states: dict, edges: dict) -> None:
             required_shift_minutes = max(
                 0,
                 _ceil_minutes(
-                    predecessor["projected_end"] - predecessor["baseline_end"]
+                    predecessor["projected_end"] - state["baseline_start"]
                 ),
             )
             if required_shift_minutes > dependency_shift_minutes:
@@ -2951,13 +3061,40 @@ def generate_plan_version(plan_version: PlanVersion, *, candidate_run=None, acto
             candidate = selected_or_top_candidate_for_step(resolved_candidate_run, step)
             candidate_blockers = list(candidate.blocking_reasons or []) if candidate else []
             candidate_warnings = list(candidate.warning_reasons or []) if candidate else []
-            selected_tug = candidate.tug if candidate and candidate.tug_id else None
-            selected_barge = candidate.barge if candidate and candidate.barge_id else step.planned_barge
-            selected_jetty = candidate.jetty if candidate and candidate.jetty_id else step.planned_jetty
-            selected_cts = candidate.cts if candidate and candidate.cts_id else step.planned_cts
+            candidate_assignable = bool(
+                candidate
+                and candidate.status
+                in {
+                    MovementAssignmentCandidate.Status.FEASIBLE,
+                    MovementAssignmentCandidate.Status.WARNING,
+                }
+                and not candidate_blockers
+            )
+            selected_tug = candidate.tug if candidate_assignable and candidate.tug_id else None
+            selected_barge = (
+                candidate.barge
+                if candidate_assignable and candidate.barge_id
+                else step.planned_barge
+                if candidate_assignable
+                else None
+            )
+            selected_jetty = (
+                candidate.jetty
+                if candidate_assignable and candidate.jetty_id
+                else step.planned_jetty
+                if candidate_assignable
+                else None
+            )
+            selected_cts = (
+                candidate.cts
+                if candidate_assignable and candidate.cts_id
+                else step.planned_cts
+                if candidate_assignable
+                else None
+            )
             selected_route_segment = (
                 candidate.route_segment
-                if candidate and candidate.route_segment_id
+                if candidate_assignable and candidate.route_segment_id
                 else route_segment
             )
             trip = Trip.objects.create(
@@ -3028,7 +3165,8 @@ def generate_plan_version(plan_version: PlanVersion, *, candidate_run=None, acto
                     message=candidate_blockers[0],
                     is_blocking=True,
                 )
-            _validate_trip(plan_version=plan_version, trip=trip, assignment=assignment)
+            if candidate_assignable:
+                _validate_trip(plan_version=plan_version, trip=trip, assignment=assignment)
 
         conflicts = Conflict.objects.filter(plan_version=plan_version)
         _reconcile_generated_trip_statuses(plan_version=plan_version, conflicts=conflicts)
@@ -3170,6 +3308,12 @@ def _reconcile_generated_trip_statuses(*, plan_version: PlanVersion, conflicts) 
 
         if not active_blockers and _is_navigation_recovery_text(
             f"{assignment.next_constraint} {assignment.next_action}"
+        ):
+            desired_next_constraint = ""
+            desired_next_action = "Dispatch chain on planned window."
+        elif (
+            not active_blockers
+            and assignment.next_action == "Review blocker and generate replan candidate."
         ):
             desired_next_constraint = ""
             desired_next_action = "Dispatch chain on planned window."

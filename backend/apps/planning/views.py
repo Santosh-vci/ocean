@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework import serializers, status
@@ -12,10 +12,15 @@ from rest_framework.viewsets import ModelViewSet
 
 from apps.audit.mixins import AuditMutationMixin
 from apps.audit.services import record_audit_event
-from apps.masters.models import Barge, CoalGrade, CTSAsset, Jetty, Location, RouteSegment
+from apps.masters.models import Barge, CoalGrade, CTSAsset, Jetty, Location, RouteSegment, Tug
 from apps.organizations.models import Organization
 from apps.rbac.permissions import RequiresAccessPermission
-from apps.scheduling.models import PlanVersion
+from apps.scheduling.models import (
+    PlanVersion,
+    ScenarioConstraintEvaluation,
+    ScenarioRun,
+    SimulationScenario,
+)
 
 from .models import (
     AssetAvailabilityWindow,
@@ -597,8 +602,286 @@ def _latest_plan_version_has_recovery_origin() -> bool:
     )
 
 
+def _latest_blocked_recovery_plan_version() -> PlanVersion | None:
+    latest_plan_version = PlanVersion.objects.order_by("-created_at", "-id").first()
+    if latest_plan_version is None:
+        return None
+    if latest_plan_version.status not in {
+        PlanVersion.Status.DRAFT,
+        PlanVersion.Status.GENERATED,
+        PlanVersion.Status.VALIDATED,
+        PlanVersion.Status.PROPOSED,
+    }:
+        return None
+    has_open_blocker = latest_plan_version.conflicts.filter(
+        is_blocking=True,
+        resolved_at__isnull=True,
+    ).exists()
+    if has_open_blocker:
+        return latest_plan_version
+    if isinstance(latest_plan_version.summary, dict) and latest_plan_version.summary.get(
+        "recoveryOrigin",
+    ):
+        return latest_plan_version
+    return None
+
+
 def _restore_recovery_practice_assets() -> None:
     Barge.objects.filter(code="BRG-KAL-22").update(status=Barge.Status.AVAILABLE)
+    Tug.objects.filter(code__in=["BER-TUG-04", "BER-TUG-08", "BER-TUG-09"]).update(
+        status=Tug.Status.AVAILABLE,
+    )
+    CTSAsset.objects.filter(code__in=["CTS-BORNEO", "CTS-JAVA"]).update(is_available=True)
+
+
+def _normalize_recovery_practice_inputs(*, voyages: list[OGVVoyage]) -> dict[str, int]:
+    voyage_ids = [voyage.id for voyage in voyages]
+    if not voyage_ids:
+        return {
+            "cargoLayerRows": 0,
+            "assetAvailabilityRows": 0,
+            "jettyWindowRows": 0,
+            "tideWindowRows": 0,
+            "bridgeWindowRows": 0,
+        }
+    cargo_layer_rows = CargoLayerStep.objects.filter(voyage_id__in=voyage_ids).update(
+        status=CargoLayerStep.Status.PLANNED,
+        sequence_violation=False,
+        blocking_reason="",
+        chain_status="RECOVERY CLEARED",
+    )
+    asset_rows = AssetAvailabilityWindow.objects.filter(
+        reason__in=[
+            "Planned maintenance at Dock 01",
+            "Awaiting bridge pass",
+            "Primary conveyor online",
+            "Operator recovery repair: resource confirmed available.",
+        ],
+    ).exclude(
+        status=AssetAvailabilityWindow.Status.AVAILABLE,
+    ).update(
+        status=AssetAvailabilityWindow.Status.AVAILABLE,
+        reason="Operator recovery repair: resource confirmed available.",
+    )
+    jetty_rows = JettyAvailabilityWindow.objects.filter(
+        Q(reason__in=[
+            "Shift handover and conveyor inspection",
+            "Silt clearance",
+            "Operator recovery repair: jetty confirmed workable.",
+        ])
+        | Q(jetty__code__in=["JTY-SUARAN", "JTY-LATI", "JTY-GMB"])
+    ).exclude(
+        status=JettyAvailabilityWindow.Status.WORKING,
+    ).update(
+        status=JettyAvailabilityWindow.Status.WORKING,
+        reason="Operator recovery repair: jetty confirmed workable.",
+    )
+    tide_rows = 0
+    bridge_rows = 0
+    for voyage in OGVVoyage.objects.filter(id__in=voyage_ids):
+        voyage.status = OGVVoyage.Status.PLANNED
+        voyage.risk_status = OGVVoyage.RiskStatus.LOW
+        voyage.next_blocking_constraint = ""
+        voyage.save(
+            update_fields=[
+                "status",
+                "risk_status",
+                "next_blocking_constraint",
+                "updated_at",
+            ],
+        )
+    return {
+        "cargoLayerRows": cargo_layer_rows,
+        "assetAvailabilityRows": asset_rows,
+        "jettyWindowRows": jetty_rows,
+        "tideWindowRows": tide_rows,
+        "bridgeWindowRows": bridge_rows,
+    }
+
+
+def _ensure_recovery_closure_windows(
+    *,
+    plan_version: PlanVersion | None,
+    locations: dict[str, Location],
+) -> dict:
+    bridge_location = (
+        locations.get("LOC-BRIDGE-GATE-B")
+        or Location.objects.filter(location_type=Location.LocationType.BRIDGE).first()
+        or Location.objects.order_by("code").first()
+    )
+    tide_location = (
+        locations.get("LOC-RANTAU-DELTA")
+        or Location.objects.filter(location_type=Location.LocationType.TIDE_GATE).first()
+        or bridge_location
+    )
+    if bridge_location is None or tide_location is None:
+        return {}
+
+    TideWindow.objects.filter(code__startswith="TIDE-OPERATOR-RECOVERY-").delete()
+    BridgeWindow.objects.filter(code__startswith="BRDG-OPERATOR-RECOVERY-").delete()
+
+    targets, source_run = _recovery_window_targets(plan_version)
+    if not targets:
+        return {
+            "source": "scenario_critical_constraints",
+            "sourceScenarioRun": source_run.run_id if source_run else "",
+            "targetCount": 0,
+            "tide": [],
+            "bridge": [],
+            "reason": "No scenario tide or bridge constraints are available.",
+        }
+
+    repair_windows = _merge_recovery_window_targets(targets)
+    tide_codes = []
+    bridge_codes = []
+    for index, window in enumerate(repair_windows, start=1):
+        if window["kind"] == "bridge":
+            bridge, _ = BridgeWindow.objects.update_or_create(
+                code=f"BRDG-OPERATOR-RECOVERY-{index:02d}",
+                defaults={
+                    "location": bridge_location,
+                    "window_start": window["window_start"],
+                    "window_end": window["window_end"],
+                    "clearance_m": Decimal("12.50"),
+                    "allowed_asset_class": "Recovered trial convoy",
+                    "status": BridgeWindow.Status.OPEN,
+                    "notes": (
+                        "Operator recovery repair: targeted bridge slot for "
+                        f"{window['target_count']} scenario constraint(s)."
+                    ),
+                    "is_active": True,
+                },
+            )
+            bridge_codes.append(bridge.code)
+            continue
+
+        tide, _ = TideWindow.objects.update_or_create(
+            code=f"TIDE-OPERATOR-RECOVERY-{index:02d}",
+            defaults={
+                "location": tide_location,
+                "window_start": window["window_start"],
+                "window_end": window["window_end"],
+                "min_water_level_m": Decimal("2.90"),
+                "max_loaded_draft_m": Decimal("4.80"),
+                "applicable_route_segment": window.get("route_segment"),
+                "risk_level": TideWindow.RiskLevel.NORMAL,
+                "source": "operator-recovery-repair",
+                "is_active": True,
+            },
+        )
+        tide_codes.append(tide.code)
+
+    return {
+        "source": "scenario_critical_constraints",
+        "sourceScenarioRun": source_run.run_id if source_run else "",
+        "targetCount": len(targets),
+        "repairWindowCount": len(repair_windows),
+        "windowMinutes": 360,
+        "tide": tide_codes,
+        "bridge": bridge_codes,
+    }
+
+
+def _recovery_window_targets(
+    plan_version: PlanVersion | None,
+) -> tuple[list[dict], ScenarioRun | None]:
+    run = _latest_recovery_scenario_run(plan_version)
+    if run is None:
+        return [], None
+
+    targets = []
+    evaluations = run.constraint_evaluations.filter(
+        code__in=[
+            "BRIDGE_WINDOW_MISSED",
+            "BRIDGE_WINDOW_TIGHT",
+            "BRIDGE_WINDOW_WAIT",
+            "TIDE_WINDOW_MISSED",
+            "TIDE_WINDOW_TIGHT",
+            "TIDE_WINDOW_WAIT",
+        ],
+        severity__in=[
+            ScenarioConstraintEvaluation.Severity.CRITICAL,
+            ScenarioConstraintEvaluation.Severity.WARNING,
+        ],
+    ).select_related("trip", "trip__assignment", "trip__assignment__route_segment")
+    for evaluation in evaluations:
+        projected_at = _parsed_datetime(evaluation.projected_value.get("projectedAt"))
+        if projected_at is None:
+            continue
+        trip = evaluation.trip
+        assignment = getattr(trip, "assignment", None) if trip is not None else None
+        route_segment = getattr(assignment, "route_segment", None)
+        targets.append(
+            {
+                "kind": "tide" if evaluation.code.startswith("TIDE_") else "bridge",
+                "projected_at": projected_at,
+                "route_segment": route_segment if evaluation.code.startswith("TIDE_") else None,
+                "evaluation_id": evaluation.evaluation_id,
+            }
+        )
+    return targets, run
+
+
+def _latest_recovery_scenario_run(plan_version: PlanVersion | None) -> ScenarioRun | None:
+    if plan_version is None:
+        return None
+    scenario = (
+        SimulationScenario.objects.filter(baseline_version=plan_version)
+        .exclude(status=SimulationScenario.Status.CANCELED)
+        .order_by("-updated_at", "-id")
+        .first()
+    )
+    if scenario is None:
+        return None
+    return (
+        scenario.runs.filter(status=ScenarioRun.Status.SUCCEEDED)
+        .order_by("-completed_at", "-created_at", "-id")
+        .first()
+    )
+
+
+def _merge_recovery_window_targets(targets: list[dict]) -> list[dict]:
+    windows = []
+    buffer_before = timedelta(minutes=90)
+    buffer_after = timedelta(minutes=270)
+    merge_gap = timedelta(minutes=30)
+    ordered_targets = sorted(
+        targets,
+        key=lambda item: (
+            item["kind"],
+            getattr(item.get("route_segment"), "id", 0) or 0,
+            item["projected_at"],
+        ),
+    )
+    for target in ordered_targets:
+        window_start = target["projected_at"] - buffer_before
+        window_end = target["projected_at"] + buffer_after
+        route_segment = target.get("route_segment")
+        merge_key = (
+            target["kind"],
+            getattr(route_segment, "id", None),
+        )
+        if (
+            windows
+            and windows[-1]["merge_key"] == merge_key
+            and window_start <= windows[-1]["window_end"] + merge_gap
+        ):
+            windows[-1]["window_end"] = max(windows[-1]["window_end"], window_end)
+            windows[-1]["target_count"] += 1
+            windows[-1]["evaluation_ids"].append(target["evaluation_id"])
+            continue
+        windows.append(
+            {
+                "kind": target["kind"],
+                "route_segment": route_segment,
+                "window_start": window_start,
+                "window_end": window_end,
+                "target_count": 1,
+                "evaluation_ids": [target["evaluation_id"]],
+                "merge_key": merge_key,
+            }
+        )
+    return windows
 
 
 class PlanningOverviewViewSet(PlanningViewSet):
@@ -766,7 +1049,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             bridge_windows.append(bridge_window)
 
-        is_recovery_window_repair = _latest_plan_version_has_recovery_origin()
+        recovery_plan_version = _latest_blocked_recovery_plan_version()
+        is_recovery_window_repair = recovery_plan_version is not None
         if is_recovery_window_repair:
             _restore_recovery_practice_assets()
             NavigationConstraintCheck.objects.filter(voyage__in=target_voyages).delete()
@@ -825,6 +1109,18 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 )
                 checks_created += 1
 
+        recovery_normalization = {}
+        recovery_closure_windows = {}
+        if is_recovery_window_repair:
+            recovery_normalization = _normalize_recovery_practice_inputs(voyages=target_voyages)
+            recovery_closure_windows = _ensure_recovery_closure_windows(
+                plan_version=recovery_plan_version,
+                locations={
+                    getattr(tide_location, "code", ""): tide_location,
+                    getattr(bridge_location, "code", ""): bridge_location,
+                },
+            )
+
         cleared_recovery_state = _clear_resolved_navigation_recovery_state(target_voyages)
         stale_plan_versions = _mark_editable_plan_versions_stale(
             reason="operating_windows_entered",
@@ -846,6 +1142,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "cleared_layer_blockers": cleared_recovery_state["cargoLayers"],
                 "cleared_voyage_blockers": cleared_recovery_state["voyages"],
                 "stale_plan_versions": stale_plan_versions,
+                "recovery_repair": is_recovery_window_repair,
+                "recovery_normalization": recovery_normalization,
+                "recovery_closure_windows": recovery_closure_windows,
             },
             request=request,
         )
@@ -861,6 +1160,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "clearedLayerBlockers": cleared_recovery_state["cargoLayers"],
                 "clearedVoyageBlockers": cleared_recovery_state["voyages"],
                 "stalePlanVersions": stale_plan_versions,
+                "recoveryRepair": is_recovery_window_repair,
+                "recoveryNormalization": recovery_normalization,
+                "recoveryClosureWindows": recovery_closure_windows,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -1008,7 +1310,8 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             bridge_windows.append(bridge_window)
 
-        is_recovery_window_repair = _latest_plan_version_has_recovery_origin()
+        recovery_plan_version = _latest_blocked_recovery_plan_version()
+        is_recovery_window_repair = recovery_plan_version is not None
         if is_recovery_window_repair:
             _restore_recovery_practice_assets()
 
@@ -1018,7 +1321,7 @@ class PlanningOverviewViewSet(PlanningViewSet):
             ("VOY-PACIFIC-PRIDE", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 4, 20), trial_dt(1, 4), trial_dt(1, 5), "4.20", 40, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 02 AGATHIS can use the restricted bridge slot with pilot clearance."),
             ("VOY-PACIFIC-PRIDE", "BRG-KAL-22", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 9, 30), trial_dt(1, 8), trial_dt(1, 10), "4.35", 30, NavigationConstraintCheck.Status.WAITING, "Movement 03 EBONY is waiting on the tight Rantau Delta tide slot."),
             ("VOY-NORTH-STAR", "BRG-NUS-17", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(1, 9, 45), trial_dt(1, 4), trial_dt(1, 5), "4.00", -285, NavigationConstraintCheck.Status.MISSED, "Movement 04 SUNGKAI misses the bridge lift and needs governed recovery."),
-            ("VOY-GOLDEN-ORIOLE", "BRG-KAL-22", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(4, 6, 25), trial_dt(1, 4), trial_dt(1, 5), "4.40", -4345, NavigationConstraintCheck.Status.WAITING, "Movement 05 MAHONI is awaiting a future bridge slot before dispatch."),
+            ("VOY-GOLDEN-ORIOLE", "BRG-KAL-22", 1, NavigationConstraintCheck.ConstraintType.BRIDGE, trial_dt(4, 6, 25), trial_dt(1, 4), trial_dt(1, 5), "4.40", 0, NavigationConstraintCheck.Status.WAITING, "Movement 05 MAHONI is awaiting a future bridge slot before dispatch."),
             ("VOY-TRITON-STAR", "BRG-VAL-08", 2, NavigationConstraintCheck.ConstraintType.TIDE, trial_dt(1, 8, 20), trial_dt(1, 8), trial_dt(1, 10), "4.30", 100, NavigationConstraintCheck.Status.CAN_CROSS, "Movement 06 EBONY can cross on the tight Rantau Delta tide slot."),
         ]
         for voyage_id, asset, segment, kind, eta, window_start, window_end, draft, margin, check_status, hint in movement_checks:
@@ -1045,6 +1348,15 @@ class PlanningOverviewViewSet(PlanningViewSet):
             )
             checks_created += 1
 
+        recovery_normalization = {}
+        recovery_closure_windows = {}
+        if is_recovery_window_repair:
+            recovery_normalization = _normalize_recovery_practice_inputs(voyages=voyages)
+            recovery_closure_windows = _ensure_recovery_closure_windows(
+                plan_version=recovery_plan_version,
+                locations=locations,
+            )
+
         stale_plan_versions = _mark_editable_plan_versions_stale(
             reason="operator_trial_operating_windows_entered",
         )
@@ -1063,6 +1375,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "constraint_checks": checks_created,
                 "stale_plan_versions": stale_plan_versions,
                 "trial_pack": "operator_trial_phase5",
+                "recovery_repair": is_recovery_window_repair,
+                "recovery_normalization": recovery_normalization,
+                "recovery_closure_windows": recovery_closure_windows,
             },
             request=request,
         )
@@ -1078,6 +1393,9 @@ class PlanningOverviewViewSet(PlanningViewSet):
                 "clearedLayerBlockers": 0,
                 "clearedVoyageBlockers": 0,
                 "stalePlanVersions": stale_plan_versions,
+                "recoveryRepair": is_recovery_window_repair,
+                "recoveryNormalization": recovery_normalization,
+                "recoveryClosureWindows": recovery_closure_windows,
             },
             status=status.HTTP_201_CREATED,
         )

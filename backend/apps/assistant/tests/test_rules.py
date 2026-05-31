@@ -285,6 +285,92 @@ def test_blocked_publishability_flow_step_emits_resolver_action():
     assert shaped.global_next_action.action_id == "REVIEW_SIGNAL_HEALTH"
 
 
+def test_blocked_promote_scenario_with_unrepaired_navigation_constraints_emits_window_repair():
+    ctx = context(
+        active_flow_run_id="FLOW-SCENARIO",
+        active_flow_key="phase5_recovery_from_demand_v1",
+        active_flow_name="Phase 5 recovery from demand",
+        active_flow_status="blocked",
+        current_flow_step_key="promote_scenario",
+        current_flow_step_label="Promote scenario",
+        current_flow_step_status="blocked",
+        expected_flow_route="/simulation/workspace",
+        expected_flow_action_id="PROMOTE_SCENARIO",
+        flow_blocked_reason="8 critical simulated constraint(s) remain before promotion.",
+        flow_promote_critical_constraint_count=8,
+        flow_promote_critical_constraint_codes=[
+            "BRIDGE_WINDOW_MISSED",
+            "TIDE_WINDOW_MISSED",
+        ],
+        flow_promote_repair_after_latest_run=False,
+        blocking_conflict_count=2,
+        demand_count=5,
+        tide_window_count=3,
+        bridge_window_count=3,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "ENTER_OPERATING_WINDOWS"
+    assert shaped.global_next_action.source == "flow.current_step"
+
+
+def test_blocked_promote_scenario_after_window_repair_emits_rerun_simulation():
+    ctx = context(
+        active_flow_run_id="FLOW-SCENARIO",
+        active_flow_key="phase5_recovery_from_demand_v1",
+        active_flow_name="Phase 5 recovery from demand",
+        active_flow_status="blocked",
+        current_flow_step_key="promote_scenario",
+        current_flow_step_label="Promote scenario",
+        current_flow_step_status="blocked",
+        expected_flow_route="/simulation/workspace",
+        expected_flow_action_id="PROMOTE_SCENARIO",
+        flow_blocked_reason="8 critical simulated constraint(s) remain before promotion.",
+        flow_promote_critical_constraint_count=8,
+        flow_promote_critical_constraint_codes=["BRIDGE_WINDOW_MISSED"],
+        flow_promote_repair_after_latest_run=True,
+        blocking_conflict_count=2,
+        demand_count=5,
+        tide_window_count=4,
+        bridge_window_count=4,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "RUN_SIMULATION"
+    assert shaped.global_next_action.source == "flow.current_step"
+
+
+def test_blocked_promote_scenario_with_clear_latest_run_emits_promote():
+    ctx = context(
+        active_flow_run_id="FLOW-SCENARIO",
+        active_flow_key="phase5_recovery_from_demand_v1",
+        active_flow_name="Phase 5 recovery from demand",
+        active_flow_status="blocked",
+        current_flow_step_key="promote_scenario",
+        current_flow_step_label="Promote scenario",
+        current_flow_step_status="blocked",
+        expected_flow_route="/simulation/workspace",
+        expected_flow_action_id="PROMOTE_SCENARIO",
+        flow_blocked_reason="8 critical simulated constraint(s) remain before promotion.",
+        flow_promote_critical_constraint_count=0,
+        flow_promote_critical_constraint_codes=[],
+        blocking_conflict_count=2,
+        demand_count=5,
+        tide_window_count=4,
+        bridge_window_count=4,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "PROMOTE_SCENARIO"
+    assert shaped.global_next_action.source == "flow.current_step"
+
+
 def test_publishability_check_needed_precedes_publish_ready():
     ctx = context(
         active_plan_status=PlanVersion.Status.APPROVED,
@@ -360,6 +446,39 @@ def test_corrected_constraints_prioritize_regeneration_over_stale_exceptions():
     assert shaped.global_next_action
     assert shaped.global_next_action.action_id == "REGENERATE_PLAN"
     assert action_ids(shaped.page_actions)[0] == "REGENERATE_PLAN"
+
+
+def test_scenario_rerun_handoff_suppresses_stale_regenerate_page_action():
+    ctx = context(
+        route="/constraints/tide-bridge",
+        active_plan_status=PlanVersion.Status.GENERATED,
+        active_plan_trip_count=6,
+        active_plan_is_editable=True,
+        source_inputs_changed=True,
+        blocking_conflict_count=2,
+        demand_count=5,
+        tide_window_count=4,
+        bridge_window_count=4,
+        active_flow_run_id="FLOW-SCENARIO",
+        active_flow_key="phase5_recovery_from_demand_v1",
+        active_flow_name="Phase 5 recovery from demand",
+        active_flow_status="blocked",
+        current_flow_step_key="promote_scenario",
+        current_flow_step_label="Promote scenario",
+        current_flow_step_status="blocked",
+        expected_flow_route="/simulation/workspace",
+        expected_flow_action_id="PROMOTE_SCENARIO",
+        flow_blocked_reason="8 critical simulated constraint(s) remain before promotion.",
+        flow_promote_critical_constraint_count=8,
+        flow_promote_critical_constraint_codes=["BRIDGE_WINDOW_MISSED"],
+        flow_promote_repair_after_latest_run=True,
+    )
+
+    shaped = shape_recommendations(ctx, evaluate_rules(ctx))
+
+    assert shaped.global_next_action
+    assert shaped.global_next_action.action_id == "RUN_SIMULATION"
+    assert "REGENERATE_PLAN" not in action_ids(shaped.page_actions)
 
 
 def test_promoted_but_blocked_plan_does_not_claim_approval_submitted():

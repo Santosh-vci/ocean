@@ -68,7 +68,7 @@ def _flow_step_action_id(ctx: AssistantContext) -> str:
     if step_key == "materialize_recommendation":
         return "OPEN_RECOMMENDATION_CONSOLE"
     if step_key == "promote_scenario":
-        return "RUN_SIMULATION"
+        return _promote_scenario_resolver(ctx)
     if step_key == "run_simulation":
         return "MATERIALIZE_RECOVERY_RECOMMENDATION"
     if step_key == "run_publishability_check" and ctx.publishability_expected_resolver_action_id:
@@ -84,6 +84,34 @@ def _flow_step_action_id(ctx: AssistantContext) -> str:
     if "recommendation" in reason:
         return "OPEN_RECOMMENDATION_CONSOLE"
     return ctx.expected_flow_action_id
+
+
+def _promote_scenario_resolver(ctx: AssistantContext) -> str:
+    if ctx.flow_promote_critical_constraint_count <= 0:
+        return ctx.expected_flow_action_id
+    if ctx.flow_promote_repair_after_latest_run:
+        return "RUN_SIMULATION"
+
+    critical_codes = {code.upper() for code in ctx.flow_promote_critical_constraint_codes}
+    if not critical_codes or critical_codes.intersection(
+        {
+            "BRIDGE_WINDOW_MISSED",
+            "BRIDGE_WINDOW_WAIT",
+            "TIDE_WINDOW_MISSED",
+            "TIDE_WINDOW_WAIT",
+            "TIDE_WINDOW_TIGHT",
+        }
+    ):
+        return "ENTER_OPERATING_WINDOWS"
+    if critical_codes.intersection(
+        {
+            "LAYER_SEQUENCE_VIOLATION",
+            "CARGO_SEQUENCE_BLOCKED",
+            "CARGO_SEQUENCE_VIOLATION",
+        }
+    ):
+        return "REVIEW_COAL_SEQUENCE"
+    return "OPEN_EXCEPTION_CENTER"
 
 
 def rule_import_demand(ctx: AssistantContext) -> list[ActionRecommendation]:
@@ -241,6 +269,12 @@ def rule_published_needs_draft(ctx: AssistantContext) -> list[ActionRecommendati
 
 
 def rule_editable_stale_regenerate(ctx: AssistantContext) -> list[ActionRecommendation]:
+    if (
+        ctx.current_flow_step_key == "promote_scenario"
+        and ctx.flow_promote_critical_constraint_count > 0
+        and ctx.flow_promote_repair_after_latest_run
+    ):
+        return []
     if ctx.active_plan_is_editable and ctx.source_inputs_changed and ctx.active_plan_trip_count > 0:
         return [
             build_recommendation(

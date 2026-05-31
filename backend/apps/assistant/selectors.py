@@ -168,6 +168,11 @@ class AssistantContext:
     flow_trial_pack: str = ""
     flow_evidence_run_id: str = ""
     flow_expected_action_ids: list[str] = field(default_factory=list)
+    flow_promote_latest_run_id: int | None = None
+    flow_promote_latest_run_ref: str = ""
+    flow_promote_critical_constraint_count: int = 0
+    flow_promote_critical_constraint_codes: list[str] = field(default_factory=list)
+    flow_promote_repair_after_latest_run: bool = False
 
 
 def select_user_permissions(user: AbstractBaseUser) -> set[str]:
@@ -828,6 +833,7 @@ def select_flow_status(
     )
     metadata = flow_run.metadata if isinstance(flow_run.metadata, dict) else {}
     expected_action_ids = metadata.get("expected_action_ids")
+    promote_state = _flow_promote_state(flow_run, current_step)
 
     return {
         "active_flow_run_id": flow_run.run_id,
@@ -853,6 +859,7 @@ def select_flow_status(
         ]
         if isinstance(expected_action_ids, list)
         else [],
+        **promote_state,
     }
 
 
@@ -961,7 +968,108 @@ def _empty_flow_status() -> dict[str, Any]:
         "flow_trial_pack": "",
         "flow_evidence_run_id": "",
         "flow_expected_action_ids": [],
+        "flow_promote_latest_run_id": None,
+        "flow_promote_latest_run_ref": "",
+        "flow_promote_critical_constraint_count": 0,
+        "flow_promote_critical_constraint_codes": [],
+        "flow_promote_repair_after_latest_run": False,
     }
+
+
+def _flow_promote_state(
+    flow_run,
+    current_step: FlowStepRun | None,
+) -> dict[str, Any]:
+    empty = {
+        "flow_promote_latest_run_id": None,
+        "flow_promote_latest_run_ref": "",
+        "flow_promote_critical_constraint_count": 0,
+        "flow_promote_critical_constraint_codes": [],
+        "flow_promote_repair_after_latest_run": False,
+    }
+    if current_step is None or current_step.step_key != "promote_scenario":
+        return empty
+
+    latest_run = _latest_successful_scenario_run_for_flow(flow_run)
+    if latest_run is None:
+        return empty
+
+    critical_codes = list(
+        latest_run.constraint_evaluations.filter(
+            severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        )
+        .order_by("code")
+        .values_list("code", flat=True)
+        .distinct()
+    )
+    critical_count = latest_run.constraint_evaluations.filter(
+        severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+    ).count()
+    run_completed_at = latest_run.completed_at or latest_run.updated_at or latest_run.created_at
+    return {
+        "flow_promote_latest_run_id": latest_run.id,
+        "flow_promote_latest_run_ref": latest_run.run_id,
+        "flow_promote_critical_constraint_count": critical_count,
+        "flow_promote_critical_constraint_codes": [str(code) for code in critical_codes],
+        "flow_promote_repair_after_latest_run": _operating_window_repair_after(
+            run_completed_at,
+        ),
+    }
+
+
+def _latest_successful_scenario_run_for_flow(flow_run) -> ScenarioRun | None:
+    metadata = flow_run.metadata if isinstance(flow_run.metadata, dict) else {}
+    bound_refs = (
+        metadata.get("bound_refs") if isinstance(metadata.get("bound_refs"), dict) else {}
+    )
+    scenario_id = _int_or_none(bound_refs.get("scenario_id"))
+    if scenario_id is not None:
+        return (
+            ScenarioRun.objects.filter(
+                scenario_id=scenario_id,
+                status=ScenarioRun.Status.SUCCEEDED,
+            )
+            .order_by("-completed_at", "-created_at", "-id")
+            .first()
+        )
+    scenario_run_id = _int_or_none(bound_refs.get("scenario_run_id"))
+    if scenario_run_id is not None:
+        return ScenarioRun.objects.filter(
+            pk=scenario_run_id,
+            status=ScenarioRun.Status.SUCCEEDED,
+        ).first()
+    return None
+
+
+def _operating_window_repair_after(timestamp) -> bool:
+    if timestamp is None:
+        return False
+    return (
+        AuditEvent.objects.filter(
+            action="planning.operating_windows.entered",
+            created_at__gt=timestamp,
+            metadata__recovery_repair=True,
+        ).exists()
+        or TideWindow.objects.filter(
+            code__startswith="TIDE-OPERATOR-RECOVERY-",
+            updated_at__gt=timestamp,
+            is_active=True,
+        ).exists()
+        or BridgeWindow.objects.filter(
+            code__startswith="BRDG-OPERATOR-RECOVERY-",
+            updated_at__gt=timestamp,
+            is_active=True,
+        ).exists()
+    )
+
+
+def _int_or_none(value) -> int | None:
+    try:
+        if value in {None, ""}:
+            return None
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _current_flow_step(

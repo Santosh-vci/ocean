@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Any
 
 from django.db.models import Max, Q
@@ -30,6 +31,7 @@ _PASS = "clear"
 _WARNING = "warning"
 _BLOCKED = "blocked"
 _NOT_APPLICABLE = "not_applicable"
+MAX_OPERATOR_RECOVERY_WINDOW_DURATION = timedelta(hours=24)
 
 
 @dataclass(frozen=True, slots=True)
@@ -342,7 +344,7 @@ def _operating_window_details() -> list[dict[str, Any]]:
         missing.append("tide")
     if bridge_count == 0:
         missing.append("bridge")
-    return [
+    details = [
         _detail(
             "active_operating_windows_exist",
             "operating_window",
@@ -360,6 +362,50 @@ def _operating_window_details() -> list[dict[str, Any]]:
             },
         )
     ]
+    unbounded = _unbounded_operator_recovery_windows()
+    if unbounded:
+        details.append(
+            _detail(
+                "operator_recovery_windows_bounded",
+                "operating_window",
+                _BLOCKED,
+                "Operator recovery windows must be targeted slots, not horizon-wide gate openings.",
+                action_id="ENTER_OPERATING_WINDOWS",
+                evidence={"windows": unbounded},
+            )
+        )
+    return details
+
+
+def _unbounded_operator_recovery_windows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for window in TideWindow.objects.filter(
+        code__startswith="TIDE-OPERATOR-RECOVERY-",
+        is_active=True,
+    ):
+        duration = window.window_end - window.window_start
+        if duration > MAX_OPERATOR_RECOVERY_WINDOW_DURATION:
+            rows.append(
+                {
+                    "code": window.code,
+                    "kind": "tide",
+                    "durationMinutes": int(duration.total_seconds() // 60),
+                }
+            )
+    for window in BridgeWindow.objects.filter(
+        code__startswith="BRDG-OPERATOR-RECOVERY-",
+        is_active=True,
+    ):
+        duration = window.window_end - window.window_start
+        if duration > MAX_OPERATOR_RECOVERY_WINDOW_DURATION:
+            rows.append(
+                {
+                    "code": window.code,
+                    "kind": "bridge",
+                    "durationMinutes": int(duration.total_seconds() // 60),
+                }
+            )
+    return rows
 
 
 def _stale_source_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
@@ -473,7 +519,7 @@ def _telemetry_details(plan_version: PlanVersion) -> list[dict[str, Any]]:
             TrackingAlert.Status.DISMISSED,
             TrackingAlert.Status.CONVERTED_TO_SCENARIO,
         ],
-    )
+    ).exclude(evidence__seed="phase_3_sample_movement")
     blocking_alerts = []
     warning_alerts = []
     for alert in alerts:

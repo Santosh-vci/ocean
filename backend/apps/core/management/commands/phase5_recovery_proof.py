@@ -14,6 +14,7 @@ from apps.scheduling.models import (
     PlanVersion,
     RecoveryAction,
     RecoveryRecommendation,
+    ScenarioConstraintEvaluation,
     ScenarioRun,
 )
 from apps.scheduling.recovery_services import (
@@ -26,6 +27,7 @@ from apps.scheduling.recovery_services import (
 from apps.scheduling.services import (
     promote_scenario_to_proposed,
     record_approval_decision,
+    simulate_scenario,
     submit_approval_request,
 )
 
@@ -272,6 +274,7 @@ class Phase5RecoveryProofRunner:
         return scenario
 
     def _stage_approval_handoff(self, scenario) -> dict:
+        scenario = self._repair_and_resimulate_before_promotion(scenario)
         scenario = promote_scenario_to_proposed(
             scenario=scenario,
             actor=self.admin,
@@ -362,6 +365,55 @@ class Phase5RecoveryProofRunner:
             "decisionCount": approval.decisions.count(),
             "publishBlockedByRisk": publish_blocked_by_risk,
         }
+
+    def _repair_and_resimulate_before_promotion(self, scenario):
+        latest_run = scenario.runs.order_by("-created_at", "-id").first()
+        if latest_run is None:
+            return scenario
+        critical_count = latest_run.constraint_evaluations.filter(
+            severity=ScenarioConstraintEvaluation.Severity.CRITICAL,
+        ).count()
+        if critical_count == 0:
+            return scenario
+
+        from apps.masters.models import Location
+        from apps.planning.models import OGVVoyage
+        from apps.planning.views import (
+            _ensure_recovery_closure_windows,
+            _normalize_recovery_practice_inputs,
+            _restore_recovery_practice_assets,
+        )
+
+        voyages = list(
+            OGVVoyage.objects.filter(
+                scheduled_trips__plan_version=scenario.baseline_version,
+            ).distinct()
+        )
+        locations = {location.code: location for location in Location.objects.all()}
+        _restore_recovery_practice_assets()
+        normalized = _normalize_recovery_practice_inputs(voyages=voyages)
+        closure_windows = _ensure_recovery_closure_windows(
+            plan_version=scenario.baseline_version,
+            locations=locations,
+        )
+        scenario = simulate_scenario(scenario=scenario, actor=self.admin)
+        repaired_run = scenario.runs.order_by("-created_at", "-id").first()
+        record_audit_event(
+            actor=self.admin,
+            organization=self.organization,
+            action="phase5.proof.scenario_repair_resimulate",
+            object_type="simulation_scenario",
+            object_id=str(scenario.pk),
+            object_repr=scenario.scenario_id,
+            metadata={
+                "priorCriticalConstraintCount": critical_count,
+                "repairedRunId": repaired_run.run_id if repaired_run else "",
+                "normalizedInputs": normalized,
+                "closureWindows": closure_windows,
+                "proofRunId": self.run_id,
+            },
+        )
+        return scenario
 
     def _stage_proof_pack(self, recommendation: RecoveryRecommendation) -> dict:
         recommendation.refresh_from_db()

@@ -89,6 +89,12 @@ The pack is based on:
 27. `27_Phase_6_Completion_Evidence.md`
     Closure evidence for Phase 6 / Phase 5+, including UI CTA happy-path and recovery browser evidence, read-only review-surface evidence, verification commands, and remaining business decisions.
 
+28. `28_Phase_5_Recovery_Operator_Trial_Runbook.md`
+    Recovery-only operator trial runbook with UI CTA evidence, step-by-step blocker resolution, root-cause validation, scenario repair, approval, publishability, and manual publish closure.
+
+29. `29_Phase_5_Recovery_UI_State_Guide.md`
+    Concise operator-facing guide for reading each recovery UI screen, Next Action recommendation, business state, and publish readiness from imported OGV demand through manual publish.
+
 ## Important interpretation
 
 This is not a generic fleet tracking product. The required tool is a constraint-aware transshipment planning and simulation engine where AIS/GPS/IoT are live-data inputs, not the full planning logic.

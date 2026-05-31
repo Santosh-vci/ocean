@@ -151,7 +151,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
     return [
         {
             "voyage_id": "VOY-HAPPY-001",
-            "vessel_name": "MV HAPPY PATH ONE",
+            "vessel_name": "MV DERAWAN STAR",
             "customer_name": "BERAU PILOT",
             "vessel_class": "Panamax",
             "eta": iso(0, 6),
@@ -177,7 +177,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
         },
         {
             "voyage_id": "VOY-HAPPY-002",
-            "vessel_name": "MV HAPPY PATH TWO",
+            "vessel_name": "MV MARATUA TRADER",
             "customer_name": "ABL PILOT",
             "vessel_class": "Supramax",
             "eta": iso(1, 6),
@@ -202,7 +202,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
         },
         {
             "voyage_id": "VOY-HAPPY-003",
-            "vessel_name": "MV HAPPY PATH THREE",
+            "vessel_name": "MV SAMBARATA QUEEN",
             "customer_name": "BERAU FORWARD",
             "vessel_class": "Handymax",
             "eta": iso(3, 2),
@@ -227,7 +227,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
         },
         {
             "voyage_id": "VOY-HAPPY-004",
-            "vessel_name": "MV HAPPY PATH FOUR",
+            "vessel_name": "MV LATI HORIZON",
             "customer_name": "ABL FORWARD",
             "vessel_class": "Capesize",
             "eta": iso(4, 4),
@@ -251,7 +251,7 @@ def operator_happy_path_demand_rows() -> list[dict]:
         },
         {
             "voyage_id": "VOY-HAPPY-005",
-            "vessel_name": "MV HAPPY PATH FIVE",
+            "vessel_name": "MV BORNEO PROSPERITY",
             "customer_name": "CONTROL TOWER FORWARD",
             "vessel_class": "Panamax",
             "eta": iso(4, 18),

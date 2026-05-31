@@ -84,6 +84,15 @@ function statusTone(status: string) {
   return "ok";
 }
 
+function marginLabel(check: Pick<NavigationConstraintCheckRecord, "margin_minutes" | "status">) {
+  const margin = check.margin_minutes;
+  if (check.status === "missed") return `${Math.abs(margin)}m late`;
+  if (check.status === "waiting" && margin <= 0) return "Awaiting slot";
+  if (check.status === "waiting") return `${margin}m wait`;
+  if (margin < 0) return `${Math.abs(margin)}m short`;
+  return `${margin}m`;
+}
+
 function windowLabel(window: TideWindowRecord | BridgeWindowRecord) {
   if ("risk_level" in window) return `${window.code} - ${window.risk_level.toUpperCase()}`;
   return `${window.code} - ${window.status.toUpperCase()}`;
@@ -394,7 +403,7 @@ export function TideBridgePage({
                 </div>
                 <div>
                   <dt>Margin</dt>
-                  <dd>{recovery.margin_minutes} min</dd>
+                  <dd>{marginLabel(recovery)}</dd>
                 </div>
               </dl>
             </div>
@@ -479,7 +488,7 @@ export function TideBridgePage({
                   <td>{check.constraint_type.toUpperCase()}</td>
                   <td>{dt(check.window_start)}</td>
                   <td>{dt(check.window_end)}</td>
-                  <td>{check.margin_minutes}m</td>
+                  <td>{marginLabel(check)}</td>
                   <td><span className={`status-chip ${statusTone(check.status)}`}>{check.status}</span></td>
                 </tr>
               ))}

@@ -299,6 +299,11 @@ def record_cta_intent(
         action_id=action_id,
         incoming_refs=incoming_refs,
     )
+    _clear_promoted_plan_refs(
+        flow_run,
+        action_id=action_id,
+        incoming_refs=incoming_refs,
+    )
     _assert_bound_refs_compatible(flow_run, incoming_refs)
     _merge_bound_refs(flow_run, incoming_refs)
     _record_event(
@@ -488,6 +493,26 @@ def _clear_failed_root_cause_refs_for_revalidation(
     if existing_status in {"", *PASSING_ROOT_CAUSE_STATUSES}:
         return
     _remove_bound_refs(flow_run, {"recommendation_id", "root_cause_assessment_id"})
+
+
+def _clear_promoted_plan_refs(
+    flow_run: FlowRun,
+    *,
+    action_id: str,
+    incoming_refs: dict[str, str],
+) -> None:
+    if action_id != "PROMOTE_SCENARIO" or "plan_version_id" not in incoming_refs:
+        return
+    _remove_bound_refs(
+        flow_run,
+        {
+            "plan_version_id",
+            "approval_request_id",
+            "publishability_assessment_id",
+            "published_snapshot_id",
+            "export_job_id",
+        },
+    )
 
 
 def _bound_root_cause_assessment_status(flow_run: FlowRun) -> str:

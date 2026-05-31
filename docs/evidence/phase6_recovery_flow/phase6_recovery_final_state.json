@@ -1,13 +1,13 @@
 {
   "voyages": 3,
   "cargoLayerSteps": 6,
-  "tideWindows": 4,
-  "bridgeWindows": 4,
+  "tideWindows": 5,
+  "bridgeWindows": 5,
   "plans": 1,
   "planVersions": 2,
   "trips": 6,
-  "openConflicts": 5,
-  "blockingConflicts": 4,
+  "openConflicts": 0,
+  "blockingConflicts": 0,
   "recoverySnapshots": 1,
   "optimizerRuns": 1,
   "recommendations": 5,
@@ -18,24 +18,59 @@
   "latestRootCauseStatus": "mitigates_cause",
   "scenarios": 1,
   "scenarioRuns": 2,
-  "approvalRequests": 0,
+  "approvalRequests": 1,
   "pendingApprovals": 0,
-  "approvalDecisions": 0,
+  "approvalDecisions": 2,
   "approvalsComplete": true,
-  "publishabilityStatus": null,
+  "publishabilityStatus": "warning",
   "publishabilityBlockers": 0,
-  "publishabilityWarnings": 0,
-  "publishabilityAssessments": 0,
-  "publishabilityAllowsPublish": false,
-  "publishabilityHasRecommendationOriginDetail": false,
-  "publishabilityRecommendationOriginDetail": null,
+  "publishabilityWarnings": 1,
+  "publishabilityAssessments": 1,
+  "publishabilityAllowsPublish": true,
+  "publishabilityHasRecommendationOriginDetail": true,
+  "publishabilityRecommendationOriginDetail": {
+    "key": "recommendation_origin_root_cause",
+    "group": "recommendation_origin",
+    "status": "warning",
+    "message": "Recovery-origin root cause is mitigated with residual risk.",
+    "actionId": "VALIDATE_ROOT_CAUSE_REPAIR",
+    "evidence": {
+      "scenarioId": "SIM-PLAN-RECOVERY-PRACTICE-20260531-V1-01",
+      "scenarioPk": 1074,
+      "residualRisk": {
+        "count": 1,
+        "items": [
+          {
+            "message": "BRIDGE_WINDOW_MISSED is mitigated but not fully removed.",
+            "severity": "warning"
+          }
+        ],
+        "level": "medium"
+      },
+      "selectedRunId": 1178,
+      "optimizerRunPk": 217,
+      "recoveryOrigin": true,
+      "selectedRunRef": "RUN-SIM-PLAN-RECOVERY-PRACTICE-20260531-V1-01-02",
+      "optimizerRunRef": "OPT-481AD8E4FA74",
+      "rootCauseStatus": "mitigates_cause",
+      "sourceCauseType": "BRIDGE_WINDOW_MISSED",
+      "recommendationId": 1025,
+      "recommendationPk": 1025,
+      "baselineVersionId": 460,
+      "recommendationRef": "REC-7BED0F612590",
+      "rootCauseAssessmentId": 126,
+      "rootCauseAssessmentPk": 126,
+      "rootCauseAssessmentRef": "RCA-1EF3F013CB21"
+    },
+    "severity": "warning"
+  },
   "publishedSnapshots": 1,
   "publishedSnapshotHasRecoveryOrigin": true,
   "exports": 0,
   "activePlanVersion": {
-    "planCode": "PLAN-RECOVERY-PRACTICE-20260530",
-    "versionNo": 1,
-    "status": "generated",
-    "validationStatus": "blocked"
+    "planCode": "PLAN-RECOVERY-PRACTICE-20260531",
+    "versionNo": 2,
+    "status": "published",
+    "validationStatus": "feasible"
   }
 }
