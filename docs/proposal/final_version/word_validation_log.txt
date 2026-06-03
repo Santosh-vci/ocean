@@ -1,0 +1,6 @@
+﻿begin
+word-created
+doc-opened-no-repair-dialog
+paragraphs=911
+saved-validated-copy
+done

@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1500" viewBox="0 0 2600 1500">
+<rect x="0.00" y="0.00" width="2600.00" height="1500.00" rx="0" fill="#FFFFFF"/>
+<rect x="0.00" y="0.00" width="2600.00" height="130.00" rx="0" fill="#0B2948"/>
+<text x="84.00" y="78.00" font-family="Segoe UI, Arial, sans-serif" font-size="48" font-weight="700" fill="#FFFFFF" text-anchor="start" >Program Delivery Timeline</text>
+<text x="2516.00" y="68.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="400" fill="#D7E6F6" text-anchor="end" >ABL | Dynamic Operational Synchronization Platform</text>
+<rect x="0.00" y="130.00" width="2600.00" height="48.00" rx="0" fill="#2F7DBD"/>
+<text x="84.00" y="161.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="start" >Estimated delivery span: 34-36 weeks from kickoff  |  Blueprinting: W1-W3  |  Release 1 validation: W18  |  Pilot-ready platform: W36</text>
+<text x="683.67" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK2</text>
+<text x="789.89" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK4</text>
+<text x="896.11" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK6</text>
+<text x="1002.33" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK8</text>
+<text x="1108.56" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK10</text>
+<text x="1214.78" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK12</text>
+<text x="1321.00" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK14</text>
+<text x="1427.22" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK16</text>
+<text x="1533.44" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK18</text>
+<text x="1639.67" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK20</text>
+<text x="1745.89" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK22</text>
+<text x="1852.11" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK24</text>
+<text x="1958.33" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK26</text>
+<text x="2064.56" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK28</text>
+<text x="2170.78" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK30</text>
+<text x="2277.00" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK32</text>
+<text x="2383.22" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK34</text>
+<text x="2489.44" y="227.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0B2948" text-anchor="middle" >WK36</text>
+<rect x="84.00" y="238.00" width="520.00" height="818.00" rx="0" fill="#F8FAFC"/>
+<rect x="604.00" y="238.00" width="159.33" height="818.00" rx="0" fill="#EAF4FD"/>
+<rect x="763.33" y="238.00" width="796.67" height="818.00" rx="0" fill="#F0FAF0"/>
+<rect x="1560.00" y="238.00" width="956.00" height="818.00" rx="0" fill="#FFF3E4"/>
+<rect x="84.00" y="341.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="451.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="561.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="671.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="781.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="891.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="1001.00" width="2432.00" height="55.00" rx="0" fill="#FBFDFF"/>
+<rect x="84.00" y="238.00" width="2432.00" height="818.00" rx="0" fill="none" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="604.00" y1="238.00" x2="604.00" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="604.00" y1="238.00" x2="604.00" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="657.11" y1="238.00" x2="657.11" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="710.22" y1="238.00" x2="710.22" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="763.33" y1="238.00" x2="763.33" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="816.44" y1="238.00" x2="816.44" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="869.56" y1="238.00" x2="869.56" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="922.67" y1="238.00" x2="922.67" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="975.78" y1="238.00" x2="975.78" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1028.89" y1="238.00" x2="1028.89" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1082.00" y1="238.00" x2="1082.00" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1135.11" y1="238.00" x2="1135.11" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1188.22" y1="238.00" x2="1188.22" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1241.33" y1="238.00" x2="1241.33" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1294.44" y1="238.00" x2="1294.44" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1347.56" y1="238.00" x2="1347.56" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1400.67" y1="238.00" x2="1400.67" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1453.78" y1="238.00" x2="1453.78" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1506.89" y1="238.00" x2="1506.89" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1560.00" y1="238.00" x2="1560.00" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1613.11" y1="238.00" x2="1613.11" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1666.22" y1="238.00" x2="1666.22" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1719.33" y1="238.00" x2="1719.33" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1772.44" y1="238.00" x2="1772.44" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1825.56" y1="238.00" x2="1825.56" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1878.67" y1="238.00" x2="1878.67" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="1931.78" y1="238.00" x2="1931.78" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1984.89" y1="238.00" x2="1984.89" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="2038.00" y1="238.00" x2="2038.00" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="2091.11" y1="238.00" x2="2091.11" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="2144.22" y1="238.00" x2="2144.22" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="2197.33" y1="238.00" x2="2197.33" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="2250.44" y1="238.00" x2="2250.44" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="2303.56" y1="238.00" x2="2303.56" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="2356.67" y1="238.00" x2="2356.67" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="2409.78" y1="238.00" x2="2409.78" y2="1056.00" stroke="#D9E2EC" stroke-width="1"/>
+<line x1="2462.89" y1="238.00" x2="2462.89" y2="1056.00" stroke="#B8C7D6" stroke-width="1"/>
+<line x1="1560.00" y1="238.00" x2="1560.00" y2="1056.00" stroke="#A9781A" stroke-width="3"/>
+<line x1="84.00" y1="286.00" x2="2516.00" y2="286.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="341.00" x2="2516.00" y2="341.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="396.00" x2="2516.00" y2="396.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="451.00" x2="2516.00" y2="451.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="506.00" x2="2516.00" y2="506.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="561.00" x2="2516.00" y2="561.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="616.00" x2="2516.00" y2="616.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="671.00" x2="2516.00" y2="671.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="726.00" x2="2516.00" y2="726.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="781.00" x2="2516.00" y2="781.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="836.00" x2="2516.00" y2="836.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="891.00" x2="2516.00" y2="891.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="946.00" x2="2516.00" y2="946.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="1001.00" x2="2516.00" y2="1001.00" stroke="#E7EDF3" stroke-width="1"/>
+<line x1="84.00" y1="1056.00" x2="2516.00" y2="1056.00" stroke="#E7EDF3" stroke-width="1"/>
+<text x="344.00" y="270.00" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#10233F" text-anchor="middle" >Delivery phase</text>
+<rect x="607.00" y="245.00" width="153.33" height="34.00" rx="4" fill="#2F7DBD"/>
+<text x="683.67" y="269.50" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" >BLUEPRINTING</text>
+<rect x="766.33" y="245.00" width="790.67" height="34.00" rx="4" fill="#2E7D32"/>
+<text x="1161.67" y="269.50" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" >RELEASE 1 - GOVERNED SCHEDULING SPINE</text>
+<rect x="1563.00" y="245.00" width="950.00" height="34.00" rx="4" fill="#C95200"/>
+<text x="2038.00" y="269.50" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" >RELEASE 2 - SCENARIO, EVIDENCE, RECOVERY, PILOT</text>
+<text x="98.00" y="322.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Blueprinting</text>
+<rect x="609.00" y="296.00" width="149.33" height="35.00" rx="5" fill="#2F7DBD"/>
+<text x="683.67" y="322.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W1-W3</text>
+<text x="98.00" y="377.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 0 - Foundation</text>
+<rect x="768.33" y="351.00" width="96.22" height="35.00" rx="5" fill="#2F7DBD"/>
+<text x="816.44" y="377.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W4-W5</text>
+<text x="98.00" y="432.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 1 - Master Data &amp; Governance</text>
+<rect x="874.56" y="406.00" width="96.22" height="35.00" rx="5" fill="#2F7DBD"/>
+<text x="922.67" y="432.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W6-W7</text>
+<text x="98.00" y="487.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 2 - OGV Demand &amp; Cargo Layer</text>
+<rect x="980.78" y="461.00" width="96.22" height="35.00" rx="5" fill="#2F7DBD"/>
+<text x="1028.89" y="487.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W8-W9</text>
+<text x="98.00" y="542.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 3 - Schedule Entity &amp; Trips</text>
+<rect x="1087.00" y="516.00" width="96.22" height="35.00" rx="5" fill="#2F7DBD"/>
+<text x="1135.11" y="542.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W10-W11</text>
+<text x="98.00" y="597.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 4 - Capacity &amp; Feasibility</text>
+<rect x="1193.22" y="571.00" width="149.33" height="35.00" rx="5" fill="#45A4E3"/>
+<text x="1267.89" y="597.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W12-W14</text>
+<text x="98.00" y="652.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 5 - Approval &amp; Publish</text>
+<rect x="1352.56" y="626.00" width="96.22" height="35.00" rx="5" fill="#45A4E3"/>
+<text x="1400.67" y="652.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W15-W16</text>
+<text x="98.00" y="707.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Release 1 Review &amp; Adoption</text>
+<rect x="1458.78" y="681.00" width="96.22" height="35.00" rx="5" fill="#21652A"/>
+<text x="1506.89" y="707.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W17-W18</text>
+<text x="98.00" y="762.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 6 - Exception &amp; Scenario</text>
+<rect x="1565.00" y="736.00" width="149.33" height="35.00" rx="5" fill="#E96500"/>
+<text x="1639.67" y="762.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W19-W21</text>
+<text x="98.00" y="817.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 7 - Live Evidence &amp; Telemetry</text>
+<rect x="1724.33" y="791.00" width="149.33" height="35.00" rx="5" fill="#E96500"/>
+<text x="1799.00" y="817.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W22-W24</text>
+<text x="98.00" y="872.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 8 - Confirmed Ops &amp; Events</text>
+<rect x="1883.67" y="846.00" width="149.33" height="35.00" rx="5" fill="#E96500"/>
+<text x="1958.33" y="872.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W25-W27</text>
+<text x="98.00" y="927.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 9 - Recovery Recommendations</text>
+<rect x="2043.00" y="901.00" width="149.33" height="35.00" rx="5" fill="#E96500"/>
+<text x="2117.67" y="927.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W28-W30</text>
+<text x="98.00" y="982.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Sprint 10 - Guided Recovery &amp; Hardening</text>
+<rect x="2202.33" y="956.00" width="149.33" height="35.00" rx="5" fill="#E96500"/>
+<text x="2277.00" y="982.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W31-W33</text>
+<text x="98.00" y="1037.00" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#10233F" text-anchor="start" >Final UAT &amp; Pilot Hardening</text>
+<rect x="2361.67" y="1011.00" width="149.33" height="35.00" rx="5" fill="#A9781A"/>
+<text x="2436.33" y="1037.00" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle" >W34-W36</text>
+<line x1="604.00" y1="1098.00" x2="2516.00" y2="1098.00" stroke="#B8C7D6" stroke-width="2"/>
+<line x1="763.33" y1="1056.00" x2="763.33" y2="1086.00" stroke="#2F7DBD" stroke-width="2"/>
+<polygon points="763.33,1087.00 774.33,1098.00 763.33,1109.00 752.33,1098.00" fill="#2F7DBD"/>
+<text x="763.33" y="1136.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Blueprint</text>
+<text x="763.33" y="1151.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Complete</text>
+<line x1="1560.00" y1="1056.00" x2="1560.00" y2="1086.00" stroke="#2E7D32" stroke-width="2"/>
+<polygon points="1560.00,1087.00 1571.00,1098.00 1560.00,1109.00 1549.00,1098.00" fill="#2E7D32"/>
+<text x="1560.00" y="1136.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Release 1</text>
+<text x="1560.00" y="1151.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Validated</text>
+<line x1="2516.00" y1="1056.00" x2="2516.00" y2="1086.00" stroke="#A9781A" stroke-width="2"/>
+<polygon points="2516.00,1087.00 2527.00,1098.00 2516.00,1109.00 2505.00,1098.00" fill="#A9781A"/>
+<text x="2516.00" y="1136.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Pilot-ready</text>
+<text x="2516.00" y="1151.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#10233F" text-anchor="middle" >Platform</text>
+<rect x="84.00" y="1196.00" width="591.50" height="162.00" rx="6" fill="#2F7DBD"/>
+<text x="379.75" y="1240.00" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle" >BLUEPRINTING</text>
+<text x="379.75" y="1269.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#EAF4FF" text-anchor="middle" >W1-W3</text>
+<text x="379.75" y="1310.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >Operating rules, data assumptions, flow</text>
+<text x="379.75" y="1334.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >logic, and sprint backlog.</text>
+<rect x="697.50" y="1196.00" width="591.50" height="162.00" rx="6" fill="#2E7D32"/>
+<text x="993.25" y="1240.00" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle" >RELEASE 1</text>
+<text x="993.25" y="1269.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#EAF4FF" text-anchor="middle" >W4-W18</text>
+<text x="993.25" y="1310.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >Governed scheduling spine, operating</text>
+<text x="993.25" y="1334.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >window logic, and pilot-user validation.</text>
+<rect x="1311.00" y="1196.00" width="591.50" height="162.00" rx="6" fill="#E96500"/>
+<text x="1606.75" y="1240.00" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle" >RELEASE 2</text>
+<text x="1606.75" y="1269.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#EAF4FF" text-anchor="middle" >W19-W33</text>
+<text x="1606.75" y="1298.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >Scenario handling, live evidence,</text>
+<text x="1606.75" y="1322.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >confirmed operations, and recovery</text>
+<text x="1606.75" y="1346.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >guidance.</text>
+<rect x="1924.50" y="1196.00" width="591.50" height="162.00" rx="6" fill="#A9781A"/>
+<text x="2220.25" y="1240.00" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle" >PILOT READY</text>
+<text x="2220.25" y="1269.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#EAF4FF" text-anchor="middle" >W34-W36</text>
+<text x="2220.25" y="1310.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >Full UAT, pilot hardening, platform</text>
+<text x="2220.25" y="1334.00" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="400" fill="#FFFFFF" text-anchor="middle" >sign-off. External risk: W40-W44.</text>
+<rect x="0.00" y="1452.00" width="2600.00" height="48.00" rx="0" fill="#0B2948"/>
+<text x="84.00" y="1482.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="400" fill="#DCE8F5" text-anchor="start" >PT Vector Management Consulting  |  ABL Operational Blueprinting - Application Build Extension v4</text>
+<text x="2516.00" y="1482.00" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="400" fill="#DCE8F5" text-anchor="end" >Estimated: 34-36 weeks nominal  |  40-44 weeks with external integration risk</text>
+</svg>
