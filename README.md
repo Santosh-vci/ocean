@@ -26,6 +26,26 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
+## Fresh Docker build
+
+Use this when starting from a clean clone or when you need to discard cached image layers:
+
+```bash
+cp .env.example .env
+docker compose down --remove-orphans
+docker compose build --no-cache --pull
+docker compose up -d --force-recreate --remove-orphans
+```
+
+PowerShell equivalent:
+
+```powershell
+Copy-Item .env.example .env -Force
+docker compose down --remove-orphans
+docker compose build --no-cache --pull
+docker compose up -d --force-recreate --remove-orphans
+```
+
 ## Docker-only local policy
 
 Do not run `npm install`, `npm ci`, `pip install`, or virtualenv setup in the workspace. Frontend and backend dependencies are installed by the Docker images from `frontend/package-lock.json` and `backend/requirements.txt`.
