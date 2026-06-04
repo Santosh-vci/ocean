@@ -1,0 +1,27 @@
+task mode: create
+primary deck-profile: product-platform
+secondary profile gates: strategy-leadership for executive storyline and delivery/adoption close
+required proof objects:
+- operating flow map
+- constraint handoff / feasibility visual
+- product workflow journey
+- product module map
+- happy-path planning flow
+- recovery scenario flow
+- telemetry evidence flow
+- roadmap / Release 1 adoption visual
+source/asset requirements:
+- final proposal DOCX: F:\ocean\docs\proposal\final_version\ABLproposal_final_submitted.docx
+- slide content blueprint: F:\ocean\docs\proposal\final_version\ABL_Client_Presentation_Slide_Content_Blueprint.md
+- visual design thesis: F:\ocean\docs\proposal\final_version\ABL_Client_Presentation_Visual_Design_Thesis.md
+brand authenticity constraints:
+- no invented client logos
+- use text identity only for ABL / Vector context
+- product frames are schematic first-draft placeholders, not represented as final screenshots
+profile-specific QA gates:
+- show product system, not feature cards
+- tie diagrams to operating outcomes
+- avoid generic architecture boxes
+- preserve concrete labels specific to ABL transshipment planning
+known missing inputs:
+- final live product screenshots are not provided; demo-anchor screen frames are used in first draft
